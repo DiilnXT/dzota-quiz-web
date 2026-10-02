@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Subject {
+  id        String    @id @default(cuid())
+  name      String
+  chapters  Chapter[]
+  createdAt DateTime  @default(now())
+}
+
+model Chapter {
+  id        String          @id @default(cuid())
+  name      String
+  subjectId String
+  subject   Subject         @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  questions QuestionGroup[]
+  createdAt DateTime        @default(now())
+}
+
+model QuestionGroup {
+  id        String     @id @default(cuid())
+  name      String     // e.g., "Câu 1 - Đạo hàm cơ bản"
+  chapterId String
+  chapter   Chapter    @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  questions Question[]
+  createdAt DateTime   @default(now())
+}
+
+model Question {
+  id            String        @id @default(cuid())
+  groupId       String
+  group         QuestionGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  content       String        // HTML/Text content
+  options       String        // JSON string of options {A: "...", B: "..."}
+  correctOption String
+  explanation   String?
+  createdAt     DateTime      @default(now())
+  testQuestions TestQuestion[]
+}
+
+model Test {
+  id          String         @id @default(cuid())
+  title       String
+  description String?
+  password    String?
+  timeLimit   Int            // minutes
+  mode        String         // exam, practice
+  isActive    Boolean        @default(true)
+  settings    String?        // JSON of generation settings (e.g., how many questions from each chapter)
+  questions   TestQuestion[]
+  createdAt   DateTime       @default(now())
+}
+
+model TestQuestion {
+  id         String   @id @default(cuid())
+  testId     String
+  test       Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
+  questionId String   // points to a specific Question (variation)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  order      Int
+}
