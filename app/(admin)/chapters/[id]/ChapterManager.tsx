@@ -11,7 +11,7 @@ export default function ChapterManager({ chapter }: { chapter: any }) {
   
   // States for new variant
   const [content, setContent] = useState('')
-  const [options, setOptions] = useState({ A: '', B: '', C: '', D: '' })
+  const [options, setOptions] = useState({ A: '', B: '', C: '', D: '', E: '', F: '', G: '' })
   const [correctOption, setCorrectOption] = useState('A')
   
   const handleCreateGroup = async (e: React.FormEvent) => {
@@ -34,7 +34,7 @@ export default function ChapterManager({ chapter }: { chapter: any }) {
       chapter.id
     )
     setContent('')
-    setOptions({ A: '', B: '', C: '', D: '' })
+    setOptions({ A: '', B: '', C: '', D: '', E: '', F: '', G: '' })
   }
 
   return (
@@ -99,7 +99,7 @@ export default function ChapterManager({ chapter }: { chapter: any }) {
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  {['A', 'B', 'C', 'D'].map(opt => (
+                  {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(opt => (
                     <div key={opt} className="flex items-center gap-3">
                       <input 
                         type="radio" 
@@ -134,12 +134,15 @@ export default function ChapterManager({ chapter }: { chapter: any }) {
                       <div className="font-bold text-[#007AFF] mb-2">Biến thể {idx + 1}:</div>
                       <div className="prose prose-sm max-w-none mb-3" dangerouslySetInnerHTML={{ __html: q.content }} />
                       <div className="grid grid-cols-2 gap-2 text-sm">
-                        {['A', 'B', 'C', 'D'].map(k => (
+                        {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(k => {
+                          if (!opts[k]) return null;
+                          return (
                           <div key={k} className={`p-2 rounded-md border ${q.correctOption === k ? 'bg-green-50 border-green-200 font-medium text-green-800' : 'bg-slate-50 border-slate-100 text-slate-600'}`}>
                             <span className="font-bold mr-2">{k}.</span>
                             {opts[k]}
                           </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     </div>
                     <button onClick={() => deleteQuestionVariant(q.id, chapter.id)} className="text-slate-400 hover:text-red-500 self-start">

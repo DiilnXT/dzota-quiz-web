@@ -156,7 +156,7 @@ export default function TestInterface({ test }: { test: any }) {
                 </div>
                 
                 <div className="space-y-2 mt-4">
-                  {['A', 'B', 'C', 'D'].map(k => {
+                  {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(k => {
                     if (!opts[k]) return null
                     const isRightOpt = k === q.correctOption
                     const isSelected = k === userAnswer
@@ -219,7 +219,7 @@ export default function TestInterface({ test }: { test: any }) {
               </div>
               
               <div className="space-y-3">
-                {['A', 'B', 'C', 'D'].map(k => {
+                {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(k => {
                   if (!opts[k]) return null
                   
                   return (
