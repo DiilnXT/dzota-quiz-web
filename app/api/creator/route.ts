@@ -4,7 +4,7 @@ import fs from 'fs'
 import path from 'path'
 
 export async function GET(request: Request) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const sessionStr = cookieStore.get('dzota_session')?.value
   
   if (!sessionStr) {

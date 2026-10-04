@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { cookies } from 'next/headers'
 
-function isAdmin() {
-  const sessionStr = cookies().get('dzota_session')?.value
+async function isAdmin() {
+  const cookieStore = await cookies()
+  const sessionStr = cookieStore.get('dzota_session')?.value
   if (!sessionStr) return false
   try {
     const session = JSON.parse(sessionStr)
@@ -12,7 +13,7 @@ function isAdmin() {
 }
 
 export async function GET() {
-  if (!isAdmin()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!(await isAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const quizzes = await prisma.quickQuiz.findMany({
     orderBy: { createdAt: 'desc' },
     include: { author: { select: { username: true } } }

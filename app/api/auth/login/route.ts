@@ -15,14 +15,16 @@ export async function POST(request: Request) {
         })
       }
       
-      cookies().set('dzota_session', JSON.stringify({ id: adminUser.id, role: 'ADMIN', username }), { maxAge: 60 * 60 * 24 * 30, httpOnly: true, path: '/' })
+      const cookieStore = await cookies()
+      cookieStore.set('dzota_session', JSON.stringify({ id: adminUser.id, role: 'ADMIN', username }), { maxAge: 60 * 60 * 24 * 30, httpOnly: true, path: '/' })
       return NextResponse.json({ success: true, role: 'ADMIN' })
     }
     
     // Normal User check
     const user = await prisma.user.findUnique({ where: { username } })
     if (user && user.password === password) {
-      cookies().set('dzota_session', JSON.stringify({ id: user.id, role: user.role, username }), { maxAge: 60 * 60 * 24 * 30, httpOnly: true, path: '/' })
+      const cookieStore = await cookies()
+      cookieStore.set('dzota_session', JSON.stringify({ id: user.id, role: user.role, username }), { maxAge: 60 * 60 * 24 * 30, httpOnly: true, path: '/' })
       return NextResponse.json({ success: true, role: user.role })
     }
     

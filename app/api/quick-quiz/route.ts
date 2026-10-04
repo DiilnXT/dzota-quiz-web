@@ -7,7 +7,8 @@ export async function POST(request: Request) {
     const data = await request.json()
     const { id, title } = data
     
-    const sessionStr = cookies().get('dzota_session')?.value
+    const cookieStore = await cookies()
+    const sessionStr = cookieStore.get('dzota_session')?.value
     let authorId = null
     
     if (sessionStr) {
