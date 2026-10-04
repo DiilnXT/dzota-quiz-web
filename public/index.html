@@ -719,8 +719,8 @@
             const handleKeyDown = (e) => {
               if (appMode !== 'taking' || quizConfig.mode !== 'practice') return;
               const currentQ = currentQuestions[currentQIndex]; if (!currentQ) return;
-              if (['1','2','3','4','5','6','7'].includes(e.key)) { const m = {'1':'A','2':'B','3':'C','4':'D','5':'E','6':'F','7':'G'}; handleSelectAnswer(currentQ.originalId || currentQ.id, m[e.key]); }
-              if (e.key === 'Enter') { e.preventDefault(); const ans = userAnswers[currentQ.originalId || currentQ.id]; if (showExplanation[currentQ.originalId || currentQ.id] === 'correct' || (ans === currentQ.correct)) handleNextQuestion(); }
+              if (['1','2','3','4','5','6','7'].includes(e.key)) { const m = {'1':'A','2':'B','3':'C','4':'D','5':'E','6':'F','7':'G'}; handleSelectAnswer(currentQ.id, m[e.key]); }
+              if (e.key === 'Enter') { e.preventDefault(); const ans = userAnswers[currentQ.id]; if (showExplanation[currentQ.id] === 'correct' || (ans === currentQ.correct)) handleNextQuestion(); }
             };
             window.addEventListener('keydown', handleKeyDown); return () => window.removeEventListener('keydown', handleKeyDown);
         }, [appMode, quizConfig.mode, currentQIndex, currentQuestions, userAnswers, showExplanation]);
@@ -731,7 +731,7 @@
           if (submitted && quizConfig.mode === 'exam') return;
           setUserAnswers(prev => ({ ...prev, [qId]: option }));
           if (quizConfig.mode === 'practice') {
-              const q = currentQuestions.find(q => (q.originalId || q.id) === qId);
+              const q = currentQuestions.find(q => q.id === qId);
               setShowExplanation(prev => ({...prev, [qId]: q.correct === option ? 'correct' : 'incorrect'}));
           }
         };
@@ -748,28 +748,34 @@
         const handleSubmitExam = () => { if(!submitted) { if (timeLeft > 0) showConfirm("Nộp bài?", "Bạn có chắc muốn nộp bài ngay?", processSubmit); else processSubmit(); } };
 
         const processSubmit = () => {
-            let count = 0; currentQuestions.forEach(q => { if (userAnswers[q.originalId || q.id] === q.correct) count++; });
+            let count = 0; currentQuestions.forEach(q => { if (userAnswers[q.id] === q.correct) count++; });
             setCorrectCount(count); setScore(((count / currentQuestions.length) * 10).toFixed(1));
             setSubmitted(true); setAppMode('result'); addToast("Đã ghi nhận kết quả!", 'success');
         };
 
         // --- RENDER SECTIONS ---
-        const renderHome = () => (
-            <div className="min-h-screen pb-12 bg-gray-50">
-                <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200/50 sticky top-0 z-[40] pt-safe">
-                    <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex justify-between items-center">
-                        <h1 className="text-xl font-bold text-gray-900 tracking-tight">Thư viện của bạn</h1>
-                        
+                const renderHome = () => (
+            <div className="min-h-screen bg-slate-50 font-sans pb-24">
+                <div className="bg-gradient-to-br from-indigo-600 via-blue-600 to-sky-500 text-white pt-10 pb-20 px-4 sm:px-6 relative overflow-hidden shadow-lg">
+                    <div className="absolute inset-0 bg-black/10"></div>
+                    <div className="max-w-5xl mx-auto relative z-10 flex justify-between items-start">
+                        <div>
+                            <div className="flex items-center gap-2 mb-1">
+                                <div className="bg-white/20 p-2 rounded-xl backdrop-blur-md"><Icons.FileText size={24} className="text-white"/></div>
+                                <h1 className="text-3xl font-extrabold tracking-tight">Dzota Workspace</h1>
+                            </div>
+                            <p className="text-blue-100 text-[14px] font-medium mt-2">Quản lý kho đề thi & trắc nghiệm của bạn</p>
+                        </div>
                         <div className="relative">
-                            <button onClick={() => setShowCreateMenu(!showCreateMenu)} className="w-10 h-10 bg-ios-blue text-white rounded-full flex items-center justify-center text-2xl shadow-lg shadow-blue-500/30 active:scale-95 transition-transform">
-                                <Icons.Plus size={22} />
+                            <button onClick={() => setShowCreateMenu(!showCreateMenu)} className="w-12 h-12 bg-white text-indigo-600 rounded-2xl flex items-center justify-center shadow-xl hover:shadow-2xl hover:-translate-y-0.5 active:scale-95 transition-all">
+                                <Icons.Plus size={24} />
                             </button>
                             {showCreateMenu && (
                                 <>
                                     <div className="fixed inset-0 z-30" onClick={() => setShowCreateMenu(false)}></div>
                                     <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden animate-pop-in z-40 origin-top-right">
                                         <button onClick={() => { setShowCreateMenu(false); handleCreateNew('standard'); }} className="w-full text-left p-4 hover:bg-gray-50 flex gap-3 border-b border-gray-50 transition-colors">
-                                            <div className="bg-blue-50 p-2 rounded-xl text-ios-blue h-fit"><Icons.FileText size={20}/></div>
+                                            <div className="bg-blue-50 p-2 rounded-xl text-blue-600 h-fit"><Icons.FileText size={20}/></div>
                                             <div>
                                                 <div className="font-bold text-gray-900 text-[14px] mb-0.5">Tạo Đề Thi Thường</div>
                                                 <div className="text-[12px] text-gray-500 leading-snug">Đề thi cố định, trắc nghiệm tiêu chuẩn.</div>
@@ -787,69 +793,18 @@
                             )}
                         </div>
                     </div>
-                </header>
+                </div>
 
-                <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-                    <div className="flex flex-col md:flex-row gap-4 mb-6 relative z-20">
-                        <div className="bg-white border border-gray-200 rounded-xl flex items-center px-4 py-3 flex-1 shadow-sm transition-shadow focus-within:ring-2 focus-within:ring-ios-blue/20 focus-within:border-ios-blue">
-                            <Icons.Search className="text-gray-400" size={18}/>
-                            <input type="text" placeholder="Tìm kiếm tên bài thi, ngân hàng..." className="flex-1 bg-transparent border-none outline-none ml-3 text-[15px] text-gray-800 placeholder-gray-400" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                <main className="max-w-5xl mx-auto px-4 sm:px-6 -mt-10 relative z-20">
+                    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-2 flex flex-col md:flex-row gap-2 mb-8">
+                        <div className="flex-1 flex items-center bg-gray-50 rounded-xl px-4 py-3 border border-transparent focus-within:border-blue-200 focus-within:bg-white transition-colors">
+                            <Icons.Search className="text-gray-400" size={20}/>
+                            <input type="text" placeholder="Tìm kiếm tên bài thi, ngân hàng..." className="flex-1 bg-transparent border-none outline-none ml-3 text-[15px] text-gray-800 font-medium placeholder-gray-400" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                         </div>
-                        <div className="w-full md:w-64 flex-shrink-0">
+                        <div className="w-full md:w-56 flex-shrink-0">
                             <CustomSelect options={categories} value={selectedCategory} onChange={setSelectedCategory} icon={<Icons.Folder size={18} className="text-gray-500"/>}/>
                         </div>
                     </div>
-
-                    <div className="flex gap-2 mb-6 bg-gray-200/50 p-1.5 rounded-xl w-fit">
-                        <button onClick={() => setStatusFilter('all')} className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${statusFilter === 'all' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Tất cả</button>
-                        <button onClick={() => setStatusFilter('active')} className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${statusFilter === 'active' ? 'bg-white text-ios-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Đang mở</button>
-                        <button onClick={() => setStatusFilter('inactive')} className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${statusFilter === 'inactive' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Đã khóa</button>
-                    </div>
-
-                    <div className="space-y-4">
-                        {filteredQuizzes.length === 0 ? (
-                            <div className="text-center py-24 bg-white rounded-3xl shadow-sm border border-gray-100">
-                                <div className="text-gray-300 mb-4 inline-block"><Icons.FileText size={56}/></div>
-                                <h3 className="text-lg font-bold text-gray-900">Không có dữ liệu</h3>
-                                <p className="text-gray-500 text-sm mt-2">Chưa có bài thi hoặc ngân hàng nào khớp điều kiện.</p>
-                            </div>
-                        ) : (
-                            filteredQuizzes.map(quiz => (
-                                <div key={quiz.id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 relative overflow-hidden flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center cursor-pointer group hover:shadow-md hover:border-gray-200 transition-all" onClick={() => setSelectedItemAction(quiz)}>
-                                    <div className="flex-1 min-w-0 w-full">
-                                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md flex items-center gap-1 ${quiz.config.quizType === 'bank' ? 'text-emerald-700 bg-emerald-50' : 'text-indigo-700 bg-indigo-50'}`}>
-                                                {quiz.config.quizType === 'bank' ? <Icons.Folder size={10}/> : <Icons.FileText size={10}/>}
-                                                {quiz.config.quizType === 'bank' ? 'Ngân hàng' : 'Đề thi'}
-                                            </span>
-                                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-600 bg-gray-100 px-2 py-1 rounded-md">{quiz.config.category || 'Chung'}</span>
-                                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md flex items-center gap-1 ${quiz.config.isActive !== false ? 'text-ios-green bg-green-50' : 'text-ios-red bg-red-50'}`}>
-                                                {quiz.config.isActive !== false ? <Icons.Check size={10}/> : <Icons.Lock size={10}/>}
-                                                {quiz.config.isActive !== false ? 'Đang mở' : 'Đã khóa'}
-                                            </span>
-                                        </div>
-                                        <h3 className="text-[18px] font-bold text-gray-900 leading-tight mb-1.5 truncate group-hover:text-ios-blue transition-colors">{quiz.title}</h3>
-                                        <p className="text-[13px] text-gray-500 flex items-center gap-4 font-medium">
-                                            <span className="flex items-center gap-1.5"><Icons.Clock size={14} className="text-gray-400"/> {quiz.config.timeLimit} phút</span>
-                                            <span className="flex items-center gap-1.5"><Icons.FileText size={14} className="text-gray-400"/> {quiz.questions ? quiz.questions.length : 0} {quiz.config.quizType === 'bank' ? 'nhóm câu' : 'câu hỏi'}</span>
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end border-t border-gray-100 sm:border-0 pt-3 sm:pt-0 mt-2 sm:mt-0">
-                                        <div className="flex items-center mr-2" onClick={(e) => e.stopPropagation()}>
-                                            <input type="checkbox" id={`toggle-${quiz.id}`} className="toggle-checkbox-ios hidden" checked={quiz.config.isActive !== false} onChange={(e) => handleToggleStatus(quiz.id, quiz.config.isActive !== false, e)} />
-                                            <label htmlFor={`toggle-${quiz.id}`} className="toggle-label-ios"></label>
-                                        </div>
-                                        <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 group-hover:bg-blue-50 group-hover:text-ios-blue transition-colors">
-                                            <Icons.ArrowRight size={18}/>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </main>
-            </div>
-        );
 
         const renderReviewSection = () => (
             <div className="glass-panel bg-white p-6 rounded-2xl w-full fade-in mt-6 animate-slide-up border border-slate-200">
@@ -1118,7 +1073,7 @@
         );
 
         const renderQuestionCard = (q, idx, isPractice) => {
-             const baseId = q.originalId || q.id;
+             const baseId = q.id;
              const isSelected = userAnswers[baseId];
              const status = showExplanation[baseId]; 
              return (
@@ -1364,3 +1319,5 @@
     </script>
   </body>
 </html>
+
+
