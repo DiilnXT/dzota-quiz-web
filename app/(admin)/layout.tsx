@@ -19,7 +19,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="flex-1 overflow-y-auto py-8 px-5 flex flex-col gap-2 scrollbar-hide">
           <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-3">Overview</div>
           
-          <Link href="/" className="flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-slate-50 text-slate-600 hover:text-indigo-600 transition-all font-semibold group">
+          <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-slate-50 text-slate-600 hover:text-indigo-600 transition-all font-semibold group">
             <LayoutDashboard size={20} className="text-slate-400 group-hover:text-indigo-500 transition-colors" />
             Bảng Điều Khiển
           </Link>
@@ -31,7 +31,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <FileText size={20} className="text-slate-400 group-hover:text-indigo-500 transition-colors" />
             Quản Lý Bài Test
           </Link>
-          <a href="/v1.html" className="flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-indigo-50 text-indigo-600 font-semibold group mt-2">
+          <a href="/" className="flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-indigo-50 text-indigo-600 font-semibold group mt-2">
             <Sparkles size={20} className="text-indigo-500" />
             Tạo Đề Nhanh (Bản Gốc)
           </a>

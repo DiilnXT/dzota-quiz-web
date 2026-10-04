@@ -480,7 +480,7 @@
         };
 
         const handleCopyLink = (id) => {
-            const url = `${window.location.origin}/v1.html?id=${id}`;
+            const url = `${window.location.origin}/?id=${id}`;
             navigator.clipboard.writeText(url); addToast("Đã copy link vào bộ nhớ tạm", 'success');
         };
 
@@ -655,7 +655,7 @@
                });
                if (!res.ok) throw new Error("Save failed");
                
-               const finalUrl = `${window.location.origin}/v1.html?id=${quizId}`;
+               const finalUrl = `${window.location.origin}/?id=${quizId}`;
                setGeneratedLink(finalUrl);
                setQuizIdTracker(quizId);
                
