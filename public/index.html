@@ -443,9 +443,9 @@
         const handleCreateNew = (type = 'standard') => {
              setQuizIdTracker(null);
              setQuizConfig({
-               title: type === 'bank' ? 'Ngân Hàng Câu Hỏi Mới' : 'Bài Kiểm Tra Mới', 
+               title: 'Bài Kiểm Tra Mới', 
                category: 'Chung', timeLimit: 15, password: '', shuffleQuestions: false, shuffleOptions: false, mode: 'exam', isActive: true, randomPickCount: 0,
-               quizType: type
+               quizType: 'standard'
              });
              setParsedQuestions([]); setGeneratedLink(''); setShowReview(false); setAppMode('editor');
         };
@@ -770,30 +770,7 @@
                             </button>
                         </div>
                         <div className="relative">
-                            <button onClick={() => setShowCreateMenu(!showCreateMenu)} className="w-12 h-12 bg-white text-indigo-600 rounded-2xl flex items-center justify-center shadow-xl hover:shadow-2xl hover:-translate-y-0.5 active:scale-95 transition-all">
-                                <Icons.Plus size={24} />
-                            </button>
-                            {showCreateMenu && (
-                                <>
-                                    <div className="fixed inset-0 z-30" onClick={() => setShowCreateMenu(false)}></div>
-                                    <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden animate-pop-in z-40 origin-top-right">
-                                        <button onClick={() => { setShowCreateMenu(false); handleCreateNew('standard'); }} className="w-full text-left p-4 hover:bg-gray-50 flex gap-3 border-b border-gray-50 transition-colors">
-                                            <div className="bg-blue-50 p-2 rounded-xl text-blue-600 h-fit"><Icons.FileText size={20}/></div>
-                                            <div>
-                                                <div className="font-bold text-gray-900 text-[14px] mb-0.5">Tạo Đề Thi Thường</div>
-                                                <div className="text-[12px] text-gray-500 leading-snug">Đề thi cố định, trắc nghiệm tiêu chuẩn.</div>
-                                            </div>
-                                        </button>
-                                        <button onClick={() => { setShowCreateMenu(false); handleCreateNew('bank'); }} className="w-full text-left p-4 hover:bg-gray-50 flex gap-3 transition-colors">
-                                            <div className="bg-emerald-50 p-2 rounded-xl text-emerald-600 h-fit"><Icons.Folder size={20}/></div>
-                                            <div>
-                                                <div className="font-bold text-gray-900 text-[14px] mb-0.5">Tạo Ngân Hàng Đề</div>
-                                                <div className="text-[12px] text-gray-500 leading-snug">Kho câu hỏi để rút ngẫu nhiên sinh đề.</div>
-                                            </div>
-                                        </button>
-                                    </div>
-                                </>
-                            )}
+                            <button onClick={() => handleCreateNew('standard')} className="w-12 h-12 bg-white text-indigo-600 rounded-2xl flex items-center justify-center shadow-xl hover:shadow-2xl hover:-translate-y-0.5 active:scale-95 transition-all"><Icons.Plus size={24} /></button>
                         </div>
                     </div>
                 </div>
@@ -802,7 +779,7 @@
                     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-2 flex flex-col md:flex-row gap-2 mb-8">
                         <div className="flex-1 flex items-center bg-gray-50 rounded-xl px-4 py-3 border border-transparent focus-within:border-blue-200 focus-within:bg-white transition-colors">
                             <Icons.Search className="text-gray-400" size={20}/>
-                            <input type="text" placeholder="Tìm kiếm tên bài thi, ngân hàng..." className="flex-1 bg-transparent border-none outline-none ml-3 text-[15px] text-gray-800 font-medium placeholder-gray-400" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                            <input type="text" placeholder="Tìm kiếm tên bài thi..." className="flex-1 bg-transparent border-none outline-none ml-3 text-[15px] text-gray-800 font-medium placeholder-gray-400" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                         </div>
                         <div className="w-full md:w-56 flex-shrink-0">
                             <CustomSelect options={categories} value={selectedCategory} onChange={setSelectedCategory} icon={<Icons.Folder size={18} className="text-gray-500"/>}/>
@@ -814,15 +791,15 @@
                             <div className="col-span-full flex flex-col items-center justify-center py-20 text-center animate-fade-in bg-white rounded-3xl border border-gray-100 shadow-sm mt-4">
                                 <div className="w-24 h-24 bg-blue-50 text-blue-300 rounded-full flex items-center justify-center mb-6"><Icons.Folder size={48} /></div>
                                 <h3 className="text-xl font-bold text-gray-800 mb-2">Chưa có bài test nào</h3>
-                                <p className="text-gray-500 mb-6 max-w-sm text-[15px]">Nhấn nút "+" ở góc trên để tạo bài thi hoặc ngân hàng đề mới.</p>
-                                <button onClick={() => setShowCreateMenu(true)} className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-indigo-200">Tạo mới ngay</button>
+                                <p className="text-gray-500 mb-6 max-w-sm text-[15px]">Nhấn nút "+" ở góc trên để tạo bài thi mới.</p>
+                                <button onClick={() => handleCreateNew('standard')} className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-indigo-200">Tạo mới ngay</button>
                             </div>
                         ) : (
                             filteredQuizzes.map(quiz => (
                                 <div key={quiz.id} onClick={() => { if (!quiz.config.isActive) return; setSelectedQuizId(quiz.id); setAppMode('entry'); }} className={`bg-white border rounded-2xl p-5 group cursor-pointer transition-all duration-300 ${quiz.config.isActive === false ? 'opacity-60 grayscale border-gray-200' : 'border-gray-200 hover:border-indigo-300 hover:shadow-xl hover:shadow-indigo-100/50 hover:-translate-y-1'}`}>
                                     <div className="flex justify-between items-start mb-4">
-                                        <div className={`p-3 rounded-xl ${quiz.config.quizType === 'bank' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
-                                            {quiz.config.quizType === 'bank' ? <Icons.Folder size={24}/> : <Icons.FileText size={24}/>}
+                                        <div className={`p-3 rounded-xl bg-blue-50 text-blue-600`}>
+                                            <Icons.FileText size={24}/>
                                         </div>
                                         <div className="flex items-center gap-1.5">
                                             <button onClick={(e) => { e.stopPropagation(); setEditQuizId(quiz.id); setQuizConfig(quiz.config); setParsedQuestions(quiz.questions || []); setAppMode('editor'); }} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><Icons.Edit size={16}/></button>
@@ -834,7 +811,7 @@
                                         <h3 className="font-bold text-gray-900 text-[17px] mb-2 line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">{quiz.config.title}</h3>
                                         <div className="flex flex-wrap gap-3 mt-3">
                                             <span className="text-[12px] font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md flex items-center gap-1.5"><Icons.Clock size={12}/> {quiz.config.timeLimit} phút</span>
-                                            <span className="text-[12px] font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md flex items-center gap-1.5"><Icons.FileText size={12}/> {quiz.questions ? quiz.questions.length : 0} {quiz.config.quizType === 'bank' ? 'nhóm' : 'câu'}</span>
+                                            <span className="text-[12px] font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md flex items-center gap-1.5"><Icons.FileText size={12}/> {quiz.questions ? quiz.questions.length : 0} câu</span>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between border-t border-gray-100 pt-4 mt-2">
@@ -855,8 +832,8 @@
         const renderReviewSection = () => (
             <div className="glass-panel bg-white p-6 rounded-2xl w-full fade-in mt-6 animate-slide-up border border-slate-200">
                 <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
-                    <h3 className="text-xl font-bold text-gray-800 flex items-center"><Icons.Edit size={24} className="text-indigo-600 mr-2"/> <span className="">Quản Lý {quizConfig.quizType === 'bank' ? 'Ngân Hàng' : 'Chi Tiết'} ({parsedQuestions.length} nhóm câu)</span></h3>
-                    <Button variant="secondary" onClick={() => { setParsedQuestions([...parsedQuestions, {id: 'slot_' + Date.now(), variants: [{id: Date.now(), text: '', options: {A:'',B:'',C:'',D:'',E:'',F:'',G:''}, correct: null, images: []}]}]); }} icon={<Icons.FilePlus size={16}/>}>Thêm nhóm mới</Button>
+                    <h3 className="text-xl font-bold text-gray-800 flex items-center"><Icons.Edit size={24} className="text-indigo-600 mr-2"/> <span className="">Chi Tiết Bài Thi ({parsedQuestions.length} câu)</span></h3>
+                    <Button variant="secondary" onClick={() => { setParsedQuestions([...parsedQuestions, {id: 'slot_' + Date.now(), variants: [{id: Date.now(), text: '', options: {A:'',B:'',C:'',D:'',E:'',F:'',G:''}, correct: null, images: []}]}]); }} icon={<Icons.FilePlus size={16}/>}>Thêm câu mới</Button>
                 </div>
                 
                 <div className="max-h-[600px] overflow-y-auto space-y-4 pr-2 custom-scrollbar">
@@ -911,15 +888,15 @@
                 
                 <div className="glass-panel bg-white rounded-2xl p-6 flex justify-between items-center sticky top-4 z-20">
                     <h2 className="text-2xl font-bold text-slate-800 flex items-center">
-                        {quizConfig.quizType === 'bank' ? <Icons.Folder className="text-emerald-600 mr-3" /> : <Icons.Edit3 className="text-indigo-600 mr-3" />}
-                        {quizConfig.quizType === 'bank' ? 'Soạn Thảo Ngân Hàng Câu Hỏi' : 'Soạn Thảo Đề Thi'}
+                        <Icons.Edit3 className="text-indigo-600 mr-3" />
+                        'Soạn Thảo Đề Thi'
                     </h2>
                     <Button variant="secondary" onClick={() => setAppMode('home')} icon={<Icons.Home size={16}/>}>Trang chủ</Button>
                 </div>
 
                 <div className="glass-panel bg-white p-8 rounded-2xl shadow-sm">
                   <div className="mb-6">
-                     <label className="block text-sm font-semibold text-slate-700 mb-3">Bước 1: {quizConfig.quizType === 'bank' ? 'Dán dữ liệu các câu hỏi của ngân hàng từ Word' : 'Dán nội dung đề thi từ Word'} (Hỗ trợ Ảnh & Toán)</label>
+                     <label className="block text-sm font-semibold text-slate-700 mb-3">Bước 1: 'Dán nội dung đề thi từ Word' (Hỗ trợ Ảnh & Toán)</label>
                      <div className="border border-slate-200 rounded-xl overflow-hidden mb-4"><textarea id="quiz-editor-area" className="w-full h-96"></textarea></div>
                      <div className="mt-4 flex items-center justify-between bg-sky-50 p-3 rounded-lg border border-sky-100">
                          <div className="flex items-center gap-2 text-sm text-sky-700">
@@ -928,7 +905,7 @@
                      </div>
                      <div className="mt-6 flex justify-center">
                         <Button onClick={parseQuiz} loading={isParsing} variant="primary" className="px-8 py-3 text-lg bg-indigo-600" icon={<Icons.RefreshCw size={20}/>}>
-                            {isParsing ? 'Đang xử lý...' : (quizConfig.quizType === 'bank' ? 'Bước 2: Phân tích kho câu hỏi' : 'Bước 2: Phân tích đề thi')}
+                            {isParsing ? 'Đang xử lý...' : 'Bước 2: Phân tích đề thi'}
                         </Button>
                      </div>
                   </div>
@@ -942,7 +919,7 @@
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                       <div>
-                          <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Tên {quizConfig.quizType === 'bank' ? 'Ngân hàng' : 'Bài Thi'}</label>
+                          <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Tên Bài Thi</label>
                           <input type="text" value={quizConfig.title} onChange={e => setQuizConfig({...quizConfig, title: e.target.value})} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition font-semibold text-gray-800"/>
                       </div>
                       <div>
@@ -1072,8 +1049,8 @@
         const renderEntry = () => (
           <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-ios-bg">
              <div className="bg-white p-8 rounded-[32px] shadow-ios max-w-sm w-full text-center relative overflow-hidden animate-pop-in">
-                <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 ${quizConfig.quizType === 'bank' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-ios-blue'}`}>
-                    {quizConfig.quizType === 'bank' ? <Icons.Folder size={40}/> : <Icons.FileText size={40} />}
+                <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 bg-blue-50 text-ios-blue`}>
+                    <Icons.FileText size={40} />
                 </div>
                 <h1 className="text-[22px] font-bold text-black mb-2 leading-tight">{quizConfig.title}</h1>
                 <p className="text-[15px] text-gray-500 mb-8 font-medium">{quizConfig.category || 'Môn học chung'}</p>
@@ -1086,9 +1063,7 @@
                     <div className="w-[1px] bg-gray-200"></div>
                     <div className="flex flex-col items-center">
                         <span className="text-xl font-bold text-black">
-                            {quizConfig.quizType === 'bank' && (quizConfig.randomPickCount || 0) > 0 
-                                ? Math.min(quizConfig.randomPickCount, parsedQuestions.length) 
-                                : parsedQuestions.length}
+                            {parsedQuestions.length}
                         </span>
                         <span className="text-[11px] font-bold text-gray-400 uppercase mt-1">Câu hỏi</span>
                     </div>
@@ -1283,13 +1258,10 @@
                         <div className="p-6 border-b border-gray-100">
                             <div className="flex items-center gap-3 mb-2">
                                 <span className="text-[11px] font-bold uppercase tracking-wide text-ios-blue bg-blue-50 px-2 py-0.5 rounded-md">{selectedItemAction.config.category || 'Chung'}</span>
-                                <span className={`text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md flex items-center gap-1 ${selectedItemAction.config.quizType === 'bank' ? 'text-emerald-700 bg-emerald-50' : 'text-indigo-700 bg-indigo-50'}`}>
-                                    {selectedItemAction.config.quizType === 'bank' ? <Icons.Folder size={10}/> : <Icons.FileText size={10}/>}
-                                    {selectedItemAction.config.quizType === 'bank' ? 'Ngân hàng' : 'Đề thi'}
-                                </span>
+                                <span className="text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md flex items-center gap-1 text-indigo-700 bg-indigo-50"><Icons.FileText size={10}/>Đề thi</span>
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 leading-tight">{selectedItemAction.title}</h3>
-                            <p className="text-sm text-gray-500 mt-1">{selectedItemAction.questions?.length || 0} {selectedItemAction.config.quizType === 'bank' ? 'nhóm câu hỏi' : 'câu hỏi'}</p>
+                            <p className="text-sm text-gray-500 mt-1">{selectedItemAction.questions?.length || 0} câu hỏi</p>
                         </div>
                         
                         <div className="p-3 bg-gray-50">
@@ -1297,18 +1269,14 @@
                                 <div className="text-ios-blue bg-blue-50 p-2 rounded-lg"><Icons.Edit3 size={18}/></div> Chỉnh sửa nội dung
                             </button>
                             
-                            {selectedItemAction.config.quizType === 'bank' && (
-                                <button onClick={() => { setGenerateBankConfig({ bank: selectedItemAction }); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
-                                    <div className="text-emerald-600 bg-emerald-50 p-2 rounded-lg"><Icons.RefreshCw size={18}/></div> Tạo đề thi từ ngân hàng này
-                                </button>
-                            )}
+                            
                             
                             <button onClick={() => { handleCopyLink(selectedItemAction.id); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
                                 <div className="text-orange-500 bg-orange-50 p-2 rounded-lg"><Icons.LinkIcon size={18}/></div> Copy link chia sẻ
                             </button>
                             
                             <button onClick={() => { handleDeleteQuiz(selectedItemAction.id); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-red-600 font-medium">
-                                <div className="text-red-600 bg-red-50 p-2 rounded-lg"><Icons.Trash size={18}/></div> Xóa {selectedItemAction.config.quizType === 'bank' ? 'ngân hàng' : 'đề thi'}
+                                <div className="text-red-600 bg-red-50 p-2 rounded-lg"><Icons.Trash size={18}/></div> Xóa đề thi
                             </button>
                         </div>
                         
@@ -1320,27 +1288,7 @@
             )}
 
             {/* Modal Prompt Lấy Câu Hỏi Từ Ngân Hàng */}
-            {generateBankConfig && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-pop-in border border-gray-100">
-                        <div className="p-6">
-                            <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-4"><Icons.RefreshCw size={24}/></div>
-                            <h3 className="text-lg font-bold text-gray-900 mb-2">Sinh đề từ Ngân hàng</h3>
-                            <p className="text-sm text-gray-500 mb-4">Nhập số lượng câu hỏi bạn muốn bốc ngẫu nhiên từ <b>{generateBankConfig.bank.questions.length}</b> câu của ngân hàng này:</p>
-                            
-                            <input type="number" id="pick-count-input" className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-lg font-bold text-center" defaultValue="20" min="1" max={generateBankConfig.bank.questions.length} />
-                        </div>
-                        <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-100">
-                            <Button variant="secondary" onClick={() => setGenerateBankConfig(null)}>Hủy</Button>
-                            <Button variant="success" onClick={() => {
-                                const count = parseInt(document.getElementById('pick-count-input').value) || 20;
-                                executeGenerateFromBank(generateBankConfig.bank, count);
-                                setGenerateBankConfig(null);
-                            }}>Tạo Đề Mới</Button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            
 
             {appMode === 'home' && renderHome()}
             {appMode === 'editor' && renderEditor()}
