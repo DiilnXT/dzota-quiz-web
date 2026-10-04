@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 
-export async function POST() {
+export async function POST(request: Request) {
   const cookieStore = await cookies()
   cookieStore.delete('dzota_session')
-  return NextResponse.json({ success: true })
+  
+  // If it's a form submission or API call
+  if (request.headers.get('content-type')?.includes('application/json')) {
+      return NextResponse.json({ success: true })
+  }
+  
+  // Normal form redirect
+  return NextResponse.redirect(new URL('/login', request.url), 303)
 }
