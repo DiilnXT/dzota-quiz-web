@@ -3,6 +3,8 @@ import prisma from '@/lib/prisma'
 import fs from 'fs'
 import path from 'path'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -14,8 +16,9 @@ export async function GET(request: Request) {
       const quiz = await prisma.quickQuiz.findUnique({ where: { id } })
       if (quiz) {
         // Replace OG tags in HTML safely
-        html = html.replace(/<meta property="og:title" content="[^"]*"/, `<meta property="og:title" content="${quiz.title} - Dzota"`)
-        html = html.replace(/<title>.*?<\/title>/, `<title>${quiz.title} - Dzota</title>`)
+        html = html.replace(/<meta property="og:title" content="[^"]*"/, `<meta property="og:title" content="${quiz.title}"`)
+        html = html.replace(/<meta property="og:description" content="[^"]*"/, `<meta property="og:description" content="Nhấn để bắt đầu làm bài thi: ${quiz.title}"`)
+        html = html.replace(/<title>.*?<\/title>/, `<title>${quiz.title}</title>`)
       }
       return new NextResponse(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
     } else {
