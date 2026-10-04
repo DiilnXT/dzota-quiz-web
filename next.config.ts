@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
         {
           source: '/',
           destination: '/api/home',
+        },
+        {
+          source: '/creator',
+          destination: '/api/creator',
         }
       ],
       afterFiles: [],

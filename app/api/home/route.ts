@@ -17,9 +17,10 @@ export async function GET(request: Request) {
         html = html.replace(/<meta property="og:title" content="[^"]*"/, `<meta property="og:title" content="${quiz.title} - Dzota"`)
         html = html.replace(/<title>.*?<\/title>/, `<title>${quiz.title} - Dzota</title>`)
       }
+      return new NextResponse(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+    } else {
+      return NextResponse.redirect(new URL('/login', request.url))
     }
-    
-    return new NextResponse(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
   } catch (error) {
     console.error(error)
     return new NextResponse('Internal Server Error', { status: 500 })

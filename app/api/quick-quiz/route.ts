@@ -1,16 +1,42 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { cookies } from 'next/headers'
 
 export async function POST(request: Request) {
   try {
     const data = await request.json()
     const { id, title } = data
     
-    await prisma.quickQuiz.create({
-      data: {
-        id,
+    const sessionStr = cookies().get('dzota_session')?.value
+    let authorId = null
+    
+    if (sessionStr) {
+      try {
+        const session = JSON.parse(sessionStr)
+        authorId = session.id
+        
+        // Check max limits
+        if (session.role !== 'ADMIN') {
+          const user = await prisma.user.findUnique({ where: { id: authorId }, include: { _count: { select: { quizzes: true } } } })
+          if (user && user._count.quizzes >= user.maxTests) {
+            return NextResponse.json({ error: `Bạn đã đạt giới hạn tạo tối đa ${user.maxTests} bài test.` }, { status: 403 })
+          }
+        }
+      } catch (e) {}
+    }
+    
+    // UPSERT to support updating
+    await prisma.quickQuiz.upsert({
+      where: { id },
+      update: {
         title: title || 'Quiz',
         data: JSON.stringify(data)
+      },
+      create: {
+        id,
+        title: title || 'Quiz',
+        data: JSON.stringify(data),
+        authorId
       }
     })
     
