@@ -4,10 +4,12 @@ import { useState, useRef } from 'react'
 import { Plus, Trash2, Edit3, Image as ImageIcon } from 'lucide-react'
 import { Editor } from '@tinymce/tinymce-react'
 import { createQuestionGroup, deleteQuestionGroup, addQuestionVariant, deleteQuestionVariant } from '@/app/actions/question'
+import WordImporter from './WordImporter'
 
 export default function ChapterManager({ chapter }: { chapter: any }) {
   const [newGroupName, setNewGroupName] = useState('')
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null)
+  const [showWordImporter, setShowWordImporter] = useState(false)
   
   // States for new variant
   const [content, setContent] = useState('')
@@ -37,12 +39,23 @@ export default function ChapterManager({ chapter }: { chapter: any }) {
     setOptions({ A: '', B: '', C: '', D: '', E: '', F: '', G: '' })
   }
 
+  if (showWordImporter) {
+    return <WordImporter chapterId={chapter.id} onDone={() => setShowWordImporter(false)} />
+  }
+
   return (
     <div className="space-y-8">
       {/* Thêm Nhóm Câu Hỏi */}
-      <div className="bg-white p-6 rounded-3xl shadow-sm">
-        <h2 className="text-lg font-bold text-slate-800 mb-4">Thêm Nhóm Câu Hỏi</h2>
-        <p className="text-sm text-slate-500 mb-4">Một nhóm câu hỏi (VD: "Câu 1 - Đạo hàm") có thể chứa nhiều biến thể. Khi tạo đề thi, hệ thống sẽ random 1 biến thể trong nhóm.</p>
+      <div className="bg-white p-6 rounded-3xl shadow-[0_2px_20px_rgba(0,0,0,0.04)] border border-slate-100 relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-6">
+          <button onClick={() => setShowWordImporter(true)} className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:scale-105 transition-all shadow-lg shadow-emerald-500/30 flex items-center gap-2">
+            <Edit3 size={18} />
+            Nhập Tự Động Từ Word
+          </button>
+        </div>
+        
+        <h2 className="text-xl font-extrabold text-slate-800 mb-2">Thêm Nhóm Câu Hỏi Cục Bộ</h2>
+        <p className="text-sm text-slate-500 mb-6 max-w-xl">Một nhóm câu hỏi (VD: "Câu 1 - Đạo hàm") có thể chứa nhiều biến thể. Khi tạo đề thi, hệ thống sẽ random 1 biến thể trong nhóm.</p>
         <form onSubmit={handleCreateGroup} className="flex gap-4">
           <input 
             type="text" 

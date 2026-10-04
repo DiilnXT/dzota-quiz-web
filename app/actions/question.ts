@@ -3,11 +3,12 @@
 import prisma from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 
-export async function createQuestionGroup(chapterId: string, name: string) {
-  await prisma.questionGroup.create({
+export async function createQuestionGroup(chapterId: string, name: string, skipRevalidate?: boolean) {
+  const group = await prisma.questionGroup.create({
     data: { name, chapterId }
   })
-  revalidatePath(`/chapters/${chapterId}`)
+  if (!skipRevalidate) revalidatePath(`/chapters/${chapterId}`)
+  return group.id
 }
 
 export async function deleteQuestionGroup(id: string, chapterId: string) {
@@ -17,8 +18,8 @@ export async function deleteQuestionGroup(id: string, chapterId: string) {
   revalidatePath(`/chapters/${chapterId}`)
 }
 
-export async function addQuestionVariant(groupId: string, data: { content: string, options: string, correctOption: string, explanation: string }, chapterId: string) {
-  await prisma.question.create({
+export async function addQuestionVariant(groupId: string, data: { content: string, options: string, correctOption: string, explanation: string }, chapterId: string, skipRevalidate?: boolean) {
+  const variant = await prisma.question.create({
     data: {
       groupId,
       content: data.content,
@@ -27,7 +28,8 @@ export async function addQuestionVariant(groupId: string, data: { content: strin
       explanation: data.explanation
     }
   })
-  revalidatePath(`/chapters/${chapterId}`)
+  if (!skipRevalidate) revalidatePath(`/chapters/${chapterId}`)
+  return variant.id
 }
 
 export async function deleteQuestionVariant(id: string, chapterId: string) {
