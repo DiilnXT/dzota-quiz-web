@@ -4,11 +4,12 @@ import { Metadata, ResolvingMetadata } from 'next'
 import TestInterface from './TestInterface'
 
 export async function generateMetadata(
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
   parent: ResolvingMetadata
 ): Promise<Metadata> {
+  const resolvedParams = await params
   const test = await prisma.test.findUnique({
-    where: { id: params.id }
+    where: { id: resolvedParams.id }
   })
   
   if (!test) return { title: 'Bài Test Không Tồn Tại' }
@@ -24,9 +25,10 @@ export async function generateMetadata(
   }
 }
 
-export default async function TestPage({ params }: { params: { id: string } }) {
+export default async function TestPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params
   const test = await prisma.test.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     include: {
       questions: {
         include: {

@@ -61,9 +61,9 @@ export default async function Dashboard() {
               <h2 className="text-xl font-extrabold text-slate-800">Bài Test Gần Đây</h2>
               <p className="text-sm text-slate-500 mt-1">Các bài test vừa được tạo trên hệ thống.</p>
             </div>
-            <Link href="/tests/create" className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30">
-              <Plus size={18} /> Tạo bài test
-            </Link>
+            <a href="/v1.html" className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30">
+              <Plus size={18} /> Tạo Đề Nhanh (V1)
+            </a>
           </div>
 
           <div className="space-y-4">

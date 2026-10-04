@@ -31,6 +31,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <FileText size={20} className="text-slate-400 group-hover:text-indigo-500 transition-colors" />
             Quản Lý Bài Test
           </Link>
+          <a href="/v1.html" className="flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-indigo-50 text-indigo-600 font-semibold group mt-2">
+            <Sparkles size={20} className="text-indigo-500" />
+            Tạo Đề Nhanh (Bản Gốc)
+          </a>
         </div>
         
         <div className="p-6 border-t border-slate-100 bg-slate-50/50">

@@ -4,9 +4,10 @@ import Link from 'next/link'
 import { ArrowLeft, Home } from 'lucide-react'
 import ChapterManager from './ChapterManager'
 
-export default async function ChapterPage({ params }: { params: { id: string } }) {
+export default async function ChapterPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params
   const chapter = await prisma.chapter.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     include: {
       subject: true,
       questions: {

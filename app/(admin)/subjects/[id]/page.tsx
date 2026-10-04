@@ -4,9 +4,10 @@ import { createChapter, deleteChapter } from '@/app/actions/subject'
 import prisma from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 
-export default async function SubjectDetailPage({ params }: { params: { id: string } }) {
+export default async function SubjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params
   const subject = await prisma.subject.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     include: {
       chapters: {
         include: { _count: { select: { questions: true } } },

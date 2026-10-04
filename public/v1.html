@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Dzota - Tạo Đề Nhanh</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ios: {
+                bg: '#F2F2F7', blue: '#007AFF', green: '#34C759',
+                red: '#FF3B30', orange: '#FF9500', gray: '#8E8E93', card: '#FFFFFF',
+              }
+            },
+            boxShadow: {
+              'ios': '0 4px 24px rgba(0,0,0,0.04)',
+              'ios-sm': '0 2px 8px rgba(0,0,0,0.04)',
+            }
+          }
+        }
+      }
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      :root { -webkit-tap-highlight-color: transparent; }
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F2F2F7; color: #1e293b; overscroll-behavior-y: none; }
+      .mode-simple { background-color: #FFFFFF !important; }
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+      ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+      .animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+      @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      .animate-pop-in { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+      @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+      .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      .toast-enter { animation: toastEnter 0.3s ease-out forwards; }
+      @keyframes toastEnter { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+      .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); }
+      .tox-tinymce { border-radius: 0.75rem !important; border: 1px solid #e2e8f0 !important; }
+      .question-image-container img { max-width: 100%; height: auto; border-radius: 12px; margin-top: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #E5E5EA; }
+      .math-text-wrapper .katex { font-size: 1.15em; }
+      .math-text-wrapper .katex-display { margin: 0.5em 0; overflow-x: auto; overflow-y: hidden; }
+      .toggle-checkbox-ios:checked { right: 0; border-color: #34C759; }
+      .toggle-checkbox-ios:checked + .toggle-label-ios { background-color: #34C759; }
+      .toggle-checkbox-ios:checked + .toggle-label-ios:after { transform: translateX(100%); border-color: white; }
+      .toggle-label-ios { width: 44px; height: 24px; background-color: #E5E5EA; border-radius: 9999px; position: relative; cursor: pointer; transition: background-color 0.3s; }
+      .toggle-label-ios:after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background-color: #fff; border-radius: 50%; transition: transform 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+      .spinner { border: 2px solid rgba(255,255,255,0.3); border-top: 2px solid #fff; border-radius: 50%; width: 18px; height: 18px; animation: spin 0.8s linear infinite; }
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      @keyframes spin-slow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+      const { useState, useEffect, useRef, useMemo } = React;
+
+      const getDirectImageUrl = (url) => {
+        if (typeof url !== 'string') return url;
+        const match = url.match(/id=([a-zA-Z0-9_-]+)/);
+        if (url.includes('drive.google.com') && match) {
+            return `https://lh3.googleusercontent.com/d/${match[1]}`;
+        }
+        return url;
+      };
+
+      const ToastContainer = ({ toasts, removeToast }) => (
+          <div className="fixed top-5 right-5 z-50 flex flex-col gap-3 pointer-events-none">
+              {toasts.map(toast => (
+                  <div key={toast.id} className={`toast-enter pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white min-w-[300px] border-l-4 ${toast.type === 'success' ? 'bg-slate-800 border-emerald-500' : toast.type === 'error' ? 'bg-slate-800 border-rose-500' : 'bg-slate-800 border-sky-500'}`}>
+                      <div className="flex-1 text-sm font-medium">{toast.message}</div>
+                      <button onClick={() => removeToast(toast.id)} className="text-gray-400 hover:text-white">X</button>
+                  </div>
+              ))}
+          </div>
+      );
+
+      const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel }) => {
+          if (!isOpen) return null;
+          return (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                  <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-pop-in">
+                      <div className="p-6">
+                          <h3 className="text-lg font-bold text-gray-900 mb-2">{title}</h3>
+                          <p className="text-gray-600">{message}</p>
+                      </div>
+                      <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                          <Button variant="secondary" onClick={onCancel}>Hủy bỏ</Button>
+                          <Button variant="danger" onClick={onConfirm}>Xác nhận</Button>
+                      </div>
+                  </div>
+              </div>
+          );
+      };
+
+      const Button = ({ children, onClick, variant = 'primary', className = '', loading }) => {
+          const baseStyle = "relative inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 active:scale-95 disabled:opacity-60 disabled:pointer-events-none";
+          const variants = {
+              primary: "bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20",
+              secondary: "bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 shadow-sm",
+              danger: "bg-rose-500 hover:bg-rose-600 text-white shadow-lg shadow-rose-500/20",
+              success: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20",
+              ghost: "text-gray-500 hover:text-gray-800 hover:bg-gray-100/50"
+          };
+          return (
+              <button onClick={onClick} disabled={loading} className={`${baseStyle} ${variants[variant]} ${className}`}>
+                  {loading && <div className="spinner border-2"></div>}
+                  <span>{children}</span>
+              </button>
+          );
+      };
+
+      const MathText = ({ text }) => {
+          if (!text || typeof text !== 'string') return text;
+          if (!window.katex) return <span>{text}</span>;
+          const parts = text.split(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$)/g);
+          return (
+              <span className="math-text-wrapper">
+                  {parts.map((part, index) => {
+                      if (part.startsWith('$$') && part.endsWith('$$')) {
+                          try { return <span key={index} dangerouslySetInnerHTML={{ __html: window.katex.renderToString(part.slice(2, -2), { displayMode: true }) }} />; } catch (e) { return <span key={index}>{part}</span>; }
+                      } else if (part.startsWith('$') && part.endsWith('$')) {
+                          try { return <span key={index} dangerouslySetInnerHTML={{ __html: window.katex.renderToString(part.slice(1, -1), { displayMode: false }) }} />; } catch (e) { return <span key={index}>{part}</span>; }
+                      }
+                      return <span key={index}>{part}</span>;
+                  })}
+              </span>
+          );
+      };
+
+      function App() {
+        const [appMode, setAppMode] = useState('loading');
+        const [isLoading, setIsLoading] = useState(true);
+        const [isParsing, setIsParsing] = useState(false);
+        const [quizIdTracker, setQuizIdTracker] = useState(null);
+        const [quizConfig, setQuizConfig] = useState({ title: 'Bài Kiểm Tra Mới', category: 'Chung', timeLimit: 15, password: '', shuffleQuestions: false, shuffleOptions: false, mode: 'exam', isActive: true });
+        const [parsedQuestions, setParsedQuestions] = useState([]);
+        const [currentQuestions, setCurrentQuestions] = useState([]); 
+        const [generatedLink, setGeneratedLink] = useState('');
+        const [isSaving, setIsSaving] = useState(false);
+        const [showReview, setShowReview] = useState(false); 
+        const [savedQuizzes, setSavedQuizzes] = useState([]);
+        const [searchTerm, setSearchTerm] = useState('');
+        const [selectedCategory, setSelectedCategory] = useState('Tất cả');
+        const [userAnswers, setUserAnswers] = useState({});
+        const [timeLeft, setTimeLeft] = useState(0);
+        const [submitted, setSubmitted] = useState(false);
+        const [score, setScore] = useState(0);
+        const [correctCount, setCorrectCount] = useState(0);
+        const [showExplanation, setShowExplanation] = useState({}); 
+        const [accessPassword, setAccessPassword] = useState('');
+        const [resultFilter, setResultFilter] = useState('all');
+        const [currentQIndex, setCurrentQIndex] = useState(0);
+        const [toasts, setToasts] = useState([]);
+        const [modalConfig, setModalConfig] = useState({ isOpen: false });
+
+        const addToast = (message, type = 'info') => {
+            const id = Date.now();
+            setToasts(prev => [...prev, { id, message, type }]);
+            setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
+        };
+        const removeToast = (id) => setToasts(prev => prev.filter(t => t.id !== id));
+        const showConfirm = (title, message, onConfirm) => setModalConfig({ isOpen: true, title, message, onConfirm: () => { onConfirm(); setModalConfig({ isOpen: false }); } });
+
+        useEffect(() => {
+          if (appMode === 'taking' || appMode === 'result') document.body.classList.add('mode-simple');
+          else document.body.classList.remove('mode-simple');
+        }, [appMode]);
+
+        useEffect(() => {
+          const initApp = async () => {
+            let localQuizzes = [];
+            try { localQuizzes = JSON.parse(localStorage.getItem('myQuizzes') || '[]'); } catch (e) {}
+            setSavedQuizzes(localQuizzes);
+
+            const handleLoadQuiz = async (id) => {
+                setIsLoading(true);
+                try {
+                    const res = await fetch('/api/quick-quiz?id=' + id);
+                    if (!res.ok) throw new Error("Not found");
+                    const data = await res.json();
+                    
+                    if (data.config && data.config.isActive === false && appMode !== 'editor') {
+                        setAppMode('blocked'); setIsLoading(false); return;
+                    }
+                    setQuizConfig(data.config || { title: 'Bài Thi', timeLimit: 15, mode: 'exam' });
+                    setParsedQuestions(data.questions || []);
+                    setAppMode('entry');
+                    setIsLoading(false);
+                } catch(e) {
+                    addToast("Không tìm thấy dữ liệu bài thi.", 'error');
+                    setAppMode('home');
+                    setIsLoading(false);
+                }
+            };
+
+            const params = new URLSearchParams(window.location.search);
+            const quizId = params.get('id') || params.get('test');
+
+            if (quizId) {
+                setQuizIdTracker(quizId);
+                handleLoadQuiz(quizId);
+            } else {
+                setAppMode('home');
+                setIsLoading(false);
+            }
+          };
+          initApp();
+        }, []);
+
+        useEffect(() => {
+          if (appMode === 'editor') {
+             const initEditor = () => {
+                 if (window.tinymce) {
+                     if (window.tinymce.get('quiz-editor-area')) window.tinymce.remove('#quiz-editor-area');
+                     window.tinymce.init({
+                         selector: '#quiz-editor-area',
+                         height: 500, menubar: false,
+                         plugins: 'lists link image table code help wordcount paste',
+                         toolbar: 'undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist | removeformat',
+                         paste_data_images: true, automatic_uploads: true,
+                         images_upload_handler: (blobInfo) => new Promise(resolve => resolve('data:' + blobInfo.blob().type + ';base64,' + blobInfo.base64()))
+                     });
+                 }
+             };
+             setTimeout(initEditor, 100);
+          }
+        }, [appMode]);
+
+        const handleCreateNew = () => {
+             setQuizIdTracker(null);
+             setQuizConfig({ title: 'Bài Kiểm Tra Mới', category: 'Chung', timeLimit: 15, password: '', shuffleQuestions: false, shuffleOptions: false, mode: 'exam', isActive: true });
+             setParsedQuestions([]); setGeneratedLink(''); setShowReview(false); setAppMode('editor');
+        };
+
+        const handleEditQuiz = (quiz) => {
+             setQuizIdTracker(quiz.id);
+             setQuizConfig({ ...quiz.config, isActive: quiz.config?.isActive !== false });
+             setParsedQuestions(quiz.questions || []);
+             setAppMode('editor'); setShowReview(true);
+        };
+
+        const handleDeleteQuiz = (id, e) => {
+            e.stopPropagation();
+            showConfirm("Xóa bài thi?", "Hành động này không thể hoàn tác.", () => {
+                const updated = savedQuizzes.filter(q => q.id !== id);
+                setSavedQuizzes(updated);
+                localStorage.setItem('myQuizzes', JSON.stringify(updated));
+                addToast("Đã xóa bài thi", 'success');
+            });
+        };
+
+        const handleToggleStatus = (id, currentStatus, e) => {
+            e.stopPropagation();
+            const newStatus = !currentStatus;
+            const updated = savedQuizzes.map(q => q.id === id ? {...q, config: {...q.config, isActive: newStatus}} : q);
+            setSavedQuizzes(updated);
+            localStorage.setItem('myQuizzes', JSON.stringify(updated));
+            addToast(`Đã ${newStatus ? 'Mở' : 'Khóa'} bài thi`, 'success');
+        };
+
+        const handleCopyLink = (id, e) => {
+            e.stopPropagation();
+            const url = `${window.location.origin}/v1.html?id=${id}`;
+            navigator.clipboard.writeText(url);
+            addToast("Đã copy link bài thi", 'success');
+        };
+
+        const categories = useMemo(() => {
+            const cats = new Set(['Tất cả']);
+            savedQuizzes.forEach(q => { if(q.config?.category) cats.add(q.config.category); });
+            return Array.from(cats).sort();
+        }, [savedQuizzes]);
+
+        const filteredQuizzes = useMemo(() => savedQuizzes.filter(q => 
+            (q.title || '').toLowerCase().includes(searchTerm.toLowerCase()) && 
+            (selectedCategory === 'Tất cả' || q.config?.category === selectedCategory)
+        ), [savedQuizzes, searchTerm, selectedCategory]);
+
+        const parseDomToLines = (rootNode) => {
+            let lines = [];
+            let currentLine = { text: "", segments: [], images: [] };
+            const flushLine = () => { if (currentLine.text.trim().length > 0 || currentLine.images.length > 0) lines.push(currentLine); currentLine = { text: "", segments: [], images: [] }; };
+            const isBlock = (node) => ['DIV', 'P', 'LI', 'BR', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'TR'].includes(node.nodeName);
+            const walk = (node) => {
+                if (node.nodeName === 'IMG') {
+                    if (node.src) currentLine.images.push(getDirectImageUrl(node.src));
+                } else if (node.nodeType === Node.TEXT_NODE) {
+                    const text = node.textContent.replace(/\u00A0/g, ' ');
+                    if (text.length === 0) return;
+                    let isBold = false; let parent = node.parentElement;
+                    while(parent && parent !== rootNode) {
+                        const style = parent.getAttribute('style') || '';
+                        if (parent.tagName === 'B' || parent.tagName === 'STRONG' || style.includes('bold') || style.includes('700') || style.includes('red')) { isBold = true; break; }
+                        parent = parent.parentElement;
+                    }
+                    currentLine.text += text; currentLine.segments.push({ text, bold: isBold });
+                } else if (node.nodeName === 'BR') { flushLine(); } 
+                else {
+                    const isBlk = isBlock(node);
+                    if (isBlk) flushLine();
+                    for (let i = 0; i < node.childNodes.length; i++) walk(node.childNodes[i]);
+                    if (isBlk) flushLine();
+                }
+            };
+            walk(rootNode); flushLine(); return lines;
+        };
+
+        const parseQuiz = async () => {
+           if (!window.tinymce?.get('quiz-editor-area')) { addToast("Trình soạn thảo chưa sẵn sàng.", 'error'); return; }
+           setIsParsing(true);
+           try { await window.tinymce.get('quiz-editor-area').uploadImages(); } catch (e) {}
+           const editorBody = window.tinymce.get('quiz-editor-area').getBody();
+           try {
+             const lines = parseDomToLines(editorBody);
+             const questions = []; let currentQ = null;
+             const fullText = lines.map(l => l.text).join('\n');
+             const keyMatch = fullText.match(/(?:^|\n)(?:Đáp án|Bảng đáp án|Answer Key)[:\s]*(.*)$/is);
+             let answerMap = {};
+             if (keyMatch) {
+                 keyMatch[1].split(/\n/).forEach(line => {
+                     const matches = line.matchAll(/(?:Câu\s*)?(\d+)[\s.:-]+([A-G])/gi);
+                     for (const match of matches) answerMap[match[1]] = match[2].toUpperCase();
+                 });
+             }
+             lines.forEach((lineObj) => {
+               const lineText = lineObj.text.trim();
+               if (!lineText && lineObj.images.length === 0) return;
+               const qStartMatch = lineText.match(/^(?:Câu|Bài)\s*(\d+)[\s.:]+(.*)/i);
+               const optMatch = lineText.match(/^([A-G])[\s.)]+(.*)/i);
+               if (qStartMatch && !optMatch) {
+                 if (currentQ) questions.push(currentQ);
+                 const qNum = qStartMatch[1];
+                 currentQ = { id: parseInt(qNum) || Date.now() + Math.random(), number: qNum, text: qStartMatch[2].trim(), options: { A: "", B: "", C: "", D: "", E: "", F: "", G: "" }, correct: answerMap[qNum] || null, images: [...lineObj.images] };
+               } else if (optMatch && currentQ) {
+                 const label = optMatch[1].toUpperCase();
+                 let content = optMatch[2].trim();
+                 currentQ.options[label] = content;
+                 if (lineObj.images.length > 0) currentQ.images.push(...lineObj.images);
+                 if (!currentQ.correct) {
+                     for (let seg of lineObj.segments) {
+                         if (seg.bold && (seg.text.replace(/^[A-G][\s.)]*/i, '').trim().length > 0 || content.includes(seg.text.trim()))) { currentQ.correct = label; break; }
+                     }
+                 }
+               } else if (currentQ) {
+                 const lastKey = ['G', 'F', 'E', 'D', 'C', 'B', 'A'].find(k => currentQ.options[k] !== "");
+                 if (lastKey) {
+                    if (lineText) currentQ.options[lastKey] += " " + lineText;
+                    for(let seg of lineObj.segments) { if (seg.bold && seg.text.trim().length > 0) currentQ.correct = lastKey; }
+                 } else { if (lineText) currentQ.text += "\n" + lineText; }
+                 if (lineObj.images.length > 0) currentQ.images.push(...lineObj.images);
+               }
+             });
+             if (currentQ) questions.push(currentQ);
+             setParsedQuestions(questions);
+             if (questions.length === 0) addToast("Không tìm thấy câu hỏi nào.", 'error');
+             else { addToast(`Đã nhận diện ${questions.length} câu.`, 'success'); setShowReview(true); }
+           } catch (e) { addToast("Lỗi phân tích: " + e.message, 'error'); }
+           setIsParsing(false);
+        };
+
+        const handleUpdateQuestion = (idx, field, value) => {
+            const updated = [...parsedQuestions];
+            if (field.includes('option_')) updated[idx].options[field.split('_')[1]] = value;
+            else updated[idx][field] = value;
+            setParsedQuestions(updated);
+        };
+
+        const handleSaveToSheet = async () => {
+           setIsSaving(true);
+           const quizId = quizIdTracker || ('quiz_' + Date.now());
+           const quizData = { id: quizId, title: quizConfig.title, config: quizConfig, questions: parsedQuestions, createdAt: new Date().toISOString() };
+           
+           try {
+               const res = await fetch('/api/quick-quiz', {
+                   method: 'POST',
+                   headers: { 'Content-Type': 'application/json' },
+                   body: JSON.stringify(quizData)
+               });
+               if (!res.ok) throw new Error("Save failed");
+               
+               const finalUrl = `${window.location.origin}/v1.html?id=${quizId}`;
+               setGeneratedLink(finalUrl);
+               setQuizIdTracker(quizId);
+               
+               const currentSaved = JSON.parse(localStorage.getItem('myQuizzes') || '[]');
+               const updatedSaved = currentSaved.filter(q => q.id !== quizId);
+               updatedSaved.unshift(quizData);
+               localStorage.setItem('myQuizzes', JSON.stringify(updatedSaved));
+               setSavedQuizzes(updatedSaved);
+               addToast("Đã lưu lên Vercel thành công!", 'success');
+           } catch(e) {
+               addToast("Lỗi kết nối Server", 'error');
+           }
+           setIsSaving(false);
+        };
+
+        const startQuiz = () => {
+          if (quizConfig.password && accessPassword !== quizConfig.password) { addToast("Sai mật khẩu!", 'error'); return; }
+          let finalQuestions = parsedQuestions.map(q => ({...q, options: {...q.options}}));
+          if (quizConfig.shuffleQuestions) finalQuestions.sort(() => Math.random() - 0.5);
+          setCurrentQuestions(finalQuestions);
+          setAppMode('taking'); setTimeLeft(quizConfig.timeLimit * 60);
+          setSubmitted(false); setScore(0); setUserAnswers({}); setShowExplanation({}); setCurrentQIndex(0);
+        };
+
+        useEffect(() => {
+          let timer;
+          if (appMode === 'taking' && timeLeft > 0 && !submitted && quizConfig.mode === 'exam') {
+            timer = setInterval(() => setTimeLeft(prev => { if (prev <= 1) { processSubmit(); return 0; } return prev - 1; }), 1000);
+          }
+          return () => clearInterval(timer);
+        }, [appMode, timeLeft, submitted]);
+
+        const formatTime = (seconds) => { const m = Math.floor(seconds / 60); const s = seconds % 60; return `${m}:${s < 10 ? '0' : ''}${s}`; };
+
+        const handleSelectAnswer = (qId, option) => {
+          if (submitted && quizConfig.mode === 'exam') return;
+          setUserAnswers(prev => ({ ...prev, [qId]: option }));
+          if (quizConfig.mode === 'practice') {
+              const question = currentQuestions.find(q => q.id === qId);
+              setShowExplanation(prev => ({...prev, [qId]: question.correct === option ? 'correct' : 'incorrect'}));
+          }
+        };
+
+        const handleNextQuestion = () => {
+            if (currentQIndex < currentQuestions.length - 1) setCurrentQIndex(prev => prev + 1);
+            else { addToast("Hoàn thành!", 'success'); processSubmit(); }
+        };
+
+        const processSubmit = () => {
+            let count = 0;
+            currentQuestions.forEach(q => { if (userAnswers[q.id] === q.correct) count++; });
+            setCorrectCount(count); setScore(((count / currentQuestions.length) * 10).toFixed(1));
+            setSubmitted(true); setAppMode('result');
+            addToast("Đã ghi nhận kết quả!", 'success');
+        };
+
+        const renderHome = () => (
+            <div className="min-h-screen pb-12">
+                <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200/50 sticky top-0 z-30 pt-safe h-14 flex justify-between items-center px-6">
+                    <h1 className="text-xl font-bold text-black tracking-tight">Thư viện Đề Thi Nhanh (V1)</h1>
+                    <button onClick={handleCreateNew} className="text-ios-blue text-[28px] leading-none active:opacity-50 transition-opacity">+</button>
+                </header>
+                <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+                    <div className="space-y-4">
+                        {filteredQuizzes.length === 0 ? <div className="text-center py-20 bg-white rounded-3xl shadow-sm">Trống</div> : 
+                            filteredQuizzes.map(quiz => (
+                                <div key={quiz.id} className="bg-white rounded-2xl p-5 shadow-ios-sm cursor-pointer hover:shadow-ios transition-shadow" onClick={() => handleEditQuiz(quiz)}>
+                                    <h3 className="text-[17px] font-semibold text-black mb-1">{quiz.title}</h3>
+                                    <button onClick={(e) => handleCopyLink(quiz.id, e)} className="bg-gray-100 px-3 py-1 rounded mt-2">Copy Link</button>
+                                </div>
+                            ))
+                        }
+                    </div>
+                </main>
+            </div>
+        );
+
+        const renderEditor = () => (
+          <div className="min-h-screen bg-slate-50 p-6 flex justify-center animate-fade-in font-sans">
+            <div className="w-full max-w-5xl space-y-6">
+                <div className="glass-panel bg-white p-8 rounded-2xl shadow-sm">
+                  <div className="mb-6">
+                     <label className="block text-sm font-semibold text-slate-700 mb-3">Dán nội dung đề thi từ Word</label>
+                     <div className="border border-slate-200 rounded-xl overflow-hidden mb-4"><textarea id="quiz-editor-area" className="w-full h-96"></textarea></div>
+                     <Button onClick={parseQuiz} loading={isParsing} variant="primary" className="w-full">Phân tích</Button>
+                  </div>
+                </div>
+
+                {(parsedQuestions.length > 0 || showReview) && (
+                  <div className="glass-panel bg-white p-8 rounded-2xl animate-slide-up">
+                    <h3 className="text-xl font-bold mb-6 text-slate-800">Cấu Hình & Xuất Bản</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                      <div><label className="block mb-2">Tên</label><input type="text" value={quizConfig.title} onChange={e => setQuizConfig({...quizConfig, title: e.target.value})} className="w-full p-3 border rounded"/></div>
+                      <div><label className="block mb-2">Phút</label><input type="number" value={quizConfig.timeLimit} onChange={e => setQuizConfig({...quizConfig, timeLimit: parseInt(e.target.value)})} className="w-full p-3 border rounded"/></div>
+                      <div><label className="block mb-2">Pass</label><input type="text" value={quizConfig.password} onChange={e => setQuizConfig({...quizConfig, password: e.target.value})} className="w-full p-3 border rounded"/></div>
+                    </div>
+                    <div className="flex gap-4">
+                       <Button onClick={handleSaveToSheet} loading={isSaving} variant="success">Lưu & Lấy Link</Button>
+                    </div>
+                    {generatedLink && (
+                       <div className="mt-4 p-4 bg-emerald-50 text-emerald-800 rounded">
+                           Link của bạn: <a href={generatedLink} target="_blank" className="font-bold underline">{generatedLink}</a>
+                       </div>
+                    )}
+                  </div>
+                )}
+            </div>
+          </div>
+        );
+
+        const renderEntry = () => (
+          <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-ios-bg">
+             <div className="bg-white p-8 rounded-[32px] shadow-ios max-w-sm w-full text-center">
+                <h1 className="text-[22px] font-bold text-black mb-8 leading-tight">{quizConfig.title}</h1>
+                <Button onClick={startQuiz} className="w-full py-4 text-[17px] ios-override">Bắt Đầu</Button>
+             </div>
+          </div>
+        );
+
+        const renderTaking = () => (
+          <div className="flex flex-col h-screen bg-ios-bg font-sans">
+             <div className="bg-white/90 px-4 py-3 flex justify-between items-center fixed top-0 w-full z-20">
+                <div className="font-bold text-black truncate">{quizConfig.title}</div>
+                <div className="flex items-center gap-3">
+                   <div className="font-mono font-bold text-red-500">{formatTime(timeLeft)}</div>
+                   <button onClick={processSubmit} className="bg-ios-blue text-white px-4 py-1.5 rounded-full font-semibold text-[15px]">Nộp</button>
+                </div>
+             </div>
+             <div className="flex-1 overflow-auto p-4 pt-20 max-w-3xl mx-auto w-full pb-20">
+                {currentQuestions.map((q, idx) => (
+                  <div key={q.id} className="bg-white p-6 rounded-[24px] shadow-ios-sm mb-6">
+                     <div className="flex gap-3 mb-4"><span className="font-bold text-ios-blue">Câu {idx + 1}:</span><div><MathText text={q.text} /></div></div>
+                     <div className="space-y-3">
+                       {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(optKey => (
+                         q.options[optKey] && (
+                           <div key={optKey} onClick={() => handleSelectAnswer(q.id, optKey)} className={`p-3.5 rounded-2xl border-2 cursor-pointer ${userAnswers[q.id] === optKey ? 'border-ios-blue bg-blue-50' : 'border-gray-100'}`}>
+                             <span className="font-bold mr-2">{optKey}.</span><MathText text={q.options[optKey]} />
+                           </div>
+                         )
+                       ))}
+                     </div>
+                  </div>
+                ))}
+             </div>
+          </div>
+        );
+
+        const renderResult = () => (
+          <div className="flex flex-col min-h-screen bg-ios-bg p-4 items-center">
+             <div className="bg-white p-8 rounded-[32px] shadow-ios max-w-2xl w-full text-center mt-4 mb-6">
+                <h2 className="text-[20px] font-bold text-gray-400 uppercase tracking-widest mb-4">Hoàn Thành</h2>
+                <div className="text-[80px] font-extrabold text-black leading-none mb-2 tracking-tight">{score}<span className="text-[32px] text-gray-300">/10</span></div>
+                <Button onClick={startQuiz} className="w-full py-4 mt-6 rounded-2xl text-[17px] ios-override">Làm Lại Lần Nữa</Button>
+             </div>
+          </div>
+        );
+
+        if (isLoading) return <div className="flex h-screen items-center justify-center bg-ios-bg"><div className="spinner border-ios-blue border-t-transparent w-8 h-8"></div></div>;
+
+        return (
+          <div className="w-full">
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
+            <ConfirmModal isOpen={modalConfig.isOpen} title={modalConfig.title} message={modalConfig.message} onConfirm={modalConfig.onConfirm} onCancel={() => setModalConfig({isOpen:false})} />
+            {appMode === 'home' && renderHome()}
+            {appMode === 'editor' && renderEditor()}
+            {appMode === 'entry' && renderEntry()}
+            {appMode === 'taking' && renderTaking()}
+            {appMode === 'result' && renderResult()}
+          </div>
+        );
+      }
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    </script>
+  </body>
+</html>
