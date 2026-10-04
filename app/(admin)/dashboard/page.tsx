@@ -159,9 +159,9 @@ export default async function AdminDashboard() {
                       <div className="text-xs text-slate-400 font-medium">ID: {u.id.substring(0,8)}...</div>
                     </td>
                     <td className="p-4">
-                      <span className={\`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold \${
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold \${
                         u.role === 'admin' ? 'bg-rose-100 text-rose-700' : 'bg-indigo-100 text-indigo-700'
-                      }\`}>
+                      }`}>
                         {u.role === 'admin' ? 'Quản trị viên' : 'Giáo viên'}
                       </span>
                     </td>
