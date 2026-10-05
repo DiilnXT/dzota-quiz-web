@@ -157,155 +157,115 @@ export default function TestInterface({ test }: { test: any }) {
           ))}
         </div>
 
-        {/* Main layout */}
+        {/* Main responsive composition */}
         <div
-          className="relative w-full flex items-center justify-center gap-16"
-          style={{ maxWidth: 1250 }}
+          className="relative w-full flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-10 xl:gap-14 py-4 sm:py-6"
+          style={{ maxWidth: 1280 }}
         >
-          {/* Illustration - desktop only */}
-          <div className="hidden lg:flex flex-1 items-center justify-center relative select-none" style={{ maxWidth: 570 }}>
-            {/* Floating animation wrapper */}
-            <div className="relative w-full h-[420px]">
-              {/* Big book stack */}
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'floatMain 5s ease-in-out infinite' }}>
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="w-36 h-20 rounded-2xl flex items-center justify-center shadow-xl" style={{ background: 'linear-gradient(135deg,#3F8CFF,#1677FF)' }}>
-                    <BookOpen size={40} className="text-white opacity-90" />
-                  </div>
-                  <div className="w-40 h-6 rounded-xl" style={{ background: 'linear-gradient(90deg,#4FC3FF,#1677FF)', opacity: 0.6 }} />
-                  <div className="w-44 h-6 rounded-xl" style={{ background: 'linear-gradient(90deg,#1677FF,#3F8CFF)', opacity: 0.4 }} />
-                </div>
-              </div>
-
-              {/* Graduation cap */}
-              <div className="absolute" style={{ top: '8%', left: '50%', transform: 'translateX(-50%)', animation: 'floatSlow 6s ease-in-out infinite' }}>
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: '#E7F1FF' }}>
-                  <GraduationCap size={28} style={{ color: '#216BFF' }} />
-                </div>
-              </div>
-
-              {/* Checklist card */}
-              <div className="absolute right-4 top-1/3 rounded-2xl p-4 shadow-xl" style={{ background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.9)', animation: 'floatRight 4.5s ease-in-out infinite', minWidth: 130 }}>
-                <div className="text-[11px] font-black text-[#102A56] mb-2 uppercase tracking-wider">Tiến độ</div>
-                {['Câu 1', 'Câu 2', 'Câu 3'].map((label, i) => (
-                  <div key={i} className="flex items-center gap-1.5 mb-1">
-                    <div className="w-3 h-3 rounded-full flex items-center justify-center" style={{ background: i < 2 ? '#22C55E' : '#E5E7EB' }}>
-                      {i < 2 && <span className="text-white text-[7px] font-black">✓</span>}
-                    </div>
-                    <span className="text-[11px] text-[#64748B] font-medium">{label}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Pen icon */}
-              <div className="absolute left-6 bottom-1/4" style={{ animation: 'floatLeft 5.5s ease-in-out infinite' }}>
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md" style={{ background: '#E7F1FF' }}>
-                  <PenLine size={22} style={{ color: '#246BFF' }} />
-                </div>
-              </div>
-
-              {/* Clock */}
-              <div className="absolute right-2 bottom-8" style={{ animation: 'floatSlow 4s ease-in-out infinite' }}>
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg,#3F8CFF,#1677FF)' }}>
-                  <Clock size={26} className="text-white" />
-                </div>
-              </div>
-
-              {/* Analytics */}
-              <div className="absolute left-2 top-10" style={{ animation: 'floatRight 6s ease-in-out infinite' }}>
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md" style={{ background: '#E7F1FF' }}>
-                  <BarChart2 size={22} style={{ color: '#1677FF' }} />
-                </div>
-              </div>
-
-              {/* Sparkles */}
-              {[
-                { top: '5%', left: '20%', size: 14, delay: '0s' },
-                { top: '15%', right: '10%', size: 10, delay: '0.5s' },
-                { top: '70%', left: '10%', size: 12, delay: '1s' },
-                { bottom: '10%', right: '20%', size: 10, delay: '1.5s' },
-                { top: '45%', left: '2%', size: 8, delay: '0.8s' },
-                { top: '80%', right: '5%', size: 10, delay: '0.3s' },
-              ].map((s, i) => (
-                <div key={i} className="absolute text-blue-300" style={{ ...s, animation: `sparkle 3s ease-in-out ${s.delay} infinite` }}>
-                  <Sparkles size={s.size} />
-                </div>
-              ))}
+          {/* Left 3D Illustration (Desktop Only) */}
+          <div className="hidden lg:flex flex-1 justify-end items-center select-none" style={{ maxWidth: 360 }}>
+            <div className="relative w-full max-w-[340px]" style={{ animation: 'floatGentleLeft 6s ease-in-out infinite' }}>
+              <img
+                src="/illustration-left.png"
+                alt="3D Study Artwork"
+                className="w-full h-auto object-contain pointer-events-none"
+                style={{ filter: 'drop-shadow(0 20px 30px rgba(22, 119, 255, 0.12))' }}
+              />
             </div>
           </div>
 
-          {/* Main Card */}
+          {/* Center Glassmorphic Quiz Card (Fully responsive for mobile & desktop) */}
           <div
-            className={`relative w-full lg:max-w-[610px] rounded-3xl overflow-hidden transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+            className={`relative w-full max-w-[440px] sm:max-w-[480px] lg:max-w-[500px] rounded-[32px] overflow-hidden transition-all duration-700 mx-auto ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
             style={{
-              background: 'rgba(255,255,255,0.78)',
+              background: 'rgba(255, 255, 255, 0.88)',
               backdropFilter: 'blur(24px)',
-              border: '1px solid rgba(255,255,255,0.9)',
-              boxShadow: '0 25px 70px rgba(40,100,180,0.18)'
+              WebkitBackdropFilter: 'blur(24px)',
+              border: '1.5px solid rgba(255, 255, 255, 0.95)',
+              boxShadow: '0 25px 60px -10px rgba(22, 119, 255, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.6) inset'
             }}
           >
-            {/* Top gradient accent */}
-            <div className="h-2 w-full" style={{ background: 'linear-gradient(90deg,#1677FF,#4FC3FF)' }} />
+            {/* Top soft blue gradient strip */}
+            <div className="h-2 w-full" style={{ background: 'linear-gradient(90deg, #1677FF, #4FC3FF)' }} />
 
-            <div className="p-8 md:p-12">
-              {/* Header */}
-              <div className="text-center mb-8">
-                {/* Document icon */}
+            <div className="p-6 sm:p-8 md:p-10 text-center">
+              {/* Top Icon with radial halo */}
+              <div className="relative mx-auto mb-4 w-20 h-20 sm:w-22 sm:h-22 flex items-center justify-center">
+                <div className="absolute inset-0 rounded-3xl" style={{ background: 'radial-gradient(circle, rgba(79, 195, 255, 0.4) 0%, rgba(22, 119, 255, 0) 70%)', transform: 'scale(1.4)' }} />
                 <div
-                  className="w-20 h-20 md:w-[84px] md:h-[84px] rounded-[22px] mx-auto mb-5 flex items-center justify-center"
+                  className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl flex items-center justify-center relative shadow-lg"
                   style={{
-                    background: 'linear-gradient(135deg,#3F8CFF,#1677FF)',
-                    boxShadow: '0 12px 30px rgba(22,119,255,0.25)',
-                    animation: 'floatSlow 4s ease-in-out infinite'
+                    background: 'linear-gradient(135deg, #4FC3FF 0%, #1677FF 100%)',
+                    boxShadow: '0 12px 28px rgba(22, 119, 255, 0.32)'
                   }}
                 >
-                  <FileText size={36} className="text-white" />
+                  <FileText size={32} className="text-white" />
                 </div>
-
-                {/* Category badge */}
-                {test.subject && (
-                  <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full mb-4 text-sm font-semibold" style={{ background: '#E7F1FF', color: '#1677FF' }}>
-                    <Sparkles size={13} />
-                    <span>{test.subject}</span>
-                  </div>
-                )}
-
-                {/* Title */}
-                <h1 className="text-3xl md:text-[42px] font-extrabold leading-tight text-[#102A56] mb-2" style={{ fontFamily: "'Inter', sans-serif" }}>
-                  {test.title}
-                </h1>
-
-                {/* Subtitle */}
-                <p className="text-[#64748B] text-base md:text-lg">
-                  {test.mode === 'practice' ? 'Bài kiểm tra luyện tập trực tuyến' : 'Bài kiểm tra thi thử trực tuyến'}
-                </p>
               </div>
 
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 gap-4 mb-8">
+              {/* Category pill badge */}
+              {test.subject && (
+                <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full mb-3 text-xs font-bold" style={{ background: '#E8F2FF', color: '#1677FF', border: '1px solid #D0E4FF' }}>
+                  <Sparkles size={13} />
+                  <span>{test.subject}</span>
+                </div>
+              )}
+
+              {/* Quiz Title with Dual Color */}
+              {(() => {
+                const rawTitle = (test.title || 'Bài Kiểm Tra Mới').trim();
+                const titleWords = rawTitle.split(/\s+/);
+                let titlePart1 = rawTitle;
+                let titlePart2 = '';
+                if (titleWords.length > 1) {
+                  const splitIdx = Math.ceil(titleWords.length / 2);
+                  titlePart1 = titleWords.slice(0, splitIdx).join(' ');
+                  titlePart2 = titleWords.slice(splitIdx).join(' ');
+                }
+                return (
+                  <h1 className="text-2xl sm:text-3xl font-extrabold mb-1.5 leading-snug tracking-tight">
+                    <span className="text-[#0F294D]">{titlePart1} </span>
+                    {titlePart2 && <span className="text-[#1677FF]">{titlePart2}</span>}
+                  </h1>
+                );
+              })()}
+
+              {/* Subtitle */}
+              <p className="text-[#64748B] text-xs sm:text-sm font-semibold uppercase tracking-wider mb-6">
+                {test.mode === 'practice' ? 'Bài kiểm tra ôn luyện trực tuyến' : 'Bài thi trắc nghiệm trực tuyến'}
+              </p>
+
+              {/* Dual Stats Grid (Time & Question count) */}
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
+                {/* Stat 1: Time */}
                 <div
-                  className="rounded-2xl p-5 flex items-center gap-3"
-                  style={{ background: 'rgba(235,244,255,0.85)', border: '1px solid rgba(255,255,255,0.9)' }}
+                  className="rounded-2xl p-3.5 sm:p-4 text-center transition-all hover:scale-[1.02]"
+                  style={{ background: '#EDF5FF', border: '1px solid #D9EAFE' }}
                 >
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(22,119,255,0.12)' }}>
-                    <Clock size={20} style={{ color: '#1677FF' }} />
+                  <div className="w-8 h-8 rounded-xl mx-auto mb-2 flex items-center justify-center" style={{ background: 'rgba(22, 119, 255, 0.12)', color: '#1677FF' }}>
+                    <Clock size={16} />
                   </div>
-                  <div>
-                    <div className="text-2xl font-black" style={{ color: '#1677FF' }}>{test.timeLimit}</div>
-                    <div className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Phút làm bài</div>
+                  <div className="text-2xl sm:text-3xl font-black text-[#1677FF] leading-none mb-1">
+                    {test.timeLimit}
+                  </div>
+                  <div className="text-[10px] sm:text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
+                    Phút làm bài
                   </div>
                 </div>
 
+                {/* Stat 2: Total Questions */}
                 <div
-                  className="rounded-2xl p-5 flex items-center gap-3"
-                  style={{ background: 'rgba(231,250,242,0.85)', border: '1px solid rgba(255,255,255,0.9)' }}
+                  className="rounded-2xl p-3.5 sm:p-4 text-center transition-all hover:scale-[1.02]"
+                  style={{ background: '#EDFAF3', border: '1px solid #D1F2DF' }}
                 >
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(22,163,106,0.12)' }}>
-                    <BarChart2 size={20} style={{ color: '#16A36A' }} />
+                  <div className="w-8 h-8 rounded-xl mx-auto mb-2 flex items-center justify-center" style={{ background: 'rgba(34, 197, 94, 0.14)', color: '#22C55E' }}>
+                    <BarChart2 size={16} />
                   </div>
-                  <div>
-                    <div className="text-2xl font-black" style={{ color: '#16A36A' }}>{test.questions.length}</div>
-                    <div className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Tổng số câu</div>
+                  <div className="text-2xl sm:text-3xl font-black text-[#22C55E] leading-none mb-1">
+                    {test.questions.length}
+                  </div>
+                  <div className="text-[10px] sm:text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
+                    Tổng số câu
                   </div>
                 </div>
               </div>
@@ -313,72 +273,87 @@ export default function TestInterface({ test }: { test: any }) {
               {/* Mode badge */}
               <div className="flex justify-center mb-6">
                 <span
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
                   style={{
                     background: test.mode === 'practice' ? 'rgba(34,197,94,0.12)' : 'rgba(22,119,255,0.12)',
                     color: test.mode === 'practice' ? '#16A36A' : '#1677FF'
                   }}
                 >
                   {test.mode === 'practice' ? (
-                    <><BookOpen size={15} /> Chế độ luyện tập – Xem đáp án ngay</>
+                    <><BookOpen size={13} /> Ôn tập – Xem đáp án tức thì</>
                   ) : (
-                    <><Clock size={15} /> Chế độ thi – Đếm ngược thời gian</>
+                    <><Clock size={13} /> Thi thử – Bấm giờ chuẩn</>
                   )}
                 </span>
               </div>
 
-              {/* Start Button */}
+              {/* CTA Button */}
               <button
                 onClick={() => setIsStarted(true)}
-                className="w-full font-bold text-white flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
+                className="w-full py-3.5 sm:py-4 px-6 rounded-full font-bold text-white text-base sm:text-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2.5 group cursor-pointer"
                 style={{
-                  height: 64,
-                  borderRadius: 999,
-                  background: 'linear-gradient(100deg,#1677FF,#168BFF,#4CC9FF)',
-                  boxShadow: '0 14px 30px rgba(22,119,255,0.28)',
-                  fontSize: 18,
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)'
-                  ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 18px 38px rgba(22,119,255,0.35)'
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'
-                  ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 14px 30px rgba(22,119,255,0.28)'
+                  background: 'linear-gradient(90deg, #1677FF 0%, #288CFF 50%, #4FC3FF 100%)',
+                  boxShadow: '0 12px 28px rgba(22, 119, 255, 0.32)',
+                  border: 'none'
                 }}
               >
-                <Play size={20} fill="white" />
-                <span>Bắt Đầu Làm Bài</span>
-                <ArrowRight size={20} />
+                <Play size={18} fill="currentColor" />
+                <span className="tracking-wide">Bắt Đầu Làm Bài</span>
+                <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
               </button>
 
-              {/* Footer */}
-              <p className="text-center mt-7 text-sm text-[#64748B]">
-                Bản quyền thuộc về <span className="font-bold text-[#102A56]">Nhật Duy Y Khoa K26</span>
-              </p>
+              {/* Prominent Glowing Copyright Badge for Nhật Duy Y Khoa K26 */}
+              <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-2">
+                <span className="text-xs font-medium text-[#64748B]">Bản quyền thuộc về</span>
+                <div
+                  className="relative inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-black text-white shadow-md overflow-hidden group select-none cursor-default"
+                  style={{
+                    background: 'linear-gradient(135deg, #0958D9 0%, #1677FF 50%, #4096FF 100%)',
+                    boxShadow: '0 4px 16px rgba(22, 119, 255, 0.45), 0 0 20px rgba(79, 195, 255, 0.3)',
+                    border: '1px solid rgba(255, 255, 255, 0.5)'
+                  }}
+                >
+                  {/* Shimmer sweep effect */}
+                  <div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full pointer-events-none"
+                    style={{ animation: 'sweepShine 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite' }}
+                  />
+                  <span className="text-amber-300 text-xs">✨</span>
+                  <span className="tracking-wider text-white drop-shadow font-extrabold">Nhật Duy Y Khoa K26</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse ml-0.5" />
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Right 3D Illustration (Desktop Only) */}
+          <div className="hidden lg:flex flex-1 justify-start items-center select-none" style={{ maxWidth: 360 }}>
+            <div className="relative w-full max-w-[340px]" style={{ animation: 'floatGentleRight 6s ease-in-out infinite' }}>
+              <img
+                src="/illustration-right.png"
+                alt="3D Exam Checklist Artwork"
+                className="w-full h-auto object-contain pointer-events-none"
+                style={{ filter: 'drop-shadow(0 20px 30px rgba(22, 119, 255, 0.12))' }}
+              />
             </div>
           </div>
         </div>
 
         {/* Keyframe styles */}
         <style>{`
-          @keyframes floatMain {
-            0%, 100% { transform: translate(-50%, -50%) translateY(0px); }
-            50% { transform: translate(-50%, -50%) translateY(-14px); }
-          }
-          @keyframes floatSlow {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-          }
-          @keyframes floatRight {
+          @keyframes floatGentleLeft {
             0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-8px) rotate(1deg); }
+            50% { transform: translateY(-10px) rotate(-1.5deg); }
           }
-          @keyframes floatLeft {
+          @keyframes floatGentleRight {
             0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-12px) rotate(-1deg); }
+            50% { transform: translateY(-12px) rotate(1.5deg); }
+          }
+          @keyframes sweepShine {
+            0% { transform: translateX(-150%); }
+            40% { transform: translateX(150%); }
+            100% { transform: translateX(150%); }
           }
           @keyframes sparkle {
             0%, 100% { opacity: 0.4; transform: scale(1); }

@@ -97,6 +97,34 @@
       @keyframes floatRight { 0%, 100% { transform: translateY(0px) translateX(0px); } 50% { transform: translateY(-10px) translateX(6px); } }
       @keyframes floatLeft { 0%, 100% { transform: translateY(0px) translateX(0px); } 50% { transform: translateY(-8px) translateX(-6px); } }
       @keyframes sparkle { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
+
+      @keyframes shimmerText {
+        0% { background-position: 0% center; }
+        50% { background-position: 100% center; }
+        100% { background-position: 0% center; }
+      }
+      .animate-shimmer {
+        background-size: 200% auto;
+        animation: shimmerText 3s linear infinite;
+      }
+
+      @keyframes floatGentleLeft {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-10px) rotate(-1.5deg); }
+      }
+      @keyframes floatGentleRight {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-12px) rotate(1.5deg); }
+      }
+      
+      @keyframes sweepShine {
+        0% { transform: translateX(-150%); }
+        40% { transform: translateX(150%); }
+        100% { transform: translateX(150%); }
+      }
+      .animate-sweep {
+        animation: sweepShine 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      }
       
       .glass-panel {
         background: rgba(255, 255, 255, 0.9);
@@ -1260,182 +1288,152 @@
             ? Math.min(quizConfig.randomPickCount, parsedQuestions.length) 
             : parsedQuestions.length;
 
+          // Split title into two harmonious parts: first in Deep Navy (#0F294D), second in Primary Blue (#1677FF)
+          const rawTitle = (quizConfig.title || 'Bài Kiểm Tra Mới').trim();
+          const titleWords = rawTitle.split(/\s+/);
+          let titlePart1 = rawTitle;
+          let titlePart2 = '';
+          if (titleWords.length > 1) {
+            const splitIdx = Math.ceil(titleWords.length / 2);
+            titlePart1 = titleWords.slice(0, splitIdx).join(' ');
+            titlePart2 = titleWords.slice(splitIdx).join(' ');
+          }
+
           return (
             <div
-              className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 relative overflow-hidden font-sans"
-              style={{ background: 'radial-gradient(ellipse at 60% 40%, #E8F2FF 0%, #F7FBFF 60%, #FFFFFF 100%)' }}
+              className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 md:p-8 relative overflow-hidden font-sans"
+              style={{ background: 'radial-gradient(circle at 50% 30%, #E8F2FF 0%, #F5F9FF 55%, #FFFFFF 100%)' }}
             >
-              {/* Decorative blurred background circles */}
-              <div className="absolute top-0 left-0 w-80 h-80 rounded-full pointer-events-none" style={{ background: '#BBD7FF', opacity: 0.35, filter: 'blur(40px)', transform: 'translate(-30%, -30%)' }} />
-              <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full pointer-events-none" style={{ background: '#9BC8FF', opacity: 0.25, filter: 'blur(50px)', transform: 'translate(30%, 30%)' }} />
+              {/* Blurred background decorative ambient blobs */}
+              <div className="absolute top-0 left-0 w-80 h-80 sm:w-96 sm:h-96 rounded-full pointer-events-none" style={{ background: '#BBD7FF', opacity: 0.35, filter: 'blur(50px)', transform: 'translate(-25%, -25%)' }} />
+              <div className="absolute bottom-0 right-0 w-96 h-96 sm:w-[450px] sm:h-[450px] rounded-full pointer-events-none" style={{ background: '#9BC8FF', opacity: 0.25, filter: 'blur(60px)', transform: 'translate(25%, 25%)' }} />
 
-              {/* Decorative Dot grid top-right */}
-              <div className="absolute top-8 right-8 hidden md:grid" style={{ gridTemplateColumns: 'repeat(4,14px)', gap: '14px', opacity: 0.65 }}>
+              {/* Decorative Dot grids */}
+              <div className="absolute top-8 right-8 hidden md:grid" style={{ gridTemplateColumns: 'repeat(4,14px)', gap: '14px', opacity: 0.55 }}>
                 {Array.from({ length: 16 }).map((_, i) => (
                   <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: '#69A7FF' }} />
                 ))}
               </div>
-              {/* Decorative Dot grid bottom-left */}
-              <div className="absolute bottom-8 left-8 hidden md:grid" style={{ gridTemplateColumns: 'repeat(4,14px)', gap: '14px', opacity: 0.45 }}>
+              <div className="absolute bottom-8 left-8 hidden md:grid" style={{ gridTemplateColumns: 'repeat(4,14px)', gap: '14px', opacity: 0.4 }}>
                 {Array.from({ length: 16 }).map((_, i) => (
                   <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: '#69A7FF' }} />
                 ))}
               </div>
 
-              {/* Outer Container (Responsive 2-column grid on desktop) */}
-              <div className="relative w-full flex flex-col lg:flex-row items-center justify-center gap-10 lg:gap-16 py-8" style={{ maxWidth: 1250 }}>
+              {/* Main Responsive Composition */}
+              <div className="relative w-full flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-10 xl:gap-14 py-4 sm:py-6" style={{ maxWidth: 1280 }}>
                 
-                {/* Left Side: 3D Educational Illustration (Desktop only) */}
-                <div className="hidden lg:flex flex-1 items-center justify-center relative select-none w-full" style={{ maxWidth: 540 }}>
-                  <div className="relative w-full h-[420px]">
-                    {/* Center main book card */}
-                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'floatMain 5s ease-in-out infinite' }}>
-                      <div className="flex flex-col gap-2 items-center">
-                        <div className="w-40 h-24 rounded-3xl flex items-center justify-center shadow-2xl" style={{ background: 'linear-gradient(135deg, #3F8CFF, #1677FF)' }}>
-                          <Icons.BookOpen size={48} className="text-white opacity-95" />
-                        </div>
-                        <div className="w-44 h-7 rounded-2xl" style={{ background: 'linear-gradient(90deg, #4FC3FF, #1677FF)', opacity: 0.65 }} />
-                        <div className="w-48 h-7 rounded-2xl" style={{ background: 'linear-gradient(90deg, #1677FF, #3F8CFF)', opacity: 0.45 }} />
-                      </div>
-                    </div>
-
-                    {/* Graduation Cap Badge */}
-                    <div className="absolute" style={{ top: '6%', left: '50%', transform: 'translateX(-50%)', animation: 'floatSlow 6s ease-in-out infinite' }}>
-                      <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: '#E7F1FF', border: '1px solid rgba(255,255,255,0.9)' }}>
-                        <Icons.GraduationCap size={32} style={{ color: '#1677FF' }} />
-                      </div>
-                    </div>
-
-                    {/* Progress Checklist Badge */}
-                    <div className="absolute right-4 top-1/3 rounded-2xl p-4 shadow-xl" style={{ background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.9)', animation: 'floatRight 4.5s ease-in-out infinite', minWidth: 140 }}>
-                      <div className="text-[11px] font-black text-[#102A56] mb-2 uppercase tracking-wider">Tiến độ bài test</div>
-                      {['Câu 1', 'Câu 2', 'Câu 3'].map((label, i) => (
-                        <div key={i} className="flex items-center gap-2 mb-1.5">
-                          <div className="w-3.5 h-3.5 rounded-full flex items-center justify-center" style={{ background: i < 2 ? '#22C55E' : '#E2E8F0' }}>
-                            {i < 2 && <span className="text-white text-[8px] font-black">✓</span>}
-                          </div>
-                          <span className="text-[11px] text-[#64748B] font-semibold">{label}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Pen Icon Badge */}
-                    <div className="absolute left-6 bottom-1/4" style={{ animation: 'floatLeft 5.5s ease-in-out infinite' }}>
-                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-md" style={{ background: '#E7F1FF', border: '1px solid rgba(255,255,255,0.9)' }}>
-                        <Icons.PenLine size={26} style={{ color: '#1677FF' }} />
-                      </div>
-                    </div>
-
-                    {/* Clock Badge */}
-                    <div className="absolute right-6 bottom-10" style={{ animation: 'floatSlow 4s ease-in-out infinite' }}>
-                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #3F8CFF, #1677FF)' }}>
-                        <Icons.Clock size={28} className="text-white" />
-                      </div>
-                    </div>
-
-                    {/* Sparkles */}
-                    {[
-                      { top: '5%', left: '20%', size: 16, delay: '0s' },
-                      { top: '15%', right: '12%', size: 12, delay: '0.5s' },
-                      { top: '70%', left: '10%', size: 14, delay: '1s' },
-                      { bottom: '12%', right: '22%', size: 12, delay: '1.5s' },
-                    ].map((s, i) => (
-                      <div key={i} className="absolute text-[#69A7FF]" style={{ ...s, animation: `sparkle 3s ease-in-out ${s.delay} infinite` }}>
-                        <Icons.Sparkles size={s.size} />
-                      </div>
-                    ))}
+                {/* Left 3D Illustration (Desktop Only) */}
+                <div className="hidden lg:flex flex-1 justify-end items-center select-none" style={{ maxWidth: 360 }}>
+                  <div className="relative w-full max-w-[340px]" style={{ animation: 'floatGentleLeft 6s ease-in-out infinite' }}>
+                    <img
+                      src="/illustration-left.png"
+                      alt="3D Study Artwork"
+                      className="w-full h-auto object-contain pointer-events-none"
+                      style={{ filter: 'drop-shadow(0 20px 30px rgba(22, 119, 255, 0.12))' }}
+                    />
                   </div>
                 </div>
 
-                {/* Right Side: Main Quiz Entry Card */}
+                {/* Center Glassmorphic Quiz Card (Fully responsive on mobile & desktop) */}
                 <div
-                  className="relative w-full lg:max-w-[580px] rounded-3xl overflow-hidden transition-all duration-500 animate-pop-in"
+                  className="relative w-full max-w-[440px] sm:max-w-[480px] lg:max-w-[500px] rounded-[32px] overflow-hidden transition-all duration-500 animate-pop-in mx-auto"
                   style={{
-                    background: 'rgba(255, 255, 255, 0.82)',
+                    background: 'rgba(255, 255, 255, 0.88)',
                     backdropFilter: 'blur(24px)',
                     WebkitBackdropFilter: 'blur(24px)',
-                    border: '1px solid rgba(255, 255, 255, 0.95)',
-                    boxShadow: '0 25px 70px rgba(22, 119, 255, 0.14)'
+                    border: '1.5px solid rgba(255, 255, 255, 0.95)',
+                    boxShadow: '0 25px 60px -10px rgba(22, 119, 255, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.6) inset'
                   }}
                 >
-                  {/* Header Top Stripe */}
-                  <div className="h-2.5 w-full" style={{ background: 'linear-gradient(90deg, #1677FF, #4FC3FF)' }} />
+                  {/* Top soft blue gradient strip */}
+                  <div className="h-2 w-full" style={{ background: 'linear-gradient(90deg, #1677FF, #4FC3FF)' }} />
 
-                  <div className="p-6 sm:p-10 md:p-12 text-center">
-                    {/* Main Icon */}
-                    <div
-                      className="w-20 h-20 sm:w-22 sm:h-22 rounded-3xl mx-auto mb-5 flex items-center justify-center"
-                      style={{
-                        background: 'linear-gradient(135deg, #3F8CFF, #1677FF)',
-                        boxShadow: '0 12px 30px rgba(22, 119, 255, 0.28)'
-                      }}
-                    >
-                      {quizConfig.quizType === 'bank' ? <Icons.Folder size={40} className="text-white" /> : <Icons.FileText size={40} className="text-white" />}
+                  <div className="p-6 sm:p-8 md:p-10 text-center">
+                    {/* Top Icon with radial halo */}
+                    <div className="relative mx-auto mb-4 w-20 h-20 sm:w-22 sm:h-22 flex items-center justify-center">
+                      <div className="absolute inset-0 rounded-3xl" style={{ background: 'radial-gradient(circle, rgba(79, 195, 255, 0.4) 0%, rgba(22, 119, 255, 0) 70%)', transform: 'scale(1.4)' }} />
+                      <div
+                        className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl flex items-center justify-center relative shadow-lg"
+                        style={{
+                          background: 'linear-gradient(135deg, #4FC3FF 0%, #1677FF 100%)',
+                          boxShadow: '0 12px 28px rgba(22, 119, 255, 0.32)'
+                        }}
+                      >
+                        {quizConfig.quizType === 'bank' ? <Icons.Folder size={32} className="text-white" /> : <Icons.FileText size={32} className="text-white" />}
+                      </div>
                     </div>
 
-                    {/* Category Pill */}
-                    <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full mb-4 text-xs font-bold" style={{ background: '#E7F1FF', color: '#1677FF' }}>
-                      <Icons.Sparkles size={14} />
-                      <span>{quizConfig.category || 'Trắc nghiệm Y Dược'}</span>
+                    {/* Category pill badge */}
+                    <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full mb-3 text-xs font-bold" style={{ background: '#E8F2FF', color: '#1677FF', border: '1px solid #D0E4FF' }}>
+                      <Icons.Sparkles size={13} />
+                      <span>{quizConfig.category || 'Trắc nghiệm'}</span>
                     </div>
 
-                    {/* Quiz Title */}
-                    <h1 className="text-2xl sm:text-3xl md:text-[34px] font-extrabold text-[#102A56] mb-2 leading-tight tracking-tight">
-                      {quizConfig.title}
+                    {/* Quiz Title with Dual Color */}
+                    <h1 className="text-2xl sm:text-3xl font-extrabold mb-1.5 leading-snug tracking-tight">
+                      <span className="text-[#0F294D]">{titlePart1} </span>
+                      {titlePart2 && <span className="text-[#1677FF]">{titlePart2}</span>}
                     </h1>
 
                     {/* Subtitle */}
-                    <p className="text-[#64748B] text-sm sm:text-base mb-6 font-medium">
+                    <p className="text-[#64748B] text-xs sm:text-sm font-semibold uppercase tracking-wider mb-6">
                       {quizConfig.mode === 'practice' ? 'Bài kiểm tra ôn luyện trực tuyến' : 'Bài thi trắc nghiệm trực tuyến'}
                     </p>
 
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-2 gap-3.5 mb-6">
+                    {/* Dual Stats Grid (Time & Question count) */}
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
+                      {/* Stat 1: Time */}
                       <div
-                        className="rounded-2xl p-4 flex items-center gap-3"
-                        style={{ background: 'rgba(235, 244, 255, 0.85)', border: '1px solid rgba(255, 255, 255, 0.9)' }}
+                        className="rounded-2xl p-3.5 sm:p-4 text-center transition-all hover:scale-[1.02]"
+                        style={{ background: '#EDF5FF', border: '1px solid #D9EAFE' }}
                       >
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(22, 119, 255, 0.12)' }}>
-                          <Icons.Clock size={20} style={{ color: '#1677FF' }} />
+                        <div className="w-8 h-8 rounded-xl mx-auto mb-2 flex items-center justify-center" style={{ background: 'rgba(22, 119, 255, 0.12)', color: '#1677FF' }}>
+                          <Icons.Clock size={16} />
                         </div>
-                        <div className="text-left">
-                          <div className="text-2xl font-black text-[#1677FF]">{quizConfig.timeLimit}</div>
-                          <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Phút làm bài</div>
+                        <div className="text-2xl sm:text-3xl font-black text-[#1677FF] leading-none mb-1">
+                          {quizConfig.timeLimit}
+                        </div>
+                        <div className="text-[10px] sm:text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
+                          Phút làm bài
                         </div>
                       </div>
 
+                      {/* Stat 2: Total Questions */}
                       <div
-                        className="rounded-2xl p-4 flex items-center gap-3"
-                        style={{ background: 'rgba(231, 250, 242, 0.85)', border: '1px solid rgba(255, 255, 255, 0.9)' }}
+                        className="rounded-2xl p-3.5 sm:p-4 text-center transition-all hover:scale-[1.02]"
+                        style={{ background: '#EDFAF3', border: '1px solid #D1F2DF' }}
                       >
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(34, 197, 94, 0.14)' }}>
-                          <Icons.BarChart2 size={20} style={{ color: '#22C55E' }} />
+                        <div className="w-8 h-8 rounded-xl mx-auto mb-2 flex items-center justify-center" style={{ background: 'rgba(34, 197, 94, 0.14)', color: '#22C55E' }}>
+                          <Icons.BarChart2 size={16} />
                         </div>
-                        <div className="text-left">
-                          <div className="text-2xl font-black text-[#22C55E]">{totalQuestions}</div>
-                          <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Tổng số câu</div>
+                        <div className="text-2xl sm:text-3xl font-black text-[#22C55E] leading-none mb-1">
+                          {totalQuestions}
+                        </div>
+                        <div className="text-[10px] sm:text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
+                          Tổng số câu
                         </div>
                       </div>
                     </div>
 
-                    {/* Password Prompt (if protected) */}
+                    {/* Password block if protected */}
                     {quizConfig.password && (
                       <div className="mb-6 w-full text-left animate-fade-in">
-                        <div className="bg-[#FEF7E0] border border-[#FCE8B2] rounded-2xl p-4 mb-4 shadow-xs">
-                          <div className="flex items-start gap-3">
-                            <div className="bg-[#FEF0B7] text-[#B06000] p-2 rounded-xl flex-shrink-0">
-                              <Icons.Crown size={20} />
+                        <div className="bg-[#FEF7E0] border border-[#FCE8B2] rounded-2xl p-3.5 mb-3">
+                          <div className="flex items-start gap-2.5">
+                            <div className="bg-[#FEF0B7] text-[#B06000] p-1.5 rounded-lg flex-shrink-0">
+                              <Icons.Crown size={18} />
                             </div>
                             <div className="w-full">
-                              <h4 className="text-[#804200] font-bold text-sm mb-0.5">Yêu Cầu Mật Khẩu</h4>
-                              <p className="text-[#804200]/90 text-xs leading-relaxed mb-2.5">Liên hệ Quản trị viên để nhận mật khẩu bài thi này.</p>
+                              <h4 className="text-[#804200] font-bold text-xs mb-0.5">Yêu Cầu Mật Khẩu</h4>
+                              <p className="text-[#804200]/90 text-[11px] leading-relaxed mb-2">Liên hệ Quản trị viên để nhận mật khẩu bài thi này.</p>
                               <a
                                 href="https://zalo.me/0914659511"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center gap-2 text-white bg-[#0068FF] hover:bg-[#0052CC] px-4 py-2 text-xs font-bold w-full rounded-full shadow-xs transition-all"
+                                className="inline-flex items-center justify-center gap-1.5 text-white bg-[#0068FF] hover:bg-[#0052CC] px-3.5 py-1.5 text-xs font-bold w-full rounded-full shadow-xs transition-all"
                               >
-                                <Icons.MessageCircle size={15} /> Nhắn tin Zalo Admin
+                                <Icons.MessageCircle size={14} /> Nhắn tin Zalo Admin
                               </a>
                             </div>
                           </div>
@@ -1444,37 +1442,62 @@
                           <input
                             type="password"
                             placeholder="Nhập mật khẩu bài test"
-                            className="w-full p-3.5 pl-11 bg-white/90 border border-[#DADCE0] rounded-2xl text-sm font-medium text-[#102A56] outline-none focus:border-[#1677FF] focus:ring-2 focus:ring-[#1677FF]/20 transition-all"
+                            className="w-full p-3 pl-10 bg-white border border-[#DADCE0] rounded-2xl text-sm font-medium text-[#102A56] outline-none focus:border-[#1677FF] focus:ring-2 focus:ring-[#1677FF]/20 transition-all"
                             value={accessPassword}
                             onChange={e => setAccessPassword(e.target.value)}
                           />
-                          <div className="absolute left-3.5 top-3.5 text-[#64748B]">
-                            <Icons.Lock size={18} />
+                          <div className="absolute left-3 top-3 text-[#64748B]">
+                            <Icons.Lock size={16} />
                           </div>
                         </div>
                       </div>
                     )}
 
-                    {/* Action Start Button */}
+                    {/* CTA Button */}
                     <button
                       onClick={startQuiz}
-                      className="w-full py-4 rounded-full font-bold text-white text-base sm:text-lg transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-3"
+                      className="w-full py-3.5 sm:py-4 px-6 rounded-full font-bold text-white text-base sm:text-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2.5 group cursor-pointer"
                       style={{
-                        background: 'linear-gradient(100deg, #1677FF, #168BFF, #4CC9FF)',
-                        boxShadow: '0 14px 30px rgba(22, 119, 255, 0.28)'
+                        background: 'linear-gradient(90deg, #1677FF 0%, #288CFF 50%, #4FC3FF 100%)',
+                        boxShadow: '0 12px 28px rgba(22, 119, 255, 0.32)'
                       }}
                     >
-                      <Icons.Play size={20} />
-                      <span>Bắt Đầu Làm Bài</span>
-                      <Icons.ArrowRight size={20} />
+                      <Icons.Play size={18} fill="currentColor" />
+                      <span className="tracking-wide">Bắt Đầu Làm Bài</span>
+                      <Icons.ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
                     </button>
 
-                    {/* Single Footer Line */}
-                    <div className="mt-8 text-center">
-                      <p className="text-xs font-medium text-[#64748B] tracking-wide select-none">
-                        Bản quyền thuộc về <span className="font-bold text-[#102A56]">Nhật Duy Y Khoa K26</span>
-                      </p>
+                    {/* Prominent Glowing Copyright Badge for Nhật Duy Y Khoa K26 */}
+                    <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-2">
+                      <span className="text-xs font-medium text-[#64748B]">Bản quyền thuộc về</span>
+                      <div
+                        className="relative inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-black text-white shadow-md overflow-hidden group select-none cursor-default"
+                        style={{
+                          background: 'linear-gradient(135deg, #0958D9 0%, #1677FF 50%, #4096FF 100%)',
+                          boxShadow: '0 4px 16px rgba(22, 119, 255, 0.45), 0 0 20px rgba(79, 195, 255, 0.3)',
+                          border: '1px solid rgba(255, 255, 255, 0.5)'
+                        }}
+                      >
+                        {/* Shimmer sweep effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-sweep pointer-events-none" />
+                        <span className="text-amber-300 text-xs">✨</span>
+                        <span className="tracking-wider text-white drop-shadow font-extrabold">Nhật Duy Y Khoa K26</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse ml-0.5" />
+                      </div>
                     </div>
+
+                  </div>
+                </div>
+
+                {/* Right 3D Illustration (Desktop Only) */}
+                <div className="hidden lg:flex flex-1 justify-start items-center select-none" style={{ maxWidth: 360 }}>
+                  <div className="relative w-full max-w-[340px]" style={{ animation: 'floatGentleRight 6s ease-in-out infinite' }}>
+                    <img
+                      src="/illustration-right.png"
+                      alt="3D Exam Checklist Artwork"
+                      className="w-full h-auto object-contain pointer-events-none"
+                      style={{ filter: 'drop-shadow(0 20px 30px rgba(22, 119, 255, 0.12))' }}
+                    />
                   </div>
                 </div>
 
