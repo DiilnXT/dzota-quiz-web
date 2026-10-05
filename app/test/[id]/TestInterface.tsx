@@ -174,156 +174,186 @@ export default function TestInterface({ test }: { test: any }) {
             </div>
           </div>
 
-          {/* Center Glassmorphic Quiz Card (Fully responsive for mobile & desktop) */}
-          <div
-            className={`relative w-full max-w-[440px] sm:max-w-[480px] lg:max-w-[500px] rounded-[32px] overflow-hidden transition-all duration-700 mx-auto ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-            style={{
-              background: 'rgba(255, 255, 255, 0.88)',
-              backdropFilter: 'blur(24px)',
-              WebkitBackdropFilter: 'blur(24px)',
-              border: '1.5px solid rgba(255, 255, 255, 0.95)',
-              boxShadow: '0 25px 60px -10px rgba(22, 119, 255, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.6) inset'
-            }}
-          >
-            {/* Top soft blue gradient strip */}
-            <div className="h-2 w-full" style={{ background: 'linear-gradient(90deg, #1677FF, #4FC3FF)' }} />
+          {/* Center Glassmorphic Quiz Card Wrapper (with mobile 3D floating decorations) */}
+          <div className="relative w-full max-w-[440px] sm:max-w-[480px] lg:max-w-[500px] mx-auto z-10 py-6 sm:py-8">
+            
+            {/* Mobile 3D Illustration: Top Left (Books & Cap) */}
+            <div
+              className="lg:hidden absolute -top-4 -left-4 sm:-top-8 sm:-left-8 w-32 sm:w-44 pointer-events-none select-none z-0"
+              style={{ animation: 'floatGentleLeft 6s ease-in-out infinite' }}
+            >
+              <img
+                src="/illustration-left.png"
+                alt="3D Study Background"
+                className="w-full h-auto object-contain opacity-95"
+                style={{ filter: 'drop-shadow(0 12px 20px rgba(22, 119, 255, 0.22))' }}
+              />
+            </div>
 
-            <div className="p-6 sm:p-8 md:p-10 text-center">
-              {/* Top Icon with radial halo */}
-              <div className="relative mx-auto mb-4 w-20 h-20 sm:w-22 sm:h-22 flex items-center justify-center">
-                <div className="absolute inset-0 rounded-3xl" style={{ background: 'radial-gradient(circle, rgba(79, 195, 255, 0.4) 0%, rgba(22, 119, 255, 0) 70%)', transform: 'scale(1.4)' }} />
-                <div
-                  className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl flex items-center justify-center relative shadow-lg"
-                  style={{
-                    background: 'linear-gradient(135deg, #4FC3FF 0%, #1677FF 100%)',
-                    boxShadow: '0 12px 28px rgba(22, 119, 255, 0.32)'
-                  }}
-                >
-                  <FileText size={32} className="text-white" />
-                </div>
-              </div>
+            {/* Mobile 3D Illustration: Bottom Right (Checklist & Clock) */}
+            <div
+              className="lg:hidden absolute -bottom-4 -right-4 sm:-bottom-8 sm:-right-8 w-36 sm:w-48 pointer-events-none select-none z-0"
+              style={{ animation: 'floatGentleRight 6s ease-in-out infinite' }}
+            >
+              <img
+                src="/illustration-right.png"
+                alt="3D Exam Background"
+                className="w-full h-auto object-contain opacity-95"
+                style={{ filter: 'drop-shadow(0 12px 20px rgba(22, 119, 255, 0.22))' }}
+              />
+            </div>
 
-              {/* Category pill badge */}
-              {test.subject && (
-                <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full mb-3 text-xs font-bold" style={{ background: '#E8F2FF', color: '#1677FF', border: '1px solid #D0E4FF' }}>
-                  <Sparkles size={13} />
-                  <span>{test.subject}</span>
-                </div>
-              )}
+            {/* Center Glassmorphic Quiz Card */}
+            <div
+              className={`relative z-10 w-full rounded-[32px] overflow-hidden transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+              style={{
+                background: 'rgba(255, 255, 255, 0.88)',
+                backdropFilter: 'blur(24px)',
+                WebkitBackdropFilter: 'blur(24px)',
+                border: '1.5px solid rgba(255, 255, 255, 0.95)',
+                boxShadow: '0 25px 60px -10px rgba(22, 119, 255, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.6) inset'
+              }}
+            >
+              {/* Top soft blue gradient strip */}
+              <div className="h-2 w-full" style={{ background: 'linear-gradient(90deg, #1677FF, #4FC3FF)' }} />
 
-              {/* Quiz Title with Dual Color */}
-              {(() => {
-                const rawTitle = (test.title || 'Bài Kiểm Tra Mới').trim();
-                const titleWords = rawTitle.split(/\s+/);
-                let titlePart1 = rawTitle;
-                let titlePart2 = '';
-                if (titleWords.length > 1) {
-                  const splitIdx = Math.ceil(titleWords.length / 2);
-                  titlePart1 = titleWords.slice(0, splitIdx).join(' ');
-                  titlePart2 = titleWords.slice(splitIdx).join(' ');
-                }
-                return (
-                  <h1 className="text-2xl sm:text-3xl font-extrabold mb-1.5 leading-snug tracking-tight">
-                    <span className="text-[#0F294D]">{titlePart1} </span>
-                    {titlePart2 && <span className="text-[#1677FF]">{titlePart2}</span>}
-                  </h1>
-                );
-              })()}
-
-              {/* Subtitle */}
-              <p className="text-[#64748B] text-xs sm:text-sm font-semibold uppercase tracking-wider mb-6">
-                {test.mode === 'practice' ? 'Bài kiểm tra ôn luyện trực tuyến' : 'Bài thi trắc nghiệm trực tuyến'}
-              </p>
-
-              {/* Dual Stats Grid (Time & Question count) */}
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
-                {/* Stat 1: Time */}
-                <div
-                  className="rounded-2xl p-3.5 sm:p-4 text-center transition-all hover:scale-[1.02]"
-                  style={{ background: '#EDF5FF', border: '1px solid #D9EAFE' }}
-                >
-                  <div className="w-8 h-8 rounded-xl mx-auto mb-2 flex items-center justify-center" style={{ background: 'rgba(22, 119, 255, 0.12)', color: '#1677FF' }}>
-                    <Clock size={16} />
-                  </div>
-                  <div className="text-2xl sm:text-3xl font-black text-[#1677FF] leading-none mb-1">
-                    {test.timeLimit}
-                  </div>
-                  <div className="text-[10px] sm:text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
-                    Phút làm bài
-                  </div>
-                </div>
-
-                {/* Stat 2: Total Questions */}
-                <div
-                  className="rounded-2xl p-3.5 sm:p-4 text-center transition-all hover:scale-[1.02]"
-                  style={{ background: '#EDFAF3', border: '1px solid #D1F2DF' }}
-                >
-                  <div className="w-8 h-8 rounded-xl mx-auto mb-2 flex items-center justify-center" style={{ background: 'rgba(34, 197, 94, 0.14)', color: '#22C55E' }}>
-                    <BarChart2 size={16} />
-                  </div>
-                  <div className="text-2xl sm:text-3xl font-black text-[#22C55E] leading-none mb-1">
-                    {test.questions.length}
-                  </div>
-                  <div className="text-[10px] sm:text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
-                    Tổng số câu
-                  </div>
-                </div>
-              </div>
-
-              {/* Mode badge */}
-              <div className="flex justify-center mb-6">
-                <span
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
-                  style={{
-                    background: test.mode === 'practice' ? 'rgba(34,197,94,0.12)' : 'rgba(22,119,255,0.12)',
-                    color: test.mode === 'practice' ? '#16A36A' : '#1677FF'
-                  }}
-                >
-                  {test.mode === 'practice' ? (
-                    <><BookOpen size={13} /> Ôn tập – Xem đáp án tức thì</>
-                  ) : (
-                    <><Clock size={13} /> Thi thử – Bấm giờ chuẩn</>
-                  )}
-                </span>
-              </div>
-
-              {/* CTA Button */}
-              <button
-                onClick={() => setIsStarted(true)}
-                className="w-full py-3.5 sm:py-4 px-6 rounded-full font-bold text-white text-base sm:text-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2.5 group cursor-pointer"
-                style={{
-                  background: 'linear-gradient(90deg, #1677FF 0%, #288CFF 50%, #4FC3FF 100%)',
-                  boxShadow: '0 12px 28px rgba(22, 119, 255, 0.32)',
-                  border: 'none'
-                }}
-              >
-                <Play size={18} fill="currentColor" />
-                <span className="tracking-wide">Bắt Đầu Làm Bài</span>
-                <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
-              </button>
-
-              {/* Prominent Glowing Copyright Badge for Nhật Duy Y Khoa K26 */}
-              <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-2">
-                <span className="text-xs font-medium text-[#64748B]">Bản quyền thuộc về</span>
-                <div
-                  className="relative inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-black text-white shadow-md overflow-hidden group select-none cursor-default"
-                  style={{
-                    background: 'linear-gradient(135deg, #0958D9 0%, #1677FF 50%, #4096FF 100%)',
-                    boxShadow: '0 4px 16px rgba(22, 119, 255, 0.45), 0 0 20px rgba(79, 195, 255, 0.3)',
-                    border: '1px solid rgba(255, 255, 255, 0.5)'
-                  }}
-                >
-                  {/* Shimmer sweep effect */}
+              <div className="p-6 sm:p-8 md:p-10 text-center">
+                {/* Top Icon with radial halo */}
+                <div className="relative mx-auto mb-4 w-20 h-20 sm:w-22 sm:h-22 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-3xl" style={{ background: 'radial-gradient(circle, rgba(79, 195, 255, 0.4) 0%, rgba(22, 119, 255, 0) 70%)', transform: 'scale(1.4)' }} />
                   <div
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full pointer-events-none"
-                    style={{ animation: 'sweepShine 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite' }}
-                  />
-                  <span className="text-amber-300 text-xs">✨</span>
-                  <span className="tracking-wider text-white drop-shadow font-extrabold">Nhật Duy Y Khoa K26</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse ml-0.5" />
+                    className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl flex items-center justify-center relative shadow-lg"
+                    style={{
+                      background: 'linear-gradient(135deg, #4FC3FF 0%, #1677FF 100%)',
+                      boxShadow: '0 12px 28px rgba(22, 119, 255, 0.32)'
+                    }}
+                  >
+                    <FileText size={32} className="text-white" />
+                  </div>
                 </div>
-              </div>
 
+                {/* Category pill badge */}
+                {test.subject && (
+                  <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full mb-3 text-xs font-bold" style={{ background: '#E8F2FF', color: '#1677FF', border: '1px solid #D0E4FF' }}>
+                    <Sparkles size={13} />
+                    <span>{test.subject}</span>
+                  </div>
+                )}
+
+                {/* Quiz Title with Dual Color */}
+                {(() => {
+                  const rawTitle = (test.title || 'Bài Kiểm Tra Mới').trim();
+                  const titleWords = rawTitle.split(/\s+/);
+                  let titlePart1 = rawTitle;
+                  let titlePart2 = '';
+                  if (titleWords.length > 1) {
+                    const splitIdx = Math.ceil(titleWords.length / 2);
+                    titlePart1 = titleWords.slice(0, splitIdx).join(' ');
+                    titlePart2 = titleWords.slice(splitIdx).join(' ');
+                  }
+                  return (
+                    <h1 className="text-2xl sm:text-3xl font-extrabold mb-1.5 leading-snug tracking-tight">
+                      <span className="text-[#0F294D]">{titlePart1} </span>
+                      {titlePart2 && <span className="text-[#1677FF]">{titlePart2}</span>}
+                    </h1>
+                  );
+                })()}
+
+                {/* Subtitle */}
+                <p className="text-[#64748B] text-xs sm:text-sm font-semibold uppercase tracking-wider mb-6">
+                  {test.mode === 'practice' ? 'Bài kiểm tra ôn luyện trực tuyến' : 'Bài thi trắc nghiệm trực tuyến'}
+                </p>
+
+                {/* Dual Stats Grid (Time & Question count) */}
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
+                  {/* Stat 1: Time */}
+                  <div
+                    className="rounded-2xl p-3.5 sm:p-4 text-center transition-all hover:scale-[1.02]"
+                    style={{ background: '#EDF5FF', border: '1px solid #D9EAFE' }}
+                  >
+                    <div className="w-8 h-8 rounded-xl mx-auto mb-2 flex items-center justify-center" style={{ background: 'rgba(22, 119, 255, 0.12)', color: '#1677FF' }}>
+                      <Clock size={16} />
+                    </div>
+                    <div className="text-2xl sm:text-3xl font-black text-[#1677FF] leading-none mb-1">
+                      {test.timeLimit}
+                    </div>
+                    <div className="text-[10px] sm:text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
+                      Phút làm bài
+                    </div>
+                  </div>
+
+                  {/* Stat 2: Total Questions */}
+                  <div
+                    className="rounded-2xl p-3.5 sm:p-4 text-center transition-all hover:scale-[1.02]"
+                    style={{ background: '#EDFAF3', border: '1px solid #D1F2DF' }}
+                  >
+                    <div className="w-8 h-8 rounded-xl mx-auto mb-2 flex items-center justify-center" style={{ background: 'rgba(34, 197, 94, 0.14)', color: '#22C55E' }}>
+                      <BarChart2 size={16} />
+                    </div>
+                    <div className="text-2xl sm:text-3xl font-black text-[#22C55E] leading-none mb-1">
+                      {test.questions.length}
+                    </div>
+                    <div className="text-[10px] sm:text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
+                      Tổng số câu
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mode badge */}
+                <div className="flex justify-center mb-6">
+                  <span
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
+                    style={{
+                      background: test.mode === 'practice' ? 'rgba(34,197,94,0.12)' : 'rgba(22,119,255,0.12)',
+                      color: test.mode === 'practice' ? '#16A36A' : '#1677FF'
+                    }}
+                  >
+                    {test.mode === 'practice' ? (
+                      <><BookOpen size={13} /> Ôn tập – Xem đáp án tức thì</>
+                    ) : (
+                      <><Clock size={13} /> Thi thử – Bấm giờ chuẩn</>
+                    )}
+                  </span>
+                </div>
+
+                {/* CTA Button */}
+                <button
+                  onClick={() => setIsStarted(true)}
+                  className="w-full py-3.5 sm:py-4 px-6 rounded-full font-bold text-white text-base sm:text-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2.5 group cursor-pointer"
+                  style={{
+                    background: 'linear-gradient(90deg, #1677FF 0%, #288CFF 50%, #4FC3FF 100%)',
+                    boxShadow: '0 12px 28px rgba(22, 119, 255, 0.32)',
+                    border: 'none'
+                  }}
+                >
+                  <Play size={18} fill="currentColor" />
+                  <span className="tracking-wide">Bắt Đầu Làm Bài</span>
+                  <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
+                </button>
+
+                {/* Prominent Glowing Copyright Badge for Nhật Duy Y Khoa K26 */}
+                <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-2">
+                  <span className="text-xs font-medium text-[#64748B]">Bản quyền thuộc về</span>
+                  <div
+                    className="relative inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-black text-white shadow-md overflow-hidden group select-none cursor-default"
+                    style={{
+                      background: 'linear-gradient(135deg, #0958D9 0%, #1677FF 50%, #4096FF 100%)',
+                      boxShadow: '0 4px 16px rgba(22, 119, 255, 0.45), 0 0 20px rgba(79, 195, 255, 0.3)',
+                      border: '1px solid rgba(255, 255, 255, 0.5)'
+                    }}
+                  >
+                    {/* Shimmer sweep effect */}
+                    <div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full pointer-events-none"
+                      style={{ animation: 'sweepShine 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite' }}
+                    />
+                    <span className="text-amber-300 text-xs">✨</span>
+                    <span className="tracking-wider text-white drop-shadow font-extrabold">Nhật Duy Y Khoa K26</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse ml-0.5" />
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
 
