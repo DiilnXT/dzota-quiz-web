@@ -14,17 +14,34 @@ async function isAdmin() {
 
 export async function GET() {
   if (!(await isAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  
+  try {
+    const defaultAdmin = await prisma.user.findFirst({
+      where: { OR: [{ username: { equals: 'DuylniEdu', mode: 'insensitive' } }, { role: 'ADMIN' }] }
+    })
+
+    if (defaultAdmin) {
+      await prisma.quickQuiz.updateMany({
+        where: { authorId: null },
+        data: { authorId: defaultAdmin.id }
+      })
+    }
+  } catch (e) {
+    console.error('Error backfilling authorId:', e)
+  }
+
   const quizzes = await prisma.quickQuiz.findMany({
     orderBy: { createdAt: 'desc' },
     include: { author: { select: { username: true } } }
   })
+
   return NextResponse.json(quizzes.map((q: any) => {
     let parsed: any = {}
     try { parsed = JSON.parse(q.data) } catch (e) {}
     return {
       id: q.id,
       title: q.title,
-      author: q.author?.username || 'Unknown',
+      author: q.author ? { username: q.author.username } : { username: 'DuylniEdu' },
       createdAt: q.createdAt,
       data: parsed
     }

@@ -35,7 +35,22 @@ export default async function TestsPage() {
     )
   }
 
-  // Fetch all QuickQuizzes (the real synchronized quizzes created via /creator)
+  try {
+    const defaultAdmin = await prisma.user.findFirst({
+      where: { OR: [{ username: { equals: 'DuylniEdu', mode: 'insensitive' } }, { role: 'ADMIN' }] }
+    })
+
+    if (defaultAdmin) {
+      await prisma.quickQuiz.updateMany({
+        where: { authorId: null },
+        data: { authorId: defaultAdmin.id }
+      })
+    }
+  } catch (e) {
+    console.error('Error backfilling authorId:', e)
+  }
+
+  // Fetch all QuickQuizzes
   const quizzes = await prisma.quickQuiz.findMany({
     orderBy: { createdAt: 'desc' },
     include: {
@@ -55,7 +70,7 @@ export default async function TestsPage() {
       id: q.id,
       title: q.title,
       createdAt: q.createdAt.toISOString(),
-      author: q.author ? { username: q.author.username } : null,
+      author: q.author ? { username: q.author.username } : { username: 'DuylniEdu' },
       data: parsed
     }
   })
