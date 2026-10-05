@@ -891,27 +891,28 @@
                                 <button onClick={() => setShowCreateMenu(!showCreateMenu)} className="w-10 h-10 bg-ios-blue text-white rounded-full flex items-center justify-center text-2xl shadow-lg shadow-blue-500/30 active:scale-95 transition-transform">
                                     <Icons.Plus size={22} />
                                 </button>
-                            {showCreateMenu && (
-                                <>
-                                    <div className="fixed inset-0 z-30" onClick={() => setShowCreateMenu(false)}></div>
-                                    <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden animate-pop-in z-40 origin-top-right">
-                                        <button onClick={() => { setShowCreateMenu(false); handleCreateNew('standard'); }} className="w-full text-left p-4 hover:bg-gray-50 flex gap-3 border-b border-gray-50 transition-colors">
-                                            <div className="bg-blue-50 p-2 rounded-xl text-ios-blue h-fit"><Icons.FileText size={20}/></div>
-                                            <div>
-                                                <div className="font-bold text-gray-900 text-[14px] mb-0.5">Tạo Đề Thi Thường</div>
-                                                <div className="text-[12px] text-gray-500 leading-snug">Đề thi cố định, trắc nghiệm tiêu chuẩn.</div>
-                                            </div>
-                                        </button>
-                                        <button onClick={() => { setShowCreateMenu(false); handleCreateNew('bank'); }} className="w-full text-left p-4 hover:bg-gray-50 flex gap-3 transition-colors">
-                                            <div className="bg-emerald-50 p-2 rounded-xl text-emerald-600 h-fit"><Icons.Folder size={20}/></div>
-                                            <div>
-                                                <div className="font-bold text-gray-900 text-[14px] mb-0.5">Tạo Ngân Hàng Đề</div>
-                                                <div className="text-[12px] text-gray-500 leading-snug">Kho câu hỏi để rút ngẫu nhiên sinh đề.</div>
-                                            </div>
-                                        </button>
-                                    </div>
-                                </>
-                            )}
+                                {showCreateMenu && (
+                                    <>
+                                        <div className="fixed inset-0 z-30" onClick={() => setShowCreateMenu(false)}></div>
+                                        <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden animate-pop-in z-40 origin-top-right">
+                                            <button onClick={() => { setShowCreateMenu(false); handleCreateNew('standard'); }} className="w-full text-left p-4 hover:bg-gray-50 flex gap-3 border-b border-gray-50 transition-colors">
+                                                <div className="bg-blue-50 p-2 rounded-xl text-ios-blue h-fit"><Icons.FileText size={20}/></div>
+                                                <div>
+                                                    <div className="font-bold text-gray-900 text-[14px] mb-0.5">Tạo Đề Thi Thường</div>
+                                                    <div className="text-[12px] text-gray-500 leading-snug">Đề thi cố định, trắc nghiệm tiêu chuẩn.</div>
+                                                </div>
+                                            </button>
+                                            <button onClick={() => { setShowCreateMenu(false); handleCreateNew('bank'); }} className="w-full text-left p-4 hover:bg-gray-50 flex gap-3 transition-colors">
+                                                <div className="bg-emerald-50 p-2 rounded-xl text-emerald-600 h-fit"><Icons.Folder size={20}/></div>
+                                                <div>
+                                                    <div className="font-bold text-gray-900 text-[14px] mb-0.5">Tạo Ngân Hàng Đề</div>
+                                                    <div className="text-[12px] text-gray-500 leading-snug">Kho câu hỏi để rút ngẫu nhiên sinh đề.</div>
+                                                </div>
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </header>
@@ -1621,5 +1622,5 @@
       const root = ReactDOM.createRoot(document.getElementById('root'));
       root.render(<App />);
     </script>
-  <script>window.addEventListener('error', e => alert('Error: ' + e.message + ' at ' + e.filename + ':' + e.lineno));</script></body>
+  </body>
 </html>
