@@ -320,6 +320,15 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
           </button>
 
           <Link
+            href="/tests"
+            className="bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-semibold shadow-sm hover:bg-slate-50 hover:text-indigo-600 transition-all flex items-center gap-2"
+            title="Quản lý toàn bộ danh sách bài test"
+          >
+            <FileText size={16} />
+            <span>Danh Sách Đề</span>
+          </Link>
+
+          <Link
             href="/creator"
             className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-md shadow-indigo-200 hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-300 transition-all flex items-center gap-2"
           >

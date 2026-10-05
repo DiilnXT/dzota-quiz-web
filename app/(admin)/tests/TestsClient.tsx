@@ -19,7 +19,8 @@ import {
   Layers,
   Users,
   ShieldCheck,
-  Sparkles
+  Sparkles,
+  LayoutDashboard
 } from 'lucide-react'
 
 export interface QuizItem {
@@ -202,7 +203,16 @@ export default function TestsClient({ initialQuizzes }: TestsClientProps) {
           <p className="text-slate-500 mt-1 font-medium">Bảng thống kê toàn bộ đề thi, quản lý mật khẩu, trạng thái và đường link làm bài</p>
         </div>
         
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Link
+            href="/dashboard"
+            className="bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-semibold shadow-sm hover:bg-slate-50 hover:text-indigo-600 transition-all flex items-center gap-2"
+            title="Về bảng điều khiển Quản trị viên"
+          >
+            <LayoutDashboard size={16} />
+            <span>Dashboard</span>
+          </Link>
+
           <button
             onClick={refreshQuizzes}
             disabled={isLoading}

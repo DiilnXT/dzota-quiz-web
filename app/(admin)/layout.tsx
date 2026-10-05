@@ -22,10 +22,47 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex font-sans">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row font-sans">
       
-      {/* Sidebar */}
-      <aside className="w-72 bg-white border-r border-slate-200 flex flex-col fixed h-screen z-20 transition-all duration-300">
+      {/* Mobile Top Navigation Header */}
+      <header className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+        <Link href="/dashboard" className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-md shadow-indigo-600/30">
+            <Sparkles size={16} />
+          </div>
+          <span className="text-base font-black text-slate-800 tracking-tight">Dzota Admin</span>
+        </Link>
+
+        <div className="flex items-center gap-1.5">
+          <Link 
+            href="/dashboard" 
+            className="p-2 rounded-xl text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-bold text-xs flex items-center gap-1 transition-colors"
+            title="Tổng quan"
+          >
+            <LayoutDashboard size={16} />
+            <span className="hidden xs:inline">Tổng quan</span>
+          </Link>
+          <Link 
+            href="/tests" 
+            className="p-2 rounded-xl text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-bold text-xs flex items-center gap-1 transition-colors"
+            title="Quản lý bài test"
+          >
+            <FileText size={16} />
+            <span className="hidden xs:inline">Bài test</span>
+          </Link>
+          <Link 
+            href="/creator" 
+            className="px-2.5 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs flex items-center gap-1 shadow-sm active:scale-95 transition-all"
+            title="Tạo đề thi mới"
+          >
+            <Sparkles size={14} />
+            <span>Tạo đề</span>
+          </Link>
+        </div>
+      </header>
+
+      {/* Desktop Sidebar */}
+      <aside className="w-72 bg-white border-r border-slate-200 hidden md:flex flex-col fixed h-screen z-20 transition-all duration-300">
         {/* Logo */}
         <div className="h-20 flex items-center px-8 border-b border-slate-100">
           <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-600/30 transform transition-transform hover:scale-105">
@@ -37,7 +74,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         {/* Navigation */}
         <div className="flex-1 overflow-y-auto py-8 px-5 space-y-8">
           
-                    <div>
+          <div>
             <h3 className="px-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">Quản trị hệ thống</h3>
             <div className="space-y-1.5">
               <Link href="/dashboard" className="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/80 transition-all group font-semibold text-sm">
@@ -101,7 +138,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 ml-72 p-10 h-screen overflow-y-auto">
+      <main className="flex-1 md:ml-72 p-4 sm:p-6 md:p-10 md:h-screen md:overflow-y-auto">
         {children}
       </main>
     </div>
