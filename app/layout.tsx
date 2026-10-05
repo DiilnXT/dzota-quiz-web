@@ -21,8 +21,22 @@ export default function RootLayout({
     <html lang="vi" suppressHydrationWarning>
       <head>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossOrigin="anonymous" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const saved = localStorage.getItem('dzota_theme');
+                if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
       </head>
-      <body className={`${inter.className} bg-[#F4F8FC] dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 transition-colors duration-200`}>
+      <body className={`${inter.className} transition-colors duration-200`}>
         <ThemeProvider>
           {children}
         </ThemeProvider>

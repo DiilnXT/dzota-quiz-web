@@ -43,7 +43,7 @@ interface AdminNavClientProps {
   }
 }
 
-type ModalType = 'stats' | 'teachers' | 'users' | 'logs' | 'settings' | 'bank' | 'tags' | null
+type ModalType = 'logs' | 'bank' | 'tags' | null
 
 export default function AdminNavClient({ session }: AdminNavClientProps) {
   const pathname = usePathname()
@@ -166,14 +166,6 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                 <LayoutDashboard size={18} />
                 <span>Dashboard</span>
               </Link>
-              
-              <button
-                onClick={() => { setActiveModal('stats'); setMobileMenuOpen(false); }}
-                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all text-left"
-              >
-                <BarChart2 size={18} />
-                <span>Thống kê</span>
-              </button>
             </div>
           </div>
 
@@ -202,35 +194,11 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
               </Link>
 
               <button
-                onClick={() => { setActiveModal('teachers'); setMobileMenuOpen(false); }}
-                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all text-left"
-              >
-                <Users size={18} className="text-slate-400 dark:text-slate-500" />
-                <span>Quản lý Giáo viên</span>
-              </button>
-
-              <button
-                onClick={() => { setActiveModal('users'); setMobileMenuOpen(false); }}
-                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all text-left"
-              >
-                <User size={18} className="text-slate-400 dark:text-slate-500" />
-                <span>Người dùng</span>
-              </button>
-
-              <button
                 onClick={() => { setActiveModal('logs'); setMobileMenuOpen(false); }}
                 className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all text-left"
               >
                 <Clock size={18} className="text-slate-400 dark:text-slate-500" />
                 <span>Nhật ký hoạt động</span>
-              </button>
-
-              <button
-                onClick={() => { setActiveModal('settings'); setMobileMenuOpen(false); }}
-                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all text-left"
-              >
-                <Settings size={18} className="text-slate-400 dark:text-slate-500" />
-                <span>Cài đặt hệ thống</span>
               </button>
             </div>
           </div>
@@ -323,12 +291,6 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                 <div className="text-[10px] font-medium text-slate-400 dark:text-slate-400 truncate">{roleName}</div>
               </div>
             </div>
-            <button
-              onClick={() => setActiveModal('settings')}
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-            >
-              <Settings size={15} />
-            </button>
           </div>
 
           <form action="/api/auth/logout" method="POST">
@@ -351,21 +313,13 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                  {activeModal === 'stats' && <BarChart2 size={18} />}
-                  {activeModal === 'teachers' && <Users size={18} />}
-                  {activeModal === 'users' && <User size={18} />}
                   {activeModal === 'logs' && <Clock size={18} />}
-                  {activeModal === 'settings' && <Settings size={18} />}
                   {activeModal === 'bank' && <BookOpen size={18} />}
                   {activeModal === 'tags' && <Tag size={18} />}
                 </div>
                 <div>
                   <h3 className="font-extrabold text-base text-slate-900 dark:text-slate-100">
-                    {activeModal === 'stats' && 'Thống Kê Toàn Hệ Thống'}
-                    {activeModal === 'teachers' && 'Quản Lý Giáo Viên'}
-                    {activeModal === 'users' && 'Quản Lý Tài Khoản Người Dùng'}
                     {activeModal === 'logs' && 'Nhật Ký Hoạt Động (Audit Log)'}
-                    {activeModal === 'settings' && 'Cài Đặt Hệ Thống & Sao Lưu'}
                     {activeModal === 'bank' && 'Ngân Hàng Câu Hỏi Tự Động'}
                     {activeModal === 'tags' && 'Thẻ & Danh Mục Môn Học'}
                   </h3>
@@ -390,96 +344,7 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
 
             {/* Modal Content */}
             <div className="py-4 text-sm text-slate-600 dark:text-slate-300 space-y-4">
-              {/* 1. THỐNG KÊ */}
-              {activeModal === 'stats' && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-slate-50 dark:bg-slate-800/80 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700">
-                      <div className="text-xs text-slate-400">Lượt thi trực tuyến</div>
-                      <div className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">1,248</div>
-                      <div className="text-[10px] text-emerald-600 font-bold">↗ +18% tuần này</div>
-                    </div>
-                    <div className="bg-slate-50 dark:bg-slate-800/80 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700">
-                      <div className="text-xs text-slate-400">Điểm trung bình</div>
-                      <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">7.8 / 10</div>
-                      <div className="text-[10px] text-slate-400 font-semibold">Tỷ lệ hoàn thành 94%</div>
-                    </div>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/80 p-4 rounded-2xl border border-slate-100 dark:border-slate-700">
-                    <div className="font-bold text-xs text-slate-700 dark:text-slate-200 mb-2">Phân bố môn học thi nhiều nhất:</div>
-                    <div className="space-y-2 text-xs">
-                      <div className="flex justify-between font-semibold">
-                        <span>Vi Sinh Học</span>
-                        <span className="font-mono text-blue-600">62% (15 đề)</span>
-                      </div>
-                      <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
-                        <div className="bg-blue-600 h-full rounded-full" style={{ width: '62%' }} />
-                      </div>
-                      <div className="flex justify-between font-semibold">
-                        <span>Sinh Học Đại Cương</span>
-                        <span className="font-mono text-emerald-600">25% (6 đề)</span>
-                      </div>
-                      <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
-                        <div className="bg-emerald-500 h-full rounded-full" style={{ width: '25%' }} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* 2. QUẢN LÝ GIÁO VIÊN */}
-              {activeModal === 'teachers' && (
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-slate-400">Danh sách tài khoản giáo viên:</span>
-                    <button
-                      onClick={() => showFeedback('Đã mở form cấp quyền Giáo viên mới!')}
-                      className="px-2.5 py-1 bg-blue-600 text-white rounded-lg text-xs font-bold"
-                    >
-                      + Thêm giáo viên
-                    </button>
-                  </div>
-                  <div className="space-y-2">
-                    {['DuylniEdu (Quản trị viên)', 'Thaictdz (Giáo viên Vi Sinh)', 'CoHanh_ViSinh (Giáo viên)'].map((t, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center">
-                            {t.charAt(0)}
-                          </div>
-                          <span className="font-bold text-xs text-slate-800 dark:text-slate-200">{t}</span>
-                        </div>
-                        <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-md">
-                          Hoạt động
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* 3. NGƯỜI DÙNG */}
-              {activeModal === 'users' && (
-                <div className="space-y-3">
-                  <div className="text-xs text-slate-500">
-                    Quản trị danh sách người dùng được phép tạo đề thi và truy cập dashboard.
-                  </div>
-                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 space-y-2">
-                    <div className="font-bold text-xs text-slate-700 dark:text-slate-200">Quyền hạn hệ thống:</div>
-                    <ul className="list-disc pl-4 text-xs space-y-1 text-slate-500 dark:text-slate-400">
-                      <li><strong>ADMIN:</strong> Toàn quyền tạo, xóa, khóa/mở bài thi, quản trị tất cả đề.</li>
-                      <li><strong>TEACHER:</strong> Tạo đề mới từ Word/HTML, chỉnh sửa các đề do mình tạo.</li>
-                    </ul>
-                  </div>
-                  <button
-                    onClick={() => showFeedback('Đã đồng bộ danh sách người dùng thành công!')}
-                    className="w-full py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 font-bold text-xs rounded-xl text-slate-700 dark:text-slate-300 transition-colors"
-                  >
-                    Kiểm tra phân quyền tài khoản
-                  </button>
-                </div>
-              )}
-
-              {/* 4. NHẬT KÝ HOẠT ĐỘNG */}
+              {/* NHẬT KÝ HOẠT ĐỘNG */}
               {activeModal === 'logs' && (
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {[
@@ -496,48 +361,6 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                       <span className="text-[10px] text-slate-400 font-mono">{log.time}</span>
                     </div>
                   ))}
-                </div>
-              )}
-
-              {/* 5. CÀI ĐẶT HỆ THỐNG */}
-              {activeModal === 'settings' && (
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                      Tên hiển thị hệ thống
-                    </label>
-                    <input
-                      type="text"
-                      defaultValue="Dzota Quiz - Hệ thống luyện thi Y Dược"
-                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                      Thời gian làm bài mặc định (phút)
-                    </label>
-                    <input
-                      type="number"
-                      defaultValue={15}
-                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100"
-                    />
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex gap-2">
-                    <button
-                      onClick={() => showFeedback('Đã lưu cấu hình hệ thống!')}
-                      className="flex-1 py-2.5 bg-blue-600 text-white font-bold text-xs rounded-xl hover:bg-blue-700 transition-colors"
-                    >
-                      Lưu thay đổi
-                    </button>
-                    <button
-                      onClick={() => showFeedback('Đã sao lưu toàn bộ đề thi thành file backup!')}
-                      className="px-3 py-2.5 bg-slate-100 dark:bg-slate-800 font-bold text-xs rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition-colors flex items-center gap-1.5"
-                    >
-                      <Download size={14} /> Sao lưu
-                    </button>
-                  </div>
                 </div>
               )}
 

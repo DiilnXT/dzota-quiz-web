@@ -137,7 +137,7 @@ export default function TestInterface({ test }: { test: any }) {
   if (!isStarted) {
     return (
       <div
-        className="min-h-screen w-full flex items-center justify-center p-4 py-24 sm:py-32 md:p-8 relative overflow-x-hidden"
+        className="min-h-screen w-full flex items-center justify-center p-4 py-20 sm:py-24 lg:py-8 md:p-6 lg:p-8 relative overflow-x-hidden"
         style={{ background: 'radial-gradient(ellipse at 60% 40%, #E8F2FF 0%, #F7FBFF 60%, #fff 100%)' }}
       >
         {/* Decorative blobs */}
@@ -159,27 +159,27 @@ export default function TestInterface({ test }: { test: any }) {
 
         {/* Main responsive composition */}
         <div
-          className="relative w-full flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-10 xl:gap-14 py-4 sm:py-6"
-          style={{ maxWidth: 1280 }}
+          className="relative w-full flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-8 xl:gap-12 py-2"
+          style={{ maxWidth: 1100 }}
         >
           {/* Left 3D Illustration (Desktop Only) */}
-          <div className="hidden lg:flex flex-1 justify-end items-center select-none" style={{ maxWidth: 360 }}>
-            <div className="relative w-full max-w-[340px]" style={{ animation: 'floatGentleLeft 6s ease-in-out infinite' }}>
+          <div className="hidden lg:flex flex-1 justify-end items-center select-none" style={{ maxWidth: 280 }}>
+            <div className="relative w-full max-w-[240px] xl:max-w-[270px]" style={{ animation: 'floatGentleLeft 6s ease-in-out infinite' }}>
               <img
                 src="/illustration-left.png"
                 alt="3D Study Artwork"
                 className="w-full h-auto object-contain pointer-events-none"
-                style={{ filter: 'drop-shadow(0 20px 30px rgba(22, 119, 255, 0.12))' }}
+                style={{ filter: 'drop-shadow(0 15px 25px rgba(22, 119, 255, 0.12))' }}
               />
             </div>
           </div>
 
           {/* Center Glassmorphic Quiz Card Wrapper (with mobile 3D floating decorations) */}
-          <div className="relative w-full max-w-[440px] sm:max-w-[480px] lg:max-w-[500px] mx-auto z-10 my-16 sm:my-20">
+          <div className="relative w-full max-w-[390px] sm:max-w-[430px] lg:max-w-[450px] mx-auto z-10 my-16 sm:my-20 lg:my-0">
             
             {/* Mobile 3D Illustration: Top (Books & Cap) - Placed clearly ABOVE the card */}
             <div
-              className="lg:hidden absolute -top-28 sm:-top-36 -left-2 sm:-left-6 w-48 sm:w-56 pointer-events-none select-none z-0"
+              className="lg:hidden absolute -top-24 sm:-top-32 -left-2 sm:-left-6 w-44 sm:w-52 pointer-events-none select-none z-0"
               style={{ animation: 'floatGentleLeft 5s ease-in-out infinite' }}
             >
               <img
@@ -192,7 +192,7 @@ export default function TestInterface({ test }: { test: any }) {
 
             {/* Mobile 3D Illustration: Bottom (Checklist & Clock) - Placed clearly BELOW the card */}
             <div
-              className="lg:hidden absolute -bottom-28 sm:-bottom-36 -right-2 sm:-right-6 w-52 sm:w-60 pointer-events-none select-none z-0"
+              className="lg:hidden absolute -bottom-24 sm:-bottom-32 -right-2 sm:-right-6 w-48 sm:w-56 pointer-events-none select-none z-0"
               style={{ animation: 'floatGentleRight 5s ease-in-out infinite' }}
             >
               <img
@@ -205,30 +205,30 @@ export default function TestInterface({ test }: { test: any }) {
 
             {/* Center Glassmorphic Quiz Card */}
             <div
-              className={`relative z-10 w-full rounded-[32px] overflow-hidden transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+              className={`relative z-10 w-full rounded-[28px] overflow-hidden transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
               style={{
                 background: 'rgba(255, 255, 255, 0.88)',
                 backdropFilter: 'blur(24px)',
                 WebkitBackdropFilter: 'blur(24px)',
                 border: '1.5px solid rgba(255, 255, 255, 0.95)',
-                boxShadow: '0 25px 60px -10px rgba(22, 119, 255, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.6) inset'
+                boxShadow: '0 20px 50px -10px rgba(22, 119, 255, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.6) inset'
               }}
             >
               {/* Top soft blue gradient strip */}
-              <div className="h-2 w-full" style={{ background: 'linear-gradient(90deg, #1677FF, #4FC3FF)' }} />
+              <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #1677FF, #4FC3FF)' }} />
 
-              <div className="p-6 sm:p-8 md:p-10 text-center">
+              <div className="p-5 sm:p-7 md:p-8 text-center">
                 {/* Top Icon with radial halo */}
-                <div className="relative mx-auto mb-4 w-20 h-20 sm:w-22 sm:h-22 flex items-center justify-center">
-                  <div className="absolute inset-0 rounded-3xl" style={{ background: 'radial-gradient(circle, rgba(79, 195, 255, 0.4) 0%, rgba(22, 119, 255, 0) 70%)', transform: 'scale(1.4)' }} />
+                <div className="relative mx-auto mb-3 w-16 h-16 sm:w-18 sm:h-18 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-2xl" style={{ background: 'radial-gradient(circle, rgba(79, 195, 255, 0.4) 0%, rgba(22, 119, 255, 0) 70%)', transform: 'scale(1.3)' }} />
                   <div
-                    className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl flex items-center justify-center relative shadow-lg"
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center relative shadow-lg"
                     style={{
                       background: 'linear-gradient(135deg, #4FC3FF 0%, #1677FF 100%)',
-                      boxShadow: '0 12px 28px rgba(22, 119, 255, 0.32)'
+                      boxShadow: '0 10px 24px rgba(22, 119, 255, 0.3)'
                     }}
                   >
-                    <FileText size={32} className="text-white" />
+                    <FileText size={26} className="text-white" />
                   </div>
                 </div>
 
@@ -252,7 +252,7 @@ export default function TestInterface({ test }: { test: any }) {
                     titlePart2 = titleWords.slice(splitIdx).join(' ');
                   }
                   return (
-                    <h1 className="text-2xl sm:text-3xl font-extrabold mb-1.5 leading-snug tracking-tight">
+                    <h1 className="text-xl sm:text-2xl font-extrabold mb-1 leading-snug tracking-tight">
                       <span className="text-[#0F294D]">{titlePart1} </span>
                       {titlePart2 && <span className="text-[#1677FF]">{titlePart2}</span>}
                     </h1>
@@ -260,47 +260,47 @@ export default function TestInterface({ test }: { test: any }) {
                 })()}
 
                 {/* Subtitle */}
-                <p className="text-[#64748B] text-xs sm:text-sm font-semibold uppercase tracking-wider mb-6">
+                <p className="text-[#64748B] text-xs font-semibold uppercase tracking-wider mb-4">
                   {test.mode === 'practice' ? 'Bài kiểm tra ôn luyện trực tuyến' : 'Bài thi trắc nghiệm trực tuyến'}
                 </p>
 
                 {/* Dual Stats Grid (Time & Question count) */}
-                <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
+                <div className="grid grid-cols-2 gap-3 mb-4">
                   {/* Stat 1: Time */}
                   <div
-                    className="rounded-2xl p-3.5 sm:p-4 text-center transition-all hover:scale-[1.02]"
+                    className="rounded-2xl p-3 text-center transition-all hover:scale-[1.02]"
                     style={{ background: '#EDF5FF', border: '1px solid #D9EAFE' }}
                   >
-                    <div className="w-8 h-8 rounded-xl mx-auto mb-2 flex items-center justify-center" style={{ background: 'rgba(22, 119, 255, 0.12)', color: '#1677FF' }}>
-                      <Clock size={16} />
+                    <div className="w-7 h-7 rounded-lg mx-auto mb-1.5 flex items-center justify-center" style={{ background: 'rgba(22, 119, 255, 0.12)', color: '#1677FF' }}>
+                      <Clock size={15} />
                     </div>
-                    <div className="text-2xl sm:text-3xl font-black text-[#1677FF] leading-none mb-1">
+                    <div className="text-xl sm:text-2xl font-black text-[#1677FF] leading-none mb-1">
                       {test.timeLimit}
                     </div>
-                    <div className="text-[10px] sm:text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
+                    <div className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">
                       Phút làm bài
                     </div>
                   </div>
 
                   {/* Stat 2: Total Questions */}
                   <div
-                    className="rounded-2xl p-3.5 sm:p-4 text-center transition-all hover:scale-[1.02]"
+                    className="rounded-2xl p-3 text-center transition-all hover:scale-[1.02]"
                     style={{ background: '#EDFAF3', border: '1px solid #D1F2DF' }}
                   >
-                    <div className="w-8 h-8 rounded-xl mx-auto mb-2 flex items-center justify-center" style={{ background: 'rgba(34, 197, 94, 0.14)', color: '#22C55E' }}>
-                      <BarChart2 size={16} />
+                    <div className="w-7 h-7 rounded-lg mx-auto mb-1.5 flex items-center justify-center" style={{ background: 'rgba(34, 197, 94, 0.14)', color: '#22C55E' }}>
+                      <BarChart2 size={15} />
                     </div>
-                    <div className="text-2xl sm:text-3xl font-black text-[#22C55E] leading-none mb-1">
+                    <div className="text-xl sm:text-2xl font-black text-[#22C55E] leading-none mb-1">
                       {test.questions.length}
                     </div>
-                    <div className="text-[10px] sm:text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
+                    <div className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">
                       Tổng số câu
                     </div>
                   </div>
                 </div>
 
                 {/* Mode badge */}
-                <div className="flex justify-center mb-6">
+                <div className="flex justify-center mb-5">
                   <span
                     className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
                     style={{
@@ -319,23 +319,23 @@ export default function TestInterface({ test }: { test: any }) {
                 {/* CTA Button */}
                 <button
                   onClick={() => setIsStarted(true)}
-                  className="w-full py-3.5 sm:py-4 px-6 rounded-full font-bold text-white text-base sm:text-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2.5 group cursor-pointer"
+                  className="w-full py-3 sm:py-3.5 px-6 rounded-full font-bold text-white text-sm sm:text-base transition-all active:scale-[0.98] flex items-center justify-center gap-2 group cursor-pointer"
                   style={{
                     background: 'linear-gradient(90deg, #1677FF 0%, #288CFF 50%, #4FC3FF 100%)',
-                    boxShadow: '0 12px 28px rgba(22, 119, 255, 0.32)',
+                    boxShadow: '0 10px 24px rgba(22, 119, 255, 0.3)',
                     border: 'none'
                   }}
                 >
-                  <Play size={18} fill="currentColor" />
+                  <Play size={16} fill="currentColor" />
                   <span className="tracking-wide">Bắt Đầu Làm Bài</span>
-                  <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
+                  <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
                 </button>
 
                 {/* Prominent Glowing Copyright Badge for Nhật Duy Y Khoa K26 */}
-                <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-2">
-                  <span className="text-xs font-medium text-[#64748B]">Bản quyền thuộc về</span>
+                <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-1.5">
+                  <span className="text-[11px] font-medium text-[#64748B]">Bản quyền thuộc về</span>
                   <div
-                    className="relative inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-black text-white shadow-md overflow-hidden group select-none cursor-default"
+                    className="relative inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black text-white shadow-md overflow-hidden group select-none cursor-default"
                     style={{
                       background: 'linear-gradient(135deg, #0958D9 0%, #1677FF 50%, #4096FF 100%)',
                       boxShadow: '0 4px 16px rgba(22, 119, 255, 0.45), 0 0 20px rgba(79, 195, 255, 0.3)',
@@ -358,13 +358,13 @@ export default function TestInterface({ test }: { test: any }) {
           </div>
 
           {/* Right 3D Illustration (Desktop Only) */}
-          <div className="hidden lg:flex flex-1 justify-start items-center select-none" style={{ maxWidth: 360 }}>
-            <div className="relative w-full max-w-[340px]" style={{ animation: 'floatGentleRight 6s ease-in-out infinite' }}>
+          <div className="hidden lg:flex flex-1 justify-start items-center select-none" style={{ maxWidth: 280 }}>
+            <div className="relative w-full max-w-[240px] xl:max-w-[270px]" style={{ animation: 'floatGentleRight 6s ease-in-out infinite' }}>
               <img
                 src="/illustration-right.png"
                 alt="3D Exam Checklist Artwork"
                 className="w-full h-auto object-contain pointer-events-none"
-                style={{ filter: 'drop-shadow(0 20px 30px rgba(22, 119, 255, 0.12))' }}
+                style={{ filter: 'drop-shadow(0 15px 25px rgba(22, 119, 255, 0.12))' }}
               />
             </div>
           </div>
