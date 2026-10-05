@@ -27,12 +27,19 @@ export async function POST(request: Request) {
     }
     
     // UPSERT to support updating
+    // On update: also backfill authorId if currently null and we have a valid session
+    const existing = await prisma.quickQuiz.findUnique({ where: { id }, select: { authorId: true } })
+    const updatePayload: any = {
+      title: title || 'Quiz',
+      data: JSON.stringify(data)
+    }
+    if (authorId && (!existing || !existing.authorId)) {
+      updatePayload.authorId = authorId
+    }
+
     await prisma.quickQuiz.upsert({
       where: { id },
-      update: {
-        title: title || 'Quiz',
-        data: JSON.stringify(data)
-      },
+      update: updatePayload,
       create: {
         id,
         title: title || 'Quiz',

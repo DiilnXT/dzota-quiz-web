@@ -60,5 +60,5 @@ export default async function TestsPage() {
     }
   })
 
-  return <TestsClient initialQuizzes={formattedQuizzes} />
+  return <TestsClient initialQuizzes={formattedQuizzes} session={{ id: session.id, username: session.username, role: session.role }} />
 }
