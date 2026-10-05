@@ -437,12 +437,18 @@
 
           // Quét bảng đáp án ở cuối văn bản nếu có
           const globalKeyMap = {};
-          const keyMatch = text.match(/(?:^|\n)(?:Đáp án|Bảng đáp án|Answer Key|Key)[:\s]*([\s\S]*)$/i);
-          if (keyMatch) {
-            const keySection = keyMatch[1];
-            for (const match of keySection.matchAll(/(?:Câu\s*)?(\d+)[\s.:-]+([A-G])/gi)) {
-              globalKeyMap[match[1]] = match[2].toUpperCase();
+          try {
+            const keyMatch = text.match(/(?:^|\n)(?:Đáp án|Bảng đáp án|Answer Key|Key)[:\s]*([\s\S]*)$/i);
+            if (keyMatch) {
+              const keySection = keyMatch[1];
+              const keyRegex = /(?:Câu\s*)?(\d+)[\s.:-]+([A-G])/gi;
+              let m;
+              while ((m = keyRegex.exec(keySection)) !== null) {
+                globalKeyMap[m[1]] = m[2].toUpperCase();
+              }
             }
+          } catch (e) {
+            console.warn('Key table parse failed:', e);
           }
 
           const processedQuestions = [];
@@ -494,13 +500,31 @@
               }
               currentQuestion.options[letter] = optContent;
             } else if (currentQuestion) {
-              const multiOptMatches = [...line.matchAll(/(?:^|\s+)([A-G])[\s.):\/*]+(.*?)(?=(?:\s+[A-G][\s.):\/*]+)|$)/gi)];
-              if (multiOptMatches.length >= 2) {
-                multiOptMatches.forEach(m => {
-                  const letter = m[1].toUpperCase();
-                  let content = m[2].trim().replace(/^\*\*/, '').replace(/\*\*$/, '');
-                  currentQuestion.options[letter] = content;
-                });
+              // Kiểm tra xem dòng có chứa nhiều phương án trên 1 dòng không (vd: A. ... B. ... C. ... D. ...)
+              const optLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+              const optIndices = [];
+              optLetters.forEach(ltr => {
+                const reg = new RegExp(`(?:^|\\s)(?:[*_]{0,2})(${ltr})[\\s.):/\\*-]+(?:[*_]{0,2})`, 'gi');
+                let m;
+                while ((m = reg.exec(line)) !== null) {
+                  optIndices.push({ letter: ltr, index: m.index, matchLen: m[0].length });
+                }
+              });
+
+              if (optIndices.length >= 2) {
+                optIndices.sort((a, b) => a.index - b.index);
+                for (let idx = 0; idx < optIndices.length; idx++) {
+                  const curr = optIndices[idx];
+                  const startPos = curr.index + curr.matchLen;
+                  const endPos = (idx + 1 < optIndices.length) ? optIndices[idx + 1].index : line.length;
+                  let content = line.substring(startPos, endPos).trim().replace(/^\*\*/, '').replace(/\*\*$/, '');
+                  const isMarkedCorrect = /\((?:đúng|đáp án đúng|chính xác|correct)\)/i.test(content);
+                  if (isMarkedCorrect) {
+                    currentQuestion.correct = curr.letter;
+                    content = content.replace(/\s*\((?:đúng|đáp án đúng|chính xác|correct)\)/i, '').trim();
+                  }
+                  currentQuestion.options[curr.letter] = content;
+                }
               } else {
                 const lastOptKey = ['G', 'F', 'E', 'D', 'C', 'B', 'A'].find(k => currentQuestion.options[k] !== undefined);
                 if (lastOptKey) {
@@ -557,15 +581,18 @@
         };
 
         const handleProcessDzotaText = () => {
-          if (!dzotaInputText.trim()) {
-            addToast('Vui lòng dán văn bản Markdown vào khung Dữ liệu đầu vào.', 'error');
-            return;
+          try {
+            if (!dzotaInputText || !dzotaInputText.trim()) {
+              addToast('Vui lòng dán văn bản Markdown vào khung Dữ liệu đầu vào.', 'error');
+              return;
+            }
+            const html = processDzotaTextCore(dzotaInputText);
+            setDzotaPreviewHtml(html);
+            addToast('Đã chuẩn hóa định dạng chuẩn Word & TinyMCE thành công!', 'success');
+          } catch (err) {
+            console.error('Lỗi khi chuẩn hóa Dzota:', err);
+            addToast('Có lỗi khi xử lý định dạng: ' + (err.message || 'Lỗi không xác định'), 'error');
           }
-          const html = processDzotaTextCore(dzotaInputText);
-          setDzotaPreviewHtml(html);
-          const box = document.getElementById('dzota-preview-box');
-          if (box) box.innerHTML = html;
-          addToast('Đã chuẩn hóa định dạng chuẩn Word & TinyMCE thành công!', 'success');
         };
 
         const clearDzotaInput = () => {
@@ -2477,19 +2504,25 @@
                         </div>
                       </div>
                       <div className="p-5 flex-grow flex flex-col gap-4 min-h-0">
-                        <div 
-                          id="dzota-preview-box" 
-                          contentEditable="true" 
-                          dangerouslySetInnerHTML={dzotaPreviewHtml ? { __html: dzotaPreviewHtml } : undefined}
-                          className="w-full flex-grow p-6 border-2 border-slate-100 rounded-2xl outline-none overflow-y-auto custom-scrollbar focus:border-emerald-400 transition-colors min-h-[280px]"
-                        >
-                          {!dzotaPreviewHtml && (
+                        {dzotaPreviewHtml ? (
+                          <div 
+                            id="dzota-preview-box" 
+                            contentEditable="true" 
+                            dangerouslySetInnerHTML={{ __html: dzotaPreviewHtml }}
+                            className="w-full flex-grow p-6 border-2 border-slate-100 rounded-2xl outline-none overflow-y-auto custom-scrollbar focus:border-emerald-400 transition-colors min-h-[280px]"
+                          />
+                        ) : (
+                          <div 
+                            id="dzota-preview-box" 
+                            contentEditable="true" 
+                            className="w-full flex-grow p-6 border-2 border-slate-100 rounded-2xl outline-none overflow-y-auto custom-scrollbar focus:border-emerald-400 transition-colors min-h-[280px]"
+                          >
                             <div className="text-slate-300 font-sans text-sm text-center py-20 pointer-events-none flex flex-col items-center">
                               <Icons.FileSignature size={48} className="mb-3 opacity-40 text-slate-400"/>
                               <span>Nhấn "Xử lý định dạng ngay" để xem trước kết quả chuẩn Word tại đây...</span>
                             </div>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
