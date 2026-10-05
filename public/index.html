@@ -680,7 +680,34 @@
             return arr;
         };
 
-        const startQuiz = () => {
+        
+          const handleFileUpload = (e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+              if (!file.name.endsWith('.docx')) {
+                  addToast("Chỉ hỗ trợ file Word (.docx)", "error");
+                  return;
+              }
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                  const arrayBuffer = event.target.result;
+                  window.mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
+                      .then(function(result) {
+                          const html = result.value;
+                          if (window.tinymce && window.tinymce.get('quiz-editor-area')) {
+                              window.tinymce.get('quiz-editor-area').setContent(html);
+                              addToast("Đã nạp nội dung từ file Word!", "success");
+                          }
+                      })
+                      .catch(function(err) {
+                          console.error(err);
+                          addToast("Lỗi đọc file Word: " + err.message, "error");
+                      });
+              };
+              reader.readAsArrayBuffer(file);
+          };
+
+          const startQuiz = () => {
           if (quizConfig.password && accessPassword !== quizConfig.password) { addToast("Sai mật khẩu!", 'error'); return; }
           
           let finalQuestions = parsedQuestions.map(slot => {

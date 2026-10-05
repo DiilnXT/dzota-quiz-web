@@ -21,7 +21,7 @@ export default async function AdminDashboard() {
     redirect('/login')
   }
 
-  if (session.role !== 'admin') {
+  if (session.role?.toLowerCase() !== 'admin') {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="bg-red-50 text-red-500 px-6 py-4 rounded-xl font-bold shadow-sm border border-red-100">
@@ -160,9 +160,9 @@ export default async function AdminDashboard() {
                     </td>
                     <td className="p-4">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold \${
-                        u.role === 'admin' ? 'bg-rose-100 text-rose-700' : 'bg-indigo-100 text-indigo-700'
+                        u.role?.toLowerCase() === 'admin' ? 'bg-rose-100 text-rose-700' : 'bg-indigo-100 text-indigo-700'
                       }`}>
-                        {u.role === 'admin' ? 'Quản trị viên' : 'Giáo viên'}
+                        {u.role?.toLowerCase() === 'admin' ? 'Quản trị viên' : 'Giáo viên'}
                       </span>
                     </td>
                     <td className="p-4">
@@ -196,7 +196,7 @@ export default async function AdminDashboard() {
               <div key={q.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-200 transition-colors cursor-pointer group">
                 <h3 className="font-bold text-slate-800 text-sm mb-2 line-clamp-2 group-hover:text-emerald-600 transition-colors">{q.title}</h3>
                 <div className="flex items-center justify-between text-xs font-medium text-slate-500">
-                  <span className="flex items-center gap-1.5"><User size={12}/> {q.author?.username || 'Ẩn danh'}</span>
+                  <span className="flex items-center gap-1.5"><Users size={12}/> {q.author?.username || 'Ẩn danh'}</span>
                   <span>{new Date(q.createdAt).toLocaleDateString('vi-VN')}</span>
                 </div>
               </div>
