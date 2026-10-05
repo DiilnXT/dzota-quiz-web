@@ -19,7 +19,7 @@ export async function GET() {
     include: { author: { select: { username: true } } }
   })
   return NextResponse.json(quizzes.map((q: any) => {
-    let parsed = {}
+    let parsed: any = {}
     try { parsed = JSON.parse(q.data) } catch (e) {}
     return {
       id: q.id,
@@ -29,4 +29,40 @@ export async function GET() {
       data: parsed
     }
   }))
+}
+
+export async function PUT(request: Request) {
+  if (!(await isAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    const { id, isActive } = await request.json()
+    const quiz = await prisma.quickQuiz.findUnique({ where: { id } })
+    if (!quiz) return NextResponse.json({ error: 'Không tìm thấy đề thi' }, { status: 404 })
+
+    let parsed: any = {}
+    try { parsed = JSON.parse(quiz.data) } catch (e) {}
+    if (!parsed.config) parsed.config = {}
+    if (isActive !== undefined) {
+      parsed.config.isActive = Boolean(isActive)
+    }
+
+    await prisma.quickQuiz.update({
+      where: { id },
+      data: { data: JSON.stringify(parsed) }
+    })
+
+    return NextResponse.json({ success: true, isActive: parsed.config.isActive })
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 400 })
+  }
+}
+
+export async function DELETE(request: Request) {
+  if (!(await isAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    const { id } = await request.json()
+    await prisma.quickQuiz.delete({ where: { id } })
+    return NextResponse.json({ success: true })
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 400 })
+  }
 }
