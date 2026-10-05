@@ -137,7 +137,7 @@ export default function TestInterface({ test }: { test: any }) {
   if (!isStarted) {
     return (
       <div
-        className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden"
+        className="min-h-screen w-full flex items-center justify-center p-4 py-24 sm:py-32 md:p-8 relative overflow-x-hidden"
         style={{ background: 'radial-gradient(ellipse at 60% 40%, #E8F2FF 0%, #F7FBFF 60%, #fff 100%)' }}
       >
         {/* Decorative blobs */}
@@ -175,31 +175,31 @@ export default function TestInterface({ test }: { test: any }) {
           </div>
 
           {/* Center Glassmorphic Quiz Card Wrapper (with mobile 3D floating decorations) */}
-          <div className="relative w-full max-w-[440px] sm:max-w-[480px] lg:max-w-[500px] mx-auto z-10 py-6 sm:py-8">
+          <div className="relative w-full max-w-[440px] sm:max-w-[480px] lg:max-w-[500px] mx-auto z-10 my-16 sm:my-20">
             
-            {/* Mobile 3D Illustration: Top Left (Books & Cap) */}
+            {/* Mobile 3D Illustration: Top (Books & Cap) - Placed clearly ABOVE the card */}
             <div
-              className="lg:hidden absolute -top-4 -left-4 sm:-top-8 sm:-left-8 w-32 sm:w-44 pointer-events-none select-none z-0"
-              style={{ animation: 'floatGentleLeft 6s ease-in-out infinite' }}
+              className="lg:hidden absolute -top-28 sm:-top-36 -left-2 sm:-left-6 w-48 sm:w-56 pointer-events-none select-none z-0"
+              style={{ animation: 'floatGentleLeft 5s ease-in-out infinite' }}
             >
               <img
                 src="/illustration-left.png"
                 alt="3D Study Background"
                 className="w-full h-auto object-contain opacity-95"
-                style={{ filter: 'drop-shadow(0 12px 20px rgba(22, 119, 255, 0.22))' }}
+                style={{ filter: 'drop-shadow(0 15px 25px rgba(22, 119, 255, 0.25))' }}
               />
             </div>
 
-            {/* Mobile 3D Illustration: Bottom Right (Checklist & Clock) */}
+            {/* Mobile 3D Illustration: Bottom (Checklist & Clock) - Placed clearly BELOW the card */}
             <div
-              className="lg:hidden absolute -bottom-4 -right-4 sm:-bottom-8 sm:-right-8 w-36 sm:w-48 pointer-events-none select-none z-0"
-              style={{ animation: 'floatGentleRight 6s ease-in-out infinite' }}
+              className="lg:hidden absolute -bottom-28 sm:-bottom-36 -right-2 sm:-right-6 w-52 sm:w-60 pointer-events-none select-none z-0"
+              style={{ animation: 'floatGentleRight 5s ease-in-out infinite' }}
             >
               <img
                 src="/illustration-right.png"
                 alt="3D Exam Background"
                 className="w-full h-auto object-contain opacity-95"
-                style={{ filter: 'drop-shadow(0 12px 20px rgba(22, 119, 255, 0.22))' }}
+                style={{ filter: 'drop-shadow(0 15px 25px rgba(22, 119, 255, 0.25))' }}
               />
             </div>
 
