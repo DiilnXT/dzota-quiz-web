@@ -419,24 +419,33 @@
         // --- TinyMCE ---
         useEffect(() => {
           if (appMode === 'editor') {
-             const initEditor = () => {
+             const initEditor = (retries = 5) => {
                  if (window.tinymce) {
-                     if (window.tinymce.get('quiz-editor-area')) window.tinymce.remove('#quiz-editor-area');
-                     window.tinymce.init({
-                         selector: '#quiz-editor-area', height: 500, menubar: false,
-                         plugins: 'lists link image table code help wordcount paste',
-                         toolbar: 'undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
-                         content_style: 'body { font-family:Inter,Helvetica,Arial,sans-serif; font-size:15px; padding: 20px; line-height: 1.6; color: #334155; } img { max-width: 100%; height: auto; border-radius: 8px; margin-top: 10px; }',
-                         placeholder: 'Paste dữ liệu từ Word vào đây (Bao gồm cả Hình Ảnh)...',
-                         paste_data_images: true, automatic_uploads: true,
-                         images_upload_handler: (blobInfo, progress) => new Promise((resolve, reject) => {
-                             resolve('data:' + blobInfo.blob().type + ';base64,' + blobInfo.base64());
-                         }),
-                         setup: (editor) => window.tinymceInstance = editor
-                     });
+                     try {
+                         if (window.tinymce.get('quiz-editor-area')) {
+                             window.tinymce.remove('#quiz-editor-area');
+                         }
+                         window.tinymce.init({
+                             selector: '#quiz-editor-area', height: 500, menubar: false,
+                             plugins: 'lists link image table code help wordcount paste',
+                             toolbar: 'undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+                             content_style: 'body { font-family:Inter,Helvetica,Arial,sans-serif; font-size:15px; padding: 20px; line-height: 1.6; color: #334155; } img { max-width: 100%; height: auto; border-radius: 8px; margin-top: 10px; }',
+                             placeholder: 'Paste dữ liệu từ Word vào đây (Bao gồm cả Hình Ảnh)...',
+                             paste_data_images: true, automatic_uploads: true,
+                             images_upload_handler: (blobInfo, progress) => new Promise((resolve, reject) => {
+                                 resolve('data:' + blobInfo.blob().type + ';base64,' + blobInfo.base64());
+                             }),
+                             setup: (editor) => window.tinymceInstance = editor
+                         });
+                     } catch(e) {
+                         alert("TinyMCE Lỗi: " + e.message);
+                         console.error(e);
+                     }
+                 } else if (retries > 0) {
+                     setTimeout(() => initEditor(retries - 1), 500);
                  }
              };
-             setTimeout(initEditor, 100);
+             setTimeout(() => initEditor(5), 100);
           }
           return () => { if (appMode === 'editor' && window.tinymce && window.tinymce.get('quiz-editor-area')) { window.tinymce.remove('#quiz-editor-area'); window.tinymceInstance = null; } };
         }, [appMode]);
@@ -697,7 +706,7 @@
                           if (window.tinymce && window.tinymce.get('quiz-editor-area')) {
                               window.tinymce.get('quiz-editor-area').setContent(html);
                               addToast("Đã nạp nội dung từ file Word!", "success");
-                          }
+                          } else { addToast("Trình soạn thảo chưa sẵn sàng hoặc bị lỗi!", "error"); }
                       })
                       .catch(function(err) {
                           console.error(err);
@@ -1406,5 +1415,5 @@
       const root = ReactDOM.createRoot(document.getElementById('root'));
       root.render(<App />);
     </script>
-  </body>
+  <script>window.addEventListener('error', e => alert('Error: ' + e.message + ' at ' + e.filename + ':' + e.lineno));</script></body>
 </html>
