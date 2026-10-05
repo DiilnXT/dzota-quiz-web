@@ -30,7 +30,7 @@ export default async function TestsPage() {
             <span className="text-slate-300">/</span>
             <h1 className="text-xl font-bold text-black tracking-tight">Quản Lý Bài Test</h1>
           </div>
-          <Link href="/tests/create" className="bg-[#007AFF] text-white px-4 py-2 rounded-xl font-semibold flex items-center gap-2 hover:bg-blue-600 transition-colors text-sm">
+          <Link href="/creator" className="bg-[#007AFF] text-white px-4 py-2 rounded-xl font-semibold flex items-center gap-2 hover:bg-blue-600 transition-colors text-sm">
             <Plus size={18} /> Tạo Bài Test
           </Link>
         </div>

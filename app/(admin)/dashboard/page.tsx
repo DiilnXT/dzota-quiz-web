@@ -136,7 +136,7 @@ export default async function AdminDashboard() {
               <div className="w-2 h-6 bg-indigo-500 rounded-full"></div>
               Danh Sách Giáo Viên
             </h2>
-            <button className="text-sm font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-4 py-2 rounded-xl transition-colors">
+            <button title="Tính năng đang phát triển" className="text-sm font-bold text-indigo-400 bg-indigo-50/50 px-4 py-2 rounded-xl cursor-not-allowed">
               + Thêm Tài Khoản
             </button>
           </div>
@@ -172,7 +172,7 @@ export default async function AdminDashboard() {
                       <div className="font-bold text-slate-700">{u.maxTests} đề</div>
                     </td>
                     <td className="p-4 text-right">
-                      <button className="text-slate-400 hover:text-indigo-600 font-medium text-sm transition-colors opacity-0 group-hover:opacity-100 flex items-center justify-end w-full gap-1">
+                      <button title="Tính năng đang phát triển" className="text-slate-300 font-medium text-sm transition-colors opacity-0 group-hover:opacity-100 flex items-center justify-end w-full gap-1 cursor-not-allowed">
                         Sửa <ChevronRight size={14} />
                       </button>
                     </td>
@@ -193,19 +193,19 @@ export default async function AdminDashboard() {
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/30 max-h-[500px]">
             {quizzes.slice(0, 10).map(q => (
-              <div key={q.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-200 transition-colors cursor-pointer group">
+              <Link href={`/test/${q.id}`} key={q.id} target="_blank" className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-200 transition-colors cursor-pointer group block">
                 <h3 className="font-bold text-slate-800 text-sm mb-2 line-clamp-2 group-hover:text-emerald-600 transition-colors">{q.title}</h3>
                 <div className="flex items-center justify-between text-xs font-medium text-slate-500">
                   <span className="flex items-center gap-1.5"><Users size={12}/> {q.author?.username || 'Ẩn danh'}</span>
                   <span>{new Date(q.createdAt).toLocaleDateString('vi-VN')}</span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
           <div className="p-4 border-t border-slate-50 bg-white text-center">
-            <button className="text-sm font-bold text-emerald-600 hover:text-emerald-700">
+            <Link href="/tests" className="text-sm font-bold text-emerald-600 hover:text-emerald-700">
               Xem toàn bộ đề thi &rarr;
-            </button>
+            </Link>
           </div>
         </div>
 
