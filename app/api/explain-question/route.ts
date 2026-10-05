@@ -79,19 +79,22 @@ ${optionsText}
 ${selectedOption ? `NGƯỜI HỌC ĐÃ CHỌN: ${selectedOption}. ${options[selectedOption] || ''}` : ''}
 ${subjectName ? `MÔN HỌC LIÊN QUAN: ${subjectName}` : ''}
 
-HÃY TRẢ LỜI CĂN LỀ TRÁI, TRỰC QUAN, RÕ RÀNG VÀ CHÍNH XÁC THEO 3 MỤC SAU:
+HÃY TRẢ LỜI CĂN LỀ TRÁI, TRỰC QUAN, RÕ RÀNG VÀ CHÍNH XÁC THEO ĐÚNG 3 MỤC SAU:
 
 Kiến thức liên quan cần biết:
-(Tóm tắt định nghĩa, cơ chế sinh học/bệnh học, nguyên lý hoặc công thức lý thuyết cốt lõi cần ghi nhớ để giải quyết dạng câu hỏi này)
+(Tóm tắt định nghĩa, cơ chế hoặc nguyên lý cốt lõi cần nhớ trong 2-3 câu ngắn gọn)
 
 Tại sao chọn phương án ${correctOption}:
-(Giải thích mạch lạc, sâu sắc lý do tại sao phương án ${correctOption} là đáp án hoàn toàn chính xác theo tài liệu chuẩn)
+(Giải thích chính xác, cô đọng lý do phương án ${correctOption} là đáp án đúng)
 
 Các phương án còn lại lần lượt sai là vì:
-(Phân tích lần lượt từng phương án sai khác ngoài ${correctOption}, chỉ ra chi tiết điểm sai, bẫy trắc nghiệm hoặc lý do không phù hợp)
+(Liệt kê từng phương án sai khác một cách NGẮN GỌN, SÚC TÍCH, DỄ HIỂU, ĐI THẲNG VÀO ĐIỂM SAI, tuyệt đối KHÔNG giải thích dài dòng lan man. Ví dụ:
+- Phương án A sai vì: [Điểm sai cốt lõi trong 1 câu ngắn]
+- Phương án B sai vì: [Điểm sai cốt lõi trong 1 câu ngắn])
 
 LƯU Ý QUAN TRỌNG:
-- Trả lời bằng tiếng Việt chuẩn y khoa/học thuật, rõ ràng, dễ hiểu.
+- Trả lời bằng tiếng Việt chuẩn y khoa/học thuật, rõ ràng, súc tích.
+- Phần các phương án sai phải chuẩn ngắn gọn, đúng trọng tâm.
 - Giữ bố cục 3 tiêu đề chuẩn xác như trên.
 - Không lặp lại đề bài không cần thiết.
 `

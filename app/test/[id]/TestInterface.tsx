@@ -140,7 +140,7 @@ export default function TestInterface({ test }: { test: any }) {
     }
   }
 
-  // Parse markdown bold text (**text**) neatly into HTML elements
+  // Parse markdown bold text (**text** or *text*) neatly into HTML elements without leftover asterisks
   const renderFormattedMarkdown = (text: string) => {
     if (!text) return null
     const lines = text.split('\n')
@@ -150,24 +150,34 @@ export default function TestInterface({ test }: { test: any }) {
           const trimmed = line.trim()
           if (!trimmed) return <div key={idx} className="h-1.5" />
 
-          // Highlight Section Headings
-          const isHeading1 = trimmed.startsWith('Kiến thức liên quan cần biết') || trimmed.startsWith('1. Kiến thức') || trimmed.startsWith('**Kiến thức liên quan')
-          const isHeading2 = trimmed.startsWith('Tại sao chọn') || trimmed.startsWith('2. Tại sao chọn') || trimmed.startsWith('**Tại sao chọn')
-          const isHeading3 = trimmed.startsWith('Các phương án còn lại') || trimmed.startsWith('3. Các phương án') || trimmed.startsWith('**Các phương án còn lại')
+          // Strip markdown headers from check for clean heading matching
+          const cleanLine = trimmed.replace(/^[\s#*>\-]+/, '').trim()
 
-          const parts = line.split(/(\*\*.*?\*\*)/g)
-          const renderedLine = parts.map((part, pIdx) => {
-            if (part.startsWith('**') && part.endsWith('**')) {
-              return <strong key={pIdx} className="font-extrabold text-indigo-900 dark:text-indigo-200">{part.slice(2, -2)}</strong>
-            }
-            return <span key={pIdx}>{part}</span>
-          })
+          // Highlight Section Headings
+          const isHeading1 = cleanLine.startsWith('Kiến thức liên quan cần biết') || cleanLine.startsWith('1. Kiến thức')
+          const isHeading2 = cleanLine.startsWith('Tại sao chọn') || cleanLine.startsWith('2. Tại sao chọn')
+          const isHeading3 = cleanLine.startsWith('Các phương án còn lại') || cleanLine.startsWith('3. Các phương án')
+
+          // Helper to parse bold (both **word** and *word*) cleanly
+          const parseInlineMarkdown = (content: string) => {
+            // Split by **...** first, then *...*
+            const parts = content.split(/(\*\*.*?\*\*|\*[^*]+?\*)/g)
+            return parts.map((part, pIdx) => {
+              if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+                return <strong key={pIdx} className="font-extrabold text-indigo-900 dark:text-indigo-200">{part.slice(2, -2)}</strong>
+              }
+              if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
+                return <strong key={pIdx} className="font-bold text-indigo-900 dark:text-indigo-200">{part.slice(1, -1)}</strong>
+              }
+              return <span key={pIdx}>{part}</span>
+            })
+          }
 
           if (isHeading1) {
             return (
               <div key={idx} className="mt-3 pt-2 text-sm sm:text-base font-extrabold text-blue-700 dark:text-blue-400 flex items-center gap-2 border-b border-blue-100 dark:border-blue-900/50 pb-1">
                 <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                {renderedLine}
+                <span>{cleanLine}</span>
               </div>
             )
           }
@@ -175,7 +185,7 @@ export default function TestInterface({ test }: { test: any }) {
             return (
               <div key={idx} className="mt-4 pt-2 text-sm sm:text-base font-extrabold text-emerald-700 dark:text-emerald-400 flex items-center gap-2 border-b border-emerald-100 dark:border-emerald-900/50 pb-1">
                 <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                {renderedLine}
+                <span>{cleanLine}</span>
               </div>
             )
           }
@@ -183,14 +193,14 @@ export default function TestInterface({ test }: { test: any }) {
             return (
               <div key={idx} className="mt-4 pt-2 text-sm sm:text-base font-extrabold text-rose-700 dark:text-rose-400 flex items-center gap-2 border-b border-rose-100 dark:border-rose-900/50 pb-1">
                 <span className="w-2 h-2 rounded-full bg-rose-500"></span>
-                {renderedLine}
+                <span>{cleanLine}</span>
               </div>
             )
           }
 
           return (
             <p key={idx} className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-              {renderedLine}
+              {parseInlineMarkdown(line)}
             </p>
           )
         })}
@@ -526,8 +536,8 @@ export default function TestInterface({ test }: { test: any }) {
     )
   }
 
-  // ─── Exam Result (submitted + exam mode) ─────────────────────────────────────
-  if (submitted && test.mode === 'exam') {
+  // ─── Quiz/Exam Result Overview (submitted for exam OR practice mode) ─────────────
+  if (submitted) {
     return (
       <div className="min-h-screen bg-[#F2F2F7] py-12 px-4 flex flex-col items-center">
         <div className="bg-white p-8 rounded-3xl shadow-sm text-center w-full max-w-2xl mb-8">
@@ -535,7 +545,10 @@ export default function TestInterface({ test }: { test: any }) {
           <div className="text-[80px] font-extrabold text-black leading-none mb-2 tracking-tight">
              {score}<span className="text-[32px] text-slate-300">/10</span>
           </div>
-          <button onClick={() => window.location.reload()} className="mt-8 bg-slate-100 text-[#007AFF] px-6 py-3 rounded-xl font-bold hover:bg-slate-200 transition-colors">
+          <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-2">
+            Chế độ: {test.mode === 'practice' ? 'Ôn tập & Luyện tập' : 'Thi chính thức'}
+          </p>
+          <button onClick={() => window.location.reload()} className="mt-6 bg-slate-100 text-[#007AFF] px-6 py-3 rounded-xl font-bold hover:bg-slate-200 transition-colors">
             Làm lại
           </button>
         </div>
@@ -550,9 +563,21 @@ export default function TestInterface({ test }: { test: any }) {
             
             return (
               <div key={q.id} className="bg-white p-6 rounded-3xl shadow-sm border-l-4 overflow-hidden relative" style={{borderLeftColor: isCorrect ? '#34C759' : '#FF3B30'}}>
-                <div className="flex gap-2 mb-4">
-                  <span className={`font-bold flex-shrink-0 ${isCorrect ? 'text-[#34C759]' : 'text-[#FF3B30]'}`}>Câu {i + 1}:</span>
-                  <div className="prose prose-sm max-w-none text-slate-800" dangerouslySetInnerHTML={{ __html: q.content }} />
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div className="flex gap-2 items-start flex-1">
+                    <span className={`font-bold flex-shrink-0 ${isCorrect ? 'text-[#34C759]' : 'text-[#FF3B30]'}`}>Câu {i + 1}:</span>
+                    <div className="prose prose-sm max-w-none text-slate-800" dangerouslySetInnerHTML={{ __html: q.content }} />
+                  </div>
+                  
+                  {/* AI Explain Button (?) in Result Review */}
+                  <button
+                    onClick={() => handleAskTeacher(q)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xs shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer flex-shrink-0"
+                    title="Hỏi giảng viên AI giải thích câu này"
+                  >
+                    <HelpCircle size={14} />
+                    <span>Giải thích (?)</span>
+                  </button>
                 </div>
                 
                 <div className="space-y-2 mt-4">
@@ -583,6 +608,171 @@ export default function TestInterface({ test }: { test: any }) {
             )
           })}
         </div>
+
+        {/* ─── POPUP GIẢI THÍCH CHUYÊN NGHIỆP CỦA GIẢNG VIÊN AI KHI XEM KẾT QUẢ ─── */}
+        {activeExplainQ && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-2xl max-h-[90vh] flex flex-col p-5 sm:p-6 overflow-hidden animate-pop-in">
+              
+              {/* Header */}
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md">
+                    <Sparkles size={18} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 leading-tight flex items-center gap-1.5">
+                      <span>Giảng Viên AI Giải Thích</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 uppercase tracking-wide">
+                        Dzota AI
+                      </span>
+                    </h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Phân tích chuyên sâu • Kiến thức cốt lõi
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setActiveExplainQ(null)
+                    setExplanationContent(null)
+                    setExplainError(null)
+                  }}
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer"
+                  title="Đóng và học tiếp"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Scrollable Body */}
+              <div className="py-4 overflow-y-auto space-y-4 flex-1 pr-1">
+                
+                {/* Question Content Box */}
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80">
+                  <div className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Câu hỏi đang xét:
+                  </div>
+                  <div
+                    className="prose prose-sm max-w-none text-slate-800 dark:text-slate-200 font-medium"
+                    dangerouslySetInnerHTML={{ __html: activeExplainQ.content }}
+                  />
+
+                  {/* Options List Preview */}
+                  {(() => {
+                    let parsedOpts: any = {}
+                    try { parsedOpts = JSON.parse(activeExplainQ.options) } catch (e) {}
+                    return (
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                        {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(k => {
+                          if (!parsedOpts[k]) return null
+                          const isCorrect = activeExplainQ.correctOption === k
+                          const isUserPick = answers[activeExplainQ.id] === k
+
+                          return (
+                            <div
+                              key={k}
+                              className={`p-2 rounded-xl border text-xs flex items-center gap-2 ${
+                                isCorrect
+                                  ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 font-bold'
+                                  : isUserPick
+                                  ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-700 text-rose-800 dark:text-rose-300 font-medium'
+                                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                              }`}
+                            >
+                              <span
+                                className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+                                  isCorrect
+                                    ? 'bg-emerald-600 text-white'
+                                    : isUserPick
+                                    ? 'bg-rose-600 text-white'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                                }`}
+                              >
+                                {k}
+                              </span>
+                              <span className="truncate flex-1">{parsedOpts[k]}</span>
+                              {isCorrect && (
+                                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 ml-auto whitespace-nowrap">
+                                  ✓ Đáp án đúng
+                                </span>
+                              )}
+                              {!isCorrect && isUserPick && (
+                                <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 ml-auto whitespace-nowrap">
+                                  ✗ Bạn chọn
+                                </span>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })()}
+                </div>
+
+                {/* Loading Animation with Teacher Wait Message */}
+                {explainLoading && (
+                  <div className="py-8 text-center flex flex-col items-center justify-center">
+                    <div className="relative mb-3">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg animate-bounce">
+                        <Sparkles size={24} />
+                      </div>
+                      <div className="absolute inset-0 rounded-2xl bg-blue-500/20 blur-xl animate-pulse"></div>
+                    </div>
+                    <p className="font-extrabold text-sm sm:text-base text-indigo-700 dark:text-indigo-400">
+                      Đang hỏi giảng viên, chờ xíu nhé bây bii ✨
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                      <Loader size={12} className="animate-spin" />
+                      <span>Đang tổng hợp kiến thức và suy luận đa chiều...</span>
+                    </p>
+                  </div>
+                )}
+
+                {/* Error Message */}
+                {explainError && (
+                  <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs font-semibold">
+                    <div className="font-bold mb-1">⚠️ Không thể tải lời giải thích:</div>
+                    <p>{explainError}</p>
+                    <button
+                      onClick={() => handleAskTeacher(activeExplainQ)}
+                      className="mt-3 px-3 py-1.5 bg-rose-600 text-white rounded-xl font-bold text-xs hover:bg-rose-700 transition-colors"
+                    >
+                      Thử lại với API Key khác
+                    </button>
+                  </div>
+                )}
+
+                {/* AI Explanation Content Box */}
+                {explanationContent && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-blue-50/50 dark:bg-slate-800/80 border border-blue-100 dark:border-slate-700 animate-fade-in">
+                    {renderFormattedMarkdown(explanationContent)}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer Buttons */}
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <span className="text-[11px] text-slate-400 font-medium">
+                  Dzota AI Assistant
+                </span>
+                <button
+                  onClick={() => {
+                    setActiveExplainQ(null)
+                    setExplanationContent(null)
+                    setExplainError(null)
+                  }}
+                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>Đóng và học bài tiếp</span>
+                  <X size={14} />
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
       </div>
     )
   }

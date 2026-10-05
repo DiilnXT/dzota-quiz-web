@@ -59,8 +59,19 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
     
-    if (!id) {
-      return NextResponse.json({ error: 'Missing ID' }, { status: 400 })
+    // If no ID or id=all, return all available quizzes for the library/creator
+    if (!id || id === 'all') {
+      const quizzes = await prisma.quickQuiz.findMany({
+        orderBy: { createdAt: 'desc' }
+      })
+      const list = quizzes.map(q => {
+        try {
+          return JSON.parse(q.data)
+        } catch (e) {
+          return { id: q.id, title: q.title, config: { title: q.title }, questions: [] }
+        }
+      })
+      return NextResponse.json(list)
     }
     
     const quiz = await prisma.quickQuiz.findUnique({
