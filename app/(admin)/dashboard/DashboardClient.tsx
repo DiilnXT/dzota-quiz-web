@@ -305,7 +305,7 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
       quizzes.forEach((q, idx) => {
         const authorName = q.author?.username || 'Ẩn danh'
         const dateStr = new Date(q.createdAt).toLocaleDateString('vi-VN')
-        const link = `https://dzota.vercel.app/test/${q.id}`
+        const link = `https://dzota.vercel.app/?id=${q.id}`
         csvContent += `${idx + 1},"${q.title.replace(/"/g, '""')}","${authorName}","${dateStr}","${link}"\n`
       })
 
@@ -592,7 +592,7 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
             ) : (
               quizzes.slice(0, 10).map(q => (
                 <Link
-                  href={`/test/${q.id}`}
+                  href={`/?id=${q.id}`}
                   key={q.id}
                   target="_blank"
                   className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer group block"

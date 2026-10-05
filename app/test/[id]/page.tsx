@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { Metadata, ResolvingMetadata } from 'next'
 import TestInterface from './TestInterface'
 
@@ -12,7 +12,18 @@ export async function generateMetadata(
     where: { id: resolvedParams.id }
   })
   
-  if (!test) return { title: 'Bài Test Không Tồn Tại' }
+  if (!test) {
+    const quickQuiz = await prisma.quickQuiz.findUnique({
+      where: { id: resolvedParams.id }
+    })
+    if (quickQuiz) {
+      return {
+        title: quickQuiz.title,
+        description: `Bắt đầu làm bài thi: ${quickQuiz.title}`
+      }
+    }
+    return { title: 'Bài Test Không Tồn Tại' }
+  }
   
   return {
     title: test.title,
@@ -39,7 +50,16 @@ export default async function TestPage({ params }: { params: Promise<{ id: strin
     }
   })
 
-  if (!test) notFound()
+  if (!test) {
+    // Check if this ID is a QuickQuiz (created via creator or quick quiz)
+    const quickQuiz = await prisma.quickQuiz.findUnique({
+      where: { id: resolvedParams.id }
+    })
+    if (quickQuiz) {
+      redirect(`/?id=${resolvedParams.id}`)
+    }
+    notFound()
+  }
 
   return <TestInterface test={test} />
 }
