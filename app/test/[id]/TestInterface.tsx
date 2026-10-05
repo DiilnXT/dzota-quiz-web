@@ -1,7 +1,25 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Clock, CheckCircle, XCircle, Play, ArrowRight, FileText, BarChart2, Sparkles, BookOpen, GraduationCap, PenLine } from 'lucide-react'
+import {
+  Clock,
+  CheckCircle,
+  XCircle,
+  Play,
+  ArrowRight,
+  FileText,
+  BarChart2,
+  Sparkles,
+  BookOpen,
+  GraduationCap,
+  PenLine,
+  HelpCircle,
+  Bot,
+  X,
+  Loader2,
+  Check,
+  Lightbulb
+} from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 export default function TestInterface({ test }: { test: any }) {
@@ -16,6 +34,13 @@ export default function TestInterface({ test }: { test: any }) {
   const [submitted, setSubmitted] = useState(false)
   const [score, setScore] = useState(0)
   const [showExplanation, setShowExplanation] = useState<Record<string, 'correct' | 'incorrect'>>({})
+
+  // AI Question Explanation Modal states
+  const [activeExplainQ, setActiveExplainQ] = useState<any | null>(null)
+  const [explainLoading, setExplainLoading] = useState(false)
+  const [explanationContent, setExplanationContent] = useState<string | null>(null)
+  const [explainError, setExplainError] = useState<string | null>(null)
+  const [explanationCache, setExplanationCache] = useState<Record<string, string>>({})
   
   useEffect(() => {
     setMounted(true)
@@ -64,6 +89,113 @@ export default function TestInterface({ test }: { test: any }) {
         setShowExplanation(prev => ({ ...prev, [qId]: 'incorrect' }))
       }
     }
+  }
+
+  // Handle calling Gemini AI Teacher
+  const handleAskTeacher = async (q: any) => {
+    setActiveExplainQ(q)
+    setExplainError(null)
+
+    // Check cached explanation
+    if (explanationCache[q.id]) {
+      setExplanationContent(explanationCache[q.id])
+      setExplainLoading(false)
+      return
+    }
+
+    setExplainLoading(true)
+    setExplanationContent(null)
+
+    let parsedOpts: Record<string, string> = {}
+    try {
+      parsedOpts = JSON.parse(q.options)
+    } catch (e) {
+      parsedOpts = {}
+    }
+
+    try {
+      const res = await fetch('/api/explain-question', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          questionText: q.content,
+          options: parsedOpts,
+          correctOption: q.correctOption,
+          selectedOption: answers[q.id] || undefined,
+          subjectName: test.subject || test.title
+        })
+      })
+
+      const data = await res.json()
+      if (res.ok && data.explanation) {
+        setExplanationContent(data.explanation)
+        setExplanationCache(prev => ({ ...prev, [q.id]: data.explanation }))
+      } else {
+        setExplainError(data.error || 'Không thể nhận phản hồi từ giảng viên AI.')
+      }
+    } catch (err: any) {
+      setExplainError('Lỗi kết nối. Vui lòng kiểm tra lại mạng hoặc thử lại.')
+    } finally {
+      setExplainLoading(false)
+    }
+  }
+
+  // Parse markdown bold text (**text**) neatly into HTML elements
+  const renderFormattedMarkdown = (text: string) => {
+    if (!text) return null
+    const lines = text.split('\n')
+    return (
+      <div className="space-y-2 text-left leading-relaxed">
+        {lines.map((line, idx) => {
+          const trimmed = line.trim()
+          if (!trimmed) return <div key={idx} className="h-1.5" />
+
+          // Highlight Section Headings
+          const isHeading1 = trimmed.startsWith('Kiến thức liên quan cần biết') || trimmed.startsWith('1. Kiến thức') || trimmed.startsWith('**Kiến thức liên quan')
+          const isHeading2 = trimmed.startsWith('Tại sao chọn') || trimmed.startsWith('2. Tại sao chọn') || trimmed.startsWith('**Tại sao chọn')
+          const isHeading3 = trimmed.startsWith('Các phương án còn lại') || trimmed.startsWith('3. Các phương án') || trimmed.startsWith('**Các phương án còn lại')
+
+          const parts = line.split(/(\*\*.*?\*\*)/g)
+          const renderedLine = parts.map((part, pIdx) => {
+            if (part.startsWith('**') && part.endsWith('**')) {
+              return <strong key={pIdx} className="font-extrabold text-indigo-900 dark:text-indigo-200">{part.slice(2, -2)}</strong>
+            }
+            return <span key={pIdx}>{part}</span>
+          })
+
+          if (isHeading1) {
+            return (
+              <div key={idx} className="mt-3 pt-2 text-sm sm:text-base font-extrabold text-blue-700 dark:text-blue-400 flex items-center gap-2 border-b border-blue-100 dark:border-blue-900/50 pb-1">
+                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                {renderedLine}
+              </div>
+            )
+          }
+          if (isHeading2) {
+            return (
+              <div key={idx} className="mt-4 pt-2 text-sm sm:text-base font-extrabold text-emerald-700 dark:text-emerald-400 flex items-center gap-2 border-b border-emerald-100 dark:border-emerald-900/50 pb-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                {renderedLine}
+              </div>
+            )
+          }
+          if (isHeading3) {
+            return (
+              <div key={idx} className="mt-4 pt-2 text-sm sm:text-base font-extrabold text-rose-700 dark:text-rose-400 flex items-center gap-2 border-b border-rose-100 dark:border-rose-900/50 pb-1">
+                <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                {renderedLine}
+              </div>
+            )
+          }
+
+          return (
+            <p key={idx} className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+              {renderedLine}
+            </p>
+          )
+        })}
+      </div>
+    )
   }
 
   const handleSubmit = () => {
@@ -510,6 +642,32 @@ export default function TestInterface({ test }: { test: any }) {
                   )
                 })}
               </div>
+
+              {/* Practice Mode: Button (?) Hỏi Giảng Viên AI sau khi trả lời */}
+              {test.mode === 'practice' && isSelected && (
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div className="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
+                    {status === 'correct' ? (
+                      <span className="text-emerald-600 font-bold flex items-center gap-1">
+                        <Check size={14} /> Chính xác!
+                      </span>
+                    ) : (
+                      <span className="text-rose-600 font-bold flex items-center gap-1">
+                        <X size={14} /> Chưa đúng. Đáp án chuẩn: {q.correctOption}
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => handleAskTeacher(q)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xs shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+                    title="Hỏi giảng viên AI giải thích chi tiết"
+                  >
+                    <HelpCircle size={15} />
+                    <span>Giải thích (?)</span>
+                  </button>
+                </div>
+              )}
             </div>
           )
         })}
@@ -521,6 +679,153 @@ export default function TestInterface({ test }: { test: any }) {
            </div>
         )}
       </div>
+
+      {/* ─── POPUP GIẢI THÍCH CHUYÊN NGHIỆP CỦA GIẢNG VIÊN AI ─────────────────── */}
+      {activeExplainQ && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-[#1E293B] rounded-3xl max-w-2xl w-full p-5 sm:p-7 border border-slate-200 dark:border-slate-700 shadow-2xl relative max-h-[90vh] flex flex-col overflow-hidden">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/25">
+                  <Bot size={22} />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base sm:text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <span>Giảng Viên AI Giải Thích</span>
+                    <span className="text-[10px] bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full font-bold">
+                      Y Khoa Chuẩn
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Phân tích chi tiết câu hỏi & ghi nhớ kiến thức
+                  </p>
+                </div>
+              </div>
+
+              {/* Close Button X */}
+              <button
+                onClick={() => {
+                  setActiveExplainQ(null)
+                  setExplanationContent(null)
+                  setExplainError(null)
+                }}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                aria-label="Đóng và học bài tiếp"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
+              {/* Question Preview Box */}
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
+                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  <FileText size={13} /> Nội dung câu hỏi:
+                </div>
+                <div
+                  className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200"
+                  dangerouslySetInnerHTML={{ __html: activeExplainQ.content }}
+                />
+                
+                {/* 4 Options preview */}
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  {(() => {
+                    let opts: any = {}
+                    try { opts = JSON.parse(activeExplainQ.options) } catch (e) {}
+                    return Object.entries(opts).map(([k, val]: any) => {
+                      const isCorrect = k === activeExplainQ.correctOption
+                      const isUserSelected = answers[activeExplainQ.id] === k
+                      return (
+                        <div
+                          key={k}
+                          className={`p-2 rounded-xl border flex items-start gap-2 ${
+                            isCorrect
+                              ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300'
+                              : isUserSelected
+                              ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 text-rose-800 dark:text-rose-300'
+                              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                          }`}
+                        >
+                          <span className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] flex-shrink-0 ${
+                            isCorrect ? 'bg-emerald-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                          }`}>
+                            {k}
+                          </span>
+                          <span className="font-medium text-xs leading-tight">{val}</span>
+                        </div>
+                      )
+                    })
+                  })()}
+                </div>
+              </div>
+
+              {/* Waiting Loading State: "Đang hỏi giảng viên, chờ xíu nhé bây bii" */}
+              {explainLoading && (
+                <div className="p-8 text-center flex flex-col items-center justify-center gap-3 animate-fade-in">
+                  <div className="relative">
+                    <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center animate-bounce">
+                      <GraduationCap size={28} />
+                    </div>
+                    <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 animate-ping" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm sm:text-base font-extrabold text-indigo-700 dark:text-indigo-300">
+                      Đang hỏi giảng viên, chờ xíu nhé bây bii ✨
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-1 flex items-center justify-center gap-1.5">
+                      <Loader2 size={13} className="animate-spin" />
+                      <span>Đang tổng hợp kiến thức và suy luận đa chiều...</span>
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {explainError && (
+                <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs font-semibold">
+                  <div className="font-bold mb-1">⚠️ Không thể tải lời giải thích:</div>
+                  <p>{explainError}</p>
+                  <button
+                    onClick={() => handleAskTeacher(activeExplainQ)}
+                    className="mt-3 px-3 py-1.5 bg-rose-600 text-white rounded-xl font-bold text-xs hover:bg-rose-700 transition-colors"
+                  >
+                    Thử lại với API Key khác
+                  </button>
+                </div>
+              )}
+
+              {/* AI Explanation Content Box */}
+              {explanationContent && (
+                <div className="p-4 sm:p-5 rounded-2xl bg-blue-50/50 dark:bg-slate-800/80 border border-blue-100 dark:border-slate-700 animate-fade-in">
+                  {renderFormattedMarkdown(explanationContent)}
+                </div>
+              )}
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <span className="text-[11px] text-slate-400 font-medium">
+                Dzota AI Assistant
+              </span>
+              <button
+                onClick={() => {
+                  setActiveExplainQ(null)
+                  setExplanationContent(null)
+                  setExplainError(null)
+                }}
+                className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>Đóng và học bài tiếp</span>
+                <X size={14} />
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   )
 }

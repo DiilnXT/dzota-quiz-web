@@ -77,6 +77,77 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
   const [editPassword, setEditPassword] = useState('')
   const [editRole, setEditRole] = useState('USER')
 
+  // Gemini AI Settings states
+  const [geminiKeys, setGeminiKeys] = useState('')
+  const [geminiModel, setGeminiModel] = useState('gemini-2.5-flash')
+  const [availableModels, setAvailableModels] = useState<string[]>([
+    'gemini-2.5-flash',
+    'gemini-2.5-pro',
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-lite',
+    'gemini-1.5-flash',
+    'gemini-1.5-pro'
+  ])
+  const [customModelInput, setCustomModelInput] = useState('')
+  const [isSavingSettings, setIsSavingSettings] = useState(false)
+
+  // Fetch AI settings when opening settings modal
+  const loadAiSettings = async () => {
+    try {
+      const res = await fetch('/api/admin/settings')
+      if (res.ok) {
+        const data = await res.json()
+        if (data.apiKeys !== undefined) setGeminiKeys(data.apiKeys)
+        if (data.activeModel) setGeminiModel(data.activeModel)
+        if (data.availableModels && Array.isArray(data.availableModels)) {
+          setAvailableModels(data.availableModels)
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load AI settings', e)
+    }
+  }
+
+  const handleSaveAiSettings = async () => {
+    setIsSavingSettings(true)
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apiKeys: geminiKeys,
+          activeModel: geminiModel,
+          availableModels: availableModels
+        })
+      })
+      if (res.ok) {
+        showToast('Đã lưu cấu hình Gemini API & Model thành công!')
+        setIsSettingsOpen(false)
+      } else {
+        showToast('Không thể lưu cấu hình AI', 'error')
+      }
+    } catch (e) {
+      showToast('Lỗi kết nối khi lưu cấu hình AI', 'error')
+    } finally {
+      setIsSavingSettings(false)
+    }
+  }
+
+  const handleAddCustomModel = () => {
+    const trimmed = customModelInput.trim()
+    if (!trimmed) return
+    if (!availableModels.includes(trimmed)) {
+      const updated = [...availableModels, trimmed]
+      setAvailableModels(updated)
+      setGeminiModel(trimmed)
+      setCustomModelInput('')
+      showToast(`Đã thêm model "${trimmed}" vào danh sách!`)
+    } else {
+      setGeminiModel(trimmed)
+      setCustomModelInput('')
+    }
+  }
+
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type })
     setTimeout(() => setToast(null), 3500)
@@ -312,7 +383,10 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
           </button>
 
           <button
-            onClick={() => setIsSettingsOpen(true)}
+            onClick={() => {
+              loadAiSettings()
+              setIsSettingsOpen(true)
+            }}
             className="bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-semibold shadow-sm hover:bg-slate-50 hover:text-indigo-600 transition-all flex items-center gap-2"
           >
             <Settings size={16} />
@@ -338,49 +412,49 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
         </div>
       </div>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all">
-          <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out"></div>
+      {/* Stats Row: 2 cols on mobile, 4 cols on desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all">
+          <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-50 dark:bg-blue-950/40 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out"></div>
           <div className="relative">
-            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
-              <Users size={24} />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4">
+              <Users size={20} className="sm:w-6 sm:h-6" />
             </div>
-            <div className="text-3xl font-black text-slate-800 mb-1">{totalUsers}</div>
-            <div className="text-sm font-semibold text-slate-500">Tổng Giáo Viên</div>
+            <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100 mb-0.5 sm:mb-1">{totalUsers}</div>
+            <div className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">Tổng Giáo Viên</div>
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all">
-          <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out"></div>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all">
+          <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-50 dark:bg-indigo-950/40 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out"></div>
           <div className="relative">
-            <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mb-4">
-              <FileText size={24} />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4">
+              <FileText size={20} className="sm:w-6 sm:h-6" />
             </div>
-            <div className="text-3xl font-black text-slate-800 mb-1">{totalQuizzes}</div>
-            <div className="text-sm font-semibold text-slate-500">Đề Thi Đã Tạo</div>
+            <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100 mb-0.5 sm:mb-1">{totalQuizzes}</div>
+            <div className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">Đề Thi Đã Tạo</div>
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all">
-          <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out"></div>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all">
+          <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50 dark:bg-emerald-950/40 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out"></div>
           <div className="relative">
-            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-4">
-              <Activity size={24} />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4">
+              <Activity size={20} className="sm:w-6 sm:h-6" />
             </div>
-            <div className="text-3xl font-black text-slate-800 mb-1">{activeTeachers}</div>
-            <div className="text-sm font-semibold text-slate-500">Giáo Viên Đang Hoạt Động</div>
+            <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100 mb-0.5 sm:mb-1">{activeTeachers}</div>
+            <div className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">Giáo Viên Hoạt Động</div>
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all">
-          <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out"></div>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all">
+          <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-50 dark:bg-purple-950/40 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out"></div>
           <div className="relative">
-            <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center mb-4">
-              <TrendingUp size={24} />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 dark:bg-purple-900/60 text-purple-600 dark:text-purple-400 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4">
+              <TrendingUp size={20} className="sm:w-6 sm:h-6" />
             </div>
-            <div className="text-3xl font-black text-slate-800 mb-1">{(totalQuizzes / (totalUsers || 1)).toFixed(1)}</div>
-            <div className="text-sm font-semibold text-slate-500">Trung bình đề/GV</div>
+            <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100 mb-0.5 sm:mb-1">{(totalQuizzes / (totalUsers || 1)).toFixed(1)}</div>
+            <div className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">Trung bình đề/GV</div>
           </div>
         </div>
       </div>
@@ -752,6 +826,77 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
                 </div>
               </div>
 
+              {/* Gemini AI Multi-Key & Model Settings */}
+              <div className="bg-indigo-50/70 dark:bg-indigo-950/40 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-900/60 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-bold text-indigo-700 dark:text-indigo-300 uppercase flex items-center gap-1.5">
+                    <Key size={14} /> Cấu hình Gemini AI Trợ Giảng
+                  </div>
+                  <span className="text-[10px] font-semibold text-indigo-600 bg-indigo-100 dark:bg-indigo-900 px-2 py-0.5 rounded-full">
+                    Tự động xoay vòng Keys
+                  </span>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Danh sách Gemini API Keys:
+                    </label>
+                    <span className="text-[11px] text-slate-400 font-medium">
+                      {geminiKeys.split(/[\n,;]+/).filter(k => k.trim().length > 5).length} keys đã nhập
+                    </span>
+                  </div>
+                  <textarea
+                    rows={3}
+                    value={geminiKeys}
+                    onChange={(e) => setGeminiKeys(e.target.value)}
+                    placeholder="Dán các API Key vào đây, cách nhau bởi dấu phẩy hoặc xuống dòng (Key1, Key2, Key3...)"
+                    className="w-full p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500"
+                  />
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    💡 Hệ thống sẽ random chọn key cho mỗi câu hỏi và tự động chuyển đổi ngay sang key khác nếu một key bị giới hạn quota.
+                  </p>
+                </div>
+
+                {/* Model Selection & Custom Add */}
+                <div className="space-y-2 pt-1 border-t border-indigo-100/80 dark:border-indigo-900/40">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                      Model Gemini đang dùng:
+                    </label>
+                    <select
+                      value={geminiModel}
+                      onChange={(e) => setGeminiModel(e.target.value)}
+                      className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none focus:border-indigo-500"
+                    >
+                      {availableModels.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Add Custom Model */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="Thêm model ID (vd: gemini-2.5-flash-thinking)..."
+                      value={customModelInput}
+                      onChange={(e) => setCustomModelInput(e.target.value)}
+                      className="flex-1 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddCustomModel}
+                      className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-colors whitespace-nowrap"
+                    >
+                      + Thêm model
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/60 space-y-3">
                 <div className="text-xs font-bold text-slate-400 uppercase">Hạ tầng & Dịch vụ</div>
                 
@@ -779,15 +924,21 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
                 </div>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-2 flex gap-2.5">
                 <button
-                  onClick={() => {
-                    setIsSettingsOpen(false)
-                    showToast('Đã lưu cấu hình hệ thống!')
-                  }}
-                  className="w-full py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200"
+                  type="button"
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="flex-1 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                 >
                   Đóng
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveAiSettings}
+                  disabled={isSavingSettings}
+                  className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200 flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  {isSavingSettings ? 'Đang lưu...' : 'Lưu Cấu Hình AI'}
                 </button>
               </div>
             </div>

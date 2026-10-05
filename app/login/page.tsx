@@ -165,7 +165,7 @@ export default function LoginPage() {
               </p>
 
               {/* Feature Points */}
-              <div className="space-y-3">
+              <div className="space-y-3 max-w-[300px] xl:max-w-[340px]">
                 {[
                   {
                     icon: FileText,
@@ -191,13 +191,13 @@ export default function LoginPage() {
                 ].map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center gap-3.5 p-2.5 rounded-2xl transition-all duration-300 hover:bg-white/80 hover:shadow-xs group cursor-default"
+                    className="flex items-center gap-3.5 p-2 rounded-2xl transition-all duration-300 hover:bg-white/80 hover:shadow-xs group cursor-default"
                   >
                     <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
+                      className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 flex-shrink-0"
                       style={{ background: item.bg, color: item.color }}
                     >
-                      <item.icon size={20} />
+                      <item.icon size={18} />
                     </div>
                     <div>
                       <div className="text-sm font-bold text-[#10213F]">
@@ -212,9 +212,9 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Bottom 3D Study Illustration Artwork */}
+            {/* Bottom-right 3D Study Illustration Artwork (Không đè lên chữ) */}
             <div
-              className="absolute -bottom-4 right-2 xl:right-6 w-[270px] xl:w-[320px] pointer-events-none select-none z-0 opacity-95"
+              className="absolute -bottom-2 -right-4 xl:right-0 w-[240px] xl:w-[280px] pointer-events-none select-none z-0"
               style={{ animation: 'floatGentle 6s ease-in-out infinite' }}
             >
               <img
