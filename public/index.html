@@ -424,7 +424,9 @@
           if (!str) return '';
           let res = str;
           res = res.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+          res = res.replace(/__(.*?)__/g, '<b>$1</b>');
           res = res.replace(/(^|[^*])\*(?!\*)(.*?)\*(?!\*)/g, '$1<i>$2</i>');
+          res = res.replace(/(^|[^_])_(?!_)(.*?)_(?!_)/g, '$1<i>$2</i>');
           res = res.replace(/`([^`]+)`/g, '<code style="background:#f1f5f9;padding:2px 4px;border-radius:4px;">$1</code>');
           return res;
         };
@@ -492,12 +494,27 @@
               currentQuestion.explanation = expMatch[1].trim();
             } else if (optMatch && currentQuestion) {
               const letter = optMatch[1].toUpperCase();
-              let optContent = (optMatch[2] || '').trim().replace(/^\*\*/, '').replace(/\*\*$/, '');
-              const isMarkedCorrect = /\((?:đúng|đáp án đúng|chính xác|correct)\)/i.test(optContent);
-              if (isMarkedCorrect) {
+
+              // Nhận diện xem phương án này có được in đậm (Markdown **) hoặc đánh dấu đúng không
+              const isLineWrappedInBold = (line.startsWith('**') && line.endsWith('**') && line.length > 4) ||
+                                          (line.startsWith('__') && line.endsWith('__') && line.length > 4);
+              const isLetterBolded = /^\s*[*_]{2}\s*[A-G][\s.):\/*]+[*_]{2}/i.test(line) ||
+                                     /^\s*[*_]{1,2}\s*[A-G]\s*[*_]{1,2}[\s.):\/*]+/i.test(line);
+              const isPrefixBolded = /^\s*[*_]{2}\s*[A-G]/i.test(line);
+              const isContentBolded = /^\s*[-*•]?\s*(?:\*\*)?[A-G][\s.):\/*]+(?:\*\*)?\s*[*_]{2}(.*?)[*_]{2}\s*$/i.test(line);
+              const hasExplicitCorrectTag = /\((?:đúng|đáp án đúng|chính xác|correct|true)\)|\[x\]/i.test(line);
+
+              if (isLineWrappedInBold || isLetterBolded || isPrefixBolded || isContentBolded || hasExplicitCorrectTag) {
                 currentQuestion.correct = letter;
-                optContent = optContent.replace(/\s*\((?:đúng|đáp án đúng|chính xác|correct)\)/i, '').trim();
               }
+
+              let rawOptContent = optMatch[2] || '';
+              let optContent = rawOptContent.trim();
+              if (isLineWrappedInBold) {
+                optContent = optContent.replace(/\*\*$/, '').replace(/__$/, '').trim();
+              }
+              optContent = optContent.replace(/\s*\((?:đúng|đáp án đúng|chính xác|correct|true)\)/i, '').replace(/\s*\[x\]/i, '').trim();
+
               currentQuestion.options[letter] = optContent;
             } else if (currentQuestion) {
               // Kiểm tra xem dòng có chứa nhiều phương án trên 1 dòng không (vd: A. ... B. ... C. ... D. ...)
@@ -517,12 +534,17 @@
                   const curr = optIndices[idx];
                   const startPos = curr.index + curr.matchLen;
                   const endPos = (idx + 1 < optIndices.length) ? optIndices[idx + 1].index : line.length;
-                  let content = line.substring(startPos, endPos).trim().replace(/^\*\*/, '').replace(/\*\*$/, '');
-                  const isMarkedCorrect = /\((?:đúng|đáp án đúng|chính xác|correct)\)/i.test(content);
-                  if (isMarkedCorrect) {
+                  const chunk = line.substring(curr.index, endPos).trim();
+
+                  const isChunkBold = /^\s*[*_]{2}/.test(chunk) ||
+                                      chunk.endsWith('**') ||
+                                      /\((?:đúng|đáp án đúng|chính xác|correct|true)\)/i.test(chunk);
+                  if (isChunkBold) {
                     currentQuestion.correct = curr.letter;
-                    content = content.replace(/\s*\((?:đúng|đáp án đúng|chính xác|correct)\)/i, '').trim();
                   }
+
+                  let content = line.substring(startPos, endPos).trim().replace(/^\*\*/, '').replace(/\*\*$/, '');
+                  content = content.replace(/\s*\((?:đúng|đáp án đúng|chính xác|correct|true)\)/i, '').replace(/\s*\[x\]/i, '').trim();
                   currentQuestion.options[curr.letter] = content;
                 }
               } else {
