@@ -87,7 +87,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               </div>
               <div className="overflow-hidden">
                 <div className="font-bold text-slate-800 text-sm truncate">{session.username}</div>
-                <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{session.role === 'admin' || session.role === 'ADMIN' ? 'Quản trị viên' : 'Giáo viên'}</div>
+                <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{session.role?.toLowerCase() === 'admin' || session.username?.toLowerCase() === 'duylniedu' ? 'Quản trị viên' : 'Giáo viên'}</div>
               </div>
             </div>
           </div>
