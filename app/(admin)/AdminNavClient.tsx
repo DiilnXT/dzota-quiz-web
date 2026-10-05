@@ -43,7 +43,7 @@ interface AdminNavClientProps {
   }
 }
 
-type ModalType = 'logs' | 'bank' | 'tags' | null
+type ModalType = 'logs' | 'bank' | null
 
 export default function AdminNavClient({ session }: AdminNavClientProps) {
   const pathname = usePathname()
@@ -234,27 +234,6 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                 <BookOpen size={18} className="text-slate-400 dark:text-slate-500" />
                 <span>Ngân hàng câu hỏi</span>
               </button>
-
-              <Link
-                href="/subjects"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                  isSubjectsActive
-                    ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
-                }`}
-              >
-                <Folder size={18} />
-                <span>Quản lý môn học</span>
-              </Link>
-
-              <button
-                onClick={() => { setActiveModal('tags'); setMobileMenuOpen(false); }}
-                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all text-left"
-              >
-                <Tag size={18} className="text-slate-400 dark:text-slate-500" />
-                <span>Thẻ & Danh mục</span>
-              </button>
             </div>
           </div>
         </div>
@@ -315,13 +294,11 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                 <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                   {activeModal === 'logs' && <Clock size={18} />}
                   {activeModal === 'bank' && <BookOpen size={18} />}
-                  {activeModal === 'tags' && <Tag size={18} />}
                 </div>
                 <div>
                   <h3 className="font-extrabold text-base text-slate-900 dark:text-slate-100">
                     {activeModal === 'logs' && 'Nhật Ký Hoạt Động (Audit Log)'}
                     {activeModal === 'bank' && 'Ngân Hàng Câu Hỏi Tự Động'}
-                    {activeModal === 'tags' && 'Thẻ & Danh Mục Môn Học'}
                   </h3>
                   <p className="text-xs text-slate-400">Dzota Admin Control Center</p>
                 </div>
@@ -364,7 +341,7 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                 </div>
               )}
 
-              {/* 6. NGÂN HÀNG CÂU HỎI */}
+              {/* NGÂN HÀNG CÂU HỎI */}
               {activeModal === 'bank' && (
                 <div className="space-y-3">
                   <div className="p-3 bg-blue-50 dark:bg-blue-950/60 rounded-xl border border-blue-100 dark:border-blue-900 text-xs text-blue-700 dark:text-blue-300">
@@ -377,26 +354,6 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                   >
                     Mở Trình Soạn Thảo & Tạo Ngân Hàng Đề Mới →
                   </Link>
-                </div>
-              )}
-
-              {/* 7. THẺ & DANH MỤC */}
-              {activeModal === 'tags' && (
-                <div className="space-y-3">
-                  <div className="text-xs font-bold text-slate-400">Danh mục môn học hiện có:</div>
-                  <div className="flex flex-wrap gap-2">
-                    {['Vi Sinh', 'Sinh Học', 'Dược Lý', 'Giải Phẫu', 'Hóa Sinh', 'Chung'].map((tag, i) => (
-                      <span key={i} className="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => showFeedback('Đã lưu danh mục môn học!')}
-                    className="w-full py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl"
-                  >
-                    + Thêm danh mục mới
-                  </button>
                 </div>
               )}
             </div>

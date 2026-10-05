@@ -9,11 +9,42 @@
 
 .dark {
   --background: #0B0F19;
-  --foreground: #f8fafc;
+  --foreground: #f1f5f9;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
 }
+
+/* Eye-friendly Global Dark Theme Enhancements */
+.dark aside {
+  background-color: #111827 !important;
+  border-color: #1E293B !important;
+}
+
+.dark input, 
+.dark select, 
+.dark textarea {
+  color-scheme: dark;
+}
+
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #0B0F19;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #1E293B;
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
 
