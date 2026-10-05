@@ -269,7 +269,7 @@ export default function TestInterface({ test }: { test: any }) {
   if (!isStarted) {
     return (
       <div
-        className="min-h-screen w-full flex items-center justify-center p-4 py-20 sm:py-24 lg:py-8 md:p-6 lg:p-8 relative overflow-x-hidden"
+        className="min-h-screen lg:h-screen lg:max-h-screen w-full flex items-center justify-center p-3 sm:p-4 py-12 sm:py-16 lg:py-2 md:p-4 lg:p-4 relative overflow-x-hidden lg:overflow-hidden font-sans"
         style={{ background: 'radial-gradient(ellipse at 60% 40%, #E8F2FF 0%, #F7FBFF 60%, #fff 100%)' }}
       >
         {/* Decorative blobs */}
@@ -277,13 +277,13 @@ export default function TestInterface({ test }: { test: any }) {
         <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full pointer-events-none" style={{ background: '#9BC8FF', opacity: 0.25, filter: 'blur(50px)', transform: 'translate(30%, 30%)' }} />
 
         {/* Dot grid top-right */}
-        <div className="absolute top-8 right-8 hidden md:grid" style={{ gridTemplateColumns: 'repeat(4,14px)', gap: '14px', opacity: 0.65 }}>
+        <div className="absolute top-6 right-8 hidden md:grid" style={{ gridTemplateColumns: 'repeat(4,14px)', gap: '14px', opacity: 0.65 }}>
           {Array.from({ length: 16 }).map((_, i) => (
             <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: '#69A7FF' }} />
           ))}
         </div>
         {/* Dot grid bottom-left */}
-        <div className="absolute bottom-8 left-8 hidden md:grid" style={{ gridTemplateColumns: 'repeat(4,14px)', gap: '14px', opacity: 0.45 }}>
+        <div className="absolute bottom-6 left-8 hidden md:grid" style={{ gridTemplateColumns: 'repeat(4,14px)', gap: '14px', opacity: 0.45 }}>
           {Array.from({ length: 16 }).map((_, i) => (
             <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: '#69A7FF' }} />
           ))}
@@ -291,12 +291,12 @@ export default function TestInterface({ test }: { test: any }) {
 
         {/* Main responsive composition */}
         <div
-          className="relative w-full flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-8 xl:gap-12 py-2"
-          style={{ maxWidth: 1100 }}
+          className="relative w-full flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-6 xl:gap-10 py-1"
+          style={{ maxWidth: 1050 }}
         >
           {/* Left 3D Illustration (Desktop Only) */}
-          <div className="hidden lg:flex flex-1 justify-end items-center select-none" style={{ maxWidth: 280 }}>
-            <div className="relative w-full max-w-[240px] xl:max-w-[270px]" style={{ animation: 'floatGentleLeft 6s ease-in-out infinite' }}>
+          <div className="hidden lg:flex flex-1 justify-end items-center select-none" style={{ maxWidth: 240 }}>
+            <div className="relative w-full max-w-[200px] xl:max-w-[230px]" style={{ animation: 'floatGentleLeft 6s ease-in-out infinite' }}>
               <img
                 src="/illustration-left.png"
                 alt="3D Study Artwork"
@@ -307,11 +307,11 @@ export default function TestInterface({ test }: { test: any }) {
           </div>
 
           {/* Center Glassmorphic Quiz Card Wrapper (with mobile 3D floating decorations) */}
-          <div className="relative w-full max-w-[390px] sm:max-w-[430px] lg:max-w-[450px] mx-auto z-10 my-16 sm:my-20 lg:my-0">
+          <div className="relative w-full max-w-[390px] sm:max-w-[420px] lg:max-w-[440px] mx-auto z-10 my-12 sm:my-16 lg:my-0">
             
             {/* Mobile 3D Illustration: Top (Books & Cap) - Placed clearly ABOVE the card */}
             <div
-              className="lg:hidden absolute -top-24 sm:-top-32 -left-2 sm:-left-6 w-44 sm:w-52 pointer-events-none select-none z-0"
+              className="lg:hidden absolute -top-20 sm:-top-28 -left-2 sm:-left-6 w-40 sm:w-48 pointer-events-none select-none z-0"
               style={{ animation: 'floatGentleLeft 5s ease-in-out infinite' }}
             >
               <img
@@ -324,7 +324,7 @@ export default function TestInterface({ test }: { test: any }) {
 
             {/* Mobile 3D Illustration: Bottom (Checklist & Clock) - Placed clearly BELOW the card */}
             <div
-              className="lg:hidden absolute -bottom-24 sm:-bottom-32 -right-2 sm:-right-6 w-48 sm:w-56 pointer-events-none select-none z-0"
+              className="lg:hidden absolute -bottom-20 sm:-bottom-28 -right-2 sm:-right-6 w-44 sm:w-52 pointer-events-none select-none z-0"
               style={{ animation: 'floatGentleRight 5s ease-in-out infinite' }}
             >
               <img
@@ -337,7 +337,7 @@ export default function TestInterface({ test }: { test: any }) {
 
             {/* Center Glassmorphic Quiz Card */}
             <div
-              className={`relative z-10 w-full rounded-[28px] overflow-hidden transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+              className={`relative z-10 w-full rounded-[24px] lg:rounded-[26px] overflow-hidden transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
               style={{
                 background: 'rgba(255, 255, 255, 0.88)',
                 backdropFilter: 'blur(24px)',
@@ -349,25 +349,25 @@ export default function TestInterface({ test }: { test: any }) {
               {/* Top soft blue gradient strip */}
               <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #1677FF, #4FC3FF)' }} />
 
-              <div className="p-5 sm:p-7 md:p-8 text-center">
+              <div className="p-4 sm:p-5 lg:p-6 text-center">
                 {/* Top Icon with radial halo */}
-                <div className="relative mx-auto mb-3 w-16 h-16 sm:w-18 sm:h-18 flex items-center justify-center">
-                  <div className="absolute inset-0 rounded-2xl" style={{ background: 'radial-gradient(circle, rgba(79, 195, 255, 0.4) 0%, rgba(22, 119, 255, 0) 70%)', transform: 'scale(1.3)' }} />
+                <div className="relative mx-auto mb-2 w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-2xl" style={{ background: 'radial-gradient(circle, rgba(79, 195, 255, 0.4) 0%, rgba(22, 119, 255, 0) 70%)', transform: 'scale(1.2)' }} />
                   <div
-                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center relative shadow-lg"
+                    className="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl flex items-center justify-center relative shadow-lg"
                     style={{
                       background: 'linear-gradient(135deg, #4FC3FF 0%, #1677FF 100%)',
-                      boxShadow: '0 10px 24px rgba(22, 119, 255, 0.3)'
+                      boxShadow: '0 8px 20px rgba(22, 119, 255, 0.28)'
                     }}
                   >
-                    <FileText size={26} className="text-white" />
+                    <FileText size={22} className="text-white" />
                   </div>
                 </div>
 
                 {/* Category pill badge */}
                 {test.subject && (
-                  <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full mb-3 text-xs font-bold" style={{ background: '#E8F2FF', color: '#1677FF', border: '1px solid #D0E4FF' }}>
-                    <Sparkles size={13} />
+                  <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full mb-2 text-xs font-bold" style={{ background: '#E8F2FF', color: '#1677FF', border: '1px solid #D0E4FF' }}>
+                    <Sparkles size={12} />
                     <span>{test.subject}</span>
                   </div>
                 )}
@@ -384,7 +384,7 @@ export default function TestInterface({ test }: { test: any }) {
                     titlePart2 = titleWords.slice(splitIdx).join(' ');
                   }
                   return (
-                    <h1 className="text-xl sm:text-2xl font-extrabold mb-1 leading-snug tracking-tight">
+                    <h1 className="text-lg sm:text-xl font-extrabold mb-1 leading-snug tracking-tight">
                       <span className="text-[#0F294D]">{titlePart1} </span>
                       {titlePart2 && <span className="text-[#1677FF]">{titlePart2}</span>}
                     </h1>
@@ -392,58 +392,58 @@ export default function TestInterface({ test }: { test: any }) {
                 })()}
 
                 {/* Subtitle */}
-                <p className="text-[#64748B] text-xs font-semibold uppercase tracking-wider mb-4">
+                <p className="text-[#64748B] text-[11px] font-semibold uppercase tracking-wider mb-3">
                   {test.mode === 'practice' ? 'Bài kiểm tra ôn luyện trực tuyến' : 'Bài thi trắc nghiệm trực tuyến'}
                 </p>
 
                 {/* Dual Stats Grid (Time & Question count) */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="grid grid-cols-2 gap-2.5 mb-3">
                   {/* Stat 1: Time */}
                   <div
-                    className="rounded-2xl p-3 text-center transition-all hover:scale-[1.02]"
+                    className="rounded-xl p-2 sm:p-2.5 text-center transition-all hover:scale-[1.02]"
                     style={{ background: '#EDF5FF', border: '1px solid #D9EAFE' }}
                   >
-                    <div className="w-7 h-7 rounded-lg mx-auto mb-1.5 flex items-center justify-center" style={{ background: 'rgba(22, 119, 255, 0.12)', color: '#1677FF' }}>
-                      <Clock size={15} />
+                    <div className="w-6 h-6 rounded-md mx-auto mb-1 flex items-center justify-center" style={{ background: 'rgba(22, 119, 255, 0.12)', color: '#1677FF' }}>
+                      <Clock size={13} />
                     </div>
-                    <div className="text-xl sm:text-2xl font-black text-[#1677FF] leading-none mb-1">
+                    <div className="text-lg sm:text-xl font-black text-[#1677FF] leading-none mb-0.5">
                       {test.timeLimit}
                     </div>
-                    <div className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">
+                    <div className="text-[9px] sm:text-[10px] font-bold text-[#64748B] uppercase tracking-wider">
                       Phút làm bài
                     </div>
                   </div>
 
                   {/* Stat 2: Total Questions */}
                   <div
-                    className="rounded-2xl p-3 text-center transition-all hover:scale-[1.02]"
+                    className="rounded-xl p-2 sm:p-2.5 text-center transition-all hover:scale-[1.02]"
                     style={{ background: '#EDFAF3', border: '1px solid #D1F2DF' }}
                   >
-                    <div className="w-7 h-7 rounded-lg mx-auto mb-1.5 flex items-center justify-center" style={{ background: 'rgba(34, 197, 94, 0.14)', color: '#22C55E' }}>
-                      <BarChart2 size={15} />
+                    <div className="w-6 h-6 rounded-md mx-auto mb-1 flex items-center justify-center" style={{ background: 'rgba(34, 197, 94, 0.14)', color: '#22C55E' }}>
+                      <BarChart2 size={13} />
                     </div>
-                    <div className="text-xl sm:text-2xl font-black text-[#22C55E] leading-none mb-1">
+                    <div className="text-lg sm:text-xl font-black text-[#22C55E] leading-none mb-0.5">
                       {test.questions.length}
                     </div>
-                    <div className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">
+                    <div className="text-[9px] sm:text-[10px] font-bold text-[#64748B] uppercase tracking-wider">
                       Tổng số câu
                     </div>
                   </div>
                 </div>
 
                 {/* Mode badge */}
-                <div className="flex justify-center mb-5">
+                <div className="flex justify-center mb-3">
                   <span
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold"
                     style={{
                       background: test.mode === 'practice' ? 'rgba(34,197,94,0.12)' : 'rgba(22,119,255,0.12)',
                       color: test.mode === 'practice' ? '#16A36A' : '#1677FF'
                     }}
                   >
                     {test.mode === 'practice' ? (
-                      <><BookOpen size={13} /> Ôn tập – Xem đáp án tức thì</>
+                      <><BookOpen size={12} /> Ôn tập – Xem đáp án tức thì</>
                     ) : (
-                      <><Clock size={13} /> Thi thử – Bấm giờ chuẩn</>
+                      <><Clock size={12} /> Thi thử – Bấm giờ chuẩn</>
                     )}
                   </span>
                 </div>
@@ -451,21 +451,21 @@ export default function TestInterface({ test }: { test: any }) {
                 {/* CTA Button */}
                 <button
                   onClick={() => setIsStarted(true)}
-                  className="w-full py-3 sm:py-3.5 px-6 rounded-full font-bold text-white text-sm sm:text-base transition-all active:scale-[0.98] flex items-center justify-center gap-2 group cursor-pointer"
+                  className="w-full py-2.5 sm:py-3 px-5 rounded-full font-bold text-white text-sm sm:text-base transition-all active:scale-[0.98] flex items-center justify-center gap-2 group cursor-pointer"
                   style={{
                     background: 'linear-gradient(90deg, #1677FF 0%, #288CFF 50%, #4FC3FF 100%)',
-                    boxShadow: '0 10px 24px rgba(22, 119, 255, 0.3)',
+                    boxShadow: '0 8px 20px rgba(22, 119, 255, 0.28)',
                     border: 'none'
                   }}
                 >
-                  <Play size={16} fill="currentColor" />
+                  <Play size={15} fill="currentColor" />
                   <span className="tracking-wide">Bắt Đầu Làm Bài</span>
-                  <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+                  <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
                 </button>
 
                 {/* Prominent Glowing Copyright Badge for Nhật Duy Y Khoa K26 */}
-                <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-1.5">
-                  <span className="text-[11px] font-medium text-[#64748B]">Bản quyền thuộc về</span>
+                <div className="mt-3.5 flex flex-col sm:flex-row items-center justify-center gap-1.5">
+                  <span className="text-[10px] sm:text-[11px] font-medium text-[#64748B]">Bản quyền thuộc về</span>
                   <div
                     className="relative inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black text-white shadow-md overflow-hidden group select-none cursor-default"
                     style={{

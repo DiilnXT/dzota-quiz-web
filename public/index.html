@@ -227,7 +227,9 @@
         BookOpen: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>,
         GraduationCap: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>,
         PenLine: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>,
-        BarChart2: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        BarChart2: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
+        HelpCircle: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
+        Loader: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
       };
 
       // --- UI COMPONENTS ---
@@ -386,6 +388,105 @@
         const [currentQIndex, setCurrentQIndex] = useState(0);
         const [toasts, setToasts] = useState([]);
         const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
+
+        // AI Giảng Viên Giải Thích States
+        const [activeExplainQ, setActiveExplainQ] = useState(null);
+        const [explainLoading, setExplainLoading] = useState(false);
+        const [explanationContent, setExplanationContent] = useState('');
+        const [explainError, setExplainError] = useState('');
+        const [explanationCache, setExplanationCache] = useState({});
+
+        // Handler hỏi giảng viên AI
+        const handleAskTeacher = async (q) => {
+          setActiveExplainQ(q);
+          setExplainError('');
+          if (explanationCache[q.id]) {
+            setExplanationContent(explanationCache[q.id]);
+            setExplainLoading(false);
+            return;
+          }
+          setExplainLoading(true);
+          setExplanationContent('');
+          try {
+            const res = await fetch('/api/explain-question', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                questionText: q.text,
+                options: q.options,
+                correctOption: q.correct,
+                selectedOption: userAnswers[q.id] || undefined,
+                subjectName: quizConfig.title || quizConfig.category || 'Trắc nghiệm'
+              })
+            });
+            const data = await res.json();
+            if (res.ok && data.explanation) {
+              setExplanationContent(data.explanation);
+              setExplanationCache(prev => ({ ...prev, [q.id]: data.explanation }));
+            } else {
+              setExplainError(data.error || 'Không thể nhận phản hồi từ giảng viên AI.');
+            }
+          } catch (err) {
+            setExplainError('Lỗi kết nối. Vui lòng kiểm tra lại mạng hoặc thử lại.');
+          } finally {
+            setExplainLoading(false);
+          }
+        };
+
+        // Render Markdown gọn gàng, định dạng in đậm chuẩn không lỗi **
+        const renderFormattedMarkdown = (text) => {
+          if (!text) return null;
+          const lines = text.split('\n');
+          return (
+            <div className="space-y-2 text-left leading-relaxed">
+              {lines.map((line, idx) => {
+                const trimmed = line.trim();
+                if (!trimmed) return <div key={idx} className="h-1.5" />;
+                const isHeading1 = trimmed.startsWith('Kiến thức liên quan cần biết') || trimmed.startsWith('1. Kiến thức') || trimmed.startsWith('**Kiến thức liên quan');
+                const isHeading2 = trimmed.startsWith('Tại sao chọn') || trimmed.startsWith('2. Tại sao chọn') || trimmed.startsWith('**Tại sao chọn');
+                const isHeading3 = trimmed.startsWith('Các phương án còn lại') || trimmed.startsWith('3. Các phương án') || trimmed.startsWith('**Các phương án còn lại');
+
+                const parts = line.split(/(\*\*.*?\*\*)/g);
+                const renderedLine = parts.map((part, pIdx) => {
+                  if (part.startsWith('**') && part.endsWith('**')) {
+                    return <strong key={pIdx} className="font-extrabold text-indigo-900">{part.slice(2, -2)}</strong>;
+                  }
+                  return <span key={pIdx}>{part}</span>;
+                });
+
+                if (isHeading1) {
+                  return (
+                    <div key={idx} className="mt-3 pt-2 text-sm sm:text-base font-extrabold text-blue-700 flex items-center gap-2 border-b border-blue-100 pb-1">
+                      <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                      {renderedLine}
+                    </div>
+                  );
+                }
+                if (isHeading2) {
+                  return (
+                    <div key={idx} className="mt-4 pt-2 text-sm sm:text-base font-extrabold text-emerald-700 flex items-center gap-2 border-b border-emerald-100 pb-1">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                      {renderedLine}
+                    </div>
+                  );
+                }
+                if (isHeading3) {
+                  return (
+                    <div key={idx} className="mt-4 pt-2 text-sm sm:text-base font-extrabold text-rose-700 flex items-center gap-2 border-b border-rose-100 pb-1">
+                      <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                      {renderedLine}
+                    </div>
+                  );
+                }
+                return (
+                  <p key={idx} className="text-xs sm:text-sm text-slate-700">
+                    {renderedLine}
+                  </p>
+                );
+              })}
+            </div>
+          );
+        };
 
         // --- UI HELPERS ---
         const addToast = (message, type = 'info', duration = 3000) => {
@@ -1301,7 +1402,7 @@
 
           return (
             <div
-              className="min-h-screen w-full flex items-center justify-center p-4 py-24 sm:py-32 md:p-8 relative overflow-x-hidden font-sans"
+              className="min-h-screen lg:h-screen lg:max-h-screen w-full flex items-center justify-center p-3 sm:p-4 py-12 sm:py-16 lg:py-2 md:p-4 lg:p-4 relative overflow-x-hidden lg:overflow-hidden font-sans"
               style={{ background: 'radial-gradient(circle at 50% 30%, #E8F2FF 0%, #F5F9FF 55%, #FFFFFF 100%)' }}
             >
               {/* Blurred background decorative ambient blobs */}
@@ -1309,38 +1410,38 @@
               <div className="absolute bottom-0 right-0 w-96 h-96 sm:w-[450px] sm:h-[450px] rounded-full pointer-events-none" style={{ background: '#9BC8FF', opacity: 0.25, filter: 'blur(60px)', transform: 'translate(25%, 25%)' }} />
 
               {/* Decorative Dot grids */}
-              <div className="absolute top-8 right-8 hidden md:grid" style={{ gridTemplateColumns: 'repeat(4,14px)', gap: '14px', opacity: 0.55 }}>
+              <div className="absolute top-6 right-8 hidden md:grid" style={{ gridTemplateColumns: 'repeat(4,14px)', gap: '14px', opacity: 0.55 }}>
                 {Array.from({ length: 16 }).map((_, i) => (
                   <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: '#69A7FF' }} />
                 ))}
               </div>
-              <div className="absolute bottom-8 left-8 hidden md:grid" style={{ gridTemplateColumns: 'repeat(4,14px)', gap: '14px', opacity: 0.4 }}>
+              <div className="absolute bottom-6 left-8 hidden md:grid" style={{ gridTemplateColumns: 'repeat(4,14px)', gap: '14px', opacity: 0.4 }}>
                 {Array.from({ length: 16 }).map((_, i) => (
                   <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: '#69A7FF' }} />
                 ))}
               </div>
 
               {/* Main Responsive Composition */}
-              <div className="relative w-full flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-10 xl:gap-14 py-4 sm:py-6" style={{ maxWidth: 1280 }}>
+              <div className="relative w-full flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-6 xl:gap-10 py-1" style={{ maxWidth: 1050 }}>
                 
                 {/* Left 3D Illustration (Desktop Only) */}
-                <div className="hidden lg:flex flex-1 justify-end items-center select-none" style={{ maxWidth: 360 }}>
-                  <div className="relative w-full max-w-[340px]" style={{ animation: 'floatGentleLeft 6s ease-in-out infinite' }}>
+                <div className="hidden lg:flex flex-1 justify-end items-center select-none" style={{ maxWidth: 240 }}>
+                  <div className="relative w-full max-w-[200px] xl:max-w-[230px]" style={{ animation: 'floatGentleLeft 6s ease-in-out infinite' }}>
                     <img
                       src="/illustration-left.png"
                       alt="3D Study Artwork"
                       className="w-full h-auto object-contain pointer-events-none"
-                      style={{ filter: 'drop-shadow(0 20px 30px rgba(22, 119, 255, 0.12))' }}
+                      style={{ filter: 'drop-shadow(0 15px 25px rgba(22, 119, 255, 0.12))' }}
                     />
                   </div>
                 </div>
 
                 {/* Center Glassmorphic Quiz Card Wrapper (with mobile 3D floating decorations) */}
-                <div className="relative w-full max-w-[440px] sm:max-w-[480px] lg:max-w-[500px] mx-auto z-10 my-16 sm:my-20">
+                <div className="relative w-full max-w-[390px] sm:max-w-[420px] lg:max-w-[440px] mx-auto z-10 my-12 sm:my-16 lg:my-0">
                   
                   {/* Mobile 3D Illustration: Top (Books & Cap) - Placed clearly ABOVE the card */}
                   <div
-                    className="lg:hidden absolute -top-28 sm:-top-36 -left-2 sm:-left-6 w-48 sm:w-56 pointer-events-none select-none z-0"
+                    className="lg:hidden absolute -top-20 sm:-top-28 -left-2 sm:-left-6 w-40 sm:w-48 pointer-events-none select-none z-0"
                     style={{ animation: 'floatGentleLeft 5s ease-in-out infinite' }}
                   >
                     <img
@@ -1353,7 +1454,7 @@
 
                   {/* Mobile 3D Illustration: Bottom (Checklist & Clock) - Placed clearly BELOW the card */}
                   <div
-                    className="lg:hidden absolute -bottom-28 sm:-bottom-36 -right-2 sm:-right-6 w-52 sm:w-60 pointer-events-none select-none z-0"
+                    className="lg:hidden absolute -bottom-20 sm:-bottom-28 -right-2 sm:-right-6 w-44 sm:w-52 pointer-events-none select-none z-0"
                     style={{ animation: 'floatGentleRight 5s ease-in-out infinite' }}
                   >
                     <img
@@ -1366,80 +1467,80 @@
 
                   {/* Center Glassmorphic Quiz Card */}
                   <div
-                    className="relative z-10 w-full rounded-[32px] overflow-hidden transition-all duration-500 animate-pop-in"
+                    className="relative z-10 w-full rounded-[24px] lg:rounded-[26px] overflow-hidden transition-all duration-500 animate-pop-in"
                     style={{
                       background: 'rgba(255, 255, 255, 0.88)',
                       backdropFilter: 'blur(24px)',
                       WebkitBackdropFilter: 'blur(24px)',
                       border: '1.5px solid rgba(255, 255, 255, 0.95)',
-                      boxShadow: '0 25px 60px -10px rgba(22, 119, 255, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.6) inset'
+                      boxShadow: '0 20px 50px -10px rgba(22, 119, 255, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.6) inset'
                     }}
                   >
                     {/* Top soft blue gradient strip */}
-                    <div className="h-2 w-full" style={{ background: 'linear-gradient(90deg, #1677FF, #4FC3FF)' }} />
+                    <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #1677FF, #4FC3FF)' }} />
 
-                    <div className="p-6 sm:p-8 md:p-10 text-center">
+                    <div className="p-4 sm:p-5 lg:p-6 text-center">
                       {/* Top Icon with radial halo */}
-                      <div className="relative mx-auto mb-4 w-20 h-20 sm:w-22 sm:h-22 flex items-center justify-center">
-                        <div className="absolute inset-0 rounded-3xl" style={{ background: 'radial-gradient(circle, rgba(79, 195, 255, 0.4) 0%, rgba(22, 119, 255, 0) 70%)', transform: 'scale(1.4)' }} />
+                      <div className="relative mx-auto mb-2 w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center">
+                        <div className="absolute inset-0 rounded-2xl" style={{ background: 'radial-gradient(circle, rgba(79, 195, 255, 0.4) 0%, rgba(22, 119, 255, 0) 70%)', transform: 'scale(1.2)' }} />
                         <div
-                          className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl flex items-center justify-center relative shadow-lg"
+                          className="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl flex items-center justify-center relative shadow-lg"
                           style={{
                             background: 'linear-gradient(135deg, #4FC3FF 0%, #1677FF 100%)',
-                            boxShadow: '0 12px 28px rgba(22, 119, 255, 0.32)'
+                            boxShadow: '0 8px 20px rgba(22, 119, 255, 0.28)'
                           }}
                         >
-                          {quizConfig.quizType === 'bank' ? <Icons.Folder size={32} className="text-white" /> : <Icons.FileText size={32} className="text-white" />}
+                          {quizConfig.quizType === 'bank' ? <Icons.Folder size={22} className="text-white" /> : <Icons.FileText size={22} className="text-white" />}
                         </div>
                       </div>
 
                       {/* Category pill badge */}
-                      <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full mb-3 text-xs font-bold" style={{ background: '#E8F2FF', color: '#1677FF', border: '1px solid #D0E4FF' }}>
-                        <Icons.Sparkles size={13} />
+                      <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full mb-2 text-xs font-bold" style={{ background: '#E8F2FF', color: '#1677FF', border: '1px solid #D0E4FF' }}>
+                        <Icons.Sparkles size={12} />
                         <span>{quizConfig.category || 'Trắc nghiệm'}</span>
                       </div>
 
                       {/* Quiz Title with Dual Color */}
-                      <h1 className="text-2xl sm:text-3xl font-extrabold mb-1.5 leading-snug tracking-tight">
+                      <h1 className="text-lg sm:text-xl font-extrabold mb-1 leading-snug tracking-tight">
                         <span className="text-[#0F294D]">{titlePart1} </span>
                         {titlePart2 && <span className="text-[#1677FF]">{titlePart2}</span>}
                       </h1>
 
                       {/* Subtitle */}
-                      <p className="text-[#64748B] text-xs sm:text-sm font-semibold uppercase tracking-wider mb-6">
+                      <p className="text-[#64748B] text-[11px] font-semibold uppercase tracking-wider mb-3">
                         {quizConfig.mode === 'practice' ? 'Bài kiểm tra ôn luyện trực tuyến' : 'Bài thi trắc nghiệm trực tuyến'}
                       </p>
 
                       {/* Dual Stats Grid (Time & Question count) */}
-                      <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
+                      <div className="grid grid-cols-2 gap-2.5 mb-3">
                         {/* Stat 1: Time */}
                         <div
-                          className="rounded-2xl p-3.5 sm:p-4 text-center transition-all hover:scale-[1.02]"
+                          className="rounded-xl p-2 sm:p-2.5 text-center transition-all hover:scale-[1.02]"
                           style={{ background: '#EDF5FF', border: '1px solid #D9EAFE' }}
                         >
-                          <div className="w-8 h-8 rounded-xl mx-auto mb-2 flex items-center justify-center" style={{ background: 'rgba(22, 119, 255, 0.12)', color: '#1677FF' }}>
-                            <Icons.Clock size={16} />
+                          <div className="w-6 h-6 rounded-md mx-auto mb-1 flex items-center justify-center" style={{ background: 'rgba(22, 119, 255, 0.12)', color: '#1677FF' }}>
+                            <Icons.Clock size={13} />
                           </div>
-                          <div className="text-2xl sm:text-3xl font-black text-[#1677FF] leading-none mb-1">
+                          <div className="text-lg sm:text-xl font-black text-[#1677FF] leading-none mb-0.5">
                             {quizConfig.timeLimit}
                           </div>
-                          <div className="text-[10px] sm:text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
+                          <div className="text-[9px] sm:text-[10px] font-bold text-[#64748B] uppercase tracking-wider">
                             Phút làm bài
                           </div>
                         </div>
 
                         {/* Stat 2: Total Questions */}
                         <div
-                          className="rounded-2xl p-3.5 sm:p-4 text-center transition-all hover:scale-[1.02]"
+                          className="rounded-xl p-2 sm:p-2.5 text-center transition-all hover:scale-[1.02]"
                           style={{ background: '#EDFAF3', border: '1px solid #D1F2DF' }}
                         >
-                          <div className="w-8 h-8 rounded-xl mx-auto mb-2 flex items-center justify-center" style={{ background: 'rgba(34, 197, 94, 0.14)', color: '#22C55E' }}>
-                            <Icons.BarChart2 size={16} />
+                          <div className="w-6 h-6 rounded-md mx-auto mb-1 flex items-center justify-center" style={{ background: 'rgba(34, 197, 94, 0.14)', color: '#22C55E' }}>
+                            <Icons.BarChart2 size={13} />
                           </div>
-                          <div className="text-2xl sm:text-3xl font-black text-[#22C55E] leading-none mb-1">
+                          <div className="text-lg sm:text-xl font-black text-[#22C55E] leading-none mb-0.5">
                             {totalQuestions}
                           </div>
-                          <div className="text-[10px] sm:text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
+                          <div className="text-[9px] sm:text-[10px] font-bold text-[#64748B] uppercase tracking-wider">
                             Tổng số câu
                           </div>
                         </div>
@@ -1447,22 +1548,22 @@
 
                       {/* Password block if protected */}
                       {quizConfig.password && (
-                        <div className="mb-6 w-full text-left animate-fade-in">
-                          <div className="bg-[#FEF7E0] border border-[#FCE8B2] rounded-2xl p-3.5 mb-3">
-                            <div className="flex items-start gap-2.5">
-                              <div className="bg-[#FEF0B7] text-[#B06000] p-1.5 rounded-lg flex-shrink-0">
-                                <Icons.Crown size={18} />
+                        <div className="mb-4 w-full text-left animate-fade-in">
+                          <div className="bg-[#FEF7E0] border border-[#FCE8B2] rounded-2xl p-2.5 mb-2">
+                            <div className="flex items-start gap-2">
+                              <div className="bg-[#FEF0B7] text-[#B06000] p-1 rounded-lg flex-shrink-0">
+                                <Icons.Crown size={15} />
                               </div>
                               <div className="w-full">
                                 <h4 className="text-[#804200] font-bold text-xs mb-0.5">Yêu Cầu Mật Khẩu</h4>
-                                <p className="text-[#804200]/90 text-[11px] leading-relaxed mb-2">Liên hệ Quản trị viên để nhận mật khẩu bài thi này.</p>
+                                <p className="text-[#804200]/90 text-[10px] leading-relaxed mb-1.5">Liên hệ Quản trị viên để nhận mật khẩu bài thi này.</p>
                                 <a
                                   href="https://zalo.me/0914659511"
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center justify-center gap-1.5 text-white bg-[#0068FF] hover:bg-[#0052CC] px-3.5 py-1.5 text-xs font-bold w-full rounded-full shadow-xs transition-all"
+                                  className="inline-flex items-center justify-center gap-1 text-white bg-[#0068FF] hover:bg-[#0052CC] px-2.5 py-1 text-[11px] font-bold w-full rounded-full shadow-xs transition-all"
                                 >
-                                  <Icons.MessageCircle size={14} /> Nhắn tin Zalo Admin
+                                  <Icons.MessageCircle size={13} /> Nhắn tin Zalo Admin
                                 </a>
                               </div>
                             </div>
@@ -1471,12 +1572,12 @@
                             <input
                               type="password"
                               placeholder="Nhập mật khẩu bài test"
-                              className="w-full p-3 pl-10 bg-white border border-[#DADCE0] rounded-2xl text-sm font-medium text-[#102A56] outline-none focus:border-[#1677FF] focus:ring-2 focus:ring-[#1677FF]/20 transition-all"
+                              className="w-full p-2.5 pl-9 bg-white border border-[#DADCE0] rounded-xl text-xs font-medium text-[#102A56] outline-none focus:border-[#1677FF] focus:ring-2 focus:ring-[#1677FF]/20 transition-all"
                               value={accessPassword}
                               onChange={e => setAccessPassword(e.target.value)}
                             />
-                            <div className="absolute left-3 top-3 text-[#64748B]">
-                              <Icons.Lock size={16} />
+                            <div className="absolute left-2.5 top-2.5 text-[#64748B]">
+                              <Icons.Lock size={14} />
                             </div>
                           </div>
                         </div>
@@ -1485,22 +1586,22 @@
                       {/* CTA Button */}
                       <button
                         onClick={startQuiz}
-                        className="w-full py-3.5 sm:py-4 px-6 rounded-full font-bold text-white text-base sm:text-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2.5 group cursor-pointer"
+                        className="w-full py-2.5 sm:py-3 px-5 rounded-full font-bold text-white text-sm sm:text-base transition-all active:scale-[0.98] flex items-center justify-center gap-2 group cursor-pointer"
                         style={{
                           background: 'linear-gradient(90deg, #1677FF 0%, #288CFF 50%, #4FC3FF 100%)',
-                          boxShadow: '0 12px 28px rgba(22, 119, 255, 0.32)'
+                          boxShadow: '0 8px 20px rgba(22, 119, 255, 0.28)'
                         }}
                       >
-                        <Icons.Play size={18} fill="currentColor" />
+                        <Icons.Play size={15} fill="currentColor" />
                         <span className="tracking-wide">Bắt Đầu Làm Bài</span>
-                        <Icons.ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
+                        <Icons.ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
                       </button>
 
                       {/* Prominent Glowing Copyright Badge for Nhật Duy Y Khoa K26 */}
-                      <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-2">
-                        <span className="text-xs font-medium text-[#64748B]">Bản quyền thuộc về</span>
+                      <div className="mt-3.5 flex flex-col sm:flex-row items-center justify-center gap-1.5">
+                        <span className="text-[10px] sm:text-[11px] font-medium text-[#64748B]">Bản quyền thuộc về</span>
                         <div
-                          className="relative inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-black text-white shadow-md overflow-hidden group select-none cursor-default"
+                          className="relative inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black text-white shadow-md overflow-hidden group select-none cursor-default"
                           style={{
                             background: 'linear-gradient(135deg, #0958D9 0%, #1677FF 50%, #4096FF 100%)',
                             boxShadow: '0 4px 16px rgba(22, 119, 255, 0.45), 0 0 20px rgba(79, 195, 255, 0.3)',
@@ -1520,13 +1621,13 @@
                 </div>
 
                 {/* Right 3D Illustration (Desktop Only) */}
-                <div className="hidden lg:flex flex-1 justify-start items-center select-none" style={{ maxWidth: 360 }}>
-                  <div className="relative w-full max-w-[340px]" style={{ animation: 'floatGentleRight 6s ease-in-out infinite' }}>
+                <div className="hidden lg:flex flex-1 justify-start items-center select-none" style={{ maxWidth: 240 }}>
+                  <div className="relative w-full max-w-[200px] xl:max-w-[230px]" style={{ animation: 'floatGentleRight 6s ease-in-out infinite' }}>
                     <img
                       src="/illustration-right.png"
                       alt="3D Exam Checklist Artwork"
                       className="w-full h-auto object-contain pointer-events-none"
-                      style={{ filter: 'drop-shadow(0 20px 30px rgba(22, 119, 255, 0.12))' }}
+                      style={{ filter: 'drop-shadow(0 15px 25px rgba(22, 119, 255, 0.12))' }}
                     />
                   </div>
                 </div>
@@ -1586,9 +1687,35 @@
                     ))}
                   </div>
 
+                  {/* Practice Feedback Bar & Nút Hỏi Giảng Viên AI (?) */}
+                  {isPractice && isSelected && (
+                    <div className="mt-4 pt-3.5 border-t border-[#dadce0]/70 flex flex-wrap items-center justify-between gap-2.5 animate-fade-in">
+                      <div className="text-xs font-semibold flex items-center gap-1.5">
+                        {status === 'correct' ? (
+                          <span className="text-[#137333] font-bold flex items-center gap-1 bg-[#e6f4ea] px-2.5 py-1 rounded-full border border-[#ceead6]">
+                            <Icons.Check size={14} /> Chính xác!
+                          </span>
+                        ) : (
+                          <span className="text-[#c5221f] font-bold flex items-center gap-1 bg-[#fce8e6] px-2.5 py-1 rounded-full border border-[#fad2cf]">
+                            <Icons.X size={14} /> Chưa đúng. Đáp án chuẩn: {q.correct}
+                          </span>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => handleAskTeacher(q)}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#1a73e8] to-[#1557b0] text-white font-bold text-xs shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+                        title="Hỏi giảng viên AI giải thích chi tiết"
+                      >
+                        <Icons.HelpCircle size={15} />
+                        <span>Giải thích (?)</span>
+                      </button>
+                    </div>
+                  )}
+
                   {/* Practice Requeue Bar */}
                   {isPractice && status === 'incorrect' && (
-                      <div className="mt-5 p-3.5 sm:p-4 rounded-2xl bg-[#fef7e0] border border-[#fce8b2] animate-fade-in">
+                      <div className="mt-4 p-3.5 sm:p-4 rounded-2xl bg-[#fef7e0] border border-[#fce8b2] animate-fade-in">
                           <div className="text-[#804200] text-xs font-bold flex items-center gap-1.5 mb-2.5 uppercase tracking-wider">
                              <Icons.Repeat size={14} className="text-[#b06000]"/> Ôn tập lại câu này sau:
                           </div>
@@ -1826,6 +1953,155 @@
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* POPUP GIẢI THÍCH CHUYÊN NGHIỆP CỦA GIẢNG VIÊN AI */}
+            {activeExplainQ && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+                <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-pop-in">
+                  {/* Modal Header */}
+                  <div className="px-5 sm:px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-blue-50/70 via-indigo-50/70 to-purple-50/70 flex items-center justify-between flex-shrink-0">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md">
+                        <Icons.Sparkles size={18} />
+                      </div>
+                      <div>
+                        <h3 className="text-sm sm:text-base font-bold text-slate-800 leading-tight flex items-center gap-1.5">
+                          <span>Giảng Viên AI Giải Thích</span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-700 uppercase tracking-wide">
+                            Dzota AI
+                          </span>
+                        </h3>
+                        <p className="text-[11px] text-slate-500">
+                          Phân tích chuyên sâu • Kiến thức cốt lõi
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setActiveExplainQ(null)}
+                      className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer"
+                      title="Đóng và tiếp tục học"
+                    >
+                      <Icons.X size={18} />
+                    </button>
+                  </div>
+
+                  {/* Modal Body */}
+                  <div className="p-5 sm:p-6 overflow-y-auto space-y-4 flex-1">
+                    {/* Question Summary Box */}
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+                      <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                        Câu hỏi đang xét:
+                      </div>
+                      <div className="text-sm sm:text-[15px] font-semibold text-slate-800 leading-relaxed">
+                        <MathText text={activeExplainQ.text} />
+                      </div>
+
+                      {/* 4 Options Preview */}
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-200/60">
+                        {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(optKey => {
+                          if (!activeExplainQ.options[optKey]) return null;
+                          const isCorrect = activeExplainQ.correct === optKey;
+                          const isUserPick = userAnswers[activeExplainQ.id] === optKey;
+
+                          return (
+                            <div
+                              key={optKey}
+                              className={`p-2 sm:p-2.5 rounded-xl border text-xs flex items-center gap-2 ${
+                                isCorrect
+                                  ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold'
+                                  : isUserPick
+                                  ? 'bg-rose-50 border-rose-300 text-rose-800 font-medium'
+                                  : 'bg-white border-slate-200 text-slate-600'
+                              }`}
+                            >
+                              <span
+                                className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+                                  isCorrect
+                                    ? 'bg-emerald-600 text-white'
+                                    : isUserPick
+                                    ? 'bg-rose-600 text-white'
+                                    : 'bg-slate-100 text-slate-600'
+                                }`}
+                              >
+                                {optKey}
+                              </span>
+                              <span className="truncate flex-1">
+                                <MathText text={activeExplainQ.options[optKey]} />
+                              </span>
+                              {isCorrect && (
+                                <span className="text-[10px] font-bold text-emerald-600 ml-auto whitespace-nowrap">
+                                  ✓ Đáp án đúng
+                                </span>
+                              )}
+                              {!isCorrect && isUserPick && (
+                                <span className="text-[10px] font-bold text-rose-600 ml-auto whitespace-nowrap">
+                                  ✗ Bạn chọn
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* AI Loading State */}
+                    {explainLoading && (
+                      <div className="py-10 text-center flex flex-col items-center justify-center animate-pulse">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 mb-4 animate-bounce">
+                          <Icons.Sparkles size={28} />
+                        </div>
+                        <h4 className="text-base sm:text-lg font-bold text-slate-800 mb-1">
+                          Đang hỏi giảng viên, chờ xíu nhé bây bii ✨
+                        </h4>
+                        <p className="text-xs sm:text-sm text-slate-500 max-w-sm">
+                          AI đang tra cứu tài liệu y khoa &amp; biên soạn lời giải thích chi tiết cho bạn...
+                        </p>
+                      </div>
+                    )}
+
+                    {/* AI Error State */}
+                    {explainError && !explainLoading && (
+                      <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-center">
+                        <div className="text-rose-600 font-bold text-sm mb-1">
+                          {explainError}
+                        </div>
+                        <p className="text-xs text-rose-500 mb-3">
+                          Vui lòng kiểm tra lại cấu hình Gemini API Key trong cài đặt Admin.
+                        </p>
+                        <button
+                          onClick={() => handleAskTeacher(activeExplainQ)}
+                          className="px-4 py-1.5 rounded-full bg-rose-600 text-white text-xs font-bold shadow-sm hover:bg-rose-700 transition-colors"
+                        >
+                          Thử lại ngay
+                        </button>
+                      </div>
+                    )}
+
+                    {/* AI Explanation Content */}
+                    {explanationContent && !explainLoading && (
+                      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-slate-50/60 to-blue-50/20 border border-blue-100 shadow-xs animate-fade-in">
+                        {renderFormattedMarkdown(explanationContent)}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Modal Footer */}
+                  <div className="px-5 sm:px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between flex-shrink-0">
+                    <span className="text-[11px] text-slate-400 font-medium">
+                      Bản quyền <strong className="text-slate-600">Nhật Duy Y Khoa K26</strong>
+                    </span>
+                    <button
+                      onClick={() => setActiveExplainQ(null)}
+                      className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold shadow-sm active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span>Đã hiểu, học tiếp</span>
+                      <Icons.ArrowRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
 
             {appMode === 'home' && renderHome()}
