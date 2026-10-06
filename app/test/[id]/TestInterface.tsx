@@ -18,7 +18,9 @@ import {
   X,
   Loader2,
   Check,
-  Lightbulb
+  Lightbulb,
+  RotateCcw,
+  CheckSquare
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -371,6 +373,37 @@ export default function TestInterface({ test }: { test: any }) {
     }
   }
 
+  const handleRestartPractice = () => {
+    if (confirm('Làm lại từ đầu?\n\nToàn bộ các đáp án đã chọn sẽ được xóa và bạn sẽ bắt đầu lại từ đầu bài test. Bạn có chắc chắn không?')) {
+      handleStartTest(false)
+    }
+  }
+
+  const handlePracticeSubmit = () => {
+    const answeredCount = Object.keys(answers).length
+    const totalCount = test.questions?.length || 0
+    if (confirm(`Nộp bài & xem điểm?\n\nBạn đã trả lời ${answeredCount}/${totalCount} câu hỏi. Bạn có chắc muốn nộp bài để xem kết quả chi tiết?`)) {
+      handleSubmit()
+    }
+  }
+
+  const renderCopyrightBadge = (className = "") => (
+    <div className={`flex items-center justify-center my-3 select-none ${className}`}>
+      <div className="relative group p-[2px] rounded-full dzota-animated-gradient-border shadow-[0_4px_20px_rgba(236,72,153,0.35)] transition-all hover:scale-105 active:scale-95">
+        <div className="px-4 sm:px-5 py-1.5 sm:py-2 rounded-full bg-slate-950/85 backdrop-blur-xl flex items-center gap-2 sm:gap-2.5 border border-white/10">
+          <span className="text-sm sm:text-base inline-block animate-[crownFloat_2.5s_ease-in-out_infinite] filter drop-shadow">👑</span>
+          <span className="text-[11px] sm:text-xs font-semibold text-slate-200 tracking-wide">
+            Bản quyền thuộc về{' '}
+            <span className="font-black tracking-wide dzota-animated-gradient-text text-xs sm:text-sm">
+              Nhật Duy — Y Khoa K26
+            </span>
+          </span>
+          <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        </div>
+      </div>
+    </div>
+  )
+
   if (!test.isActive) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#F2F2F7]">
@@ -420,7 +453,7 @@ export default function TestInterface({ test }: { test: any }) {
             >
               Xác Nhận
             </button>
-            <p className="mt-6 text-xs text-[#64748B]">Bản quyền thuộc về <span className="font-bold text-[#102A56]">Nhật Duy Y Khoa K26</span></p>
+            {renderCopyrightBadge('mt-6')}
           </form>
         </div>
       </div>
@@ -540,12 +573,7 @@ export default function TestInterface({ test }: { test: any }) {
             </button>
 
             {/* Copyright Badge */}
-            <div className="mt-4 flex items-center justify-center">
-              <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/70 hover:bg-white/90 backdrop-blur-md border border-blue-100 text-[#1D68EE] text-xs font-bold shadow-xs transition-all">
-                <span>👑</span>
-                <span className="font-extrabold tracking-wide">Nhật Duy Y Khoa K26</span>
-              </div>
-            </div>
+            {renderCopyrightBadge('mt-4')}
 
           </div>
         </div>
@@ -663,6 +691,7 @@ export default function TestInterface({ test }: { test: any }) {
             )
           })}
         </div>
+        {renderCopyrightBadge('mt-6 mb-4')}
 
         {/* ─── POPUP GIẢI THÍCH CHUYÊN NGHIỆP CỦA GIẢNG VIÊN AI KHI XEM KẾT QUẢ ─── */}
         {activeExplainQ && (
@@ -844,17 +873,59 @@ export default function TestInterface({ test }: { test: any }) {
           <span>{restoredToast}</span>
         </div>
       )}
-      <header className="bg-white/90 backdrop-blur-md border-b border-white/80 px-4 py-3 flex justify-between items-center fixed top-0 w-full z-20 shadow-xs">
-        <div className="font-bold text-slate-800 truncate max-w-[50%]">{test.title}</div>
-        {test.mode === 'exam' ? (
-          <div className="flex items-center gap-3">
-            <div className={`font-mono text-[17px] font-bold flex items-center gap-1.5 px-3 py-1.5 rounded-full ${timeLeft < 60 ? 'bg-[#fce8e6] text-[#c5221f] animate-pulse' : 'bg-white/80 border border-slate-200/60 text-slate-800'}`}>
-              <Clock size={16}/> {formatTime(timeLeft)}
+      <header className="bg-white/90 backdrop-blur-md border-b border-white/80 px-3 sm:px-6 py-2.5 flex justify-between items-center fixed top-0 w-full z-20 shadow-xs">
+        {/* Khung tên bài thi nổi bật thay vì màu trắng */}
+        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 max-w-[45%] sm:max-w-[48%] px-2.5 sm:px-3.5 py-1.5 rounded-2xl bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 border border-blue-400/30 shadow-[0_4px_16px_rgba(26,115,232,0.25)]">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-cyan-400 via-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold flex-shrink-0 shadow-md">
+            <Sparkles size={16} />
+          </div>
+          <div className="min-w-0">
+            <div className="font-black text-white text-xs sm:text-sm leading-tight truncate drop-shadow-xs">{test.title}</div>
+            <div className="text-[9px] sm:text-[10px] font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+              <span>{test.mode === 'exam' ? 'Bài thi trắc nghiệm' : 'Chế độ luyện tập'}</span>
             </div>
-            <button onClick={handleSubmit} className="bg-[#007AFF] text-white px-4 py-1.5 rounded-full font-semibold text-sm hover:bg-blue-600 transition-colors cursor-pointer">Nộp Bài</button>
+          </div>
+        </div>
+
+        {/* Khung số câu đã làm trên n câu & Controls */}
+        {test.mode === 'exam' ? (
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-black shadow-[0_4px_14px_rgba(13,148,136,0.35)] border border-white/20 whitespace-nowrap">
+              <CheckCircle size={14} className="text-cyan-200 hidden xs:inline" />
+              <span>Đã làm <strong className="text-yellow-300 font-extrabold">{Object.keys(answers).length}</strong>/{test.questions.length}</span>
+            </div>
+            <div className={`font-mono text-xs sm:text-sm font-bold flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full ${timeLeft < 60 ? 'bg-[#fce8e6] text-[#c5221f] animate-pulse' : 'bg-white/90 border border-slate-200/80 text-slate-800'}`}>
+              <Clock size={15}/> {formatTime(timeLeft)}
+            </div>
+            <button onClick={handleSubmit} className="bg-[#007AFF] text-white px-3 sm:px-4 py-1.5 rounded-full font-bold text-xs sm:text-sm hover:bg-blue-600 transition-colors cursor-pointer shadow-xs active:scale-95">Nộp Bài</button>
           </div>
         ) : (
-          <div className="text-xs font-bold bg-[#e8f0fe] text-[#1967d2] border border-[#d2e3fc] px-3 py-1.5 rounded-full">Chế độ luyện tập</div>
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            {/* Khung số câu đã làm trên n câu */}
+            <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white text-xs font-black shadow-[0_4px_14px_rgba(79,70,229,0.35)] border border-white/25 whitespace-nowrap">
+              <span className="text-cyan-200 hidden sm:inline">Đã làm</span>
+              <span className="text-yellow-300 font-extrabold">{Object.keys(answers).length}</span>
+              <span className="text-white font-extrabold">/{test.questions.length}</span>
+              <span className="text-cyan-200 text-[10px] hidden xs:inline">câu</span>
+            </div>
+            <button
+              onClick={handleRestartPractice}
+              className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-bold bg-white/90 hover:bg-slate-100 border border-slate-300 text-slate-700 shadow-xs active:scale-95 transition-all cursor-pointer"
+              title="Xóa làm lại từ đầu"
+            >
+              <RotateCcw size={13} />
+              <span className="hidden sm:inline">Làm lại</span>
+            </button>
+            <button
+              onClick={handlePracticeSubmit}
+              className="inline-flex items-center gap-1 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-xs font-bold bg-[#007AFF] hover:bg-blue-600 text-white shadow-xs active:scale-95 transition-all cursor-pointer"
+              title="Nộp bài và xem điểm ngay"
+            >
+              <CheckSquare size={14} />
+              <span>Nộp Bài</span>
+            </button>
+          </div>
         )}
       </header>
 
@@ -926,12 +997,24 @@ export default function TestInterface({ test }: { test: any }) {
           )
         })}
         {test.mode === 'practice' && (
-           <div className="text-center pt-4">
-             <button onClick={handleSubmit} className="bg-[#007AFF] text-white px-8 py-3 rounded-xl font-bold text-lg hover:bg-blue-600 transition-colors">
-               Kết Thúc &amp; Xem Điểm
+           <div className="pt-4 pb-8 flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
+             <button
+               onClick={handleRestartPractice}
+               className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm bg-white border-2 border-slate-300 text-slate-700 hover:bg-slate-50 shadow-xs active:scale-95 transition-all cursor-pointer"
+             >
+               <RotateCcw size={16} />
+               <span>Làm Lại Từ Đầu</span>
+             </button>
+             <button
+               onClick={handlePracticeSubmit}
+               className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm bg-[#007AFF] hover:bg-blue-600 text-white shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
+             >
+               <CheckSquare size={16} />
+               <span>Nộp Bài &amp; Xem Điểm</span>
              </button>
            </div>
         )}
+        {renderCopyrightBadge('my-4')}
       </div>
 
       {/* ─── POPUP GIẢI THÍCH CHUYÊN NGHIỆP CỦA GIẢNG VIÊN AI ─────────────────── */}

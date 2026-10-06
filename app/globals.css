@@ -47,4 +47,42 @@ body {
   background: #334155;
 }
 
+/* Animated Gradient & Glowing Styles for Dzota Quiz */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.45), 0 0 30px rgba(236, 72, 153, 0.25);
+    transform: translateY(0);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(99, 102, 241, 0.7), 0 0 45px rgba(236, 72, 153, 0.45);
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes crownFloat {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-8deg) scale(1.15); }
+  75% { transform: rotate(8deg) scale(1.15); }
+}
+
+.dzota-animated-gradient-text {
+  background: linear-gradient(90deg, #ff007a, #7928ca, #0070f3, #00dfd8, #ff007a);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 4s ease infinite;
+}
+
+.dzota-animated-gradient-border {
+  background: linear-gradient(90deg, #ff007a, #7928ca, #0070f3, #00dfd8, #ff007a);
+  background-size: 300% 300%;
+  animation: gradientShift 4s ease infinite, pulseGlow 3s ease-in-out infinite;
+}
+
 
