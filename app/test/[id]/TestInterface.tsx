@@ -364,13 +364,12 @@ export default function TestInterface({ test }: { test: any }) {
                 <div className="relative mx-auto mb-2 w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center">
                   <div className="absolute inset-0 rounded-2xl" style={{ background: 'radial-gradient(circle, rgba(79, 195, 255, 0.4) 0%, rgba(22, 119, 255, 0) 70%)', transform: 'scale(1.2)' }} />
                   <div
-                    className="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl flex items-center justify-center relative shadow-lg"
+                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center relative shadow-lg bg-white p-1.5 border border-blue-200/60"
                     style={{
-                      background: 'linear-gradient(135deg, #4FC3FF 0%, #1677FF 100%)',
-                      boxShadow: '0 8px 20px rgba(22, 119, 255, 0.28)'
+                      boxShadow: '0 8px 24px rgba(22, 119, 255, 0.22)'
                     }}
                   >
-                    <FileText size={22} className="text-white" />
+                    <img src="/logo-dzota.png" alt="Dzota" className="w-full h-full object-contain" />
                   </div>
                 </div>
 
@@ -724,7 +723,7 @@ export default function TestInterface({ test }: { test: any }) {
                       Đang hỏi giảng viên, chờ xíu nhé bây bii ✨
                     </p>
                     <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
-                      <Loader size={12} className="animate-spin" />
+                      <Loader2 size={12} className="animate-spin" />
                       <span>Đang tổng hợp kiến thức và suy luận đa chiều...</span>
                     </p>
                   </div>

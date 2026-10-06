@@ -5,10 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     
     <!-- Open Graph Meta Tags cho Zalo / Facebook -->
-    <meta property="og:title" content="Thư viện Đề Thi & Trắc Nghiệm - Dzota" id="og-title" />
-    <meta property="og:description" content="Click để bắt đầu làm bài thi trực tuyến." id="og-desc" />
-    <meta property="og:image" content="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=1000&auto=format&fit=crop" id="og-image" />
+    <meta property="og:title" content="Dzota - Thư viện Đề Thi & Trắc Nghiệm" id="og-title" />
+    <meta property="og:description" content="Click để bắt đầu làm bài thi trực tuyến Dzota." id="og-desc" />
+    <meta property="og:image" content="https://i.ibb.co/YBCrhtwk/logo-dzota.png" id="og-image" />
+    <meta property="og:image:secure_url" content="https://i.ibb.co/YBCrhtwk/logo-dzota.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://i.ibb.co/YBCrhtwk/logo-dzota.png" />
     <meta property="og:type" content="website" />
+    <link rel="icon" type="image/png" href="/logo-dzota.png" />
+    <link rel="apple-touch-icon" href="/logo-dzota.png" />
 
     <script>
       // Đọc URL param cố gắng update title sớm nhất có thể
@@ -1301,6 +1309,13 @@
                 <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200/50 sticky top-0 z-[40] pt-safe">
                     <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex justify-between items-center">
                         <div className="flex items-center gap-3">
+                            <a href="/creator" className="flex items-center gap-2 group">
+                                <div className="w-9 h-9 rounded-xl bg-white p-1 flex items-center justify-center shadow-xs border border-gray-200 group-hover:scale-105 transition-transform">
+                                    <img src="/logo-dzota.png" alt="Dzota" className="w-full h-full object-contain" />
+                                </div>
+                                <span className="font-extrabold text-base tracking-tight text-gray-900 group-hover:text-blue-600 transition-colors">Dzota</span>
+                            </a>
+                            <span className="hidden sm:inline-block w-px h-5 bg-gray-200"></span>
                             <h1 className="text-xl font-bold text-gray-900 tracking-tight">Thư viện của bạn</h1>
                             <span className="hidden sm:inline-block w-px h-5 bg-gray-200"></span>
                             <div className="hidden sm:flex items-center gap-2">
@@ -1813,13 +1828,12 @@
                       <div className="relative mx-auto mb-2 w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center">
                         <div className="absolute inset-0 rounded-2xl" style={{ background: 'radial-gradient(circle, rgba(79, 195, 255, 0.4) 0%, rgba(22, 119, 255, 0) 70%)', transform: 'scale(1.2)' }} />
                         <div
-                          className="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl flex items-center justify-center relative shadow-lg"
+                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center relative shadow-lg bg-white p-1.5 border border-blue-200/60"
                           style={{
-                            background: 'linear-gradient(135deg, #4FC3FF 0%, #1677FF 100%)',
-                            boxShadow: '0 8px 20px rgba(22, 119, 255, 0.28)'
+                            boxShadow: '0 8px 24px rgba(22, 119, 255, 0.22)'
                           }}
                         >
-                          {quizConfig.quizType === 'bank' ? <Icons.Folder size={22} className="text-white" /> : <Icons.FileText size={22} className="text-white" />}
+                          <img src="/logo-dzota.png" alt="Dzota" className="w-full h-full object-contain" />
                         </div>
                       </div>
 

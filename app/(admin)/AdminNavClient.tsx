@@ -78,9 +78,9 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
           >
             {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/25">
-              <Sparkles size={16} />
+          <Link href="/dashboard" className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 p-1 flex items-center justify-center shadow-xs border border-slate-200/60 dark:border-slate-700/60">
+              <img src="/logo-dzota.png" alt="Dzota Logo" className="w-full h-full object-contain" />
             </div>
             <div>
               <span className="text-sm font-black text-slate-800 dark:text-slate-100 tracking-tight block leading-tight">Dzota Admin</span>
@@ -130,8 +130,8 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
         {/* Sidebar Header Brand */}
         <div className="h-20 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800/80">
           <Link href="/dashboard" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 transform transition-transform group-hover:scale-105">
-              <Sparkles size={20} />
+            <div className="w-11 h-11 rounded-2xl bg-white dark:bg-slate-800 p-1.5 flex items-center justify-center shadow-sm border border-slate-200/70 dark:border-slate-700/70 transform transition-transform group-hover:scale-105">
+              <img src="/logo-dzota.png" alt="Dzota Logo" className="w-full h-full object-contain" />
             </div>
             <div>
               <span className="text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight block leading-tight">Dzota Admin</span>

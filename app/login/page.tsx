@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -17,7 +17,9 @@ import {
   Shield,
   ShieldCheck,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Zap,
+  Check
 } from 'lucide-react'
 
 export default function LoginPage() {
@@ -27,7 +29,45 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [focusedField, setFocusedField] = useState<string | null>(null)
+  const [logoClicked, setLogoClicked] = useState(false)
+  
+  // Interactive 3D Card Tilt & Mouse Spotlight Glow
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [tilt, setTilt] = useState({ x: 0, y: 0 })
+  const [spotlight, setSpotlight] = useState({ x: 50, y: 50, active: false })
+
   const router = useRouter()
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return
+    const rect = cardRef.current.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    const centerX = rect.width / 2
+    const centerY = rect.height / 2
+
+    // Max tilt ~ 6 degrees for smooth natural feel
+    const tiltX = ((y - centerY) / centerY) * -5
+    const tiltY = ((x - centerX) / centerX) * 5
+
+    setTilt({ x: tiltX, y: tiltY })
+    setSpotlight({
+      x: (x / rect.width) * 100,
+      y: (y / rect.height) * 100,
+      active: true
+    })
+  }
+
+  const handleMouseLeave = () => {
+    setTilt({ x: 0, y: 0 })
+    setSpotlight(prev => ({ ...prev, active: false }))
+  }
+
+  const handleLogoClick = () => {
+    setLogoClicked(true)
+    setTimeout(() => setLogoClicked(false), 800)
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -68,322 +108,318 @@ export default function LoginPage() {
   }
 
   return (
-    <main
-      className="min-h-screen w-full relative flex items-center justify-center overflow-x-hidden p-3 sm:p-6 lg:p-8 select-none"
-      style={{
-        background:
-          'radial-gradient(circle at 15% 15%, rgba(129, 140, 248, 0.22), transparent 40%), radial-gradient(circle at 90% 20%, rgba(56, 189, 248, 0.2), transparent 40%), radial-gradient(circle at 50% 85%, rgba(99, 102, 241, 0.12), transparent 50%), linear-gradient(135deg, #F8FAFF 0%, #EEF4FF 100%)'
-      }}
-    >
-      {/* Dynamic Background Glowing Orbs */}
+    <main className="min-h-screen w-full relative flex items-center justify-center overflow-x-hidden p-3 sm:p-6 lg:p-10 select-none dzota-login-bg">
+      {/* Background Dimming & Blur Overlay to enhance readability while keeping artwork vibrant */}
+      <div className="absolute inset-0 bg-slate-900/10 lg:bg-slate-900/5 backdrop-blur-[0.5px] pointer-events-none" />
+
+      {/* Floating Animated Sunbeams & Ambient Glow Orbs */}
       <div
-        className="absolute -top-32 -left-32 w-96 h-96 sm:w-[480px] sm:h-[480px] rounded-full pointer-events-none"
+        className="absolute top-1/4 left-1/4 w-72 h-72 sm:w-96 sm:h-96 rounded-full pointer-events-none"
         style={{
-          background: '#8B8AFB',
-          opacity: 0.18,
-          filter: 'blur(90px)',
-          animation: 'pulseSlow 8s ease-in-out infinite alternate'
+          background: 'radial-gradient(circle, rgba(56, 189, 248, 0.22) 0%, transparent 70%)',
+          filter: 'blur(60px)',
+          animation: 'floatSlow1 10s ease-in-out infinite'
         }}
       />
       <div
-        className="absolute -bottom-36 left-[15%] w-96 h-96 sm:w-[500px] sm:h-[500px] rounded-full pointer-events-none"
+        className="absolute bottom-1/4 right-1/4 w-80 h-80 sm:w-[450px] sm:h-[450px] rounded-full pointer-events-none"
         style={{
-          background: '#60A5FA',
-          opacity: 0.2,
-          filter: 'blur(100px)',
-          animation: 'pulseSlow 10s ease-in-out infinite alternate'
+          background: 'radial-gradient(circle, rgba(129, 140, 248, 0.2) 0%, transparent 70%)',
+          filter: 'blur(70px)',
+          animation: 'floatSlow2 12s ease-in-out infinite'
         }}
       />
-      <div
-        className="absolute -top-28 -right-28 w-80 h-80 sm:w-[460px] sm:h-[460px] rounded-full pointer-events-none"
-        style={{
-          background: '#67E8F9',
-          opacity: 0.16,
-          filter: 'blur(95px)',
-          animation: 'pulseSlow 9s ease-in-out infinite alternate'
-        }}
-      />
+
+      {/* Ambient Floating Dust/Light Particles */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {[...Array(6)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute rounded-full bg-white/60 blur-[1px] animate-pulse"
+            style={{
+              width: `${(i % 3) + 3}px`,
+              height: `${(i % 3) + 3}px`,
+              top: `${15 + (i * 14)}%`,
+              left: `${10 + (i * 15)}%`,
+              animation: `particleFloat ${6 + (i * 2)}s ease-in-out infinite alternate`
+            }}
+          />
+        ))}
+      </div>
 
       {/* Main Outer Container */}
       <div
-        className="relative w-full z-10 mx-auto flex items-center justify-center"
-        style={{ maxWidth: 1240 }}
+        className="relative w-full z-10 mx-auto flex items-center justify-between"
+        style={{ maxWidth: 1280 }}
       >
-        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[580px]">
           
           {/* ══════════════════════════════════════════════════════════════════════
-              DESKTOP LEFT SHOWCASE (Ẩn trên mobile / tablet nhỏ)
+              DESKTOP LEFT SIDE: Interactive Ambient Badges (Không che mất tranh)
              ══════════════════════════════════════════════════════════════════════ */}
-          <div className="hidden lg:flex lg:col-span-7 flex-col justify-between relative rounded-[32px] p-8 xl:p-11 min-h-[620px] xl:min-h-[650px] overflow-hidden border border-white/80 shadow-[0_20px_70px_rgba(30,60,120,0.08)] bg-white/45 backdrop-blur-[24px]">
-            {/* Top Bar inside Left Showcase */}
-            <div className="flex items-center justify-between w-full relative z-10">
-              {/* Brand Logo & Title */}
-              <div className="flex items-center gap-3.5 group cursor-default">
-                <div
-                  className="w-13 h-13 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/25 transition-transform duration-300 group-hover:scale-105 group-hover:rotate-3"
-                  style={{
-                    background: 'linear-gradient(135deg, #4F46FF 0%, #2563EB 100%)'
-                  }}
-                >
-                  <Sparkles size={24} className="text-white drop-shadow" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-black text-[#10213F] tracking-tight leading-tight">
-                    Dzota
-                  </h2>
-                  <p className="text-xs font-semibold text-[#64748B]">
-                    Hệ thống quản lý đề thi
-                  </p>
-                </div>
+          <div className="hidden lg:flex lg:col-span-6 xl:col-span-7 flex-col justify-between py-6 h-full pointer-events-auto">
+            {/* Top Brand Pill with Logo */}
+            <div className="inline-flex items-center gap-3 p-2 pr-5 rounded-2xl bg-white/80 hover:bg-white/95 backdrop-blur-xl border border-white/90 shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 hover:scale-105 hover:shadow-lg w-fit cursor-default group">
+              <div className="w-11 h-11 rounded-xl bg-white p-1 flex items-center justify-center shadow-xs border border-blue-100 group-hover:rotate-6 transition-transform">
+                <img src="/logo-dzota.png" alt="Dzota Logo" className="w-full h-full object-contain" />
               </div>
-
-              {/* Admin Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/70 border border-[#DCE6F3] text-[#475569] text-xs font-bold shadow-2xs backdrop-blur-md">
-                <GraduationCap size={15} className="text-indigo-600" />
-                <span>Dành cho giáo viên và quản trị viên</span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-black text-slate-800 tracking-tight leading-none">Dzota</h2>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs">
+                    Edu AI
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">Hệ thống quản lý đề thi & học tập</p>
               </div>
             </div>
 
-            {/* Mid Headline & Subtitle */}
-            <div className="relative z-10 my-auto py-6 max-w-[500px]">
-              {/* Welcome Badge */}
-              <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#E8F0FF] text-[#2563EB] text-xs font-bold mb-4 shadow-2xs">
-                <span>Chào mừng đến với Dzota</span>
-                <span className="text-sm">👋</span>
+            {/* Middle Welcome & Interactive Highlights */}
+            <div className="my-auto py-8 max-w-[480px]">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-600/90 text-white text-xs font-bold mb-4 shadow-md backdrop-blur-md animate-bounce-subtle">
+                <Sparkles size={14} className="text-amber-300" />
+                <span>Nền tảng khảo thí & ôn luyện thông minh</span>
               </div>
 
-              {/* Main Headline */}
-              <h1 className="text-4xl xl:text-5xl font-extrabold text-[#10213F] tracking-tight leading-[1.15] mb-3">
+              <h1 className="text-4xl xl:text-5xl font-black text-slate-900 tracking-tight leading-[1.15] mb-4 drop-shadow-sm">
                 Quản lý đề thi <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#2563EB] to-[#4F46FF]">
-                  hiệu quả hơn
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600">
+                  Dễ Dàng & Hiệu Quả
                 </span>
               </h1>
 
-              <p className="text-base text-[#64748B] font-medium leading-relaxed mb-6">
-                Hệ thống quản lý thư viện đề thi hiện đại, trực quan, hỗ trợ ngân hàng câu hỏi và chấm thi tự động.
+              <p className="text-slate-700 font-medium text-base leading-relaxed mb-6 bg-white/40 backdrop-blur-md p-3.5 rounded-2xl border border-white/60 shadow-xs">
+                Tạo đề thi trắc nghiệm bằng AI, nhập liệu từ Word/PDF tự động, và giải thích chi tiết câu hỏi chuẩn từng bước.
               </p>
 
-              {/* Feature Points */}
-              <div className="space-y-3 max-w-[300px] xl:max-w-[340px]">
+              {/* Floating Mini Feature Badges with Hover Interactions */}
+              <div className="flex flex-wrap gap-2.5">
                 {[
-                  {
-                    icon: FileText,
-                    title: 'Quản lý đề thi',
-                    desc: 'Lưu trữ, phân loại, tìm kiếm dễ dàng',
-                    color: '#2563EB',
-                    bg: 'rgba(37, 99, 235, 0.1)'
-                  },
-                  {
-                    icon: BarChart2,
-                    title: 'Thống kê chi tiết',
-                    desc: 'Theo dõi, báo cáo trực quan',
-                    color: '#4F46FF',
-                    bg: 'rgba(79, 70, 229, 0.1)'
-                  },
-                  {
-                    icon: Shield,
-                    title: 'Bảo mật an toàn',
-                    desc: 'Dữ liệu được bảo vệ tuyệt đối',
-                    color: '#7C3AED',
-                    bg: 'rgba(124, 58, 237, 0.1)'
-                  }
+                  { icon: Zap, text: 'Chuẩn hóa Markdown Dzota', color: 'text-amber-600 bg-amber-50/90 border-amber-200' },
+                  { icon: GraduationCap, text: 'Trợ lý Giảng Viên AI (?)', color: 'text-indigo-600 bg-indigo-50/90 border-indigo-200' },
+                  { icon: BarChart2, text: 'Thống kê & Chấm điểm tự động', color: 'text-emerald-600 bg-emerald-50/90 border-emerald-200' },
+                  { icon: ShieldCheck, text: 'Bảo mật an toàn 100%', color: 'text-blue-600 bg-blue-50/90 border-blue-200' },
                 ].map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center gap-3.5 p-2 rounded-2xl transition-all duration-300 hover:bg-white/80 hover:shadow-xs group cursor-default"
+                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border shadow-xs backdrop-blur-md transition-all duration-200 hover:scale-105 hover:shadow-md cursor-default ${item.color}`}
                   >
-                    <div
-                      className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 flex-shrink-0"
-                      style={{ background: item.bg, color: item.color }}
-                    >
-                      <item.icon size={18} />
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-[#10213F]">
-                        {item.title}
-                      </div>
-                      <div className="text-xs text-[#64748B] font-medium">
-                        {item.desc}
-                      </div>
-                    </div>
+                    <item.icon size={15} />
+                    <span>{item.text}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Bottom-right 3D Study Illustration Artwork (Không đè lên chữ) */}
-            <div
-              className="absolute -bottom-2 -right-4 xl:right-0 w-[240px] xl:w-[280px] pointer-events-none select-none z-0"
-              style={{ animation: 'floatGentle 6s ease-in-out infinite' }}
-            >
-              <img
-                src="/login-illustration.png"
-                alt="3D Education Illustration"
-                className="w-full h-auto object-contain"
-                style={{ filter: 'drop-shadow(0 20px 30px rgba(37, 99, 235, 0.18))' }}
-              />
+            {/* Bottom Slogan Note */}
+            <div className="text-xs font-bold text-slate-600/90 flex items-center gap-2 bg-white/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/70 w-fit shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+              <span>Hệ thống hoạt động trực tuyến 24/7</span>
             </div>
           </div>
 
           {/* ══════════════════════════════════════════════════════════════════════
-              RIGHT / MOBILE LOGIN CARD
+              RIGHT SIDE / MOBILE: Glassmorphic 3D Interactive Login Card
              ══════════════════════════════════════════════════════════════════════ */}
-          <div className="lg:col-span-5 w-full max-w-[480px] mx-auto">
-            {/* Mobile Brand Header */}
-            <div className="lg:hidden flex items-center justify-center gap-3 mb-6">
-              <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md shadow-indigo-500/25"
-                style={{
-                  background: 'linear-gradient(135deg, #4F46FF 0%, #2563EB 100%)'
-                }}
-              >
-                <Sparkles size={22} className="text-white" />
+          <div className="lg:col-span-6 xl:col-span-5 w-full max-w-[460px] mx-auto lg:ml-auto">
+            
+            {/* Mobile Header Brand */}
+            <div className="lg:hidden flex items-center justify-center gap-3 mb-5">
+              <div className="w-12 h-12 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-lg border border-white/80">
+                <img src="/logo-dzota.png" alt="Dzota Logo" className="w-full h-full object-contain" />
               </div>
               <div className="text-left">
-                <h2 className="text-xl font-extrabold text-[#10213F] leading-tight">
-                  Dzota
-                </h2>
-                <p className="text-xs text-[#64748B] font-medium">
-                  Hệ thống quản lý đề thi
-                </p>
+                <h2 className="text-xl font-black text-slate-900 leading-tight drop-shadow-xs">Dzota</h2>
+                <p className="text-xs text-slate-700 font-bold">Hệ thống quản lý đề thi</p>
               </div>
             </div>
 
-            {/* Main Glassmorphic Login Card */}
+            {/* 3D Tilt & Mouse-Glow Card Wrapper */}
             <div
-              className="relative w-full rounded-[30px] p-7 sm:p-9 md:p-10 transition-all duration-300"
+              ref={cardRef}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+              className="relative w-full rounded-[32px] p-7 sm:p-9 md:p-10 transition-transform duration-200 ease-out"
               style={{
                 background: 'rgba(255, 255, 255, 0.88)',
-                backdropFilter: 'blur(25px)',
-                WebkitBackdropFilter: 'blur(25px)',
+                backdropFilter: 'blur(28px)',
+                WebkitBackdropFilter: 'blur(28px)',
                 border: '1.5px solid rgba(255, 255, 255, 0.95)',
-                boxShadow: '0 25px 70px rgba(31, 45, 80, 0.14)'
+                boxShadow: '0 25px 70px rgba(15, 30, 65, 0.18), 0 0 40px rgba(59, 130, 246, 0.1)',
+                transform: `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
+                transformStyle: 'preserve-3d'
               }}
             >
-              {/* Card Center Logo & Titles */}
-              <div className="text-center mb-7 sm:mb-8">
+              {/* Dynamic Torchlight / Spotlight Following Mouse */}
+              {spotlight.active && (
                 <div
-                  className="w-16 h-16 sm:w-18 sm:h-18 mx-auto rounded-2xl sm:rounded-[20px] flex items-center justify-center text-white shadow-xl shadow-indigo-500/25 mb-4 group cursor-pointer transition-transform duration-300 hover:scale-105"
+                  className="absolute inset-0 rounded-[32px] pointer-events-none transition-opacity duration-300"
                   style={{
-                    background: 'linear-gradient(135deg, #4F46FF 0%, #2563EB 100%)'
+                    background: `radial-gradient(350px circle at ${spotlight.x}% ${spotlight.y}%, rgba(59, 130, 246, 0.15), transparent 75%)`
                   }}
+                />
+              )}
+
+              {/* Card Top Brand Logo with Click / Hover Effects */}
+              <div className="text-center mb-6 sm:mb-8 relative z-10">
+                <div
+                  onClick={handleLogoClick}
+                  className={`relative w-20 h-20 sm:w-22 sm:h-22 mx-auto rounded-3xl bg-white p-2.5 flex items-center justify-center shadow-xl shadow-blue-500/20 border-2 border-white/90 mb-4 cursor-pointer group transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:shadow-blue-500/30 ${
+                    logoClicked ? 'animate-logo-spin' : ''
+                  }`}
+                  style={{
+                    animation: logoClicked ? undefined : 'floatGentle 5s ease-in-out infinite'
+                  }}
+                  title="Nhấn vào để xem hiệu ứng xoay logo!"
                 >
-                  <Sparkles size={28} className="text-white drop-shadow" />
+                  <img
+                    src="/logo-dzota.png"
+                    alt="Dzota Logo"
+                    className="w-full h-full object-contain filter drop-shadow-md transition-transform duration-300 group-hover:scale-105"
+                  />
+                  {/* Subtle pulsing badge */}
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-md border-2 border-white">
+                    <Sparkles size={11} className="text-amber-300" />
+                  </div>
                 </div>
-                <h1 className="text-2xl sm:text-[28px] font-black text-[#17233D] tracking-tight leading-tight">
+
+                <h1 className="text-2xl sm:text-[28px] font-black text-slate-900 tracking-tight leading-tight">
                   Đăng nhập Dzota
                 </h1>
-                <p className="text-xs sm:text-sm text-[#64748B] font-semibold mt-1.5">
-                  Hệ thống quản lý thư viện đề thi
+                <p className="text-xs sm:text-sm text-slate-500 font-semibold mt-1">
+                  Hệ thống quản lý và làm bài thi trực tuyến
                 </p>
               </div>
 
               {/* Error Alert Banner */}
               {error && (
-                <div className="mb-5 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-2.5 animate-shake">
+                <div className="mb-5 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-2.5 animate-shake shadow-xs">
                   <AlertCircle size={17} className="flex-shrink-0" />
                   <span>{error}</span>
                 </div>
               )}
 
               {/* Login Form */}
-              <form onSubmit={handleLogin} className="space-y-4">
+              <form onSubmit={handleLogin} className="space-y-4 relative z-10">
                 {/* Username Input */}
                 <div>
-                  <label className="block text-xs sm:text-sm font-bold text-[#17233D] mb-1.5 pl-1">
-                    Tài khoản
+                  <label className="block text-xs sm:text-sm font-bold text-slate-800 mb-1.5 pl-1 flex items-center justify-between">
+                    <span>Tài khoản</span>
+                    {focusedField === 'username' && (
+                      <span className="text-[11px] font-bold text-blue-600 animate-fade-in">Đang nhập...</span>
+                    )}
                   </label>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#94A3B8] transition-colors group-focus-within:text-[#4F46FF]">
+                    <div
+                      className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-all duration-200 ${
+                        focusedField === 'username' ? 'text-blue-600 scale-110' : 'text-slate-400 group-hover:text-slate-600'
+                      }`}
+                    >
                       <User size={19} />
                     </div>
                     <input
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
+                      onFocus={() => setFocusedField('username')}
+                      onBlur={() => setFocusedField(null)}
                       placeholder="Nhập tên đăng nhập"
                       autoComplete="username"
                       required
-                      className="w-full h-13 sm:h-14 pl-11 pr-4 bg-[#F8FAFC] border border-[#DCE6F3] rounded-[18px] text-sm sm:text-base font-semibold text-[#17233D] placeholder-[#94A3B8] outline-none transition-all duration-200 focus:bg-white focus:border-[#4F46FF] focus:ring-4 focus:ring-indigo-500/10"
+                      className="w-full h-13 sm:h-14 pl-11 pr-4 bg-slate-50/90 border-2 border-slate-200/80 rounded-2xl text-sm sm:text-base font-bold text-slate-800 placeholder-slate-400 outline-none transition-all duration-200 hover:border-slate-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:scale-[1.01]"
                     />
                   </div>
                 </div>
 
                 {/* Password Input */}
                 <div>
-                  <label className="block text-xs sm:text-sm font-bold text-[#17233D] mb-1.5 pl-1">
-                    Mật khẩu
+                  <label className="block text-xs sm:text-sm font-bold text-slate-800 mb-1.5 pl-1 flex items-center justify-between">
+                    <span>Mật khẩu</span>
+                    {focusedField === 'password' && (
+                      <span className="text-[11px] font-bold text-blue-600 animate-fade-in">Bảo mật</span>
+                    )}
                   </label>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#94A3B8] transition-colors group-focus-within:text-[#4F46FF]">
+                    <div
+                      className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-all duration-200 ${
+                        focusedField === 'password' ? 'text-blue-600 scale-110' : 'text-slate-400 group-hover:text-slate-600'
+                      }`}
+                    >
                       <Lock size={19} />
                     </div>
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
+                      onFocus={() => setFocusedField('password')}
+                      onBlur={() => setFocusedField(null)}
                       placeholder="Nhập mật khẩu"
                       autoComplete="current-password"
                       required
-                      className="w-full h-13 sm:h-14 pl-11 pr-12 bg-[#F8FAFC] border border-[#DCE6F3] rounded-[18px] text-sm sm:text-base font-semibold text-[#17233D] placeholder-[#94A3B8] outline-none transition-all duration-200 focus:bg-white focus:border-[#4F46FF] focus:ring-4 focus:ring-indigo-500/10"
+                      className="w-full h-13 sm:h-14 pl-11 pr-12 bg-slate-50/90 border-2 border-slate-200/80 rounded-2xl text-sm sm:text-base font-bold text-slate-800 placeholder-slate-400 outline-none transition-all duration-200 hover:border-slate-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:scale-[1.01]"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label="Hiển thị hoặc ẩn mật khẩu"
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-[#94A3B8] hover:text-[#4F46FF] transition-colors cursor-pointer"
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-blue-600 hover:scale-115 active:scale-95 transition-all cursor-pointer"
+                      title={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                     >
-                      {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+                      {showPassword ? <EyeOff size={19} className="text-blue-600" /> : <Eye size={19} />}
                     </button>
                   </div>
                 </div>
 
-                {/* Remember Me & Forgot Password Row */}
+                {/* Remember Me & Forgot Password */}
                 <div className="pt-1 flex items-center justify-between text-xs sm:text-sm">
-                  <label className="inline-flex items-center gap-2 cursor-pointer select-none font-medium text-[#475569] hover:text-[#17233D] transition-colors">
+                  <label className="inline-flex items-center gap-2 cursor-pointer select-none font-semibold text-slate-600 hover:text-slate-900 transition-colors group">
                     <input
                       type="checkbox"
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 rounded text-[#2563EB] focus:ring-indigo-500 border-[#CBD5E1] cursor-pointer"
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer transition-transform group-active:scale-90"
                     />
                     <span>Ghi nhớ đăng nhập</span>
                   </label>
 
                   <button
                     type="button"
-                    onClick={() => alert('Vui lòng liên hệ Quản trị viên để đặt lại mật khẩu.')}
-                    className="font-bold text-[#2563EB] hover:text-[#4F46FF] hover:underline transition-colors cursor-pointer"
+                    onClick={() => alert('Vui lòng liên hệ Quản trị viên để đặt lại mật khẩu hoặc đổi mật khẩu mới.')}
+                    className="font-bold text-blue-600 hover:text-indigo-600 hover:underline transition-colors cursor-pointer"
                   >
                     Quên mật khẩu?
                   </button>
                 </div>
 
-                {/* Submit Button */}
+                {/* High-Impact Animated Submit Button */}
                 <div className="pt-2">
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full h-13 sm:h-14 rounded-[18px] font-bold text-white text-base shadow-[0_12px_28px_rgba(37,99,235,0.28)] hover:shadow-[0_16px_34px_rgba(37,99,235,0.36)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-70 disabled:pointer-events-none group"
+                    className="relative overflow-hidden w-full h-13 sm:h-14 rounded-2xl font-bold text-white text-base shadow-[0_10px_28px_rgba(37,99,235,0.32)] hover:shadow-[0_16px_36px_rgba(37,99,235,0.45)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-70 disabled:pointer-events-none group"
                     style={{
-                      background:
-                        'linear-gradient(100deg, #4F46FF 0%, #2563EB 55%, #7C3AED 100%)',
-                      border: 'none'
+                      background: 'linear-gradient(100deg, #2563EB 0%, #4F46FF 50%, #7C3AED 100%)',
+                      backgroundSize: '200% 100%'
                     }}
                   >
+                    {/* Continuous Shimmer Light Sweep */}
+                    <div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full pointer-events-none"
+                      style={{ animation: 'shimmerSweep 3s infinite ease-in-out' }}
+                    />
+
                     {loading ? (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2.5">
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         <span>Đang đăng nhập...</span>
                       </div>
                     ) : (
                       <>
-                        <LogIn size={18} />
-                        <span>Đăng nhập hệ thống</span>
+                        <LogIn size={19} className="transition-transform group-hover:scale-110" />
+                        <span className="tracking-wide">Đăng nhập hệ thống</span>
                         <ArrowRight
-                          size={18}
-                          className="transition-transform duration-200 group-hover:translate-x-1"
+                          size={19}
+                          className="transition-transform duration-200 group-hover:translate-x-1.5"
                         />
                       </>
                     )}
@@ -392,50 +428,140 @@ export default function LoginPage() {
               </form>
 
               {/* Security Footnote */}
-              <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-center gap-1.5 text-xs font-semibold text-[#64748B]">
-                <ShieldCheck size={15} className="text-emerald-500" />
-                <span>Thông tin đăng nhập của bạn được bảo mật tuyệt đối</span>
+              <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-center gap-1.5 text-xs font-semibold text-slate-500">
+                <ShieldCheck size={16} className="text-emerald-500" />
+                <span>Thông tin được bảo mật và mã hóa an toàn</span>
               </div>
             </div>
 
             {/* Mobile Bottom Mini Features */}
-            <div className="lg:hidden mt-6 grid grid-cols-3 gap-2 text-center">
+            <div className="lg:hidden mt-5 grid grid-cols-3 gap-2 text-center">
               {[
-                { icon: FileText, label: 'Quản lý đề thi' },
-                { icon: BarChart2, label: 'Thống kê' },
-                { icon: Shield, label: 'Bảo mật' }
+                { icon: Zap, label: 'Chuẩn hóa đề' },
+                { icon: GraduationCap, label: 'Giảng viên AI' },
+                { icon: ShieldCheck, label: 'Bảo mật 100%' }
               ].map((item, i) => (
                 <div
                   key={i}
-                  className="bg-white/60 backdrop-blur-md rounded-2xl p-2.5 border border-white/80 shadow-2xs flex flex-col items-center gap-1"
+                  className="bg-white/80 backdrop-blur-md rounded-2xl p-2.5 border border-white/90 shadow-sm flex flex-col items-center gap-1 transition-all active:scale-95"
                 >
-                  <item.icon size={16} className="text-[#2563EB]" />
-                  <span className="text-[11px] font-bold text-[#475569]">{item.label}</span>
+                  <item.icon size={16} className="text-blue-600" />
+                  <span className="text-[11px] font-bold text-slate-700">{item.label}</span>
                 </div>
               ))}
             </div>
+
           </div>
 
         </div>
       </div>
 
-      {/* Floating Keyframe Animation */}
+      {/* Global Embedded Styles for Animations & Responsive Background */}
       <style>{`
+        /* Responsive Background Image Setup */
+        .dzota-login-bg {
+          background-image: url('/bg-login-mobile.png'), url('https://i.ibb.co/9kyXLchK/f268cd60-295b-4376-a64c-b0cd9f4e25b9.png');
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+          background-attachment: fixed;
+        }
+
+        @media (min-width: 1024px) {
+          .dzota-login-bg {
+            background-image: url('/bg-login-desktop.png'), url('https://i.ibb.co/Gf87wSCQ/6151ea27-2022-4704-a5d5-61ece517d68f.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+          }
+        }
+
+        /* Keyframes */
         @keyframes floatGentle {
           0%, 100% {
             transform: translateY(0px) rotate(0deg);
           }
           50% {
-            transform: translateY(-8px) rotate(0.5deg);
+            transform: translateY(-8px) rotate(1deg);
           }
         }
-        @keyframes pulseSlow {
+
+        @keyframes floatSlow1 {
+          0%, 100% {
+            transform: translate(0, 0) scale(1);
+          }
+          50% {
+            transform: translate(30px, -20px) scale(1.1);
+          }
+        }
+
+        @keyframes floatSlow2 {
+          0%, 100% {
+            transform: translate(0, 0) scale(1);
+          }
+          50% {
+            transform: translate(-25px, 25px) scale(1.08);
+          }
+        }
+
+        @keyframes particleFloat {
           0% {
-            transform: scale(1);
+            transform: translateY(0) scale(1);
+            opacity: 0.3;
           }
           100% {
-            transform: scale(1.08);
+            transform: translateY(-40px) scale(1.4);
+            opacity: 0.9;
           }
+        }
+
+        @keyframes shimmerSweep {
+          0% {
+            transform: translateX(-100%);
+          }
+          50%, 100% {
+            transform: translateX(150%);
+          }
+        }
+
+        @keyframes logoSpin {
+          0% {
+            transform: scale(1) rotate(0deg);
+          }
+          50% {
+            transform: scale(1.2) rotate(180deg);
+          }
+          100% {
+            transform: scale(1) rotate(360deg);
+          }
+        }
+
+        .animate-logo-spin {
+          animation: logoSpin 0.75s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes bounceSubtle {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-4px);
+          }
+        }
+
+        .animate-bounce-subtle {
+          animation: bounceSubtle 3s ease-in-out infinite;
+        }
+
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          20%, 60% { transform: translateX(-6px); }
+          40%, 80% { transform: translateX(6px); }
+        }
+
+        .animate-shake {
+          animation: shake 0.4s ease-in-out;
         }
       `}</style>
     </main>

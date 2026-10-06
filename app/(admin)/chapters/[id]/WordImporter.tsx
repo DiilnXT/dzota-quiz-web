@@ -89,7 +89,7 @@ export default function WordImporter({ chapterId, onDone }: { chapterId: string,
       const questions: any[] = [];
       let currentQ: any = null;
       const fullText = lines.map(l => l.text).join('\n');
-      const keySplitRegex = /(?:^|\n)(?:Đáp án|Bảng đáp án|Answer Key)[:\s]*(.*)$/is;
+      const keySplitRegex = /(?:^|\n)(?:Đáp án|Bảng đáp án|Answer Key)[:\s]*([\s\S]*)$/i;
       const keyMatch = fullText.match(keySplitRegex);
       let answerMap: Record<string, string> = {};
       
@@ -242,7 +242,7 @@ export default function WordImporter({ chapterId, onDone }: { chapterId: string,
               content_style: 'body { font-family:Inter,sans-serif; font-size:15px; padding:20px; line-height:1.6 } img { max-width: 100%; height: auto; border-radius: 8px; margin-top: 10px; }',
               paste_data_images: true,
               automatic_uploads: true,
-              images_upload_handler: (blobInfo, progress) => new Promise((resolve) => {
+              images_upload_handler: (blobInfo: any, progress: any) => new Promise((resolve) => {
                  resolve('data:' + blobInfo.blob().type + ';base64,' + blobInfo.base64());
               })
             }}

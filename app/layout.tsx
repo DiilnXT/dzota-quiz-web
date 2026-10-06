@@ -8,8 +8,35 @@ import { ThemeProvider } from './ThemeContext'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Hệ Thống Thi Trắc Nghiệm',
-  description: 'Hệ thống thi trắc nghiệm và quản lý ngân hàng môn học',
+  title: 'Dzota - Hệ Thống Thi Trắc Nghiệm',
+  description: 'Hệ thống thi trắc nghiệm và quản lý ngân hàng môn học Dzota',
+  icons: {
+    icon: '/logo-dzota.png',
+    shortcut: '/logo-dzota.png',
+    apple: '/logo-dzota.png',
+  },
+  openGraph: {
+    title: 'Dzota - Thư Viện Đề Thi & Trắc Nghiệm',
+    description: 'Hệ thống thi trắc nghiệm trực quan, hiện đại Dzota. Bấm để bắt đầu làm bài.',
+    url: 'https://dzota.edu.vn',
+    siteName: 'Dzota Quiz',
+    images: [
+      {
+        url: 'https://i.ibb.co/YBCrhtwk/logo-dzota.png',
+        width: 1200,
+        height: 630,
+        alt: 'Dzota Logo',
+      },
+    ],
+    locale: 'vi_VN',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Dzota - Hệ Thống Thi Trắc Nghiệm',
+    description: 'Hệ thống thi trắc nghiệm trực quan, hiện đại Dzota',
+    images: ['https://i.ibb.co/YBCrhtwk/logo-dzota.png'],
+  },
 }
 
 export default function RootLayout({
