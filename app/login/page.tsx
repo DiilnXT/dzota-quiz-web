@@ -121,55 +121,29 @@ export default function LoginPage() {
         ))}
       </div>
 
-      {/* Main Outer Container */}
-      <div
-        className="relative w-full z-10 mx-auto flex items-center justify-between"
-        style={{ maxWidth: 1280 }}
-      >
-        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[580px]">
-          
-          {/* ══════════════════════════════════════════════════════════════════════
-              DESKTOP LEFT SIDE: Tinh Gọn, Trong Suốt, Tuyệt Đối Không Che Tranh
-             ══════════════════════════════════════════════════════════════════════ */}
-          <div className="hidden lg:flex lg:col-span-6 xl:col-span-7 flex-col justify-between py-4 h-full pointer-events-auto min-h-[520px]">
-            {/* Top-Left Minimalist Transparent Glass Brand Pill */}
-            <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-white/20 hover:bg-white/35 backdrop-blur-md border border-white/40 shadow-sm transition-all duration-300 hover:scale-105 w-fit cursor-default group">
-              <div className="w-9 h-9 rounded-xl bg-white/30 backdrop-blur-md p-1 flex items-center justify-center border border-white/50 group-hover:rotate-6 transition-transform">
-                <img src="/logo-dzota.png" alt="Dzota" className="w-full h-full object-contain" />
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-base font-black text-slate-900 tracking-tight drop-shadow-xs">Dzota Education</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-600/85 text-white shadow-xs backdrop-blur-xs">
-                  Edu AI
-                </span>
-              </div>
-            </div>
+      {/* Top-Left Minimalist Floating Glass Brand Pill on Desktop */}
+      <div className="absolute top-6 left-6 z-20 hidden lg:inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-white/20 hover:bg-white/35 backdrop-blur-md border border-white/40 shadow-sm transition-all duration-300 hover:scale-105 cursor-default group">
+        <div className="w-8 h-8 rounded-xl bg-white/30 backdrop-blur-md p-1 flex items-center justify-center border border-white/50 group-hover:rotate-6 transition-transform">
+          <img src="/logo-dzota.png" alt="Dzota" className="w-full h-full object-contain" />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-black text-slate-900 tracking-tight drop-shadow-xs">Dzota Education</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+        </div>
+      </div>
 
-            {/* Spacer: Giữ khoảng trống rộng mở hoàn toàn để lộ bàn học, máy tính & cửa sổ */}
-            <div className="flex-1" />
-
-            {/* Bottom-Left Minimalist Transparent Tagline */}
-            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/35 text-xs font-bold text-slate-800 shadow-xs transition-all w-fit">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-              <span>Nền tảng khảo thí & quản lý đề thi thông minh</span>
-            </div>
+      {/* Main Outer Container: Centered on Laptop & Mobile */}
+      <div className="relative w-full z-10 mx-auto flex flex-col items-center justify-center max-w-[460px]">
+        {/* Mobile Header Brand (Trong suốt) */}
+        <div className="lg:hidden flex items-center justify-center gap-3 mb-5">
+          <div className="w-11 h-11 rounded-2xl bg-white/30 backdrop-blur-md p-1.5 flex items-center justify-center border border-white/50 shadow-md">
+            <img src="/logo-dzota.png" alt="Dzota Logo" className="w-full h-full object-contain" />
           </div>
-
-          {/* ══════════════════════════════════════════════════════════════════════
-              RIGHT SIDE / MOBILE: KHUNG ĐĂNG NHẬP TRONG SUỐT (PURE GLASS)
-             ══════════════════════════════════════════════════════════════════════ */}
-          <div className="lg:col-span-6 xl:col-span-5 w-full max-w-[450px] mx-auto lg:ml-auto">
-            
-            {/* Mobile Header Brand (Trong suốt) */}
-            <div className="lg:hidden flex items-center justify-center gap-3 mb-5">
-              <div className="w-11 h-11 rounded-2xl bg-white/30 backdrop-blur-md p-1.5 flex items-center justify-center border border-white/50 shadow-md">
-                <img src="/logo-dzota.png" alt="Dzota Logo" className="w-full h-full object-contain" />
-              </div>
-              <div className="text-left">
-                <h2 className="text-xl font-black text-slate-900 leading-tight drop-shadow-xs">Dzota</h2>
-                <p className="text-xs text-slate-800 font-bold drop-shadow-xs">Hệ thống quản lý đề thi</p>
-              </div>
-            </div>
+          <div className="text-left">
+            <h2 className="text-xl font-black text-slate-900 leading-tight drop-shadow-xs">Dzota</h2>
+            <p className="text-xs text-slate-800 font-bold drop-shadow-xs">Hệ thống quản lý đề thi</p>
+          </div>
+        </div>
 
             {/* 3D Tilt & Mouse-Glow PURE TRANSPARENT GLASS CARD */}
             <div
@@ -385,11 +359,7 @@ export default function LoginPage() {
                 </div>
               ))}
             </div>
-
           </div>
-
-        </div>
-      </div>
 
       {/* Global Embedded Styles for Animations & Responsive Background */}
       <style>{`
