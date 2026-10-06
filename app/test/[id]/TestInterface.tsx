@@ -996,24 +996,6 @@ export default function TestInterface({ test }: { test: any }) {
             </div>
           )
         })}
-        {test.mode === 'practice' && (
-           <div className="pt-4 pb-8 flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
-             <button
-               onClick={handleRestartPractice}
-               className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm bg-white border-2 border-slate-300 text-slate-700 hover:bg-slate-50 shadow-xs active:scale-95 transition-all cursor-pointer"
-             >
-               <RotateCcw size={16} />
-               <span>Làm Lại Từ Đầu</span>
-             </button>
-             <button
-               onClick={handlePracticeSubmit}
-               className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm bg-[#007AFF] hover:bg-blue-600 text-white shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
-             >
-               <CheckSquare size={16} />
-               <span>Nộp Bài &amp; Xem Điểm</span>
-             </button>
-           </div>
-        )}
         {renderCopyrightBadge('my-4')}
       </div>
 
