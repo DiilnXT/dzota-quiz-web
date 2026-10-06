@@ -38,6 +38,7 @@ export default function TestInterface({ test }: { test: any }) {
   const [showExplanation, setShowExplanation] = useState<Record<string, 'correct' | 'incorrect'>>({})
   const [savedSession, setSavedSession] = useState<any | null>(null)
   const [restoredToast, setRestoredToast] = useState<string | null>(null)
+  const [activeBgEnabled, setActiveBgEnabled] = useState(true)
 
   // AI Question Explanation Modal states
   const [activeExplainQ, setActiveExplainQ] = useState<any | null>(null)
@@ -45,7 +46,19 @@ export default function TestInterface({ test }: { test: any }) {
   const [explanationContent, setExplanationContent] = useState<string | null>(null)
   const [explainError, setExplainError] = useState<string | null>(null)
   const [explanationCache, setExplanationCache] = useState<Record<string, string>>({})
-  
+
+  // Fetch admin settings for active background mode
+  useEffect(() => {
+    fetch('/api/admin/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.activeBgEnabled !== undefined) {
+          setActiveBgEnabled(Boolean(data.activeBgEnabled))
+        }
+      })
+      .catch(() => {})
+  }, [])
+
   // Khôi phục đa nhiệm khi chuyển app / tải lại trang trên điện thoại
   useEffect(() => {
     setMounted(true)
@@ -863,9 +876,9 @@ export default function TestInterface({ test }: { test: any }) {
 
   // ─── Active test-taking view ──────────────────────────────────────────────────
   return (
-    <div className="flex flex-col min-h-screen dzota-active-bg font-sans relative overflow-y-auto">
-      {/* Subtle ambient overlay */}
-      <div className="absolute inset-0 bg-slate-900/[0.03] pointer-events-none" />
+    <div className={`flex flex-col min-h-screen font-sans relative overflow-y-auto ${activeBgEnabled ? 'dzota-active-bg' : 'bg-[#F8F9FA]'}`}>
+      {/* Subtle ambient overlay only when background is enabled */}
+      {activeBgEnabled && <div className="absolute inset-0 bg-slate-900/[0.03] pointer-events-none" />}
 
       {restoredToast && (
         <div className="fixed top-16 left-1/2 -translate-x-1/2 z-30 bg-blue-600 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg flex items-center gap-2 animate-bounce">

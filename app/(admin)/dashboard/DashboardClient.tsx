@@ -19,7 +19,8 @@ import {
   Shield,
   Key,
   Database,
-  ExternalLink
+  ExternalLink,
+  Image as ImageIcon
 } from 'lucide-react'
 
 interface UserItem {
@@ -89,9 +90,10 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
     'gemini-1.5-pro'
   ])
   const [customModelInput, setCustomModelInput] = useState('')
+  const [activeBgEnabled, setActiveBgEnabled] = useState(true)
   const [isSavingSettings, setIsSavingSettings] = useState(false)
 
-  // Fetch AI settings when opening settings modal
+  // Fetch AI & System settings when opening settings modal
   const loadAiSettings = async () => {
     try {
       const res = await fetch('/api/admin/settings')
@@ -102,9 +104,12 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
         if (data.availableModels && Array.isArray(data.availableModels)) {
           setAvailableModels(data.availableModels)
         }
+        if (data.activeBgEnabled !== undefined) {
+          setActiveBgEnabled(Boolean(data.activeBgEnabled))
+        }
       }
     } catch (e) {
-      console.error('Failed to load AI settings', e)
+      console.error('Failed to load settings', e)
     }
   }
 
@@ -117,17 +122,18 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
         body: JSON.stringify({
           apiKeys: geminiKeys,
           activeModel: geminiModel,
-          availableModels: availableModels
+          availableModels: availableModels,
+          activeBgEnabled: activeBgEnabled
         })
       })
       if (res.ok) {
-        showToast('Đã lưu cấu hình Gemini API & Model thành công!')
+        showToast('Đã lưu cấu hình cài đặt hệ thống thành công!')
         setIsSettingsOpen(false)
       } else {
-        showToast('Không thể lưu cấu hình AI', 'error')
+        showToast('Không thể lưu cấu hình', 'error')
       }
     } catch (e) {
-      showToast('Lỗi kết nối khi lưu cấu hình AI', 'error')
+      showToast('Lỗi kết nối khi lưu cấu hình', 'error')
     } finally {
       setIsSavingSettings(false)
     }
@@ -897,6 +903,51 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
                 </div>
               </div>
 
+              {/* Cài đặt Giao diện & Ảnh nền lúc làm bài */}
+              <div className="bg-slate-50 dark:bg-slate-800/80 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase flex items-center gap-1.5">
+                    <ImageIcon size={15} className="text-indigo-600 dark:text-indigo-400" /> Ảnh nền khi làm bài thi & luyện tập
+                  </div>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    activeBgEnabled 
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300' 
+                      : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                  }`}>
+                    {activeBgEnabled ? 'Đang BẬT' : 'Đang TẮT (Nền trắng)'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <div className="pr-4">
+                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-100">
+                      Hiển thị hình nền khi thí sinh làm bài
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                      Khi tắt, giao diện làm bài sẽ tự động quay về <b>nền trắng sạch</b> như cũ trên cả laptop và điện thoại.
+                    </p>
+                  </div>
+
+                  {/* Toggle Switch */}
+                  <button
+                    type="button"
+                    onClick={() => setActiveBgEnabled(!activeBgEnabled)}
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      activeBgEnabled ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600'
+                    }`}
+                    role="switch"
+                    aria-checked={activeBgEnabled}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                        activeBgEnabled ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/60 space-y-3">
                 <div className="text-xs font-bold text-slate-400 uppercase">Hạ tầng & Dịch vụ</div>
                 
@@ -938,7 +989,7 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
                   disabled={isSavingSettings}
                   className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200 flex items-center justify-center gap-2 disabled:opacity-60"
                 >
-                  {isSavingSettings ? 'Đang lưu...' : 'Lưu Cấu Hình AI'}
+                  {isSavingSettings ? 'Đang lưu...' : 'Lưu Cài Đặt'}
                 </button>
               </div>
             </div>

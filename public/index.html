@@ -489,6 +489,7 @@
         const [currentQIndex, setCurrentQIndex] = useState(0);
         const [toasts, setToasts] = useState([]);
         const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
+        const [activeBgEnabled, setActiveBgEnabled] = useState(true);
 
         // AI Giảng Viên Giải Thích States
         const [activeExplainQ, setActiveExplainQ] = useState(null);
@@ -899,6 +900,17 @@
             let localQuizzes = [];
             try { localQuizzes = JSON.parse(localStorage.getItem('myQuizzes') || '[]'); } catch (e) {}
             setSavedQuizzes(localQuizzes);
+
+            // Fetch admin settings for active background state
+            try {
+              const settingsRes = await fetch('/api/admin/settings');
+              if (settingsRes.ok) {
+                const sData = await settingsRes.json();
+                if (sData && sData.activeBgEnabled !== undefined) {
+                  setActiveBgEnabled(Boolean(sData.activeBgEnabled));
+                }
+              }
+            } catch (err) {}
 
             // Fetch from database so mobile / other devices show all created quizzes
             try {
@@ -2277,9 +2289,9 @@
         const renderTaking = () => {
              if (quizConfig.mode === 'exam') {
                return (
-                <div className="flex flex-col min-h-screen dzota-active-bg font-sans pb-20 relative">
+                <div className={`flex flex-col min-h-screen font-sans pb-20 relative ${activeBgEnabled ? 'dzota-active-bg' : 'bg-[#F8F9FA]'}`}>
                    {/* Subtle ambient overlay */}
-                   <div className="absolute inset-0 bg-slate-900/[0.03] pointer-events-none" />
+                   {activeBgEnabled && <div className="absolute inset-0 bg-slate-900/[0.03] pointer-events-none" />}
 
                    {/* Top Progress in Google Blue */}
                    <div className="w-full bg-[#dadce0] h-1.5 fixed top-0 left-0 z-30">
@@ -2323,9 +2335,9 @@
                const q = currentQuestions[currentQIndex];
                const progressPercent = ((currentQIndex + 1) / Math.max(1, currentQuestions.length)) * 100;
                return (
-                <div className="flex flex-col h-screen h-[100dvh] max-h-screen dzota-active-bg font-sans overflow-hidden relative">
+                <div className={`flex flex-col h-screen h-[100dvh] max-h-screen font-sans overflow-hidden relative ${activeBgEnabled ? 'dzota-active-bg' : 'bg-[#F8F9FA]'}`}>
                     {/* Subtle ambient overlay */}
-                    <div className="absolute inset-0 bg-slate-900/[0.03] pointer-events-none" />
+                    {activeBgEnabled && <div className="absolute inset-0 bg-slate-900/[0.03] pointer-events-none" />}
 
                     {/* Top Progress bar in Google Blue */}
                     <div className="w-full bg-[#dadce0] h-1.5 flex-shrink-0 z-30">

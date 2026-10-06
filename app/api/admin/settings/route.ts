@@ -23,12 +23,14 @@ export async function GET() {
     let keysSetting: any = null
     let modelSetting: any = null
     let availableModelsSetting: any = null
+    let activeBgSetting: any = null
 
     try {
       if ((prisma as any).systemSetting) {
         keysSetting = await (prisma as any).systemSetting.findUnique({ where: { key: 'GEMINI_API_KEYS' } })
         modelSetting = await (prisma as any).systemSetting.findUnique({ where: { key: 'GEMINI_ACTIVE_MODEL' } })
         availableModelsSetting = await (prisma as any).systemSetting.findUnique({ where: { key: 'GEMINI_AVAILABLE_MODELS' } })
+        activeBgSetting = await (prisma as any).systemSetting.findUnique({ where: { key: 'ACTIVE_BG_ENABLED' } })
       }
     } catch (e) {
       console.warn('SystemSetting table not ready in DB, using fallback')
@@ -48,34 +50,38 @@ export async function GET() {
     const availableModels = availableModelsSetting?.value
       ? JSON.parse(availableModelsSetting.value)
       : defaultModels
+    // Mặc định là true (bật ảnh background) trừ khi admin tắt explicitly thành 'false'
+    const activeBgEnabled = activeBgSetting ? activeBgSetting.value !== 'false' : true
 
     if (!isUserAdmin) {
-      // Non-admin chỉ cần biết cấu hình đã có key hay chưa và model đang dùng
+      // Non-admin chỉ cần biết cấu hình đã có key hay chưa, model đang dùng, và trạng thái bật/tắt background
       return NextResponse.json({
         hasKeys: Boolean(apiKeys.trim()),
         activeModel,
-        keyCount: apiKeys.split(',').filter(Boolean).length
+        keyCount: apiKeys.split(',').filter(Boolean).length,
+        activeBgEnabled
       })
     }
 
     return NextResponse.json({
       apiKeys,
       activeModel,
-      availableModels
+      availableModels,
+      activeBgEnabled
     })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 
-// POST: Lưu cài đặt Gemini API & Models (chỉ admin)
+// POST: Lưu cài đặt Gemini API & Models & Background (chỉ admin)
 export async function POST(request: Request) {
   if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Bạn không có quyền thực hiện thao tác này.' }, { status: 403 })
   }
 
   try {
-    const { apiKeys, activeModel, availableModels } = await request.json()
+    const { apiKeys, activeModel, availableModels, activeBgEnabled } = await request.json()
 
     if ((prisma as any).systemSetting) {
       if (apiKeys !== undefined) {
@@ -101,9 +107,17 @@ export async function POST(request: Request) {
           create: { key: 'GEMINI_AVAILABLE_MODELS', value: JSON.stringify(availableModels) }
         })
       }
+
+      if (activeBgEnabled !== undefined) {
+        await (prisma as any).systemSetting.upsert({
+          where: { key: 'ACTIVE_BG_ENABLED' },
+          update: { value: String(activeBgEnabled) },
+          create: { key: 'ACTIVE_BG_ENABLED', value: String(activeBgEnabled) }
+        })
+      }
     }
 
-    return NextResponse.json({ success: true, message: 'Đã lưu cấu hình AI Gemini thành công!' })
+    return NextResponse.json({ success: true, message: 'Đã lưu cấu hình cài đặt hệ thống thành công!' })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
