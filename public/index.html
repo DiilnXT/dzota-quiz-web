@@ -874,6 +874,50 @@
                         loadedQuestions = loadedQuestions.map(q => ({ id: 'slot_' + (q.id || Math.random()), variants: [q] }));
                     }
                     setParsedQuestions(loadedQuestions);
+
+                    // Kiểm tra và khôi phục đa nhiệm nếu người dùng đang làm dở trên điện thoại
+                    const savedSessionKey = 'dzota_quiz_session_' + id;
+                    let savedSession = null;
+                    try {
+                        const raw = localStorage.getItem(savedSessionKey);
+                        if (raw) savedSession = JSON.parse(raw);
+                    } catch (e) {}
+
+                    if (savedSession && savedSession.appMode === 'taking' && Array.isArray(savedSession.currentQuestions) && savedSession.currentQuestions.length > 0) {
+                        const now = Date.now();
+                        const isExam = (savedSession.mode || data.config?.mode) === 'exam';
+                        const remaining = savedSession.endTime ? Math.round((savedSession.endTime - now) / 1000) : savedSession.timeLeft;
+                        
+                        if (isExam && remaining <= 0) {
+                            // Hết giờ làm bài trong lúc ở app khác -> tự nộp bài
+                            setCurrentQuestions(savedSession.currentQuestions);
+                            setUserAnswers(savedSession.userAnswers || {});
+                            setShowExplanation(savedSession.showExplanation || {});
+                            setCurrentQIndex(savedSession.currentQIndex || 0);
+                            setTimeLeft(0);
+                            setAppMode('taking');
+                            setIsLoading(false);
+                            setTimeout(() => {
+                                addToast("Thời gian làm bài đã kết thúc trong lúc thoát ứng dụng. Đã tự động nộp bài!", 'warning');
+                                processSubmit();
+                            }, 400);
+                            return;
+                        }
+
+                        // Khôi phục nguyên vẹn câu hỏi, các câu đã làm và câu đang đứng
+                        setCurrentQuestions(savedSession.currentQuestions);
+                        setUserAnswers(savedSession.userAnswers || {});
+                        setShowExplanation(savedSession.showExplanation || {});
+                        const targetQIdx = Math.min(savedSession.currentQIndex || 0, savedSession.currentQuestions.length - 1);
+                        setCurrentQIndex(targetQIdx);
+                        setTimeLeft(isExam ? remaining : (savedSession.timeLeft || (data.config?.timeLimit || 15) * 60));
+                        setAppMode('taking');
+                        setIsLoading(false);
+                        const answeredCount = Object.keys(savedSession.userAnswers || {}).length;
+                        addToast(`🔄 Đã khôi phục bài làm của bạn (Câu ${targetQIdx + 1}, đã làm ${answeredCount} câu)!`, 'success');
+                        return;
+                    }
+
                     setAppMode('entry'); setIsLoading(false);
                 } catch (e) {
                     addToast("Không tìm thấy dữ liệu bài thi.", 'error');
@@ -1196,8 +1240,47 @@
               reader.readAsArrayBuffer(file);
           };
 
-          const startQuiz = () => {
-          if (quizConfig.password && accessPassword !== quizConfig.password) { addToast("Sai mật khẩu!", 'error'); return; }
+        // Lưu tiến trình bài thi vào localStorage để không bị mất khi thoát app/đa nhiệm
+        const saveSessionProgress = (overrides = {}) => {
+          if (submitted) return;
+          const questionsToSave = overrides.currentQuestions || currentQuestions;
+          if (!questionsToSave || questionsToSave.length === 0) return;
+          const key = 'dzota_quiz_session_' + (quizIdTracker || 'default');
+          const now = Date.now();
+          const curTimeLeft = overrides.timeLeft !== undefined ? overrides.timeLeft : timeLeft;
+          
+          let prevEndTime = null;
+          try {
+            const raw = localStorage.getItem(key);
+            if (raw) {
+              const prev = JSON.parse(raw);
+              prevEndTime = prev.endTime;
+            }
+          } catch(e) {}
+
+          const endTime = quizConfig.mode === 'exam' ? (prevEndTime || (now + curTimeLeft * 1000)) : null;
+
+          const sessionData = {
+            quizId: quizIdTracker,
+            appMode: 'taking',
+            currentQuestions: questionsToSave,
+            currentQIndex: overrides.currentQIndex !== undefined ? overrides.currentQIndex : currentQIndex,
+            userAnswers: overrides.userAnswers || userAnswers,
+            showExplanation: overrides.showExplanation || showExplanation,
+            timeLeft: curTimeLeft,
+            endTime: endTime,
+            savedAt: now,
+            mode: quizConfig.mode
+          };
+          try {
+            localStorage.setItem(key, JSON.stringify(sessionData));
+          } catch(e) {}
+        };
+
+        const startQuiz = (resume = false) => {
+          if (!resume) {
+            if (quizConfig.password && accessPassword !== quizConfig.password) { addToast("Sai mật khẩu!", 'error'); return; }
+          }
           
           let finalQuestions = parsedQuestions.map(slot => {
               const variants = slot.variants || []; const picked = variants[Math.floor(Math.random() * variants.length)] || variants[0];
@@ -1223,6 +1306,23 @@
           
           setCurrentQuestions(finalQuestions); setAppMode('taking'); setTimeLeft(quizConfig.timeLimit * 60);
           setSubmitted(false); setScore(0); setUserAnswers({}); setShowExplanation({}); setCurrentQIndex(0);
+
+          const now = Date.now();
+          const sessionData = {
+            quizId: quizIdTracker,
+            appMode: 'taking',
+            currentQuestions: finalQuestions,
+            currentQIndex: 0,
+            userAnswers: {},
+            showExplanation: {},
+            timeLeft: quizConfig.timeLimit * 60,
+            endTime: quizConfig.mode === 'exam' ? (now + quizConfig.timeLimit * 60 * 1000) : null,
+            savedAt: now,
+            mode: quizConfig.mode
+          };
+          try {
+            localStorage.setItem('dzota_quiz_session_' + (quizIdTracker || 'default'), JSON.stringify(sessionData));
+          } catch(e) {}
         };
 
         useEffect(() => {
@@ -1232,6 +1332,43 @@
           }
           return () => clearInterval(timer);
         }, [appMode, timeLeft, submitted]);
+
+        // Lắng nghe khi người dùng thoát ra app khác hoặc tắt màn hình điện thoại
+        useEffect(() => {
+          const handleVisibility = () => {
+            if (document.visibilityState === 'hidden') {
+              if (appMode === 'taking' && !submitted && currentQuestions.length > 0) {
+                saveSessionProgress();
+              }
+            } else if (document.visibilityState === 'visible') {
+              if (appMode === 'taking' && !submitted && quizConfig.mode === 'exam') {
+                const key = 'dzota_quiz_session_' + (quizIdTracker || 'default');
+                try {
+                  const raw = localStorage.getItem(key);
+                  if (raw) {
+                    const data = JSON.parse(raw);
+                    if (data.endTime) {
+                      const remaining = Math.round((data.endTime - Date.now()) / 1000);
+                      if (remaining <= 0) {
+                        setTimeLeft(0);
+                        handleSubmitExam();
+                      } else {
+                        setTimeLeft(remaining);
+                      }
+                    }
+                  }
+                } catch(e) {}
+              }
+            }
+          };
+
+          document.addEventListener('visibilitychange', handleVisibility);
+          window.addEventListener('pagehide', handleVisibility);
+          return () => {
+            document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('pagehide', handleVisibility);
+          };
+        }, [appMode, submitted, currentQuestions, currentQIndex, userAnswers, showExplanation, timeLeft, quizIdTracker, quizConfig.mode]);
 
         useEffect(() => {
             const handleKeyDown = (e) => {
@@ -1248,16 +1385,29 @@
 
         const handleSelectAnswer = (qId, option) => {
           if (submitted && quizConfig.mode === 'exam') return;
-          setUserAnswers(prev => ({ ...prev, [qId]: option }));
+          const nextAnswers = { ...userAnswers, [qId]: option };
+          setUserAnswers(nextAnswers);
+          let nextExp = showExplanation;
           if (quizConfig.mode === 'practice') {
               const q = currentQuestions.find(q => q.id === qId || (q.originalId || q.id) === qId);
               if (q) {
-                  setShowExplanation(prev => ({...prev, [qId]: q.correct === option ? 'correct' : 'incorrect'}));
+                  nextExp = { ...showExplanation, [qId]: q.correct === option ? 'correct' : 'incorrect' };
+                  setShowExplanation(nextExp);
               }
           }
+          saveSessionProgress({ userAnswers: nextAnswers, showExplanation: nextExp });
         };
 
-        const handleNextQuestion = () => { if (currentQIndex < currentQuestions.length - 1) setCurrentQIndex(p => p + 1); else { addToast("Hoàn thành!", 'success'); processSubmit(); } };
+        const handleNextQuestion = () => { 
+          if (currentQIndex < currentQuestions.length - 1) {
+            const nextIdx = currentQIndex + 1;
+            setCurrentQIndex(nextIdx);
+            saveSessionProgress({ currentQIndex: nextIdx });
+          } else { 
+            addToast("Hoàn thành!", 'success'); 
+            processSubmit(); 
+          } 
+        };
 
         const handleRequeue = (offset) => {
             const curQ = currentQuestions[currentQIndex];
@@ -1300,6 +1450,7 @@
             const newQ = [...currentQuestions];
             newQ.splice(Math.min(newQ.length, currentQIndex + 1 + offset), 0, requeuedQ);
             setCurrentQuestions(newQ);
+            saveSessionProgress({ currentQuestions: newQ });
             addToast("Đã xáo trộn phương án và thêm câu hỏi vào hàng đợi ôn tập!", 'info');
             handleNextQuestion();
         };
@@ -1319,6 +1470,9 @@
             });
             setCorrectCount(count); setScore(((count / uniqueQuestions.length) * 10).toFixed(1));
             setSubmitted(true); setAppMode('result'); addToast("Đã ghi nhận kết quả!", 'success');
+            try {
+              localStorage.removeItem('dzota_quiz_session_' + (quizIdTracker || 'default'));
+            } catch(e) {}
         };
 
         // --- RENDER SECTIONS ---
@@ -1769,9 +1923,17 @@
                   boxShadow: '0 25px 60px rgba(15, 35, 75, 0.16)'
                 }}
               >
-                {/* Floating Top Logo Card */}
-                <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-3xl bg-white p-2.5 mx-auto shadow-xl shadow-blue-500/15 border-2 border-white flex items-center justify-center -mt-9 sm:-mt-10 mb-3.5 hover:scale-105 transition-transform duration-300">
-                  <img src="/logo-dzota.png" alt="Dzota" className="w-full h-full object-contain filter drop-shadow-sm" />
+                {/* Floating Top Logo Card (Kích thước cân đối, chuẩn tỉ lệ trên điện thoại & laptop) */}
+                <div
+                  className="rounded-3xl bg-white p-2 mx-auto shadow-xl shadow-blue-500/15 border-2 border-white flex items-center justify-center -mt-9 sm:-mt-11 mb-3.5 hover:scale-105 transition-transform duration-300 flex-shrink-0"
+                  style={{ width: '74px', height: '74px', maxWidth: '74px', maxHeight: '74px' }}
+                >
+                  <img
+                    src="/logo-dzota.png"
+                    alt="Dzota"
+                    className="w-full h-full object-contain filter drop-shadow-sm"
+                    style={{ maxWidth: '100%', maxHeight: '100%' }}
+                  />
                 </div>
 
                 <div className="text-center">
@@ -1782,20 +1944,20 @@
                   </div>
 
                   {/* Quiz Title */}
-                  <h1 className="text-2xl sm:text-3xl font-black text-[#0F294D] tracking-tight mb-1 leading-tight uppercase">
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F294D] tracking-tight mb-1 leading-tight uppercase">
                     {title}
                   </h1>
 
                   {/* Subtitle */}
-                  <p className="text-xs sm:text-[13px] font-bold text-[#64748B] uppercase tracking-wider mb-5 sm:mb-6">
+                  <p className="text-[11px] sm:text-xs lg:text-[13px] font-bold text-[#64748B] uppercase tracking-wider mb-4 sm:mb-6">
                     {quizConfig.mode === 'practice' ? 'BÀI KIỂM TRA ÔN LUYỆN TRỰC TUYẾN' : 'BÀI THI TRẮC NGHIỆM TRỰC TUYẾN'}
                   </p>
 
                   {/* 3 Info Cards Grid */}
                   <div className="grid grid-cols-3 gap-2 sm:gap-3.5 mb-5 sm:mb-6 text-center">
                     {/* Card 1: Thời gian */}
-                    <div className="bg-[#F4F8FF] border border-[#E0ECFF] rounded-2xl p-2.5 sm:p-3 flex flex-col items-center justify-center hover:scale-[1.02] transition-transform">
-                      <div className="w-8 h-8 rounded-xl bg-[#E1EEFF] text-[#1D68EE] flex items-center justify-center mb-1.5 shadow-2xs">
+                    <div className="bg-[#F4F8FF] border border-[#E0ECFF] rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-center hover:scale-[1.02] transition-transform">
+                      <div className="w-8 h-8 rounded-xl bg-[#E1EEFF] text-[#1D68EE] flex items-center justify-center mb-1 shadow-2xs">
                         <Icons.Clock size={16} />
                       </div>
                       <div className="text-[10px] sm:text-[11px] font-semibold text-[#64748B]">Thời gian làm bài</div>
@@ -1803,8 +1965,8 @@
                     </div>
 
                     {/* Card 2: Tổng số câu */}
-                    <div className="bg-[#F0FAF4] border border-[#DCF5E5] rounded-2xl p-2.5 sm:p-3 flex flex-col items-center justify-center hover:scale-[1.02] transition-transform">
-                      <div className="w-8 h-8 rounded-xl bg-[#DCF5E5] text-[#10B981] flex items-center justify-center mb-1.5 shadow-2xs">
+                    <div className="bg-[#F0FAF4] border border-[#DCF5E5] rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-center hover:scale-[1.02] transition-transform">
+                      <div className="w-8 h-8 rounded-xl bg-[#DCF5E5] text-[#10B981] flex items-center justify-center mb-1 shadow-2xs">
                         <Icons.FileText size={16} />
                       </div>
                       <div className="text-[10px] sm:text-[11px] font-semibold text-[#64748B]">Tổng số câu hỏi</div>
@@ -1812,8 +1974,8 @@
                     </div>
 
                     {/* Card 3: Hình thức */}
-                    <div className="bg-[#FFF8F0] border border-[#FFE8D1] rounded-2xl p-2.5 sm:p-3 flex flex-col items-center justify-center hover:scale-[1.02] transition-transform">
-                      <div className="w-8 h-8 rounded-xl bg-[#FFE8D1] text-[#F59E0B] flex items-center justify-center mb-1.5 shadow-2xs">
+                    <div className="bg-[#FFF8F0] border border-[#FFE8D1] rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-center hover:scale-[1.02] transition-transform">
+                      <div className="w-8 h-8 rounded-xl bg-[#FFE8D1] text-[#F59E0B] flex items-center justify-center mb-1 shadow-2xs">
                         <Icons.BarChart2 size={16} />
                       </div>
                       <div className="text-[10px] sm:text-[11px] font-semibold text-[#64748B]">Hình thức làm bài</div>
@@ -1858,17 +2020,58 @@
                     </div>
                   )}
 
-                  {/* CTA Button */}
+                  {/* Saved in-progress session box (nếu có bài làm dở) */}
+                  {(() => {
+                    const savedSessionKey = 'dzota_quiz_session_' + (quizIdTracker || 'default');
+                    let existingSession = null;
+                    try {
+                      const raw = localStorage.getItem(savedSessionKey);
+                      if (raw) existingSession = JSON.parse(raw);
+                    } catch(e) {}
+
+                    if (!existingSession || existingSession.appMode !== 'taking' || !existingSession.currentQuestions?.length) return null;
+
+                    return (
+                      <div className="mb-4 p-3.5 bg-blue-50/90 border border-blue-200/80 rounded-2xl text-left flex items-center justify-between gap-3 animate-fade-in shadow-xs">
+                        <div className="min-w-0">
+                          <p className="text-xs font-black text-blue-900 flex items-center gap-1.5">
+                            <span>🔄</span> Có bài làm dở ({Object.keys(existingSession.userAnswers || {}).length}/{existingSession.currentQuestions?.length || 0} câu đã làm)
+                          </p>
+                          <p className="text-[11px] text-blue-700/80 truncate">Đa nhiệm đã tự động lưu lại bài làm của bạn.</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setCurrentQuestions(existingSession.currentQuestions);
+                            setUserAnswers(existingSession.userAnswers || {});
+                            setShowExplanation(existingSession.showExplanation || {});
+                            const targetQIdx = Math.min(existingSession.currentQIndex || 0, existingSession.currentQuestions.length - 1);
+                            setCurrentQIndex(targetQIdx);
+                            setTimeLeft(existingSession.timeLeft || 0);
+                            setAppMode('taking');
+                            addToast(`Đã tiếp tục bài làm tại câu ${targetQIdx + 1}!`, 'success');
+                          }}
+                          className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-xs whitespace-nowrap active:scale-95 transition-all cursor-pointer"
+                        >
+                          Tiếp tục
+                        </button>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Big Impressive CTA Button */}
                   <button
-                    onClick={startQuiz}
-                    className="w-full h-13 sm:h-14 rounded-full font-black text-white text-base sm:text-lg transition-all active:scale-[0.98] hover:-translate-y-0.5 flex items-center justify-center gap-2.5 shadow-[0_10px_25px_rgba(26,115,232,0.4)] hover:shadow-[0_14px_32px_rgba(26,115,232,0.5)] cursor-pointer group"
+                    onClick={() => startQuiz(false)}
+                    className="relative overflow-hidden w-full py-3.5 sm:py-4 px-6 rounded-2xl sm:rounded-full font-black text-white text-[16px] sm:text-[18px] transition-all active:scale-[0.98] hover:-translate-y-0.5 flex items-center justify-center gap-3 shadow-[0_12px_28px_-4px_rgba(22,119,255,0.48),0_6px_12px_-2px_rgba(22,119,255,0.25)] hover:shadow-[0_16px_34px_rgba(22,119,255,0.55)] cursor-pointer group"
                     style={{
-                      background: 'linear-gradient(90deg, #0066FF 0%, #1A73E8 50%, #00B4D8 100%)'
+                      background: 'linear-gradient(90deg, #0052FF 0%, #1677FF 48%, #00C2FF 100%)',
+                      minHeight: '54px'
                     }}
                   >
-                    <Icons.Play size={18} fill="currentColor" />
-                    <span className="tracking-wide">Bắt Đầu Làm Bài</span>
-                    <Icons.ArrowRight size={18} className="transition-transform group-hover:translate-x-1.5" />
+                    <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                      <Icons.Play size={15} fill="currentColor" className="ml-0.5 text-white" />
+                    </div>
+                    <span className="tracking-wide text-white drop-shadow-xs">Bắt Đầu Làm Bài</span>
+                    <Icons.ArrowRight size={19} className="transition-transform group-hover:translate-x-1.5" />
                   </button>
 
                   {/* Copyright Badge */}
@@ -2051,7 +2254,7 @@
                    <nav className="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-[#dadce0] p-3 sm:p-4 z-20 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
                       <div className="max-w-2xl mx-auto flex gap-3 items-center">
                           <button 
-                            onClick={() => setCurrentQIndex(Math.max(0, currentQIndex - 1))} 
+                            onClick={() => { const prevIdx = Math.max(0, currentQIndex - 1); setCurrentQIndex(prevIdx); saveSessionProgress({ currentQIndex: prevIdx }); }} 
                             disabled={currentQIndex === 0} 
                             className="flex-1 py-3 rounded-full font-bold text-sm border-2 border-[#dadce0] bg-white text-[#3c4043] hover:bg-[#f8f9fa] disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all shadow-xs"
                           >

@@ -34,6 +34,8 @@ export default function TestInterface({ test }: { test: any }) {
   const [submitted, setSubmitted] = useState(false)
   const [score, setScore] = useState(0)
   const [showExplanation, setShowExplanation] = useState<Record<string, 'correct' | 'incorrect'>>({})
+  const [savedSession, setSavedSession] = useState<any | null>(null)
+  const [restoredToast, setRestoredToast] = useState<string | null>(null)
 
   // AI Question Explanation Modal states
   const [activeExplainQ, setActiveExplainQ] = useState<any | null>(null)
@@ -42,9 +44,126 @@ export default function TestInterface({ test }: { test: any }) {
   const [explainError, setExplainError] = useState<string | null>(null)
   const [explanationCache, setExplanationCache] = useState<Record<string, string>>({})
   
+  // Khôi phục đa nhiệm khi chuyển app / tải lại trang trên điện thoại
   useEffect(() => {
     setMounted(true)
-  }, [])
+    if (!test?.id) return
+
+    const key = `dzota_quiz_session_${test.id}`
+    try {
+      const raw = localStorage.getItem(key)
+      if (raw) {
+        const saved = JSON.parse(raw)
+        if (saved && saved.isStarted && !saved.submitted) {
+          setSavedSession(saved)
+          const now = Date.now()
+          const isExam = test.mode === 'exam'
+          const remaining = saved.endTime ? Math.round((saved.endTime - now) / 1000) : saved.timeLeft
+
+          if (isExam && remaining <= 0) {
+            // Hết giờ làm bài trong lúc ở app khác -> tự động nộp bài
+            setAnswers(saved.answers || {})
+            setShowExplanation(saved.showExplanation || {})
+            setIsStarted(true)
+            setTimeLeft(0)
+            let correctCount = 0
+            test.questions.forEach((tq: any) => {
+              if (saved.answers?.[tq.question.id] === tq.question.correctOption) {
+                correctCount++
+              }
+            })
+            setScore(parseFloat(((correctCount / test.questions.length) * 10).toFixed(1)))
+            setSubmitted(true)
+            setRestoredToast('Hết giờ làm bài trong lúc chuyển ứng dụng. Đã tự động nộp bài!')
+            try { localStorage.removeItem(key) } catch (e) {}
+            return
+          }
+
+          // Tự động khôi phục bài làm đang dở
+          setAnswers(saved.answers || {})
+          setShowExplanation(saved.showExplanation || {})
+          setTimeLeft(isExam ? remaining : (saved.timeLeft || test.timeLimit * 60))
+          setIsStarted(true)
+          const ansCount = Object.keys(saved.answers || {}).length
+          setRestoredToast(`🔄 Đã tự động khôi phục bài làm (${ansCount}/${test.questions?.length || 0} câu đã chọn)!`)
+          setTimeout(() => setRestoredToast(null), 4500)
+        }
+      }
+    } catch (e) {
+      console.warn('Lỗi kiểm tra session:', e)
+    }
+  }, [test?.id])
+
+  // Lưu tiến trình bài làm liên tục vào localStorage
+  const saveProgressToStorage = (overrideAnswers?: Record<string, string>, overrideExp?: Record<string, any>) => {
+    if (!test?.id || submitted) return
+    const key = `dzota_quiz_session_${test.id}`
+    const now = Date.now()
+    const curAnswers = overrideAnswers || answers
+    const curExp = overrideExp || showExplanation
+    
+    let prevEndTime = null
+    try {
+      const raw = localStorage.getItem(key)
+      if (raw) {
+        const prev = JSON.parse(raw)
+        prevEndTime = prev.endTime
+      }
+    } catch (e) {}
+
+    const sessionData = {
+      testId: test.id,
+      isStarted: true,
+      answers: curAnswers,
+      showExplanation: curExp,
+      timeLeft,
+      endTime: test.mode === 'exam' ? (prevEndTime || (now + timeLeft * 1000)) : null,
+      submitted: false,
+      savedAt: now
+    }
+    try {
+      localStorage.setItem(key, JSON.stringify(sessionData))
+    } catch (e) {}
+  }
+
+  // Lắng nghe visibilitychange: khi người dùng chuyển app hoặc tắt màn hình điện thoại
+  useEffect(() => {
+    if (!test?.id) return
+    const key = `dzota_quiz_session_${test.id}`
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        if (isStarted && !submitted) {
+          saveProgressToStorage()
+        }
+      } else if (document.visibilityState === 'visible') {
+        if (isStarted && !submitted && test.mode === 'exam') {
+          try {
+            const raw = localStorage.getItem(key)
+            if (raw) {
+              const data = JSON.parse(raw)
+              if (data.endTime) {
+                const remaining = Math.round((data.endTime - Date.now()) / 1000)
+                if (remaining <= 0) {
+                  setTimeLeft(0)
+                  handleSubmit()
+                } else {
+                  setTimeLeft(remaining)
+                }
+              }
+            }
+          } catch (e) {}
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('pagehide', handleVisibility)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('pagehide', handleVisibility)
+    }
+  }, [test?.id, isStarted, submitted, answers, showExplanation, timeLeft])
 
   useEffect(() => {
     let timer: any
@@ -77,18 +196,48 @@ export default function TestInterface({ test }: { test: any }) {
     }
   }
 
+  const handleStartTest = (isResume = false) => {
+    const key = `dzota_quiz_session_${test.id}`
+    if (!isResume) {
+      try { localStorage.removeItem(key) } catch (e) {}
+      setAnswers({})
+      setShowExplanation({})
+      setTimeLeft(test.timeLimit * 60)
+    }
+    setIsStarted(true)
+    const now = Date.now()
+    const sessionData = {
+      testId: test.id,
+      isStarted: true,
+      answers: isResume ? answers : {},
+      showExplanation: isResume ? showExplanation : {},
+      timeLeft: isResume ? timeLeft : test.timeLimit * 60,
+      endTime: test.mode === 'exam' ? (now + (isResume ? timeLeft : test.timeLimit * 60) * 1000) : null,
+      submitted: false,
+      savedAt: now
+    }
+    try {
+      localStorage.setItem(key, JSON.stringify(sessionData))
+    } catch (e) {}
+  }
+
   const handleSelectAnswer = (qId: string, optKey: string) => {
     if (submitted && test.mode === 'exam') return
-    setAnswers(prev => ({ ...prev, [qId]: optKey }))
+    const nextAnswers = { ...answers, [qId]: optKey }
+    setAnswers(nextAnswers)
     
+    let nextExp = showExplanation
     if (test.mode === 'practice') {
       const q = test.questions.find((tq: any) => tq.question.id === qId).question
       if (q.correctOption === optKey) {
-        setShowExplanation(prev => ({ ...prev, [qId]: 'correct' }))
+        nextExp = { ...showExplanation, [qId]: 'correct' }
       } else {
-        setShowExplanation(prev => ({ ...prev, [qId]: 'incorrect' }))
+        nextExp = { ...showExplanation, [qId]: 'incorrect' }
       }
+      setShowExplanation(nextExp)
     }
+
+    saveProgressToStorage(nextAnswers, nextExp)
   }
 
   // Handle calling Gemini AI Teacher
@@ -217,6 +366,9 @@ export default function TestInterface({ test }: { test: any }) {
     })
     setScore(parseFloat(((correctCount / test.questions.length) * 10).toFixed(1)))
     setSubmitted(true)
+    if (test?.id) {
+      try { localStorage.removeItem(`dzota_quiz_session_${test.id}`) } catch (e) {}
+    }
   }
 
   if (!test.isActive) {
@@ -294,8 +446,16 @@ export default function TestInterface({ test }: { test: any }) {
           }}
         >
           {/* Floating Top Logo Card */}
-          <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-3xl bg-white p-2.5 mx-auto shadow-xl shadow-blue-500/15 border-2 border-white flex items-center justify-center -mt-9 sm:-mt-10 mb-3.5 hover:scale-105 transition-transform duration-300">
-            <img src="/logo-dzota.png" alt="Dzota" className="w-full h-full object-contain filter drop-shadow-sm" />
+          <div 
+            className="rounded-3xl bg-white p-2.5 mx-auto shadow-xl shadow-blue-500/15 border-2 border-white flex items-center justify-center -mt-9 sm:-mt-10 mb-3.5 hover:scale-105 transition-transform duration-300"
+            style={{ width: '74px', height: '74px', maxWidth: '74px', maxHeight: '74px' }}
+          >
+            <img 
+              src="/logo-dzota.png" 
+              alt="Dzota" 
+              className="w-auto h-auto max-w-full max-h-full object-contain filter drop-shadow-sm" 
+              style={{ maxWidth: '100%', maxHeight: '100%' }}
+            />
           </div>
 
           <div className="text-center">
@@ -345,17 +505,38 @@ export default function TestInterface({ test }: { test: any }) {
               </div>
             </div>
 
+            {/* In-progress saved session box (nếu có bài làm dở từ trước) */}
+            {savedSession && (
+              <div className="mb-4 p-3.5 bg-blue-50/90 border border-blue-200/80 rounded-2xl text-left flex items-center justify-between gap-3 animate-fade-in shadow-xs">
+                <div className="min-w-0">
+                  <p className="text-xs font-black text-blue-900 flex items-center gap-1.5">
+                    <span>🔄</span> Có bài làm dở ({Object.keys(savedSession.answers || {}).length}/{test.questions?.length || 0} câu đã chọn)
+                  </p>
+                  <p className="text-[11px] text-blue-700/80 truncate">Đa nhiệm đã tự động lưu lại bài làm của bạn.</p>
+                </div>
+                <button
+                  onClick={() => handleStartTest(true)}
+                  className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-xs whitespace-nowrap active:scale-95 transition-all cursor-pointer"
+                >
+                  Tiếp tục
+                </button>
+              </div>
+            )}
+
             {/* CTA Button */}
             <button
-              onClick={() => setIsStarted(true)}
-              className="w-full h-13 sm:h-14 rounded-full font-black text-white text-base sm:text-lg transition-all active:scale-[0.98] hover:-translate-y-0.5 flex items-center justify-center gap-2.5 shadow-[0_10px_25px_rgba(26,115,232,0.4)] hover:shadow-[0_14px_32px_rgba(26,115,232,0.5)] cursor-pointer group"
+              onClick={() => handleStartTest(false)}
+              className="relative overflow-hidden w-full py-3.5 sm:py-4 px-6 rounded-2xl sm:rounded-full font-black text-white text-[16px] sm:text-[18px] transition-all active:scale-[0.98] hover:-translate-y-0.5 flex items-center justify-center gap-3 shadow-[0_12px_28px_-4px_rgba(22,119,255,0.48),0_6px_12px_-2px_rgba(22,119,255,0.25)] hover:shadow-[0_16px_34px_rgba(22,119,255,0.55)] cursor-pointer group"
               style={{
-                background: 'linear-gradient(90deg, #0066FF 0%, #1A73E8 50%, #00B4D8 100%)'
+                background: 'linear-gradient(90deg, #0052FF 0%, #1677FF 48%, #00C2FF 100%)',
+                minHeight: '54px'
               }}
             >
-              <Play size={18} fill="currentColor" />
-              <span className="tracking-wide">Bắt Đầu Làm Bài</span>
-              <ArrowRight size={18} className="transition-transform group-hover:translate-x-1.5" />
+              <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                <Play size={15} fill="currentColor" className="ml-0.5 text-white" />
+              </div>
+              <span className="tracking-wide text-white drop-shadow-xs">Bắt Đầu Làm Bài</span>
+              <ArrowRight size={19} className="transition-transform group-hover:translate-x-1.5" />
             </button>
 
             {/* Copyright Badge */}
@@ -636,6 +817,12 @@ export default function TestInterface({ test }: { test: any }) {
   // ─── Active test-taking view ──────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-screen bg-[#F2F2F7]">
+      {restoredToast && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-30 bg-blue-600 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg flex items-center gap-2 animate-bounce">
+          <span>✨</span>
+          <span>{restoredToast}</span>
+        </div>
+      )}
       <div className="bg-white/90 backdrop-blur-xl border-b border-gray-200/50 px-4 py-3 flex justify-between items-center fixed top-0 w-full z-20">
         <div className="font-bold text-slate-800 truncate max-w-[50%]">{test.title}</div>
         {test.mode === 'exam' ? (
