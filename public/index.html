@@ -211,6 +211,24 @@
           background-attachment: fixed;
         }
       }
+
+      /* Responsive Background cho lúc đang làm bài thi / bài text ôn luyện */
+      .dzota-active-bg {
+        background-image: url('/bg-active-mobile.png'), url('https://i.ibb.co/7NnQtYVb/b93ce28c-a278-4123-8650-771eb2a3be79.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+      }
+      @media (min-width: 1024px) {
+        .dzota-active-bg {
+          background-image: url('/bg-active-desktop.png'), url('https://i.ibb.co/xqxLMLNj/1a348e38-aec7-4e9a-9bbe-69ff1c4af67d.png');
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+          background-attachment: fixed;
+        }
+      }
     </style>
   </head>
   <body>
@@ -818,7 +836,7 @@
         };
 
         // --- 1. INITIALIZATION ---
-        useEffect(() => { document.body.classList.toggle('mode-simple', appMode === 'taking' || appMode === 'result'); }, [appMode]);
+        useEffect(() => { document.body.classList.toggle('mode-simple', appMode === 'result'); }, [appMode]);
 
         useEffect(() => {
           const initApp = async () => {
@@ -2093,7 +2111,7 @@
              const isSelected = userAnswers[qId];
              const status = showExplanation[qId]; 
              return (
-               <div key={qId} className="bg-white rounded-3xl shadow-[0_1px_3px_0_rgba(60,64,67,0.3),0_4px_8px_3px_rgba(60,64,67,0.15)] border border-[#dadce0]/60 p-4 sm:p-8 mb-5 transition-all animate-slide-up">
+               <div key={qId} className="bg-white/95 backdrop-blur-md rounded-3xl shadow-[0_8px_30px_rgba(15,35,75,0.12)] border border-white/80 p-4 sm:p-8 mb-5 transition-all animate-slide-up">
                   {/* Question Header */}
                   <div className="flex items-start gap-3 sm:gap-4 mb-4">
                      <span className="flex-shrink-0 bg-[#1a73e8] text-white font-bold w-8 h-8 flex items-center justify-center rounded-full text-sm shadow-xs mt-0.5">{idx + 1}</span>
@@ -2121,7 +2139,7 @@
                         <div key={optKey} onClick={() => handleSelectAnswer(qId, optKey)} 
                           className={`
                             p-3 sm:p-4 rounded-2xl border-2 cursor-pointer transition-all duration-150 flex items-center group min-h-[50px]
-                            ${isSelected === optKey ? 'border-[#1a73e8] bg-[#e8f0fe]/50 shadow-xs' : 'border-[#dadce0] hover:border-[#1a73e8]/60 hover:bg-[#f8fafd] bg-white active:bg-slate-50'}
+                            ${isSelected === optKey ? 'border-[#1a73e8] bg-[#e8f0fe]/70 shadow-xs' : 'border-[#dadce0]/80 hover:border-[#1a73e8]/60 hover:bg-[#f8fafd] bg-white/80 active:bg-slate-50'}
                             ${isPractice && status === 'correct' && (isSelected === optKey || q.correct === optKey) ? '!border-[#137333] !bg-[#e6f4ea] text-[#137333] shadow-xs' : ''}
                             ${isPractice && status === 'incorrect' && isSelected === optKey ? '!border-[#c5221f] !bg-[#fce8e6] text-[#c5221f] shadow-xs' : ''}
                           `}>
@@ -2185,39 +2203,45 @@
         const renderTaking = () => {
              if (quizConfig.mode === 'exam') {
                return (
-                <div className="flex flex-col min-h-screen bg-[#f0f4f9] font-sans pb-20">
+                <div className="flex flex-col min-h-screen dzota-active-bg font-sans pb-20 relative">
+                   {/* Subtle ambient overlay */}
+                   <div className="absolute inset-0 bg-slate-900/[0.03] pointer-events-none" />
+
                    {/* Top Progress in Google Blue */}
                    <div className="w-full bg-[#dadce0] h-1.5 fixed top-0 left-0 z-30">
                       <div className="bg-[#1a73e8] h-full transition-all duration-300" style={{ width: `${(Object.keys(userAnswers).length / Math.max(1, currentQuestions.length)) * 100}%` }}></div>
                    </div>
                    
-                   <header className="bg-white/95 backdrop-blur border-b border-[#dadce0] px-4 sm:px-6 h-14 sm:h-16 flex justify-between items-center fixed top-0 w-full z-20 shadow-xs">
+                   <header className="bg-white/90 backdrop-blur-md border-b border-white/80 px-4 sm:px-6 h-14 sm:h-16 flex justify-between items-center fixed top-0 w-full z-20 shadow-xs">
                       <div className="font-bold text-[#202124] text-sm sm:text-base truncate max-w-[50%] flex items-center gap-2">
                         <Icons.FileText size={18} className="text-[#1a73e8] flex-shrink-0"/>
                         <span className="truncate">{quizConfig.title}</span>
                       </div>
                       <div className="flex items-center gap-2 sm:gap-3">
-                         <div className={`font-mono text-xs sm:text-sm font-bold flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full ${timeLeft < 60 ? 'bg-[#fce8e6] text-[#c5221f] animate-pulse' : 'bg-[#f1f3f4] text-[#3c4043]'}`}>
+                         <div className={`font-mono text-xs sm:text-sm font-bold flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full ${timeLeft < 60 ? 'bg-[#fce8e6] text-[#c5221f] animate-pulse' : 'bg-white/80 border border-slate-200/60 text-[#3c4043]'}`}>
                            <Icons.Clock size={15}/> {formatTime(timeLeft)}
                          </div>
                          <button onClick={handleSubmitExam} className="bg-[#1a73e8] hover:bg-[#1557b0] text-white px-4 sm:px-5 py-1.5 rounded-full font-bold text-xs shadow-xs active:scale-95 transition-all">Nộp Bài</button>
                       </div>
                    </header>
-                   <main className="flex-1 w-full max-w-3xl mx-auto p-3 sm:p-6 pt-20 sm:pt-24">{currentQuestions.map((q, idx) => renderQuestionCard(q, idx, false))}</main>
+                   <main className="flex-1 w-full max-w-3xl mx-auto p-3 sm:p-6 pt-20 sm:pt-24 relative z-10">{currentQuestions.map((q, idx) => renderQuestionCard(q, idx, false))}</main>
                 </div>
                );
              } else {
                const q = currentQuestions[currentQIndex];
                const progressPercent = ((currentQIndex + 1) / Math.max(1, currentQuestions.length)) * 100;
                return (
-                <div className="flex flex-col min-h-screen bg-[#f0f4f9] font-sans pb-28">
+                <div className="flex flex-col min-h-screen dzota-active-bg font-sans pb-28 relative">
+                   {/* Subtle ambient overlay */}
+                   <div className="absolute inset-0 bg-slate-900/[0.03] pointer-events-none" />
+
                    {/* Top Progress bar in Google Blue */}
                    <div className="w-full bg-[#dadce0] h-1.5 fixed top-0 left-0 z-30">
                       <div className="bg-[#1a73e8] h-full transition-all duration-300" style={{ width: `${progressPercent}%` }}></div>
                    </div>
 
-                   {/* Fixed Google Header */}
-                   <header className="bg-white/95 backdrop-blur border-b border-[#dadce0] px-3.5 sm:px-6 h-14 sm:h-16 flex justify-between items-center fixed top-0 w-full z-20 shadow-xs">
+                   {/* Fixed Header */}
+                   <header className="bg-white/90 backdrop-blur-md border-b border-white/80 px-3.5 sm:px-6 h-14 sm:h-16 flex justify-between items-center fixed top-0 w-full z-20 shadow-xs">
                       <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1 mr-2 sm:mr-3">
                         <div className="w-8 h-8 rounded-xl bg-[#e8f0fe] text-[#1a73e8] flex items-center justify-center font-bold flex-shrink-0">
                           <Icons.Sparkles size={16} />
@@ -2233,36 +2257,36 @@
                    </header>
 
                    {/* Main Content Area - Generous Top Padding to NEVER hide under header */}
-                   <main className="flex-1 w-full max-w-2xl mx-auto px-3 sm:px-6 pt-20 sm:pt-24 flex flex-col">
+                   <main className="flex-1 w-full max-w-2xl mx-auto px-3 sm:px-6 pt-20 sm:pt-24 flex flex-col relative z-10">
                       {renderQuestionCard(q, currentQIndex, true)}
                       
                       {/* Keyboard shortcuts on desktop */}
                       <div className="hidden sm:flex text-center text-[#70757a] text-xs font-medium my-2 items-center justify-center gap-1.5">
                          <span>Phím tắt:</span>
-                         <span className="font-mono bg-white text-[#3c4043] px-1.5 py-0.5 rounded border border-[#dadce0] text-[11px]">1 - 7</span>
+                         <span className="font-mono bg-white/80 text-[#3c4043] px-1.5 py-0.5 rounded border border-[#dadce0] text-[11px]">1 - 7</span>
                          <span>chọn đáp án •</span>
-                         <span className="font-mono bg-white text-[#3c4043] px-1.5 py-0.5 rounded border border-[#dadce0] text-[11px]">Enter</span>
+                         <span className="font-mono bg-white/80 text-[#3c4043] px-1.5 py-0.5 rounded border border-[#dadce0] text-[11px]">Enter</span>
                          <span>tiếp tục</span>
                       </div>
 
                       <div className="text-center py-2 mb-2">
-                        <p className="text-[11px] font-medium text-[#70757a] select-none">Bản quyền thuộc về <span className="font-bold text-[#202124]">Nhật Duy Y Khoa K26</span></p>
+                        <p className="text-[11px] font-bold text-white/90 drop-shadow-md select-none">Bản quyền thuộc về <span className="font-extrabold text-white">Nhật Duy Y Khoa K26</span></p>
                       </div>
                    </main>
 
                    {/* Fixed Bottom Dock for Thumb Navigation on Mobile & Desktop */}
-                   <nav className="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-[#dadce0] p-3 sm:p-4 z-20 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
+                   <nav className="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-white/80 p-3 sm:p-4 z-20 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
                       <div className="max-w-2xl mx-auto flex gap-3 items-center">
                           <button 
                             onClick={() => { const prevIdx = Math.max(0, currentQIndex - 1); setCurrentQIndex(prevIdx); saveSessionProgress({ currentQIndex: prevIdx }); }} 
                             disabled={currentQIndex === 0} 
-                            className="flex-1 py-3 rounded-full font-bold text-sm border-2 border-[#dadce0] bg-white text-[#3c4043] hover:bg-[#f8f9fa] disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all shadow-xs"
+                            className="flex-1 py-3 rounded-full font-bold text-sm border-2 border-[#dadce0] bg-white text-[#3c4043] hover:bg-[#f8f9fa] disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all shadow-xs cursor-pointer"
                           >
                             Lùi Lại
                           </button>
                           <button 
                             onClick={handleNextQuestion} 
-                            className="flex-[2] py-3 rounded-full font-bold text-sm bg-[#1a73e8] hover:bg-[#1557b0] text-white shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+                            className="flex-[2] py-3 rounded-full font-bold text-sm bg-[#1a73e8] hover:bg-[#1557b0] text-white shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
                           >
                             {currentQIndex === currentQuestions.length - 1 ? 'Hoàn Thành' : 'Tiếp Theo'}
                             <Icons.ArrowRight size={16} />

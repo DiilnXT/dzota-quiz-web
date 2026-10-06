@@ -568,6 +568,24 @@ export default function TestInterface({ test }: { test: any }) {
               background-attachment: fixed;
             }
           }
+
+          /* Responsive Background cho lúc đang làm bài thi / bài text ôn luyện */
+          .dzota-active-bg {
+            background-image: url('/bg-active-mobile.png'), url('https://i.ibb.co/7NnQtYVb/b93ce28c-a278-4123-8650-771eb2a3be79.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+          }
+          @media (min-width: 1024px) {
+            .dzota-active-bg {
+              background-image: url('/bg-active-desktop.png'), url('https://i.ibb.co/xqxLMLNj/1a348e38-aec7-4e9a-9bbe-69ff1c4af67d.png');
+              background-size: cover;
+              background-position: center;
+              background-repeat: no-repeat;
+              background-attachment: fixed;
+            }
+          }
         `}</style>
       </div>
     )
@@ -816,28 +834,31 @@ export default function TestInterface({ test }: { test: any }) {
 
   // ─── Active test-taking view ──────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-screen bg-[#F2F2F7]">
+    <div className="flex flex-col min-h-screen dzota-active-bg font-sans relative overflow-y-auto">
+      {/* Subtle ambient overlay */}
+      <div className="absolute inset-0 bg-slate-900/[0.03] pointer-events-none" />
+
       {restoredToast && (
         <div className="fixed top-16 left-1/2 -translate-x-1/2 z-30 bg-blue-600 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg flex items-center gap-2 animate-bounce">
           <span>✨</span>
           <span>{restoredToast}</span>
         </div>
       )}
-      <div className="bg-white/90 backdrop-blur-xl border-b border-gray-200/50 px-4 py-3 flex justify-between items-center fixed top-0 w-full z-20">
+      <header className="bg-white/90 backdrop-blur-md border-b border-white/80 px-4 py-3 flex justify-between items-center fixed top-0 w-full z-20 shadow-xs">
         <div className="font-bold text-slate-800 truncate max-w-[50%]">{test.title}</div>
         {test.mode === 'exam' ? (
           <div className="flex items-center gap-3">
-            <div className={`font-mono text-[17px] font-bold flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-full ${timeLeft < 60 ? 'text-[#FF3B30] animate-pulse' : 'text-slate-800'}`}>
+            <div className={`font-mono text-[17px] font-bold flex items-center gap-1.5 px-3 py-1.5 rounded-full ${timeLeft < 60 ? 'bg-[#fce8e6] text-[#c5221f] animate-pulse' : 'bg-white/80 border border-slate-200/60 text-slate-800'}`}>
               <Clock size={16}/> {formatTime(timeLeft)}
             </div>
-            <button onClick={handleSubmit} className="bg-[#007AFF] text-white px-4 py-1.5 rounded-full font-semibold text-sm hover:bg-blue-600 transition-colors">Nộp Bài</button>
+            <button onClick={handleSubmit} className="bg-[#007AFF] text-white px-4 py-1.5 rounded-full font-semibold text-sm hover:bg-blue-600 transition-colors cursor-pointer">Nộp Bài</button>
           </div>
         ) : (
-          <div className="text-xs font-bold bg-slate-100 text-slate-500 px-3 py-1.5 rounded-full">Chế độ luyện tập</div>
+          <div className="text-xs font-bold bg-[#e8f0fe] text-[#1967d2] border border-[#d2e3fc] px-3 py-1.5 rounded-full">Chế độ luyện tập</div>
         )}
-      </div>
+      </header>
 
-      <div className="flex-1 overflow-auto p-4 pt-20 max-w-3xl mx-auto w-full pb-20 space-y-6">
+      <div className="flex-1 overflow-auto p-4 pt-20 max-w-3xl mx-auto w-full pb-20 space-y-6 relative z-10">
         {test.questions.map((tq: any, i: number) => {
           const q = tq.question
           const isSelected = answers[q.id]
@@ -845,9 +866,9 @@ export default function TestInterface({ test }: { test: any }) {
           const opts = JSON.parse(q.options)
           
           return (
-            <div key={q.id} className="bg-white p-6 rounded-3xl shadow-sm">
+            <div key={q.id} className="bg-white/95 backdrop-blur-md p-6 rounded-3xl shadow-[0_8px_30px_rgba(15,35,75,0.12)] border border-white/80">
               <div className="flex gap-3 mb-6">
-                 <span className="flex-shrink-0 bg-[#007AFF] text-white font-bold w-8 h-8 flex items-center justify-center rounded-full text-sm">{i + 1}</span>
+                 <span className="flex-shrink-0 bg-[#007AFF] text-white font-bold w-8 h-8 flex items-center justify-center rounded-full text-sm shadow-xs">{i + 1}</span>
                  <div className="prose prose-sm max-w-none text-slate-800 pt-1" dangerouslySetInnerHTML={{ __html: q.content }} />
               </div>
               
@@ -859,9 +880,9 @@ export default function TestInterface({ test }: { test: any }) {
                     <div key={k} onClick={() => handleSelectAnswer(q.id, k)} 
                       className={`
                         p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-center
-                        ${isSelected === k ? 'border-[#007AFF] bg-blue-50/50' : 'border-transparent bg-slate-50 hover:bg-slate-100'}
-                        ${test.mode === 'practice' && status === 'correct' && (isSelected === k || q.correctOption === k) ? '!border-[#34C759] !bg-green-50' : ''}
-                        ${test.mode === 'practice' && status === 'incorrect' && isSelected === k ? '!border-[#FF3B30] !bg-red-50' : ''}
+                        ${isSelected === k ? 'border-[#007AFF] bg-blue-50/70 shadow-xs' : 'border-slate-200/80 hover:border-blue-300 hover:bg-blue-50/30 bg-white/80 active:bg-slate-50'}
+                        ${test.mode === 'practice' && status === 'correct' && (isSelected === k || q.correctOption === k) ? '!border-[#34C759] !bg-green-50 shadow-xs' : ''}
+                        ${test.mode === 'practice' && status === 'incorrect' && isSelected === k ? '!border-[#FF3B30] !bg-red-50 shadow-xs' : ''}
                       `}>
                       <span className={`w-7 h-7 flex-shrink-0 rounded-full border-2 flex items-center justify-center mr-3 text-sm font-bold transition-colors
                          ${isSelected === k ? 'bg-[#007AFF] border-[#007AFF] text-white' : 'border-slate-300 text-slate-500 bg-white'}
