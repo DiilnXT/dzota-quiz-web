@@ -177,16 +177,19 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
     }
   }
 
-  const handleAcceptFriendRequest = async (friendshipId: string) => {
+  const handleAcceptFriendRequest = async (friendshipId?: string, targetId?: string) => {
     try {
       const res = await fetch('/api/teachers/friends', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'accept', friendshipId })
+        body: JSON.stringify({ action: 'accept', friendshipId, targetId })
       })
       const data = await res.json()
       if (data.success) {
         fetchFriends()
+        if (isSearchModalOpen) {
+          handleSearchTeachers()
+        }
       } else {
         alert(data.error || 'Lỗi khi chấp nhận')
       }
@@ -195,16 +198,21 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
     }
   }
 
-  const handleRejectFriendRequest = async (friendshipId: string) => {
+  const handleRejectFriendRequest = async (friendshipId?: string, targetId?: string) => {
     try {
       const res = await fetch('/api/teachers/friends', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'reject', friendshipId })
+        body: JSON.stringify({ action: 'reject', friendshipId, targetId })
       })
       const data = await res.json()
       if (data.success) {
         fetchFriends()
+        if (isSearchModalOpen) {
+          handleSearchTeachers()
+        }
+      } else {
+        alert(data.error || 'Lỗi khi từ chối')
       }
     } catch (e) {
       alert('Đã xảy ra lỗi')
@@ -536,13 +544,13 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
                         </div>
                         <div className="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-700/60">
                           <button
-                            onClick={() => handleAcceptFriendRequest(req.friendshipId)}
+                            onClick={() => handleAcceptFriendRequest(req.friendshipId, req.id)}
                             className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer"
                           >
                             Đồng ý
                           </button>
                           <button
-                            onClick={() => handleRejectFriendRequest(req.friendshipId)}
+                            onClick={() => handleRejectFriendRequest(req.friendshipId, req.id)}
                             className="py-1.5 px-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl cursor-pointer"
                           >
                             Từ chối
@@ -1007,7 +1015,7 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
                         ) : u.friendStatus === 'received' ? (
                           <button
                             onClick={() => {
-                              handleAcceptFriendRequest(u.friendshipId)
+                              handleAcceptFriendRequest(u.friendshipId, u.id)
                               setIsSearchModalOpen(false)
                             }}
                             className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer"

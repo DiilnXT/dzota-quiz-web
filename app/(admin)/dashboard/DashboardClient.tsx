@@ -2850,7 +2850,18 @@ export default function DashboardClient({
           TAB: CỘNG ĐỒNG GIÁO VIÊN & CHAT TRỰC TUYẾN
       ───────────────────────────────────────────────────────────── */}
       {activeTab === 'friends' && (
-        <TeacherChatTab session={session} userQuizzes={quizzes} />
+        <TeacherChatTab
+          session={{
+            ...session,
+            id: currentUserInfo?.id || session.id || '',
+            role: currentUserInfo?.role || session.role || 'TEACHER',
+            name: profileName || currentUserInfo?.name || session.name || session.username,
+            avatar: profileAvatar || currentUserInfo?.avatar || session.avatar,
+            phone: profilePhone || currentUserInfo?.phone || session.phone,
+            email: currentUserInfo?.email || session.email
+          }}
+          userQuizzes={quizzes}
+        />
       )}
 
       {/* ─────────────────────────────────────────────────────────────

@@ -2,38 +2,65 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { cookies } from 'next/headers'
 
-async function getSession() {
+async function getSessionUser() {
   const cookieStore = await cookies()
   const sessionStr = cookieStore.get('dzota_session')?.value
   if (!sessionStr) return null
+  let sessionData: any = null
   try {
-    return JSON.parse(sessionStr)
+    sessionData = JSON.parse(sessionStr)
   } catch (e) {
     return null
   }
+
+  const orConditions: any[] = []
+  if (sessionData.id) orConditions.push({ id: sessionData.id })
+  if (sessionData.email) orConditions.push({ email: sessionData.email })
+  if (sessionData.username) orConditions.push({ username: sessionData.username })
+  if (orConditions.length === 0) return null
+
+  const user = await prisma.user.findFirst({
+    where: { OR: orConditions },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      name: true,
+      role: true,
+      avatar: true,
+      phone: true
+    }
+  })
+
+  if (!user) return null
+
+  const isSuperAdmin =
+    user.email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com' ||
+    user.username?.toLowerCase() === 'duylniedu' ||
+    sessionData.email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com' ||
+    sessionData.username?.toLowerCase() === 'duylniedu'
+
+  const role = isSuperAdmin ? 'ADMIN' : (user.role?.toUpperCase() || 'STUDENT')
+  return {
+    ...user,
+    role
+  }
 }
 
-function isTeacherOrAdmin(session: any) {
-  if (!session) return false
-  const role = session.role?.toUpperCase() || ''
-  const username = session.username?.toLowerCase() || ''
-  const email = session.email?.toLowerCase() || ''
-  return (
-    role === 'ADMIN' ||
-    role === 'TEACHER' ||
-    username === 'duylniedu' ||
-    email === 'lenhatduy.vietnam@gmail.com'
-  )
+function isTeacherOrAdmin(user: any) {
+  if (!user) return false
+  const role = user.role?.toUpperCase() || ''
+  return role === 'ADMIN' || role === 'TEACHER' || role === 'USER'
 }
 
 // GET: Lấy danh sách đề thi của bạn bè (CHỈ XEM & LÀM BÀI, KHÔNG SỬA / XÓA)
 export async function GET(request: Request) {
-  const session = await getSession()
-  if (!session?.id) {
+  const user = await getSessionUser()
+  if (!user?.id) {
     return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
   }
 
-  if (!isTeacherOrAdmin(session)) {
+  if (!isTeacherOrAdmin(user)) {
     return NextResponse.json({ error: 'Chỉ Giáo viên mới có quyền xem kho đề chia sẻ' }, { status: 403 })
   }
 
@@ -44,11 +71,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Thiếu ID giáo viên cần xem đề' }, { status: 400 })
   }
 
-  const myId = session.id
-  const isAdmin =
-    session.role?.toUpperCase() === 'ADMIN' ||
-    session.username?.toLowerCase() === 'duylniedu' ||
-    session.email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com'
+  const myId = user.id
+  const isAdmin = user.role?.toUpperCase() === 'ADMIN'
 
   // Kiểm tra quan hệ bạn bè (hoặc là Admin)
   if (!isAdmin && teacherId !== myId) {

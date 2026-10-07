@@ -2,43 +2,70 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { cookies } from 'next/headers'
 
-async function getSession() {
+async function getSessionUser() {
   const cookieStore = await cookies()
   const sessionStr = cookieStore.get('dzota_session')?.value
   if (!sessionStr) return null
+  let sessionData: any = null
   try {
-    return JSON.parse(sessionStr)
+    sessionData = JSON.parse(sessionStr)
   } catch (e) {
     return null
   }
+
+  const orConditions: any[] = []
+  if (sessionData.id) orConditions.push({ id: sessionData.id })
+  if (sessionData.email) orConditions.push({ email: sessionData.email })
+  if (sessionData.username) orConditions.push({ username: sessionData.username })
+  if (orConditions.length === 0) return null
+
+  const user = await prisma.user.findFirst({
+    where: { OR: orConditions },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      name: true,
+      role: true,
+      avatar: true,
+      phone: true
+    }
+  })
+
+  if (!user) return null
+
+  const isSuperAdmin =
+    user.email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com' ||
+    user.username?.toLowerCase() === 'duylniedu' ||
+    sessionData.email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com' ||
+    sessionData.username?.toLowerCase() === 'duylniedu'
+
+  const role = isSuperAdmin ? 'ADMIN' : (user.role?.toUpperCase() || 'STUDENT')
+  return {
+    ...user,
+    role
+  }
 }
 
-function isTeacherOrAdmin(session: any) {
-  if (!session) return false
-  const role = session.role?.toUpperCase() || ''
-  const username = session.username?.toLowerCase() || ''
-  const email = session.email?.toLowerCase() || ''
-  return (
-    role === 'ADMIN' ||
-    role === 'TEACHER' ||
-    username === 'duylniedu' ||
-    email === 'lenhatduy.vietnam@gmail.com'
-  )
+function isTeacherOrAdmin(user: any) {
+  if (!user) return false
+  const role = user.role?.toUpperCase() || ''
+  return role === 'ADMIN' || role === 'TEACHER' || role === 'USER'
 }
 
 // GET: Lấy danh sách bạn bè, lời mời kết bạn và cập nhật trạng thái Online
 export async function GET() {
-  const session = await getSession()
-  if (!session?.id) {
+  const user = await getSessionUser()
+  if (!user?.id) {
     return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
   }
 
-  if (!isTeacherOrAdmin(session)) {
+  if (!isTeacherOrAdmin(user)) {
     return NextResponse.json({ error: 'Tính năng chỉ dành riêng cho Giáo viên & Quản trị viên' }, { status: 403 })
   }
 
   try {
-    const myId = session.id
+    const myId = user.id
 
     // Cập nhật trạng thái đang hoạt động (Online heartbeat)
     try {
@@ -142,19 +169,19 @@ export async function GET() {
 
 // POST: Tìm kiếm giáo viên, gửi lời mời, đồng ý, từ chối, hủy kết bạn
 export async function POST(request: Request) {
-  const session = await getSession()
-  if (!session?.id) {
+  const user = await getSessionUser()
+  if (!user?.id) {
     return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
   }
 
-  if (!isTeacherOrAdmin(session)) {
+  if (!isTeacherOrAdmin(user)) {
     return NextResponse.json({ error: 'Tính năng chỉ dành riêng cho Giáo viên & Quản trị viên' }, { status: 403 })
   }
 
   try {
     const body = await request.json()
     const { action, query, targetId, friendshipId } = body
-    const myId = session.id
+    const myId = user.id
 
     // ACTION: SEARCH TEACHERS
     if (action === 'search') {
@@ -164,15 +191,17 @@ export async function POST(request: Request) {
       }
 
       // Tìm kiếm user (khác chính mình) qua UID, Gmail, Tên đăng nhập hoặc Họ tên
-      // Tự động tìm kiếm linh hoạt, không phân biệt hoa thường
+      // Hỗ trợ cả khớp chính xác tuyệt đối (UID, Email) và khớp gần đúng
       const users = await prisma.user.findMany({
         where: {
           id: { not: myId },
           OR: [
             { id: { equals: q } },
             { id: { contains: q, mode: 'insensitive' } },
-            { username: { contains: q, mode: 'insensitive' } },
+            { email: { equals: q, mode: 'insensitive' } },
             { email: { contains: q, mode: 'insensitive' } },
+            { username: { equals: q, mode: 'insensitive' } },
+            { username: { contains: q, mode: 'insensitive' } },
             { name: { contains: q, mode: 'insensitive' } }
           ]
         },
@@ -187,7 +216,7 @@ export async function POST(request: Request) {
           lastActiveAt: true,
           _count: { select: { quizzes: true } }
         },
-        take: 10
+        take: 20
       })
 
       // Lấy trạng thái kết bạn với từng user tìm thấy
@@ -254,7 +283,7 @@ export async function POST(request: Request) {
         select: { id: true, role: true, name: true, username: true }
       })
 
-      if (!targetUser || (targetUser.role !== 'TEACHER' && targetUser.role !== 'ADMIN')) {
+      if (!targetUser || (targetUser.role !== 'TEACHER' && targetUser.role !== 'ADMIN' && targetUser.role !== 'USER')) {
         return NextResponse.json({ error: 'Chỉ có thể kết bạn với tài khoản Giáo viên hoặc Quản trị viên' }, { status: 400 })
       }
 
@@ -293,7 +322,7 @@ export async function POST(request: Request) {
 
       // Gửi thông báo tới giáo viên nhận
       try {
-        const senderName = session.name || session.username || 'Một đồng nghiệp'
+        const senderName = user.name || user.username || 'Một đồng nghiệp'
         await prisma.notification.create({
           data: {
             userId: targetId,
@@ -332,7 +361,7 @@ export async function POST(request: Request) {
 
       // Gửi thông báo cho người gửi lời mời
       try {
-        const myName = session.name || session.username || 'Giáo viên'
+        const myName = user.name || user.username || 'Giáo viên'
         await prisma.notification.create({
           data: {
             userId: targetFriendship.requesterId,
