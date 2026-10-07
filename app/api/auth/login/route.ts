@@ -7,9 +7,36 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { username, password, googleUser } = body
 
+    let resolvedGoogleUser = googleUser
+    if (!resolvedGoogleUser && body.credential) {
+      try {
+        const payloadPart = body.credential.split('.')[1]
+        const decoded = JSON.parse(Buffer.from(payloadPart, 'base64').toString('utf8'))
+        if (decoded.email) {
+          resolvedGoogleUser = {
+            email: decoded.email,
+            name: decoded.name,
+            picture: decoded.picture,
+            sub: decoded.sub
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (!resolvedGoogleUser && body.accessToken) {
+      try {
+        const gRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${body.accessToken}` }
+        })
+        if (gRes.ok) {
+          resolvedGoogleUser = await gRes.json()
+        }
+      } catch (e) {}
+    }
+
     // ─── 1. XỬ LÝ ĐĂNG NHẬP BẰNG GOOGLE ──────────────────────────────────
-    if (googleUser && googleUser.email) {
-      const email = String(googleUser.email).trim().toLowerCase()
+    if (resolvedGoogleUser && resolvedGoogleUser.email) {
+      const email = String(resolvedGoogleUser.email).trim().toLowerCase()
       const isSuperAdminEmail = email === 'lenhatduy.vietnam@gmail.com'
 
       let user = await prisma.user.findFirst({
@@ -23,7 +50,7 @@ export async function POST(request: Request) {
 
       if (!user) {
         // Tự động tạo user mới nếu đăng nhập lần đầu bằng Google
-        const targetUsername = isSuperAdminEmail ? 'DuylniEdu' : (googleUser.name || email.split('@')[0])
+        const targetUsername = isSuperAdminEmail ? 'DuylniEdu' : (resolvedGoogleUser.name || email.split('@')[0])
         // Tránh trùng username
         let uniqueUsername = targetUsername
         const exists = await prisma.user.findUnique({ where: { username: uniqueUsername } })
