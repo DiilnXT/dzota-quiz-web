@@ -311,6 +311,7 @@
         Repeat: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>,
         ShieldAlert: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
         Shield: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+        Bell: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>,
         User: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
         Folder: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>,
         FilePlus: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>,
@@ -482,6 +483,9 @@
 
         // Quản lý phiên đăng nhập và phân quyền giáo viên / admin
         const [currentUser, setCurrentUser] = useState(window.__DZOTA_SESSION__ || null);
+        const [userNotifications, setUserNotifications] = useState([]);
+        const [showNotifModal, setShowNotifModal] = useState(false);
+        const unreadNotifCount = userNotifications.filter(n => !n.isRead).length;
         const [adminScope, setAdminScope] = useState('all'); // 'all' hoặc 'mine'
         const isUserAdmin = currentUser?.role === 'ADMIN' || currentUser?.username?.toLowerCase() === 'duylniedu';
         const canEditQuiz = (quiz) => {
@@ -951,6 +955,20 @@
 
             // Đồng bộ dữ liệu đề thi theo quyền giáo viên / admin
             await fetchQuizzes(adminScope);
+
+            // Tải thông báo người dùng
+            try {
+              const notifRes = await fetch('/api/notifications');
+              if (notifRes.ok) {
+                const nData = await notifRes.json();
+                if (nData.notifications && Array.isArray(nData.notifications)) {
+                  setUserNotifications(nData.notifications);
+                  if (nData.unreadCount > 0) {
+                    addToast(`🔔 Bạn có ${nData.unreadCount} thông báo mới! Bấm chuông trên menu để xem.`, 'info');
+                  }
+                }
+              }
+            } catch (err) {}
 
             const handleLoadQuiz = async (id) => {
                 setIsLoading(true);
@@ -1698,6 +1716,20 @@
                         </div>
                         
                         <div className="flex items-center gap-2">
+                            {/* Nút Chuông Thông Báo */}
+                            <button 
+                                onClick={() => setShowNotifModal(true)} 
+                                className="relative p-2 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 transition-colors cursor-pointer"
+                                title="Hộp thư thông báo"
+                            >
+                                <Icons.Bell size={20} className={unreadNotifCount > 0 ? "text-indigo-600" : ""} />
+                                {unreadNotifCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
+                                        {unreadNotifCount}
+                                    </span>
+                                )}
+                            </button>
+
                             <a 
                                 href="/dashboard" 
                                 className="sm:hidden p-2 rounded-xl text-indigo-600 bg-indigo-50 active:bg-indigo-100 transition-colors"
@@ -2622,6 +2654,51 @@
             <ToastContainer toasts={toasts} removeToast={removeToast} />
             <ConfirmModal isOpen={modalConfig.isOpen} title={modalConfig.title} message={modalConfig.message} onConfirm={modalConfig.onConfirm} onCancel={() => setModalConfig(prev => ({ ...prev, isOpen: false }))} />
             
+            {/* Modal Hộp Thư Thông Báo */}
+            {showNotifModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={() => setShowNotifModal(false)}>
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-slate-50">
+                            <div className="flex items-center gap-2.5">
+                                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl"><Icons.Bell size={18}/></div>
+                                <div>
+                                    <h3 className="font-extrabold text-gray-900 text-base leading-tight">Hộp Thư Thông Báo</h3>
+                                    <p className="text-[11px] text-gray-500 font-medium">
+                                        {unreadNotifCount > 0 ? `${unreadNotifCount} thông báo mới` : 'Tất cả thông báo'}
+                                    </p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowNotifModal(false)} className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 cursor-pointer"><Icons.X size={18}/></button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                            {userNotifications.length === 0 ? (
+                                <div className="text-center py-16 text-gray-400 text-sm">
+                                    <div className="text-gray-300 mb-2 inline-block"><Icons.Bell size={36}/></div>
+                                    <p className="font-bold text-gray-600">Hộp thư trống</p>
+                                    <p className="text-xs text-gray-400 mt-1">Chưa có thông báo nào từ Quản trị viên.</p>
+                                </div>
+                            ) : (
+                                userNotifications.map(n => (
+                                    <div key={n.id} className={`p-4 rounded-2xl border transition-all ${!n.isRead ? 'bg-indigo-50/50 border-indigo-200 shadow-xs' : 'bg-white border-gray-100'}`}>
+                                        <div className="flex justify-between items-start gap-2 mb-1.5">
+                                            <h4 className="font-bold text-gray-900 text-sm flex items-center gap-1.5">
+                                                {!n.isRead && <span className="w-2 h-2 rounded-full bg-indigo-600 flex-shrink-0 animate-pulse"/>}
+                                                {n.title}
+                                            </h4>
+                                            <span className="text-[10px] text-gray-400 flex-shrink-0">{new Date(n.createdAt).toLocaleDateString('vi-VN', {hour:'2-digit', minute:'2-digit'})}</span>
+                                        </div>
+                                        <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-line pl-3.5">{n.message}</p>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                        <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+                            <button onClick={() => setShowNotifModal(false)} className="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold text-xs rounded-xl cursor-pointer">Đóng</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Modal Menu Hành Động cho Card */}
             {selectedItemAction && (
                 <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={() => setSelectedItemAction(null)}>

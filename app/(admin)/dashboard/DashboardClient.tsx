@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   Users,
@@ -20,65 +20,150 @@ import {
   Key,
   Database,
   ExternalLink,
-  Image as ImageIcon
+  Bell,
+  Send,
+  Mail,
+  Eye,
+  EyeOff,
+  Lock,
+  Unlock,
+  Copy,
+  Clock,
+  Sparkles,
+  MessageSquare,
+  AlertCircle
 } from 'lucide-react'
+
+interface TeacherQuiz {
+  id: string
+  title: string
+  createdAt: string
+  isActive: boolean
+  category: string
+  timeLimit: number
+  password?: string
+}
 
 interface UserItem {
   id: string
   username: string
+  email?: string | null
+  name?: string | null
   role: string
   maxTests: number
   password?: string
   createdAt?: string | Date
-  _count: {
+  _count?: {
     quizzes: number
+    notifications?: number
   }
+  quizzes?: TeacherQuiz[]
 }
 
 interface QuizItem {
   id: string
   title: string
   createdAt: string | Date
+  isActive?: boolean
+  category?: string
+  timeLimit?: number
+  password?: string
   author?: {
+    id?: string
     username: string
   } | null
+}
+
+interface NotificationItem {
+  id: string
+  userId: string
+  title: string
+  message: string
+  isRead: boolean
+  createdAt: string | Date
 }
 
 interface DashboardClientProps {
   initialUsers: UserItem[]
   initialQuizzes: QuizItem[]
+  initialNotifications?: NotificationItem[]
+  isTeacher?: boolean
+  currentUserInfo?: UserItem | null
   session: {
     id?: string
     username?: string
     role?: string
+    email?: string
   }
 }
 
-export default function DashboardClient({ initialUsers, initialQuizzes, session }: DashboardClientProps) {
+// Helper định dạng thời gian
+function formatTimeAgo(dateInput: string | Date) {
+  try {
+    const d = new Date(dateInput)
+    const now = new Date()
+    const diffSec = Math.floor((now.getTime() - d.getTime()) / 1000)
+    if (diffSec < 60) return 'Vừa xong'
+    if (diffSec < 3600) return `${Math.floor(diffSec / 60)} phút trước`
+    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)} giờ trước`
+    if (diffSec < 604800) return `${Math.floor(diffSec / 86400)} ngày trước`
+    return d.toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+  } catch (e) {
+    return 'Vừa xong'
+  }
+}
+
+export default function DashboardClient({
+  initialUsers,
+  initialQuizzes,
+  initialNotifications = [],
+  isTeacher = false,
+  currentUserInfo = null,
+  session
+}: DashboardClientProps) {
   const [users, setUsers] = useState<UserItem[]>(initialUsers)
   const [quizzes, setQuizzes] = useState<QuizItem[]>(initialQuizzes)
+  const [notifications, setNotifications] = useState<NotificationItem[]>(initialNotifications)
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('Tất cả')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [isLoading, setIsLoading] = useState(false)
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
+
+  // Notifications Drawer State
+  const [isNotifOpen, setIsNotifOpen] = useState(false)
+  const unreadCount = notifications.filter(n => !n.isRead).length
+
+  // Quick Gmail Grant State (Admin)
+  const [quickGmail, setQuickGmail] = useState('')
 
   // Modals state
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<UserItem | null>(null)
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [viewingUserQuizzes, setViewingUserQuizzes] = useState<UserItem | null>(null)
+  const [sendNotifModal, setSendNotifModal] = useState<{ isOpen: boolean; targetUser: UserItem | null; targetAll: boolean }>({
+    isOpen: false,
+    targetUser: null,
+    targetAll: false
+  })
+  const [notifTitle, setNotifTitle] = useState('')
+  const [notifMessage, setNotifMessage] = useState('')
+  const [isSendingNotif, setIsSendingNotif] = useState(false)
 
-  // Form states for Add User
-  const [newUsername, setNewUsername] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [newRole, setNewRole] = useState('USER')
-  const [newMaxTests, setNewMaxTests] = useState(10)
+  // Form states for Add / Edit User
+  const [formName, setFormName] = useState('')
+  const [formEmail, setFormEmail] = useState('')
+  const [formUsername, setFormUsername] = useState('')
+  const [formPassword, setFormPassword] = useState('Gv@123456')
+  const [formRole, setFormRole] = useState('TEACHER')
+  const [formMaxTests, setFormMaxTests] = useState(10)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Form states for Edit User
-  const [editMaxTests, setEditMaxTests] = useState(10)
-  const [editPassword, setEditPassword] = useState('')
-  const [editRole, setEditRole] = useState('USER')
+  // Teacher Dashboard Password peek
+  const [showPasswordMap, setShowPasswordMap] = useState<Record<string, boolean>>({})
 
   // Gemini AI Settings states
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [geminiKeys, setGeminiKeys] = useState('')
   const [geminiModel, setGeminiModel] = useState('gemini-2.5-flash')
   const [availableModels, setAvailableModels] = useState<string[]>([
@@ -93,7 +178,253 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
   const [activeBgEnabled, setActiveBgEnabled] = useState(true)
   const [isSavingSettings, setIsSavingSettings] = useState(false)
 
-  // Fetch AI & System settings when opening settings modal
+  // Show welcome notification toast when logging in with unread items
+  useEffect(() => {
+    if (unreadCount > 0) {
+      showToast(`🔔 Bạn có ${unreadCount} thông báo mới! Bấm chuông để xem chi tiết.`, 'info')
+    }
+  }, [])
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 4000)
+  }
+
+  // --- NOTIFICATION HANDLERS ---
+  const handleMarkAllRead = async () => {
+    try {
+      const res = await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ markAllAsRead: true })
+      })
+      if (res.ok) {
+        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+        showToast('Đã đánh dấu tất cả thông báo là đã đọc!')
+      }
+    } catch (e) {}
+  }
+
+  const handleDeleteNotif = async (id: string) => {
+    try {
+      const res = await fetch('/api/notifications', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      })
+      if (res.ok) {
+        setNotifications(prev => prev.filter(n => n.id !== id))
+        showToast('Đã xóa thông báo')
+      }
+    } catch (e) {}
+  }
+
+  const handleSendNotification = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!notifTitle.trim() || !notifMessage.trim()) {
+      showToast('Vui lòng nhập tiêu đề và nội dung thông báo', 'error')
+      return
+    }
+
+    setIsSendingNotif(true)
+    try {
+      const res = await fetch('/api/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: sendNotifModal.targetUser?.id,
+          targetAll: sendNotifModal.targetAll,
+          title: notifTitle.trim(),
+          message: notifMessage.trim()
+        })
+      })
+      const result = await res.json()
+      if (res.ok) {
+        showToast(result.message || 'Gửi thông báo thành công!')
+        setSendNotifModal({ isOpen: false, targetUser: null, targetAll: false })
+        setNotifTitle('')
+        setNotifMessage('')
+      } else {
+        showToast(result.error || 'Gửi thất bại', 'error')
+      }
+    } catch (e) {
+      showToast('Lỗi kết nối khi gửi thông báo', 'error')
+    } finally {
+      setIsSendingNotif(false)
+    }
+  }
+
+  // --- REFRESH DATA ---
+  const refreshData = async () => {
+    setIsLoading(true)
+    try {
+      if (!isTeacher) {
+        const res = await fetch('/api/admin/users')
+        if (res.ok) {
+          const data = await res.json()
+          setUsers(data)
+        }
+      }
+      const qRes = await fetch('/api/quick-quiz?id=all')
+      if (qRes.ok) {
+        const qData = await qRes.json()
+        setQuizzes(qData)
+      }
+      const nRes = await fetch('/api/notifications')
+      if (nRes.ok) {
+        const nData = await nRes.json()
+        setNotifications(nData.notifications || [])
+      }
+      showToast('Đã làm mới dữ liệu thành công!')
+    } catch (e) {
+      showToast('Lỗi kết nối khi làm mới dữ liệu', 'error')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // --- QUICK GMAIL GRANT ---
+  const handleQuickGmailSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const email = quickGmail.trim().toLowerCase()
+    if (!email || !email.includes('@')) {
+      showToast('Vui lòng nhập đúng địa chỉ Gmail hợp lệ', 'error')
+      return
+    }
+    setFormEmail(email)
+    setFormUsername(email.split('@')[0])
+    setFormName('Thầy/Cô ' + email.split('@')[0])
+    setFormRole('TEACHER')
+    setFormMaxTests(10)
+    setFormPassword('Gv@123456')
+    setIsAddUserOpen(true)
+    setQuickGmail('')
+  }
+
+  // --- USER CREATION & EDIT ---
+  const handleSaveUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    try {
+      const isEditing = Boolean(editingUser)
+      const url = '/api/admin/users'
+      const method = isEditing ? 'PUT' : 'POST'
+      const payload: any = {
+        name: formName.trim(),
+        email: formEmail.trim().toLowerCase() || null,
+        username: formUsername.trim(),
+        role: formRole,
+        maxTests: Number(formMaxTests) || 10
+      }
+      if (isEditing) {
+        payload.id = editingUser!.id
+        if (formPassword.trim()) payload.password = formPassword.trim()
+      } else {
+        payload.password = formPassword.trim() || 'Gv@123456'
+      }
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      const result = await res.json()
+      if (res.ok) {
+        showToast(isEditing ? 'Cập nhật tài khoản thành công!' : 'Cấp quyền giáo viên thành công!')
+        setIsAddUserOpen(false)
+        setEditingUser(null)
+        await refreshData()
+      } else {
+        showToast(result.error || 'Thao tác thất bại', 'error')
+      }
+    } catch (e) {
+      showToast('Lỗi kết nối máy chủ', 'error')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const openEditModal = (u: UserItem) => {
+    setEditingUser(u)
+    setFormName(u.name || '')
+    setFormEmail(u.email || '')
+    setFormUsername(u.username)
+    setFormRole(u.role)
+    setFormMaxTests(u.maxTests)
+    setFormPassword('')
+    setIsAddUserOpen(true)
+  }
+
+  const handleDeleteUser = async (u: UserItem) => {
+    if (!confirm(`Bạn có chắc muốn xóa tài khoản "${u.name || u.username}"? Mọi đề thi của tài khoản này sẽ bị xóa.`)) {
+      return
+    }
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: u.id })
+      })
+      if (res.ok) {
+        showToast(`Đã xóa tài khoản "${u.name || u.username}"`)
+        await refreshData()
+      } else {
+        const data = await res.json()
+        showToast(data.error || 'Xóa thất bại', 'error')
+      }
+    } catch (e) {
+      showToast('Lỗi khi xóa tài khoản', 'error')
+    }
+  }
+
+  // --- QUIZ ACTIONS (TEACHER & ADMIN) ---
+  const handleToggleQuizStatus = async (id: string, currentStatus: boolean) => {
+    const newStatus = !currentStatus
+    try {
+      const res = await fetch('/api/quick-quiz', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, isActive: newStatus })
+      })
+      if (res.ok) {
+        setQuizzes(prev => prev.map(q => q.id === id ? { ...q, isActive: newStatus } : q))
+        showToast(`Đã ${newStatus ? 'Mở' : 'Khóa'} bài thi`)
+      } else {
+        const err = await res.json()
+        showToast(err.error || 'Không thể đổi trạng thái', 'error')
+      }
+    } catch (e) {
+      showToast('Lỗi kết nối', 'error')
+    }
+  }
+
+  const handleDeleteQuiz = async (id: string, title: string) => {
+    if (!confirm(`Bạn có chắc muốn xóa vĩnh viễn bài thi "${title}"?`)) return
+    try {
+      const res = await fetch('/api/quick-quiz', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      })
+      if (res.ok) {
+        setQuizzes(prev => prev.filter(q => q.id !== id))
+        showToast(`Đã xóa bài thi "${title}" thành công!`)
+      } else {
+        const err = await res.json()
+        showToast(err.error || 'Không thể xóa bài thi', 'error')
+      }
+    } catch (e) {
+      showToast('Lỗi kết nối khi xóa bài thi', 'error')
+    }
+  }
+
+  const handleCopyLink = (id: string) => {
+    const url = `${window.location.origin}/?id=${id}`
+    navigator.clipboard.writeText(url)
+    showToast('Đã sao chép liên kết bài thi vào bộ nhớ tạm!')
+  }
+
+  // --- SETTINGS (GEMINI & BG) ---
   const loadAiSettings = async () => {
     try {
       const res = await fetch('/api/admin/settings')
@@ -108,9 +439,7 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
           setActiveBgEnabled(Boolean(data.activeBgEnabled))
         }
       }
-    } catch (e) {
-      console.error('Failed to load settings', e)
-    }
+    } catch (e) {}
   }
 
   const handleSaveAiSettings = async () => {
@@ -139,431 +468,363 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
     }
   }
 
-  const handleAddCustomModel = () => {
-    const trimmed = customModelInput.trim()
-    if (!trimmed) return
-    if (!availableModels.includes(trimmed)) {
-      const updated = [...availableModels, trimmed]
-      setAvailableModels(updated)
-      setGeminiModel(trimmed)
-      setCustomModelInput('')
-      showToast(`Đã thêm model "${trimmed}" vào danh sách!`)
-    } else {
-      setGeminiModel(trimmed)
-      setCustomModelInput('')
-    }
-  }
+  // --- FILTERED LISTS ---
+  const categories = Array.from(new Set(['Tất cả', ...quizzes.map(q => q.category || 'Chung')]))
 
-  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-    setToast({ message, type })
-    setTimeout(() => setToast(null), 3500)
-  }
+  const filteredQuizzes = quizzes.filter(q => {
+    const matchesSearch = (q.title || '').toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCategory = selectedCategory === 'Tất cả' || (q.category || 'Chung') === selectedCategory
+    const isActive = q.isActive !== false
+    const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' && isActive) || (statusFilter === 'inactive' && !isActive)
+    return matchesSearch && matchesCategory && matchesStatus
+  })
 
-  // Refresh user data from API
-  const refreshUsers = async () => {
-    setIsLoading(true)
-    try {
-      const res = await fetch('/api/admin/users')
-      if (res.ok) {
-        const data = await res.json()
-        setUsers(data)
-        showToast('Đã làm mới dữ liệu người dùng thành công!')
-      } else {
-        showToast('Không thể tải lại danh sách người dùng', 'error')
-      }
-    } catch (e) {
-      showToast('Lỗi kết nối khi làm mới dữ liệu', 'error')
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const filteredUsers = users.filter(u => {
+    const term = searchTerm.toLowerCase()
+    return (
+      (u.name || '').toLowerCase().includes(term) ||
+      (u.username || '').toLowerCase().includes(term) ||
+      (u.email || '').toLowerCase().includes(term)
+    )
+  })
 
-  // Handle Add User
-  const handleAddUser = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newUsername.trim() || !newPassword.trim()) {
-      showToast('Vui lòng nhập đầy đủ tên tài khoản và mật khẩu', 'error')
-      return
-    }
-
-    setIsSubmitting(true)
-    try {
-      const res = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: newUsername.trim(),
-          password: newPassword.trim(),
-          role: newRole,
-          maxTests: Number(newMaxTests) || 10
-        })
-      })
-      const result = await res.json()
-      if (res.ok) {
-        showToast(`Tạo tài khoản "${newUsername}" thành công!`)
-        setIsAddUserOpen(false)
-        setNewUsername('')
-        setNewPassword('')
-        setNewMaxTests(10)
-        setNewRole('USER')
-        await refreshUsers()
-      } else {
-        showToast(result.error || 'Tạo tài khoản thất bại', 'error')
-      }
-    } catch (e) {
-      showToast('Lỗi kết nối khi tạo tài khoản', 'error')
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  // Open Edit User Modal
-  const openEditModal = (u: UserItem) => {
-    setEditingUser(u)
-    setEditMaxTests(u.maxTests)
-    setEditPassword('')
-    setEditRole(u.role?.toUpperCase() === 'ADMIN' ? 'ADMIN' : 'USER')
-  }
-
-  // Handle Edit User
-  const handleSaveEditUser = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!editingUser) return
-
-    setIsSubmitting(true)
-    try {
-      const res = await fetch('/api/admin/users', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: editingUser.id,
-          maxTests: Number(editMaxTests),
-          password: editPassword.trim() ? editPassword.trim() : undefined,
-          role: editRole
-        })
-      })
-      const result = await res.json()
-      if (res.ok) {
-        showToast(`Cập nhật thông tin cho "${editingUser.username}" thành công!`)
-        setEditingUser(null)
-        await refreshUsers()
-      } else {
-        showToast(result.error || 'Cập nhật thất bại', 'error')
-      }
-    } catch (e) {
-      showToast('Lỗi kết nối khi cập nhật tài khoản', 'error')
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  // Handle Delete User
-  const handleDeleteUser = async (u: UserItem) => {
-    if (u.username?.toLowerCase() === 'duylniedu') {
-      showToast('Không thể xóa tài khoản Quản trị viên tối cao!', 'error')
-      return
-    }
-
-    if (!confirm(`Bạn có chắc chắn muốn xóa tài khoản "${u.username}" không? Tất cả đề thi của tài khoản này sẽ bị ảnh hưởng.`)) {
-      return
-    }
-
-    try {
-      const res = await fetch('/api/admin/users', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: u.id })
-      })
-      const result = await res.json()
-      if (res.ok) {
-        showToast(`Đã xóa tài khoản "${u.username}" thành công!`)
-        setUsers(users.filter(x => x.id !== u.id))
-      } else {
-        showToast(result.error || 'Xóa tài khoản thất bại', 'error')
-      }
-    } catch (e) {
-      showToast('Lỗi kết nối khi xóa tài khoản', 'error')
-    }
-  }
-
-  // Handle Export CSV Report
-  const handleExportReport = () => {
-    try {
-      let csvContent = '\uFEFF' // UTF-8 BOM for Excel in Vietnamese
-      csvContent += 'BÁO CÁO THỐNG KÊ HỆ THỐNG DZOTA QUIZ\n'
-      csvContent += `Thời gian xuất: ${new Date().toLocaleString('vi-VN')}\n`
-      csvContent += `Người xuất: ${session.username || 'Admin'}\n\n`
-
-      csvContent += '--- THỐNG KÊ TỔNG QUAN ---\n'
-      csvContent += `Tổng số giáo viên: ${totalUsers}\n`
-      csvContent += `Tổng số đề thi: ${totalQuizzes}\n`
-      csvContent += `Số giáo viên đang hoạt động: ${activeTeachers}\n\n`
-
-      csvContent += '--- DANH SÁCH GIÁO VIÊN ---\n'
-      csvContent += 'STT,Tên đăng nhập,Vai trò,Mật khẩu,Số đề đã tạo,Giới hạn đề\n'
-      users.forEach((u, idx) => {
-        const roleText = u.role?.toUpperCase() === 'ADMIN' ? 'Quản trị viên' : 'Giáo viên'
-        csvContent += `${idx + 1},"${u.username}","${roleText}","${u.password || ''}",${u._count?.quizzes || 0},${u.maxTests}\n`
-      })
-
-      csvContent += '\n--- DANH SÁCH ĐỀ THI GẦN ĐÂY ---\n'
-      csvContent += 'STT,Tiêu đề đề thi,Người tạo,Ngày tạo,Link trực tiếp\n'
-      quizzes.forEach((q, idx) => {
-        const authorName = q.author?.username || 'Ẩn danh'
-        const dateStr = new Date(q.createdAt).toLocaleDateString('vi-VN')
-        const link = `https://dzota.vercel.app/?id=${q.id}`
-        csvContent += `${idx + 1},"${q.title.replace(/"/g, '""')}","${authorName}","${dateStr}","${link}"\n`
-      })
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `Bao_Cao_Dzota_Quiz_${new Date().toISOString().slice(0, 10)}.csv`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-
-      showToast('Đã xuất báo cáo CSV thành công!')
-    } catch (e) {
-      showToast('Lỗi khi xuất báo cáo', 'error')
-    }
-  }
-
-  // Filtered users
-  const filteredUsers = users.filter(u =>
-    u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.id.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
-  // Calculations
+  // Stats calculation
   const totalUsers = users.length
   const totalQuizzes = quizzes.length
-  const activeTeachers = users.filter(u => (u._count?.quizzes || 0) > 0).length
+  const activeQuizzesCount = quizzes.filter(q => q.isActive !== false).length
+  const inactiveQuizzesCount = quizzes.filter(q => q.isActive === false).length
+  const teacherLimit = currentUserInfo?.maxTests || 10
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-16">
-      
-      {/* Toast Notification */}
+    <div className="min-h-screen bg-slate-50/70 p-4 sm:p-6 lg:p-8 space-y-6">
+      {/* Toast Alert */}
       {toast && (
-        <div className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-xl text-white font-bold flex items-center gap-3 transition-all transform animate-in slide-in-from-bottom-5 ${
-          toast.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'
+        <div className={`fixed bottom-6 right-6 z-50 px-5 py-3.5 rounded-2xl shadow-xl text-white font-bold flex items-center gap-3 transition-all animate-bounce-short ${
+          toast.type === 'success' ? 'bg-emerald-600' : toast.type === 'info' ? 'bg-indigo-600' : 'bg-rose-600'
         }`}>
-          {toast.type === 'success' ? <Check size={18} /> : <X size={18} />}
-          <span>{toast.message}</span>
+          {toast.type === 'success' ? <Check size={18} /> : toast.type === 'info' ? <Bell size={18} /> : <X size={18} />}
+          <span className="text-sm">{toast.message}</span>
         </div>
       )}
 
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="bg-indigo-100 text-indigo-700 font-black text-xs px-2.5 py-1 rounded-full uppercase tracking-wider">
-              {session.username === 'DuylniEdu' ? 'Super Admin' : 'Admin Panel'}
-            </span>
-            <span className="text-slate-400 text-xs font-semibold">• Đang hoạt động</span>
+      {/* TOP HEADER */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-3xl border border-slate-100 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center p-2 flex-shrink-0">
+            <img src="/logo-dzota.png" alt="Dzota" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight">Tổng Quan Hệ Thống</h1>
-          <p className="text-slate-500 mt-1 font-medium">Theo dõi hoạt động, quản lý tài khoản giáo viên & đề thi</p>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className={`text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                isTeacher ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800'
+              }`}>
+                {isTeacher ? 'Giáo Viên' : 'Quản Trị Viên (Super Admin)'}
+              </span>
+              <span className="text-slate-400 text-xs font-semibold">• Đang trực tuyến</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight mt-0.5">
+              {isTeacher ? `Bảng Điều Khiển: ${currentUserInfo?.name || session.username}` : 'Hệ Thống Quản Trị Dzota'}
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 font-medium">
+              {isTeacher
+                ? `Quản lý ${quizzes.length}/${teacherLimit} bài test của bạn • Email: ${currentUserInfo?.email || session.email || 'Chưa cập nhật'}`
+                : `Chào mừng ${session.username}! Quản lý cấp quyền giáo viên, đề thi & thông báo`}
+            </p>
+          </div>
         </div>
-        
+
         {/* Header Action Buttons */}
-        <div className="flex flex-wrap gap-3">
+        <div className="flex items-center flex-wrap gap-2.5">
+          {/* Nút Chuông Thông Báo */}
           <button
-            onClick={refreshUsers}
+            onClick={() => setIsNotifOpen(true)}
+            className="relative bg-white border border-slate-200 text-slate-700 p-2.5 sm:px-4 sm:py-2.5 rounded-xl font-bold shadow-xs hover:bg-slate-50 hover:text-indigo-600 transition-all flex items-center gap-2 cursor-pointer"
+            title="Xem hộp thư thông báo"
+          >
+            <Bell size={18} className={unreadCount > 0 ? 'text-indigo-600 animate-wiggle' : ''} />
+            <span className="hidden sm:inline text-xs">Thông báo</span>
+            {unreadCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 sm:relative sm:top-auto sm:right-auto bg-rose-500 text-white text-[11px] font-black px-1.5 py-0.2 rounded-full min-w-5 h-5 flex items-center justify-center shadow-xs">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={refreshData}
             disabled={isLoading}
-            className="bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-semibold shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2"
+            className="bg-white border border-slate-200 text-slate-700 px-3.5 py-2.5 rounded-xl font-semibold shadow-xs hover:bg-slate-50 transition-all flex items-center gap-1.5 text-xs cursor-pointer"
             title="Làm mới dữ liệu"
           >
-            <RefreshCw size={16} className={isLoading ? 'animate-spin text-indigo-600' : ''} />
+            <RefreshCw size={15} className={isLoading ? 'animate-spin text-indigo-600' : ''} />
             <span className="hidden sm:inline">Làm mới</span>
           </button>
 
-          <button
-            onClick={handleExportReport}
-            className="bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-semibold shadow-sm hover:bg-slate-50 hover:text-indigo-600 hover:border-indigo-200 transition-all flex items-center gap-2"
-          >
-            <Download size={16} />
-            <span>Xuất Báo Cáo</span>
-          </button>
-
-          <button
-            onClick={() => {
-              loadAiSettings()
-              setIsSettingsOpen(true)
-            }}
-            className="bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-semibold shadow-sm hover:bg-slate-50 hover:text-indigo-600 transition-all flex items-center gap-2"
-          >
-            <Settings size={16} />
-            <span>Cài Đặt</span>
-          </button>
-
-          <Link
-            href="/tests"
-            className="bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-semibold shadow-sm hover:bg-slate-50 hover:text-indigo-600 transition-all flex items-center gap-2"
-            title="Quản lý toàn bộ danh sách bài test"
-          >
-            <FileText size={16} />
-            <span>Danh Sách Đề</span>
-          </Link>
+          {!isTeacher && (
+            <button
+              onClick={() => {
+                loadAiSettings()
+                setIsSettingsOpen(true)
+              }}
+              className="bg-white border border-slate-200 text-slate-700 px-3.5 py-2.5 rounded-xl font-semibold shadow-xs hover:bg-slate-50 hover:text-indigo-600 transition-all flex items-center gap-1.5 text-xs cursor-pointer"
+            >
+              <Settings size={15} />
+              <span>Cài Đặt</span>
+            </button>
+          )}
 
           <Link
             href="/creator"
-            className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-md shadow-indigo-200 hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-300 transition-all flex items-center gap-2"
+            className="bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-md shadow-indigo-200 hover:bg-indigo-700 transition-all flex items-center gap-1.5"
           >
-            <Plus size={18} />
+            <Plus size={16} />
             <span>Tạo Đề Mới</span>
           </Link>
         </div>
       </div>
 
-      {/* Stats Row: 2 cols on mobile, 4 cols on desktop */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all">
-          <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-50 dark:bg-blue-950/40 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out"></div>
-          <div className="relative">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4">
-              <Users size={20} className="sm:w-6 sm:h-6" />
+      {/* STATS OVERVIEW CARDS */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-xs relative overflow-hidden group">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              {isTeacher ? 'Đề thi của bạn' : 'Tổng Giáo Viên'}
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              {isTeacher ? <FileText size={16} /> : <Users size={16} />}
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100 mb-0.5 sm:mb-1">{totalUsers}</div>
-            <div className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">Tổng Giáo Viên</div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-black text-slate-800">
+            {isTeacher ? `${quizzes.length}/${teacherLimit}` : totalUsers}
+          </div>
+          <div className="text-[11px] font-medium text-slate-400 mt-1">
+            {isTeacher ? `Đã dùng ${Math.round((quizzes.length / teacherLimit) * 100)}% hạn mức` : 'Tài khoản hoạt động'}
+          </div>
+          {isTeacher && (
+            <div className="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+              <div
+                className={`h-full rounded-full ${
+                  quizzes.length >= teacherLimit ? 'bg-rose-500' : 'bg-indigo-600'
+                }`}
+                style={{ width: `${Math.min(100, (quizzes.length / teacherLimit) * 100)}%` }}
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-xs relative overflow-hidden group">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              {isTeacher ? 'Đang mở (Công khai)' : 'Tổng Đề Thi'}
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <Activity size={16} />
+            </div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-black text-slate-800">
+            {isTeacher ? activeQuizzesCount : totalQuizzes}
+          </div>
+          <div className="text-[11px] font-medium text-emerald-600 mt-1">
+            Học sinh có thể truy cập
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all">
-          <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-50 dark:bg-indigo-950/40 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out"></div>
-          <div className="relative">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4">
-              <FileText size={20} className="sm:w-6 sm:h-6" />
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-xs relative overflow-hidden group">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Đã Khóa</span>
+            <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+              <Lock size={16} />
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100 mb-0.5 sm:mb-1">{totalQuizzes}</div>
-            <div className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">Đề Thi Đã Tạo</div>
           </div>
+          <div className="text-2xl sm:text-3xl font-black text-slate-800">{inactiveQuizzesCount}</div>
+          <div className="text-[11px] font-medium text-slate-400 mt-1">Tạm dừng nhận bài</div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all">
-          <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50 dark:bg-emerald-950/40 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out"></div>
-          <div className="relative">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4">
-              <Activity size={20} className="sm:w-6 sm:h-6" />
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-xs relative overflow-hidden group">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Hộp Thư</span>
+            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+              <Bell size={16} />
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100 mb-0.5 sm:mb-1">{activeTeachers}</div>
-            <div className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">Giáo Viên Hoạt Động</div>
           </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all">
-          <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-50 dark:bg-purple-950/40 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out"></div>
-          <div className="relative">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 dark:bg-purple-900/60 text-purple-600 dark:text-purple-400 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4">
-              <TrendingUp size={20} className="sm:w-6 sm:h-6" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100 mb-0.5 sm:mb-1">{(totalQuizzes / (totalUsers || 1)).toFixed(1)}</div>
-            <div className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">Trung bình đề/GV</div>
+          <div className="text-2xl sm:text-3xl font-black text-slate-800">{notifications.length}</div>
+          <div className="text-[11px] font-bold text-indigo-600 mt-1 cursor-pointer" onClick={() => setIsNotifOpen(true)}>
+            {unreadCount > 0 ? `${unreadCount} tin chưa đọc ➔` : 'Đã đọc hết'}
           </div>
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Users Table */}
-        <div className="lg:col-span-2 bg-white border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl overflow-hidden flex flex-col">
-          <div className="p-6 border-b border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white z-10">
+      {/* ─────────────────────────────────────────────────────────────
+          GIAO DIỆN ADMIN: CẤP QUYỀN GIÁO VIÊN BẰNG GMAIL & QUẢN LÝ TÀI KHOẢN
+      ───────────────────────────────────────────────────────────── */}
+      {!isTeacher && (
+        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-5">
+          {/* Thanh Cấp Quyền Giáo Viên Nhanh bằng Gmail */}
+          <div className="bg-gradient-to-r from-indigo-50/80 via-blue-50/50 to-slate-50 p-4 sm:p-5 rounded-2xl border border-indigo-100 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="bg-indigo-600 text-white p-1 rounded-lg">
+                  <Mail size={16} />
+                </span>
+                <h3 className="font-extrabold text-slate-900 text-sm sm:text-base">
+                  Cấp Quyền Giáo Viên Bằng Gmail
+                </h3>
+                <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  Google Login
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 mt-1">
+                Nhập Gmail của giáo viên để cấp quyền tạo đề thi. Khi giáo viên đăng nhập bằng Google với Gmail này, họ sẽ tự nhận quyền Giáo viên.
+              </p>
+            </div>
+
+            <form onSubmit={handleQuickGmailSubmit} className="flex items-center gap-2 w-full md:w-auto">
+              <input
+                type="email"
+                placeholder="Nhập Gmail (vd: giaovien@gmail.com)..."
+                value={quickGmail}
+                onChange={(e) => setQuickGmail(e.target.value)}
+                className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 w-full md:w-72 shadow-2xs"
+                required
+              />
+              <button
+                type="submit"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold text-xs flex-shrink-0 transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>Cấp quyền</span>
+                <span className="hidden sm:inline">➔</span>
+              </button>
+            </form>
+          </div>
+
+          {/* User Table Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
             <div>
               <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <div className="w-2 h-6 bg-indigo-500 rounded-full"></div>
-                Danh Sách Giáo Viên
+                <div className="w-2.5 h-6 bg-indigo-600 rounded-full"></div>
+                Danh Sách Giáo Viên & Tài Khoản ({users.length})
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">Quản lý phân quyền và hạn mức tạo đề</p>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Xem số lượng đề đã tạo, danh sách bài test của từng giáo viên và gửi thông báo trực tiếp
+              </p>
             </div>
-            
-            <div className="flex items-center gap-3">
-              {/* Search bar */}
-              <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Tìm giáo viên..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 w-36 sm:w-48 font-medium transition-all"
-                />
-              </div>
 
-              {/* Add user button */}
+            <div className="flex items-center gap-2">
               <button
-                onClick={() => setIsAddUserOpen(true)}
-                className="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3.5 py-2 rounded-xl shadow-sm transition-all flex items-center gap-1.5 whitespace-nowrap"
+                onClick={() => setSendNotifModal({ isOpen: true, targetUser: null, targetAll: true })}
+                className="px-3.5 py-2 bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
               >
-                <Plus size={14} /> Thêm Tài Khoản
+                <Send size={14} /> Gửi thông báo toàn trường
+              </button>
+              <button
+                onClick={() => {
+                  setEditingUser(null)
+                  setFormName('')
+                  setFormEmail('')
+                  setFormUsername('')
+                  setFormPassword('Gv@123456')
+                  setFormRole('TEACHER')
+                  setFormMaxTests(10)
+                  setIsAddUserOpen(true)
+                }}
+                className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+              >
+                <Plus size={14} /> Thêm Thủ Công
               </button>
             </div>
           </div>
 
-          <div className="flex-1 overflow-auto bg-slate-50/30">
-            <table className="w-full text-left border-collapse">
+          {/* User Table */}
+          <div className="overflow-x-auto rounded-2xl border border-slate-100">
+            <table className="w-full text-left border-collapse text-xs sm:text-sm">
               <thead>
-                <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                  <th className="p-4 font-bold border-b border-slate-100">Tài khoản</th>
-                  <th className="p-4 font-bold border-b border-slate-100">Quyền</th>
-                  <th className="p-4 font-bold border-b border-slate-100">Mật khẩu</th>
-                  <th className="p-4 font-bold border-b border-slate-100">Đã Tạo</th>
-                  <th className="p-4 font-bold border-b border-slate-100">Hạn mức</th>
-                  <th className="p-4 font-bold border-b border-slate-100 text-right">Thao tác</th>
+                <tr className="bg-slate-50 text-slate-500 uppercase tracking-wider font-bold text-[11px]">
+                  <th className="p-3.5 border-b border-slate-100">Giáo Viên / Tài Khoản</th>
+                  <th className="p-3.5 border-b border-slate-100">Email (Google)</th>
+                  <th className="p-3.5 border-b border-slate-100">Quyền hạn</th>
+                  <th className="p-3.5 border-b border-slate-100">Số đề đã tạo</th>
+                  <th className="p-3.5 border-b border-slate-100">Hạn mức</th>
+                  <th className="p-3.5 border-b border-slate-100 text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-slate-400 text-sm">
+                    <td colSpan={6} className="p-8 text-center text-slate-400">
                       Không tìm thấy giáo viên nào
                     </td>
                   </tr>
                 ) : (
                   filteredUsers.map(u => (
-                    <tr key={u.id} className="hover:bg-slate-50/80 transition-colors group">
-                      <td className="p-4">
-                        <div className="font-bold text-slate-800 flex items-center gap-1.5">
-                          {u.username}
+                    <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="p-3.5">
+                        <div className="font-extrabold text-slate-800 flex items-center gap-1.5">
+                          {u.name || u.username}
                           {u.username?.toLowerCase() === 'duylniedu' && (
-                            <span className="bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.5 rounded font-bold">Chính</span>
+                            <span className="bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.5 rounded font-black">Admin Tối Cao</span>
                           )}
                         </div>
-                        <div className="text-[11px] text-slate-400 font-medium">ID: {u.id.substring(0, 8)}...</div>
+                        <div className="text-[11px] text-slate-400 font-mono mt-0.5">@{u.username}</div>
                       </td>
-                      <td className="p-4">
+
+                      <td className="p-3.5">
+                        {u.email ? (
+                          <span className="font-medium text-slate-700 bg-slate-50 border border-slate-100 px-2 py-1 rounded-lg">
+                            {u.email}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 italic text-[11px]">Chưa liên kết</span>
+                        )}
+                      </td>
+
+                      <td className="p-3.5">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                          u.role?.toLowerCase() === 'admin' ? 'bg-rose-100 text-rose-700' : 'bg-indigo-100 text-indigo-700'
+                          u.role?.toLowerCase() === 'admin'
+                            ? 'bg-rose-100 text-rose-700'
+                            : 'bg-indigo-100 text-indigo-700'
                         }`}>
                           {u.role?.toLowerCase() === 'admin' ? 'Quản trị viên' : 'Giáo viên'}
                         </span>
                       </td>
-                      <td className="p-4">
-                        <code className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-600 font-mono">
-                          {u.password || '••••••'}
-                        </code>
+
+                      <td className="p-3.5">
+                        <button
+                          onClick={() => setViewingUserQuizzes(u)}
+                          className="font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                          title="Xem chi tiết các bài test của giáo viên này"
+                        >
+                          <FileText size={13} />
+                          <span>{u._count?.quizzes || u.quizzes?.length || 0} đề (Xem DS)</span>
+                        </button>
                       </td>
-                      <td className="p-4">
-                        <div className="font-bold text-slate-700">{u._count?.quizzes || 0} đề</div>
+
+                      <td className="p-3.5">
+                        <span className="font-bold text-slate-700">{u.maxTests} đề</span>
                       </td>
-                      <td className="p-4">
-                        <div className="font-bold text-slate-700">{u.maxTests} đề</div>
-                      </td>
-                      <td className="p-4 text-right">
+
+                      <td className="p-3.5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          {/* Gửi thông báo riêng */}
+                          <button
+                            onClick={() => setSendNotifModal({ isOpen: true, targetUser: u, targetAll: false })}
+                            className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
+                            title={`Gửi thông báo riêng cho ${u.name || u.username}`}
+                          >
+                            <Send size={15} />
+                          </button>
+
                           <button
                             onClick={() => openEditModal(u)}
-                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                            title="Sửa thông tin"
+                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                            title="Sửa thông tin & Hạn mức"
                           >
                             <Edit2 size={15} />
                           </button>
+
                           {u.username?.toLowerCase() !== 'duylniedu' && (
                             <button
                               onClick={() => handleDeleteUser(u)}
-                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                               title="Xóa tài khoản"
                             >
                               <Trash2 size={15} />
@@ -578,136 +839,448 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
             </table>
           </div>
         </div>
+      )}
 
-        {/* Recent Quizzes */}
-        <div className="bg-white border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl overflow-hidden flex flex-col">
-          <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-white z-10">
+      {/* ─────────────────────────────────────────────────────────────
+          BẢNG QUẢN LÝ BÀI TEST (CHO GIÁO VIÊN HOẶC TOÀN HỆ THỐNG ADMIN)
+      ───────────────────────────────────────────────────────────── */}
+      <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
             <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <div className="w-2 h-6 bg-emerald-500 rounded-full"></div>
-              Đề Thi Mới Nhất
+              <div className="w-2.5 h-6 bg-emerald-500 rounded-full"></div>
+              {isTeacher ? 'Danh Sách Bài Test Của Bạn' : 'Tất Cả Bài Test Trong Hệ Thống'}
             </h2>
-            <Link href="/creator" className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
-              + Tạo mới
-            </Link>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              {isTeacher
+                ? 'Quản lý, sao chép liên kết, khóa/mở bài thi và xem kết quả của chính bạn'
+                : 'Theo dõi và quản lý mọi đề thi của các giáo viên trên toàn trường'}
+            </p>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/30 max-h-[500px]">
-            {quizzes.length === 0 ? (
-              <div className="text-center py-12 text-slate-400 text-sm">
-                Chưa có đề thi nào được tạo
-              </div>
-            ) : (
-              quizzes.slice(0, 10).map(q => (
-                <Link
-                  href={`/?id=${q.id}`}
-                  key={q.id}
-                  target="_blank"
-                  className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer group block"
-                >
-                  <h3 className="font-bold text-slate-800 text-sm mb-2 line-clamp-2 group-hover:text-emerald-600 transition-colors">
-                    {q.title}
-                  </h3>
-                  <div className="flex items-center justify-between text-xs font-medium text-slate-500">
-                    <span className="flex items-center gap-1.5">
-                      <Users size={12} /> {q.author?.username || 'Ẩn danh'}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      {new Date(q.createdAt).toLocaleDateString('vi-VN')}
-                      <ExternalLink size={11} className="opacity-0 group-hover:opacity-100 transition-opacity text-emerald-600" />
-                    </span>
-                  </div>
-                </Link>
-              ))
-            )}
-          </div>
-          <div className="p-4 border-t border-slate-50 bg-white text-center">
-            <Link href="/tests" className="text-sm font-bold text-emerald-600 hover:text-emerald-700">
-              Xem toàn bộ đề thi &rarr;
-            </Link>
+
+          {/* Bộ lọc & Tìm kiếm */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Tìm tên đề thi..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600 w-44 sm:w-56"
+              />
+            </div>
+
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none"
+            >
+              {categories.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+
+            <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
+              <button
+                onClick={() => setStatusFilter('all')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  statusFilter === 'all' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'
+                }`}
+              >
+                Tất cả
+              </button>
+              <button
+                onClick={() => setStatusFilter('active')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  statusFilter === 'active' ? 'bg-white text-emerald-700 shadow-2xs' : 'text-slate-500'
+                }`}
+              >
+                Đang mở
+              </button>
+              <button
+                onClick={() => setStatusFilter('inactive')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  statusFilter === 'inactive' ? 'bg-white text-rose-700 shadow-2xs' : 'text-slate-500'
+                }`}
+              >
+                Đã khóa
+              </button>
+            </div>
           </div>
         </div>
 
+        {/* Quiz Table */}
+        <div className="overflow-x-auto rounded-2xl border border-slate-100">
+          <table className="w-full text-left border-collapse text-xs sm:text-sm">
+            <thead>
+              <tr className="bg-slate-50 text-slate-500 uppercase tracking-wider font-bold text-[11px]">
+                <th className="p-3.5 border-b border-slate-100">Tên bài thi</th>
+                <th className="p-3.5 border-b border-slate-100">Môn / Danh mục</th>
+                <th className="p-3.5 border-b border-slate-100">Thời gian</th>
+                <th className="p-3.5 border-b border-slate-100">Mật khẩu</th>
+                <th className="p-3.5 border-b border-slate-100">Trạng thái (Khóa/Mở)</th>
+                <th className="p-3.5 border-b border-slate-100">Ngày tạo</th>
+                <th className="p-3.5 border-b border-slate-100 text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 bg-white">
+              {filteredQuizzes.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-10 text-center text-slate-400">
+                    <FileText size={36} className="mx-auto mb-2 text-slate-300" />
+                    <p className="font-bold text-slate-600">Chưa có đề thi nào</p>
+                    <p className="text-xs text-slate-400 mt-1">Bấm nút &quot;+ Tạo Đề Mới&quot; ở trên để bắt đầu soạn đề thi.</p>
+                  </td>
+                </tr>
+              ) : (
+                filteredQuizzes.map(q => (
+                  <tr key={q.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="p-3.5">
+                      <a
+                        href={`/?id=${q.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-extrabold text-slate-800 hover:text-indigo-600 transition-colors line-clamp-1 flex items-center gap-1.5"
+                      >
+                        <span>{q.title}</span>
+                        <ExternalLink size={12} className="text-slate-400 flex-shrink-0" />
+                      </a>
+                      <div className="text-[11px] text-slate-400 font-mono mt-0.5">ID: {q.id}</div>
+                    </td>
+
+                    <td className="p-3.5">
+                      <span className="font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md text-xs">
+                        {q.category || 'Chung'}
+                      </span>
+                    </td>
+
+                    <td className="p-3.5">
+                      <span className="font-medium text-slate-600 flex items-center gap-1">
+                        <Clock size={13} className="text-slate-400" /> {q.timeLimit || 15} phút
+                      </span>
+                    </td>
+
+                    <td className="p-3.5">
+                      {q.password ? (
+                        <div className="flex items-center gap-1.5">
+                          <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-mono text-slate-700">
+                            {showPasswordMap[q.id] ? q.password : '••••••'}
+                          </code>
+                          <button
+                            type="button"
+                            onClick={() => setShowPasswordMap(prev => ({ ...prev, [q.id]: !prev[q.id] }))}
+                            className="text-slate-400 hover:text-slate-600 p-0.5"
+                            title="Hiện/Ẩn mật khẩu"
+                          >
+                            {showPasswordMap[q.id] ? <EyeOff size={13} /> : <Eye size={13} />}
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 text-xs italic">Không có</span>
+                      )}
+                    </td>
+
+                    <td className="p-3.5">
+                      <button
+                        onClick={() => handleToggleQuizStatus(q.id, q.isActive !== false)}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                          q.isActive !== false
+                            ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                            : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
+                        }`}
+                        title="Bấm để Đóng hoặc Mở đề thi"
+                      >
+                        {q.isActive !== false ? <Unlock size={12} /> : <Lock size={12} />}
+                        <span>{q.isActive !== false ? 'Đang mở' : 'Đã khóa'}</span>
+                      </button>
+                    </td>
+
+                    <td className="p-3.5 text-slate-500 font-medium text-xs">
+                      {new Date(q.createdAt).toLocaleDateString('vi-VN')}
+                    </td>
+
+                    <td className="p-3.5 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => handleCopyLink(q.id)}
+                          className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
+                          title="Sao chép link làm bài"
+                        >
+                          <Copy size={15} />
+                        </button>
+
+                        <a
+                          href={`/creator?id=${q.id}`}
+                          className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                          title="Chỉnh sửa đề thi"
+                        >
+                          <Edit2 size={15} />
+                        </a>
+
+                        <button
+                          onClick={() => handleDeleteQuiz(q.id, q.title)}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                          title="Xóa đề thi"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Modal: Thêm Tài Khoản */}
-      {isAddUserOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-slate-100 animate-in fade-in zoom-in-95">
+      {/* ─────────────────────────────────────────────────────────────
+          DRAWER: HỘP THƯ THÔNG BÁO CỦA TÀI KHOẢN (CÓ THỜI GIAN THỰC)
+      ───────────────────────────────────────────────────────────── */}
+      {isNotifOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-xs flex justify-end animate-fade-in">
+          <div className="bg-white w-full max-w-md h-full shadow-2xl flex flex-col animate-slide-in-right">
+            {/* Drawer Header */}
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                  <Bell size={18} />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-base">Hộp Thư Thông Báo</h3>
+                  <p className="text-[11px] font-medium text-slate-500">
+                    {unreadCount > 0 ? `${unreadCount} thông báo mới chưa đọc` : 'Không có thông báo mới'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {unreadCount > 0 && (
+                  <button
+                    onClick={handleMarkAllRead}
+                    className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer"
+                  >
+                    Đọc tất cả
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsNotifOpen(false)}
+                  className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Notifications List */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {notifications.length === 0 ? (
+                <div className="py-20 text-center text-slate-400">
+                  <Bell size={36} className="mx-auto mb-2 text-slate-200" />
+                  <p className="font-bold text-sm text-slate-600">Hộp thư trống</p>
+                  <p className="text-xs text-slate-400 mt-1">Bạn chưa có thông báo nào từ hệ thống.</p>
+                </div>
+              ) : (
+                notifications.map(n => (
+                  <div
+                    key={n.id}
+                    className={`p-4 rounded-2xl border transition-all relative ${
+                      !n.isRead
+                        ? 'bg-indigo-50/40 border-indigo-200 shadow-xs'
+                        : 'bg-white border-slate-100 text-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-2">
+                        {!n.isRead && (
+                          <span className="w-2 h-2 rounded-full bg-indigo-600 flex-shrink-0 animate-pulse" />
+                        )}
+                        <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm">
+                          {n.title}
+                        </h4>
+                      </div>
+                      <span className="text-[10px] font-medium text-slate-400 flex items-center gap-1 flex-shrink-0">
+                        <Clock size={11} /> {formatTimeAgo(n.createdAt)}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-600 leading-relaxed font-normal whitespace-pre-line pl-4">
+                      {n.message}
+                    </p>
+
+                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100/70 text-[11px] text-slate-400">
+                      <span>{new Date(n.createdAt).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
+                      <button
+                        onClick={() => handleDeleteNotif(n.id)}
+                        className="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                      >
+                        Xóa
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          MODAL: XEM DANH SÁCH BÀI TEST CỦA MỘT GIÁO VIÊN (ADMIN)
+      ───────────────────────────────────────────────────────────── */}
+      {viewingUserQuizzes && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-6 border border-slate-100 animate-in fade-in zoom-in-95 max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <Plus size={18} className="text-indigo-600" /> Thêm Tài Khoản Mới
-              </h3>
+              <div>
+                <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                  <FileText size={20} className="text-indigo-600" />
+                  Đề Thi Của: {viewingUserQuizzes.name || viewingUserQuizzes.username}
+                </h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  Email: {viewingUserQuizzes.email || 'Chưa liên kết'} • Đã tạo: {viewingUserQuizzes.quizzes?.length || 0} / {viewingUserQuizzes.maxTests} đề
+                </p>
+              </div>
               <button
-                onClick={() => setIsAddUserOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100"
+                onClick={() => setViewingUserQuizzes(null)}
+                className="text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-slate-100 cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleAddUser} className="space-y-4 mt-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Tên đăng nhập</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ví dụ: giaovien_toan"
-                  value={newUsername}
-                  onChange={e => setNewUsername(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-sm focus:outline-none focus:border-indigo-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Mật khẩu</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Nhập mật khẩu"
-                  value={newPassword}
-                  onChange={e => setNewPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-sm focus:outline-none focus:border-indigo-600"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Hạn mức tạo đề</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="9999"
-                    value={newMaxTests}
-                    onChange={e => setNewMaxTests(Number(e.target.value))}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-sm focus:outline-none focus:border-indigo-600"
-                  />
+            <div className="flex-1 overflow-y-auto py-4 space-y-3">
+              {!viewingUserQuizzes.quizzes || viewingUserQuizzes.quizzes.length === 0 ? (
+                <div className="py-12 text-center text-slate-400">
+                  <FileText size={32} className="mx-auto mb-2 text-slate-300" />
+                  <p className="font-bold text-sm text-slate-600">Giáo viên này chưa tạo bài test nào</p>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Vai trò</label>
-                  <select
-                    value={newRole}
-                    onChange={e => setNewRole(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-sm focus:outline-none focus:border-indigo-600"
+              ) : (
+                viewingUserQuizzes.quizzes.map(q => (
+                  <div
+                    key={q.id}
+                    className="p-4 bg-slate-50/70 border border-slate-200/70 rounded-2xl flex items-center justify-between gap-3 hover:bg-white hover:shadow-xs transition-all"
                   >
-                    <option value="USER">Giáo viên</option>
-                    <option value="ADMIN">Quản trị viên</option>
-                  </select>
+                    <div>
+                      <a
+                        href={`/?id=${q.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-extrabold text-slate-800 hover:text-indigo-600 text-sm flex items-center gap-1.5"
+                      >
+                        <span>{q.title}</span>
+                        <ExternalLink size={12} className="text-slate-400" />
+                      </a>
+                      <div className="flex items-center gap-3 text-xs text-slate-500 font-medium mt-1">
+                        <span>Môn: {q.category}</span>
+                        <span>•</span>
+                        <span>{q.timeLimit} phút</span>
+                        <span>•</span>
+                        <span>{new Date(q.createdAt).toLocaleDateString('vi-VN')}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                        q.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                      }`}>
+                        {q.isActive ? 'Đang mở' : 'Đã khóa'}
+                      </span>
+                      <button
+                        onClick={() => handleCopyLink(q.id)}
+                        className="p-1.5 bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 rounded-lg cursor-pointer"
+                        title="Copy link"
+                      >
+                        <Copy size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 flex justify-end">
+              <button
+                onClick={() => setViewingUserQuizzes(null)}
+                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          MODAL: GỬI THÔNG BÁO CHO GIÁO VIÊN (ADMIN)
+      ───────────────────────────────────────────────────────────── */}
+      {sendNotifModal.isOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-slate-100 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <Send size={16} />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-base">
+                    {sendNotifModal.targetAll
+                      ? 'Gửi Thông Báo Toàn Trường'
+                      : `Gửi Cho: ${sendNotifModal.targetUser?.name || sendNotifModal.targetUser?.username}`}
+                  </h3>
+                  <p className="text-[11px] text-slate-400 font-medium">
+                    Thông báo sẽ xuất hiện ngay lập tức trong hộp thư của tài khoản
+                  </p>
                 </div>
               </div>
+              <button
+                onClick={() => setSendNotifModal({ isOpen: false, targetUser: null, targetAll: false })}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
-              <div className="pt-4 flex gap-3">
+            <form onSubmit={handleSendNotification} className="space-y-3.5 mt-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Tiêu đề thông báo</label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: Cập nhật hạn mức đề thi mới / Chúc mừng bạn..."
+                  value={notifTitle}
+                  onChange={(e) => setNotifTitle(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nội dung thông báo</label>
+                <textarea
+                  rows={4}
+                  placeholder="Nhập nội dung chi tiết muốn gửi..."
+                  value={notifMessage}
+                  onChange={(e) => setNotifMessage(e.target.value)}
+                  className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600"
+                  required
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setIsAddUserOpen(false)}
-                  className="flex-1 py-2.5 border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors"
+                  onClick={() => setSendNotifModal({ isOpen: false, targetUser: null, targetAll: false })}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-colors"
+                  disabled={isSendingNotif}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
                 >
-                  {isSubmitting ? 'Đang tạo...' : 'Tạo Tài Khoản'}
+                  <Send size={14} />
+                  <span>{isSendingNotif ? 'Đang gửi...' : 'Gửi Ngay'}</span>
                 </button>
               </div>
             </form>
@@ -715,84 +1288,118 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
         </div>
       )}
 
-      {/* Modal: Sửa Tài Khoản */}
-      {editingUser && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+      {/* ─────────────────────────────────────────────────────────────
+          MODAL: THÊM / SỬA TÀI KHOẢN GIÁO VIÊN
+      ───────────────────────────────────────────────────────────── */}
+      {isAddUserOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-slate-100 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <Edit2 size={18} className="text-indigo-600" /> Sửa Tài Khoản: {editingUser.username}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                <Plus size={18} className="text-indigo-600" />
+                {editingUser ? `Chỉnh Sửa: ${editingUser.name || editingUser.username}` : 'Cấp Quyền Giáo Viên Mới'}
               </h3>
               <button
-                onClick={() => setEditingUser(null)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100"
+                onClick={() => {
+                  setIsAddUserOpen(false)
+                  setEditingUser(null)
+                }}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleSaveEditUser} className="space-y-4 mt-4">
+            <form onSubmit={handleSaveUser} className="space-y-3.5 mt-4">
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Tên đăng nhập</label>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Tên Giáo Viên</label>
                 <input
                   type="text"
-                  disabled
-                  value={editingUser.username}
-                  className="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl font-medium text-sm text-slate-500 cursor-not-allowed"
+                  placeholder="Ví dụ: Thầy Nguyễn Văn Nam"
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase mb-1">
-                  Đổi mật khẩu mới <span className="text-slate-400 lowercase font-normal">(bỏ trống nếu giữ nguyên)</span>
-                </label>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Email / Gmail (Đăng nhập Google)</label>
+                <input
+                  type="email"
+                  placeholder="ví dụ: giaovien@gmail.com"
+                  value={formEmail}
+                  onChange={(e) => setFormEmail(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Tên đăng nhập (Username)</label>
                 <input
                   type="text"
-                  placeholder="Để trống nếu không đổi"
-                  value={editPassword}
-                  onChange={e => setEditPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-sm focus:outline-none focus:border-indigo-600"
+                  placeholder="Username đăng nhập"
+                  value={formUsername}
+                  onChange={(e) => setFormUsername(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600"
+                  required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Giới hạn đề thi</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Quyền Hạn</label>
+                  <select
+                    value={formRole}
+                    onChange={(e) => setFormRole(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none"
+                  >
+                    <option value="TEACHER">Giáo Viên</option>
+                    <option value="ADMIN">Quản Trị Viên</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Hạn Mức Đề Thi</label>
                   <input
                     type="number"
                     min="1"
                     max="9999"
-                    value={editMaxTests}
-                    onChange={e => setEditMaxTests(Number(e.target.value))}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-sm focus:outline-none focus:border-indigo-600"
+                    value={formMaxTests}
+                    onChange={(e) => setFormMaxTests(Number(e.target.value))}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none"
+                    required
                   />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Vai trò</label>
-                  <select
-                    value={editRole}
-                    onChange={e => setEditRole(e.target.value)}
-                    disabled={editingUser.username?.toLowerCase() === 'duylniedu'}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-sm focus:outline-none focus:border-indigo-600 disabled:bg-slate-100 disabled:text-slate-400"
-                  >
-                    <option value="USER">Giáo viên</option>
-                    <option value="ADMIN">Quản trị viên</option>
-                  </select>
                 </div>
               </div>
 
-              <div className="pt-4 flex gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  {editingUser ? 'Mật khẩu mới (Để trống nếu không đổi)' : 'Mật khẩu dự phòng'}
+                </label>
+                <input
+                  type="text"
+                  placeholder={editingUser ? 'Nhập mật khẩu mới...' : 'Mặc định: Gv@123456'}
+                  value={formPassword}
+                  onChange={(e) => setFormPassword(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 outline-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setEditingUser(null)}
-                  className="flex-1 py-2.5 border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors"
+                  onClick={() => {
+                    setIsAddUserOpen(false)
+                    setEditingUser(null)
+                  }}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-colors"
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer disabled:opacity-60"
                 >
                   {isSubmitting ? 'Đang lưu...' : 'Lưu Thay Đổi'}
                 </button>
@@ -802,184 +1409,75 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
         </div>
       )}
 
-      {/* Modal: Cài Đặt Hệ Thống */}
-      {isSettingsOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 border border-slate-100 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <Settings size={18} className="text-indigo-600" /> Cài Đặt & Thông Tin Hệ Thống
+      {/* ─────────────────────────────────────────────────────────────
+          MODAL: CÀI ĐẶT HỆ THỐNG & GEMINI API (ADMIN)
+      ───────────────────────────────────────────────────────────── */}
+      {isSettingsOpen && !isTeacher && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full p-6 border border-slate-100 animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                <Settings size={18} className="text-indigo-600" />
+                Cài Đặt Hệ Thống & Trí Tuệ Nhân Tạo
               </h3>
               <button
                 onClick={() => setIsSettingsOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100"
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="space-y-4 mt-5">
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/60">
-                <div className="text-xs font-bold text-slate-400 uppercase mb-2">Tài khoản Quản trị</div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <Shield size={18} className="text-indigo-600" />
-                    <span className="font-bold text-slate-800">{session.username || 'DuylniEdu'}</span>
-                  </div>
-                  <span className="bg-rose-100 text-rose-700 font-bold text-xs px-2.5 py-0.5 rounded-full">
-                    Quản trị viên tối cao
-                  </span>
-                </div>
-              </div>
-
-              {/* Gemini AI Multi-Key & Model Settings */}
-              <div className="bg-indigo-50/70 dark:bg-indigo-950/40 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-900/60 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs font-bold text-indigo-700 dark:text-indigo-300 uppercase flex items-center gap-1.5">
-                    <Key size={14} /> Cấu hình Gemini AI Trợ Giảng
-                  </div>
-                  <span className="text-[10px] font-semibold text-indigo-600 bg-indigo-100 dark:bg-indigo-900 px-2 py-0.5 rounded-full">
-                    Tự động xoay vòng Keys
-                  </span>
-                </div>
-
+            <div className="space-y-5 mt-4">
+              {/* Active Background Switch */}
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
                 <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Danh sách Gemini API Keys:
-                    </label>
-                    <span className="text-[11px] text-slate-400 font-medium">
-                      {geminiKeys.split(/[\n,;]+/).filter(k => k.trim().length > 5).length} keys đã nhập
-                    </span>
-                  </div>
-                  <textarea
-                    rows={3}
-                    value={geminiKeys}
-                    onChange={(e) => setGeminiKeys(e.target.value)}
-                    placeholder="Dán các API Key vào đây, cách nhau bởi dấu phẩy hoặc xuống dòng (Key1, Key2, Key3...)"
-                    className="w-full p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500"
-                  />
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    💡 Hệ thống sẽ random chọn key cho mỗi câu hỏi và tự động chuyển đổi ngay sang key khác nếu một key bị giới hạn quota.
+                  <h4 className="font-extrabold text-slate-800 text-xs sm:text-sm">Ảnh Nền Khi Làm Bài Thi</h4>
+                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    Bật ảnh nền đẹp mắt khi học sinh làm bài thi / luyện tập. Tắt đi sẽ quay về nền trắng tối giản.
                   </p>
                 </div>
-
-                {/* Model Selection & Custom Add */}
-                <div className="space-y-2 pt-1 border-t border-indigo-100/80 dark:border-indigo-900/40">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                      Model Gemini đang dùng:
-                    </label>
-                    <select
-                      value={geminiModel}
-                      onChange={(e) => setGeminiModel(e.target.value)}
-                      className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none focus:border-indigo-500"
-                    >
-                      {availableModels.map((m) => (
-                        <option key={m} value={m}>
-                          {m}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Add Custom Model */}
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      placeholder="Thêm model ID (vd: gemini-2.5-flash-thinking)..."
-                      value={customModelInput}
-                      onChange={(e) => setCustomModelInput(e.target.value)}
-                      className="flex-1 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddCustomModel}
-                      className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-colors whitespace-nowrap"
-                    >
-                      + Thêm model
-                    </button>
-                  </div>
-                </div>
+                <input
+                  type="checkbox"
+                  checked={activeBgEnabled}
+                  onChange={(e) => setActiveBgEnabled(e.target.checked)}
+                  className="w-5 h-5 accent-indigo-600 cursor-pointer"
+                />
               </div>
 
-              {/* Cài đặt Giao diện & Ảnh nền lúc làm bài */}
-              <div className="bg-slate-50 dark:bg-slate-800/80 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase flex items-center gap-1.5">
-                    <ImageIcon size={15} className="text-indigo-600 dark:text-indigo-400" /> Ảnh nền khi làm bài thi & luyện tập
-                  </div>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    activeBgEnabled 
-                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300' 
-                      : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
-                  }`}>
-                    {activeBgEnabled ? 'Đang BẬT' : 'Đang TẮT (Nền trắng)'}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between pt-1">
-                  <div className="pr-4">
-                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-100">
-                      Hiển thị hình nền khi thí sinh làm bài
-                    </p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                      Khi tắt, giao diện làm bài sẽ tự động quay về <b>nền trắng sạch</b> như cũ trên cả laptop và điện thoại.
-                    </p>
-                  </div>
-
-                  {/* Toggle Switch */}
-                  <button
-                    type="button"
-                    onClick={() => setActiveBgEnabled(!activeBgEnabled)}
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      activeBgEnabled ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600'
-                    }`}
-                    role="switch"
-                    aria-checked={activeBgEnabled}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                        activeBgEnabled ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
+              {/* Gemini API Keys */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Gemini API Keys (Phân cách bằng dấu phẩy)
+                </label>
+                <textarea
+                  rows={3}
+                  value={geminiKeys}
+                  onChange={(e) => setGeminiKeys(e.target.value)}
+                  placeholder="AIzaSy..., AIzaSy..."
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 outline-none focus:border-indigo-600"
+                />
               </div>
 
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/60 space-y-3">
-                <div className="text-xs font-bold text-slate-400 uppercase">Hạ tầng & Dịch vụ</div>
-                
-                <div className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2 text-slate-600">
-                    <Database size={16} className="text-emerald-500" /> Cơ sở dữ liệu:
-                  </span>
-                  <span className="font-semibold text-slate-800">PostgreSQL (Vercel Neon)</span>
-                </div>
-
-                <div className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2 text-slate-600">
-                    <Activity size={16} className="text-blue-500" /> Trạng thái máy chủ:
-                  </span>
-                  <span className="bg-emerald-100 text-emerald-700 font-bold text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping"></span> Hoạt động tốt
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2 text-slate-600">
-                    <Key size={16} className="text-amber-500" /> Chế độ tạo đề:
-                  </span>
-                  <span className="font-bold text-indigo-600">Bản Gốc (Upload Word & Paste Text)</span>
-                </div>
+              {/* Active Model */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Model AI Đang Sử Dụng</label>
+                <select
+                  value={geminiModel}
+                  onChange={(e) => setGeminiModel(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none"
+                >
+                  {availableModels.map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
               </div>
 
-              <div className="pt-2 flex gap-2.5">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsSettingsOpen(false)}
-                  className="flex-1 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
                 >
                   Đóng
                 </button>
@@ -987,7 +1485,7 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
                   type="button"
                   onClick={handleSaveAiSettings}
                   disabled={isSavingSettings}
-                  className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200 flex items-center justify-center gap-2 disabled:opacity-60"
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer disabled:opacity-60"
                 >
                   {isSavingSettings ? 'Đang lưu...' : 'Lưu Cài Đặt'}
                 </button>
@@ -996,7 +1494,6 @@ export default function DashboardClient({ initialUsers, initialQuizzes, session 
           </div>
         </div>
       )}
-
     </div>
   )
 }

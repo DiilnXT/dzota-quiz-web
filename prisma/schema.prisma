@@ -77,13 +77,26 @@ model QuickQuiz {
 }
 
 model User {
+  id            String         @id @default(cuid())
+  username      String         @unique
+  email         String?        @unique
+  name          String?
+  password      String
+  role          String         @default("USER")
+  maxTests      Int            @default(10)
+  createdAt     DateTime       @default(now())
+  quizzes       QuickQuiz[]
+  notifications Notification[]
+}
+
+model Notification {
   id        String   @id @default(cuid())
-  username  String   @unique
-  password  String
-  role      String   @default("USER")
-  maxTests  Int      @default(10)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
-  quizzes   QuickQuiz[]
 }
 
 model SystemSetting {
@@ -91,4 +104,5 @@ model SystemSetting {
   value     String
   updatedAt DateTime @updatedAt
 }
+
 
