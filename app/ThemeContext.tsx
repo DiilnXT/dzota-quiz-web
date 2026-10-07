@@ -23,23 +23,32 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setMounted(true)
     const saved = localStorage.getItem('dzota_theme') as Theme | null
-    if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      setTheme('dark')
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const initial = saved ? saved : (prefersDark ? 'dark' : 'light')
+    setTheme(initial)
+    if (initial === 'dark') {
       document.documentElement.classList.add('dark')
+      document.documentElement.setAttribute('data-theme', 'dark')
+      document.documentElement.style.colorScheme = 'dark'
     } else {
-      setTheme('light')
       document.documentElement.classList.remove('dark')
+      document.documentElement.setAttribute('data-theme', 'light')
+      document.documentElement.style.colorScheme = 'light'
     }
   }, [])
 
   const toggleTheme = () => {
-    const next = theme === 'light' ? 'dark' : 'light'
+    const next: Theme = theme === 'light' ? 'dark' : 'light'
     setTheme(next)
     localStorage.setItem('dzota_theme', next)
     if (next === 'dark') {
       document.documentElement.classList.add('dark')
+      document.documentElement.setAttribute('data-theme', 'dark')
+      document.documentElement.style.colorScheme = 'dark'
     } else {
       document.documentElement.classList.remove('dark')
+      document.documentElement.setAttribute('data-theme', 'light')
+      document.documentElement.style.colorScheme = 'light'
     }
   }
 

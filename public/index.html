@@ -971,18 +971,18 @@
               }
             } catch (err) {}
 
-            const handleLoadQuiz = async (id) => {
+            const handleLoadQuiz = async (id, isEditMode = false) => {
                 setIsLoading(true);
                 try {
                     const res = await fetch('/api/quick-quiz?id=' + id);
                     if (!res.ok) throw new Error("Not found");
                     const data = await res.json();
                     
-                    if (data.config && data.config.isActive === false && appMode !== 'editor') {
+                    if (data.config && data.config.isActive === false && appMode !== 'editor' && !isEditMode) {
                         setAppMode('blocked'); setIsLoading(false); return;
                     }
                     if (data.config && data.config.title) {
-                        document.title = data.config.title + " | Dzota";
+                        document.title = (isEditMode ? "Chỉnh sửa: " : "") + data.config.title + " | Dzota";
                         const ogTitle = document.getElementById('og-title'); if (ogTitle) ogTitle.content = data.config.title;
                         const ogDesc = document.getElementById('og-desc'); if (ogDesc) ogDesc.content = "Bắt đầu làm bài thi: " + data.config.title;
                     }
@@ -1000,6 +1000,14 @@
                         loadedQuestions = loadedQuestions.map(q => ({ id: 'slot_' + (q.id || Math.random()), variants: [q] }));
                     }
                     setParsedQuestions(loadedQuestions);
+
+                    if (isEditMode) {
+                        setAppMode('editor');
+                        setShowReview(true);
+                        setIsLoading(false);
+                        addToast(`✏️ Đang chỉnh sửa: ${data.config?.title || 'Bài thi'}`, 'info');
+                        return;
+                    }
 
                     // Kiểm tra và khôi phục đa nhiệm nếu người dùng đang làm dở trên điện thoại
                     const savedSessionKey = 'dzota_quiz_session_' + id;
@@ -1053,11 +1061,12 @@
             };
 
             const params = new URLSearchParams(window.location.search);
-            const quizId = params.get('id') || params.get('test');
+            const quizId = params.get('id') || params.get('test') || params.get('editId');
+            const isEditParam = params.get('edit') === 'true' || params.has('editId');
 
             if (quizId) {
                 setQuizIdTracker(quizId);
-                handleLoadQuiz(quizId);
+                handleLoadQuiz(quizId, isEditParam);
             } else {
                 setAppMode('home');
                 setIsLoading(false);

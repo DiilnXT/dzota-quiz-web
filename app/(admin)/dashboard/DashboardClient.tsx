@@ -1011,7 +1011,7 @@ export default function DashboardClient({
                         </button>
 
                         <a
-                          href={`/creator?id=${q.id}`}
+                          href={`/creator?id=${q.id}&edit=true`}
                           className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                           title="Chỉnh sửa đề thi"
                         >
