@@ -13,10 +13,17 @@ export async function GET(request: Request) {
   
   try {
     let html = fs.readFileSync(path.join(process.cwd(), 'public/index.html'), 'utf8')
-    let sessionData = {}
+    let sessionData: any = {}
     try {
       sessionData = JSON.parse(sessionStr)
     } catch (e) {}
+
+    // Học sinh không được phép truy cập trình tạo đề
+    const role = sessionData.role?.toUpperCase()
+    const isStudent = role === 'STUDENT'
+    if (isStudent) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
 
     // Inject session info into window.__DZOTA_SESSION__ so client knows who is logged in
     const injectionScript = `<script>window.__DZOTA_SESSION__ = ${JSON.stringify(sessionData)};</script>`

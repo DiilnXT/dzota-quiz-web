@@ -21,6 +21,11 @@ export default async function TestsPage() {
     redirect('/login')
   }
 
+  // Học sinh không có quyền xem trang quản lý bài test
+  if (session.role?.toUpperCase() === 'STUDENT') {
+    redirect('/dashboard')
+  }
+
   // Ensure DuylniEdu is always authorized as Admin
   const isUserAdmin = session.role?.toLowerCase() === 'admin' || session.username?.toLowerCase() === 'duylniedu'
 

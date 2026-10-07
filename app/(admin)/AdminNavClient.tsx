@@ -5,33 +5,21 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
-  BarChart2,
   FileText,
   Users,
-  User,
-  Clock,
   Settings,
   Sparkles,
   BookOpen,
-  Folder,
-  Tag,
+  School,
+  Shield,
   LogOut,
   Menu,
   X,
-  Bell,
-  Search,
-  ChevronDown,
   Sun,
   Moon,
-  Plus,
-  Shield,
-  Key,
-  Database,
-  Download,
-  Upload,
-  Check,
-  CheckCircle2,
-  AlertCircle
+  User as UserIcon,
+  BarChart2,
+  CheckCircle2
 } from 'lucide-react'
 import { useTheme } from '../ThemeContext'
 
@@ -39,11 +27,15 @@ interface AdminNavClientProps {
   session: {
     id?: string
     username?: string
+    name?: string
+    email?: string
+    avatar?: string
+    phone?: string
     role?: string
   }
 }
 
-type ModalType = 'logs' | 'bank' | null
+type ModalType = 'bank' | null
 
 export default function AdminNavClient({ session }: AdminNavClientProps) {
   const pathname = usePathname()
@@ -55,18 +47,22 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
   const isTestsActive = pathname.startsWith('/tests')
   const isDashboardActive = pathname === '/dashboard'
   const isCreatorActive = pathname.startsWith('/creator')
-  const isSubjectsActive = pathname.startsWith('/subjects')
 
-  const username = session.username || 'DuylniEdu'
+  const username = session.name || session.username || 'Người dùng'
+  const email = session.email?.toLowerCase() || ''
   const isDuylni =
-    username.toLowerCase() === 'duylniedu' ||
-    (session as any).email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com'
-  const roleName = isDuylni || session.role?.toLowerCase() === 'admin' ? 'Quản trị viên' : 'Giáo viên'
+    session.username?.toLowerCase() === 'duylniedu' ||
+    email === 'lenhatduy.vietnam@gmail.com'
+  const role = session.role?.toUpperCase() || 'STUDENT'
+  const isAdmin = isDuylni || role === 'ADMIN'
+  const isStudent = !isAdmin && role === 'STUDENT'
+  const isTeacher = !isAdmin && !isStudent
 
-  const showFeedback = (msg: string) => {
-    setModalFeedback(msg)
-    setTimeout(() => setModalFeedback(null), 3000)
-  }
+  const roleName = isAdmin
+    ? 'Quản trị viên tối cao'
+    : isTeacher
+    ? 'Giáo viên'
+    : 'Học sinh'
 
   return (
     <>
@@ -75,7 +71,7 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             aria-label="Mở Menu"
           >
             {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
@@ -85,8 +81,12 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
               <img src="/logo-dzota.png" alt="Dzota Logo" className="w-full h-full object-contain" />
             </div>
             <div>
-              <span className="text-sm font-black text-slate-800 dark:text-slate-100 tracking-tight block leading-tight">Dzota Admin</span>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium block leading-tight">Hệ thống quản lý đề thi</span>
+              <span className="text-sm font-black text-slate-800 dark:text-slate-100 tracking-tight block leading-tight">
+                {isStudent ? 'Dzota Học Tập' : 'Dzota Admin'}
+              </span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium block leading-tight">
+                {isStudent ? 'Cổng học sinh' : 'Quản lý thi trắc nghiệm'}
+              </span>
             </div>
           </Link>
         </div>
@@ -96,19 +96,23 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
           {/* Theme switch button */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             title={isDark ? 'Chuyển sang giao diện Sáng' : 'Chuyển sang giao diện Tối'}
           >
             {isDark ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} />}
           </button>
 
-          <Link
-            href="/creator"
-            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center gap-1 shadow-xs active:scale-95 transition-all"
-          >
-            <Sparkles size={13} />
-            <span>Tạo đề</span>
-          </Link>
+          {/* Chỉ Giáo viên & Admin mới có nút Tạo đề */}
+          {!isStudent && (
+            <Link
+              href="/creator"
+              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center gap-1 shadow-xs active:scale-95 transition-all"
+            >
+              <Sparkles size={13} />
+              <span>Tạo đề</span>
+            </Link>
+          )}
+
           <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-bold text-xs flex items-center justify-center border border-blue-200 dark:border-blue-800">
             {username.charAt(0).toUpperCase()}
           </div>
@@ -136,13 +140,17 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
               <img src="/logo-dzota.png" alt="Dzota Logo" className="w-full h-full object-contain" />
             </div>
             <div>
-              <span className="text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight block leading-tight">Dzota Admin</span>
-              <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold block leading-tight">Hệ thống quản lý đề thi</span>
+              <span className="text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight block leading-tight">
+                {isStudent ? 'Dzota Học Tập' : 'Dzota Admin'}
+              </span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold block leading-tight">
+                {isStudent ? 'Cổng rèn luyện học sinh' : 'Hệ thống quản lý đề thi'}
+              </span>
             </div>
           </Link>
           <button
             onClick={() => setMobileMenuOpen(false)}
-            className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
           >
             <X size={20} />
           </button>
@@ -166,76 +174,121 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                 }`}
               >
                 <LayoutDashboard size={18} />
-                <span>Dashboard</span>
+                <span>Dashboard {isStudent ? '(Lịch sử làm bài)' : ''}</span>
               </Link>
             </div>
           </div>
 
-          {/* Section 2: QUẢN LÝ HỆ THỐNG */}
-          <div>
-            <h3 className="px-3 text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
-              Quản lý hệ thống
-            </h3>
-            <div className="space-y-1">
-              <Link
-                href="/tests"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all relative ${
-                  isTestsActive
-                    ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <FileText size={18} className={isTestsActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400'} />
-                  <span>Quản lý Bài test</span>
-                </div>
-                {isTestsActive && (
-                  <div className="w-1.5 h-6 bg-blue-600 dark:bg-blue-400 rounded-full" />
+          {/* Section 2: QUẢN LÝ HỆ THỐNG (CHỈ DÀNH CHO GIÁO VIÊN & ADMIN - ẨN HOÀN TOÀN VỚI HỌC SINH) */}
+          {!isStudent && (
+            <div>
+              <h3 className="px-3 text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                Quản lý hệ thống
+              </h3>
+              <div className="space-y-1">
+                {/* Quản lý đề thi */}
+                <Link
+                  href="/dashboard?tab=quizzes"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all relative ${
+                    isTestsActive
+                      ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <FileText size={18} className="text-blue-600 dark:text-blue-400" />
+                    <span>{isTeacher ? 'Đề thi của tôi' : 'Quản lý Bài test'}</span>
+                  </div>
+                </Link>
+
+                {/* Quản lý Lớp học & Học sinh */}
+                <Link
+                  href="/dashboard?tab=classes"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all text-left"
+                >
+                  <School size={18} className="text-indigo-500" />
+                  <span>Lớp học & Học sinh</span>
+                </Link>
+
+                {/* Quản lý Người dùng & Phân quyền (Chỉ Admin) */}
+                {isAdmin && (
+                  <Link
+                    href="/dashboard?tab=teachers"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all text-left"
+                  >
+                    <Shield size={18} className="text-purple-500" />
+                    <span>Người dùng & Phân quyền</span>
+                  </Link>
                 )}
-              </Link>
 
-              <button
-                onClick={() => { setActiveModal('logs'); setMobileMenuOpen(false); }}
-                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all text-left"
-              >
-                <Clock size={18} className="text-slate-400 dark:text-slate-500" />
-                <span>Nhật ký hoạt động</span>
-              </button>
+                {/* Cài đặt Web & Hệ thống (Chỉ Admin) */}
+                {isAdmin && (
+                  <Link
+                    href="/dashboard?tab=settings"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all text-left"
+                  >
+                    <Settings size={18} className="text-amber-500" />
+                    <span>Cài đặt Web & AI</span>
+                  </Link>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Section 3: CÔNG CỤ GIÁO DỤC */}
+          {/* Section 3: CÔNG CỤ GIÁO DỤC (CHỈ DÀNH CHO GIÁO VIÊN & ADMIN - ẨN HOÀN TOÀN VỚI HỌC SINH) */}
+          {!isStudent && (
+            <div>
+              <h3 className="px-3 text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                Công cụ giáo dục
+              </h3>
+              <div className="space-y-1">
+                <Link
+                  href="/creator"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                    isCreatorActive
+                      ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 shadow-xs'
+                      : 'text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Sparkles size={18} className="text-blue-500" />
+                    <span>Tạo Đề Mới (Bản Gốc)</span>
+                  </div>
+                  <span className="bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-extrabold">
+                    Mới
+                  </span>
+                </Link>
+
+                <button
+                  onClick={() => { setActiveModal('bank'); setMobileMenuOpen(false); }}
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all text-left cursor-pointer"
+                >
+                  <BookOpen size={18} className="text-slate-400 dark:text-slate-500" />
+                  <span>Ngân hàng câu hỏi</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Section 4: TÀI KHOẢN & LIÊN HỆ */}
           <div>
             <h3 className="px-3 text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
-              Công cụ giáo dục
+              Tài khoản
             </h3>
             <div className="space-y-1">
               <Link
-                href="/creator"
+                href="/dashboard?tab=profile"
                 onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all ${
-                  isCreatorActive
-                    ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 shadow-xs'
-                    : 'text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <FileText size={18} className="text-blue-500" />
-                  <span>Tạo Đề Mới (Bản Gốc)</span>
-                </div>
-                <span className="bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-extrabold">
-                  Mới
-                </span>
-              </Link>
-
-              <button
-                onClick={() => { setActiveModal('bank'); setMobileMenuOpen(false); }}
                 className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all text-left"
               >
-                <BookOpen size={18} className="text-slate-400 dark:text-slate-500" />
-                <span>Ngân hàng câu hỏi</span>
-              </button>
+                <UserIcon size={18} className="text-emerald-500" />
+                <span>Cá nhân & Zalo</span>
+              </Link>
             </div>
           </div>
         </div>
@@ -250,7 +303,7 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
             </span>
             <button
               onClick={toggleTheme}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
                 isDark ? 'bg-blue-600' : 'bg-slate-300'
               }`}
             >
@@ -277,7 +330,7 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
           <form action="/api/auth/logout" method="POST">
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-100 dark:border-rose-900/50 rounded-xl transition-all"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-100 dark:border-rose-900/50 rounded-xl transition-all cursor-pointer"
             >
               <LogOut size={14} />
               <span>Đăng xuất</span>
@@ -286,85 +339,50 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
         </div>
       </aside>
 
-      {/* ─── MODALS FOR ALL FEATURE MENUS ─── */}
-      {activeModal && (
+      {/* ─── MODAL NGÂN HÀNG CÂU HỎI ─── */}
+      {activeModal === 'bank' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
           <div className="bg-white dark:bg-[#1E293B] rounded-3xl max-w-lg w-full p-6 border border-slate-200 dark:border-slate-700 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                  {activeModal === 'logs' && <Clock size={18} />}
-                  {activeModal === 'bank' && <BookOpen size={18} />}
+                  <BookOpen size={18} />
                 </div>
                 <div>
                   <h3 className="font-extrabold text-base text-slate-900 dark:text-slate-100">
-                    {activeModal === 'logs' && 'Nhật Ký Hoạt Động (Audit Log)'}
-                    {activeModal === 'bank' && 'Ngân Hàng Câu Hỏi Tự Động'}
+                    Ngân Hàng Câu Hỏi Tự Động
                   </h3>
                   <p className="text-xs text-slate-400">Dzota Admin Control Center</p>
                 </div>
               </div>
               <button
                 onClick={() => setActiveModal(null)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            {/* Modal Feedback banner */}
-            {modalFeedback && (
-              <div className="mt-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-bold flex items-center gap-2">
-                <CheckCircle2 size={16} />
-                <span>{modalFeedback}</span>
-              </div>
-            )}
-
             {/* Modal Content */}
             <div className="py-4 text-sm text-slate-600 dark:text-slate-300 space-y-4">
-              {/* NHẬT KÝ HOẠT ĐỘNG */}
-              {activeModal === 'logs' && (
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {[
-                    { action: 'Đổi giao diện Sáng / Tối', user: username, time: 'Vừa xong' },
-                    { action: 'Mở đề thi: Vi Sinh Câu 101-159', user: 'DuylniEdu', time: '10 phút trước' },
-                    { action: 'Tạo đề mới từ Word (50 câu)', user: 'DuylniEdu', time: '1 giờ trước' },
-                    { action: 'Đăng nhập vào hệ thống', user: username, time: 'Hôm nay' },
-                  ].map((log, i) => (
-                    <div key={i} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs">
-                      <div>
-                        <div className="font-bold text-slate-800 dark:text-slate-200">{log.action}</div>
-                        <div className="text-[11px] text-slate-400">Bởi {log.user}</div>
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-mono">{log.time}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* NGÂN HÀNG CÂU HỎI */}
-              {activeModal === 'bank' && (
-                <div className="space-y-3">
-                  <div className="p-3 bg-blue-50 dark:bg-blue-950/60 rounded-xl border border-blue-100 dark:border-blue-900 text-xs text-blue-700 dark:text-blue-300">
-                    Ngân hàng câu hỏi cho phép bạn import hàng trăm câu hỏi và tự động bốc ngẫu nhiên (random pick) theo từng lần thi!
-                  </div>
-                  <Link
-                    href="/creator"
-                    onClick={() => setActiveModal(null)}
-                    className="block text-center py-2.5 bg-blue-600 text-white font-bold text-xs rounded-xl hover:bg-blue-700 transition-colors"
-                  >
-                    Mở Trình Soạn Thảo & Tạo Ngân Hàng Đề Mới →
-                  </Link>
-                </div>
-              )}
+              <div className="p-3 bg-blue-50 dark:bg-blue-950/60 rounded-xl border border-blue-100 dark:border-blue-900 text-xs text-blue-700 dark:text-blue-300">
+                Ngân hàng câu hỏi cho phép bạn import hàng trăm câu hỏi và tự động bốc ngẫu nhiên (random pick) theo từng lần thi!
+              </div>
+              <Link
+                href="/creator"
+                onClick={() => setActiveModal(null)}
+                className="block text-center py-2.5 bg-blue-600 text-white font-bold text-xs rounded-xl hover:bg-blue-700 transition-colors"
+              >
+                Mở Trình Soạn Thảo & Tạo Ngân Hàng Đề Mới →
+              </Link>
             </div>
 
             {/* Modal Footer */}
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
               <button
                 onClick={() => setActiveModal(null)}
-                className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl transition-colors"
+                className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl transition-colors cursor-pointer"
               >
                 Đóng
               </button>
