@@ -888,11 +888,11 @@ export default function TestInterface({ test }: { test: any }) {
       )}
       <header className="bg-white/90 backdrop-blur-md border-b border-white/80 px-3 sm:px-6 py-2.5 flex justify-between items-center fixed top-0 w-full z-20 shadow-xs">
         {/* Khung tên bài thi nổi bật thay vì màu trắng */}
-        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 max-w-[45%] sm:max-w-[48%] px-2.5 sm:px-3.5 py-1.5 rounded-2xl bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 border border-blue-400/30 shadow-[0_4px_16px_rgba(26,115,232,0.25)]">
+        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1 mr-2 sm:mr-3 px-2.5 sm:px-3.5 py-1.5 rounded-2xl bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 border border-blue-400/30 shadow-[0_4px_16px_rgba(26,115,232,0.25)]">
           <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-cyan-400 via-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold flex-shrink-0 shadow-md">
             <Sparkles size={16} />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="font-black text-white text-xs sm:text-sm leading-tight truncate drop-shadow-xs">{test.title}</div>
             <div className="text-[9px] sm:text-[10px] font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
