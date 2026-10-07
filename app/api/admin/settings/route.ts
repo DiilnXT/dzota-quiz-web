@@ -28,6 +28,9 @@ export async function GET() {
     let modelSetting: any = null
     let availableModelsSetting: any = null
     let activeBgSetting: any = null
+    let activeBgDesktopSetting: any = null
+    let activeBgMobileSetting: any = null
+    let activeBgGallerySetting: any = null
 
     try {
       if ((prisma as any).systemSetting) {
@@ -35,6 +38,9 @@ export async function GET() {
         modelSetting = await (prisma as any).systemSetting.findUnique({ where: { key: 'GEMINI_ACTIVE_MODEL' } })
         availableModelsSetting = await (prisma as any).systemSetting.findUnique({ where: { key: 'GEMINI_AVAILABLE_MODELS' } })
         activeBgSetting = await (prisma as any).systemSetting.findUnique({ where: { key: 'ACTIVE_BG_ENABLED' } })
+        activeBgDesktopSetting = await (prisma as any).systemSetting.findUnique({ where: { key: 'ACTIVE_BG_DESKTOP' } })
+        activeBgMobileSetting = await (prisma as any).systemSetting.findUnique({ where: { key: 'ACTIVE_BG_MOBILE' } })
+        activeBgGallerySetting = await (prisma as any).systemSetting.findUnique({ where: { key: 'ACTIVE_BG_GALLERY' } })
       }
     } catch (e) {
       console.warn('SystemSetting table not ready in DB, using fallback')
@@ -56,6 +62,26 @@ export async function GET() {
       : defaultModels
     // Mặc định là true (bật ảnh background) trừ khi admin tắt explicitly thành 'false'
     const activeBgEnabled = activeBgSetting ? activeBgSetting.value !== 'false' : true
+    const activeBgDesktop = activeBgDesktopSetting?.value || ''
+    const activeBgMobile = activeBgMobileSetting?.value || ''
+    
+    // Thư viện ảnh mặc định
+    const defaultGallery = [
+      { id: 'def_d1', name: 'Thiên Nhiên Núi Rừng (Mặc định PC)', device: 'desktop', url: 'https://i.ibb.co/xqxLMLNj/1a348e38-aec7-4e9a-9bbe-69ff1c4af67d.png' },
+      { id: 'def_m1', name: 'Thung Lũng Xanh (Mặc định Mobile)', device: 'mobile', url: 'https://i.ibb.co/7NnQtYVb/b93ce28c-a278-4123-8650-771eb2a3be79.png' },
+      { id: 'def_d2', name: 'Bình Minh Trên Đỉnh Núi', device: 'desktop', url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=80' },
+      { id: 'def_m2', name: 'Hoàng Hôn Sông Nước', device: 'mobile', url: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&w=800&q=80' },
+      { id: 'def_d3', name: 'Cực Quang Huyền Ảo', device: 'desktop', url: 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?auto=format&fit=crop&w=1920&q=80' },
+      { id: 'def_m3', name: 'Biển Đêm Tĩnh Lặng', device: 'mobile', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80' }
+    ]
+
+    let activeBgGallery = defaultGallery
+    if (activeBgGallerySetting?.value) {
+      try {
+        const parsed = JSON.parse(activeBgGallerySetting.value)
+        if (Array.isArray(parsed) && parsed.length > 0) activeBgGallery = parsed
+      } catch (e) {}
+    }
 
     if (!isUserAdmin) {
       // Non-admin chỉ cần biết cấu hình đã có key hay chưa, model đang dùng, và trạng thái bật/tắt background
@@ -63,7 +89,9 @@ export async function GET() {
         hasKeys: Boolean(apiKeys.trim()),
         activeModel,
         keyCount: apiKeys.split(',').filter(Boolean).length,
-        activeBgEnabled
+        activeBgEnabled,
+        activeBgDesktop,
+        activeBgMobile
       })
     }
 
@@ -71,7 +99,10 @@ export async function GET() {
       apiKeys,
       activeModel,
       availableModels,
-      activeBgEnabled
+      activeBgEnabled,
+      activeBgDesktop,
+      activeBgMobile,
+      activeBgGallery
     })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -85,7 +116,15 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { apiKeys, activeModel, availableModels, activeBgEnabled } = await request.json()
+    const {
+      apiKeys,
+      activeModel,
+      availableModels,
+      activeBgEnabled,
+      activeBgDesktop,
+      activeBgMobile,
+      activeBgGallery
+    } = await request.json()
 
     if ((prisma as any).systemSetting) {
       if (apiKeys !== undefined) {
@@ -117,6 +156,30 @@ export async function POST(request: Request) {
           where: { key: 'ACTIVE_BG_ENABLED' },
           update: { value: String(activeBgEnabled) },
           create: { key: 'ACTIVE_BG_ENABLED', value: String(activeBgEnabled) }
+        })
+      }
+
+      if (activeBgDesktop !== undefined) {
+        await (prisma as any).systemSetting.upsert({
+          where: { key: 'ACTIVE_BG_DESKTOP' },
+          update: { value: String(activeBgDesktop).trim() },
+          create: { key: 'ACTIVE_BG_DESKTOP', value: String(activeBgDesktop).trim() }
+        })
+      }
+
+      if (activeBgMobile !== undefined) {
+        await (prisma as any).systemSetting.upsert({
+          where: { key: 'ACTIVE_BG_MOBILE' },
+          update: { value: String(activeBgMobile).trim() },
+          create: { key: 'ACTIVE_BG_MOBILE', value: String(activeBgMobile).trim() }
+        })
+      }
+
+      if (activeBgGallery !== undefined) {
+        await (prisma as any).systemSetting.upsert({
+          where: { key: 'ACTIVE_BG_GALLERY' },
+          update: { value: JSON.stringify(activeBgGallery) },
+          create: { key: 'ACTIVE_BG_GALLERY', value: JSON.stringify(activeBgGallery) }
         })
       }
     }

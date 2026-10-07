@@ -49,6 +49,38 @@ interface TeacherChatTabProps {
 }
 
 const QUICK_EMOJIS = ['😊', '👍', '❤️', '😂', '🎉', '🔥', '👏', '💡', '🎓', '✨', '📚', '💪']
+const REACTION_EMOJIS = ['❤️', '👍', '😆', '😮', '😢', '🔥']
+
+const STICKER_PACKS = [
+  { id: 'st1', label: 'Cố lên nha! 💪', emoji: '💪', text: 'Cố lên nha!' },
+  { id: 'st2', label: 'Tuyệt vời ông mặt trời 🌟', emoji: '🌟', text: 'Tuyệt vời ông mặt trời!' },
+  { id: 'st3', label: 'Đỉnh nóc kịch trần 🔥', emoji: '🔥', text: 'Đỉnh nóc kịch trần!' },
+  { id: 'st4', label: 'Chuẩn 10 điểm 💯', emoji: '💯', text: 'Chuẩn 10 điểm!' },
+  { id: 'st5', label: 'Cảm ơn thầy cô nhé 🙏', emoji: '🙏', text: 'Cảm ơn thầy cô nhé!' },
+  { id: 'st6', label: 'Học bài thôi nào 📚', emoji: '📚', text: 'Học bài thôi nào!' },
+  { id: 'st7', label: 'Chúc mừng thành công 🎉', emoji: '🎉', text: 'Chúc mừng thành công!' },
+  { id: 'st8', label: 'Rất đáng khen ngợi 👏', emoji: '👏', text: 'Rất đáng khen ngợi!' },
+  { id: 'st9', label: 'Đang xem xét đề thi 🧐', emoji: '🧐', text: 'Đang xem xét đề thi...' },
+  { id: 'st10', label: 'Thầy cô vất vả rồi ☕', emoji: '☕', text: 'Thầy cô vất vả rồi!' },
+  { id: 'st11', label: 'Đồng ý 100% 👍', emoji: '👍', text: 'Đồng ý 100%!' },
+  { id: 'st12', label: 'Dzota chúc bạn ngày vui 🎈', emoji: '🎈', text: 'Dzota chúc bạn ngày vui!' }
+]
+
+function formatLastActive(lastActiveAt?: string | Date) {
+  if (!lastActiveAt) return 'Ngoại tuyến'
+  try {
+    const d = new Date(lastActiveAt)
+    const now = new Date()
+    const diffSec = Math.floor((now.getTime() - d.getTime()) / 1000)
+    if (diffSec < 180) return 'Đang hoạt động'
+    if (diffSec < 3600) return `Truy cập ${Math.floor(diffSec / 60)} phút trước`
+    if (diffSec < 86400) return `Truy cập ${Math.floor(diffSec / 3600)} giờ trước`
+    if (diffSec < 604800) return `Truy cập ${Math.floor(diffSec / 86400)} ngày trước`
+    return `Truy cập ngày ${d.toLocaleDateString('vi-VN')}`
+  } catch (e) {
+    return 'Ngoại tuyến'
+  }
+}
 
 export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherChatTabProps) {
   const myId = session.id || ''
@@ -72,6 +104,7 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [pickerTab, setPickerTab] = useState<'emoji' | 'sticker'>('emoji')
   const [showShareQuizModal, setShowShareQuizModal] = useState(false)
   const [showFriendQuizzesModal, setShowFriendQuizzesModal] = useState(false)
   const [friendQuizzes, setFriendQuizzes] = useState<any[]>([])
@@ -640,11 +673,15 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
                           <h4 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 truncate flex items-center gap-1.5">
                             {f.name}
                           </h4>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[10px] text-slate-400 dark:text-slate-500 truncate max-w-[120px]">
-                              {f.email || `@${f.username}`}
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 truncate max-w-[105px]">
+                              {f.isOnline ? (
+                                <span className="text-emerald-600 dark:text-emerald-400 font-bold">Online</span>
+                              ) : (
+                                formatLastActive(f.lastActiveAt)
+                              )}
                             </span>
-                            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded-md">
+                            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.2 rounded-md">
                               {f.quizCount} đề
                             </span>
                           </div>
@@ -771,7 +808,10 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
                           Đang hoạt động
                         </span>
                       ) : (
-                        <span className="text-slate-400 dark:text-slate-500 font-medium">Ngoại tuyến</span>
+                        <span className="text-slate-400 dark:text-slate-500 font-medium flex items-center gap-1">
+                          <Clock size={11} className="text-slate-400" />
+                          <span>{formatLastActive(activeFriend.lastActiveAt)}</span>
+                        </span>
                       )}
                       {activeFriend.phone && (
                         <span className="text-indigo-600 dark:text-indigo-400 font-bold">
@@ -896,21 +936,19 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
                             <div className={`opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 mb-1 ${
                               isMe ? 'order-first mr-1' : 'order-last ml-1'
                             }`}>
-                              {/* Thả cảm xúc nhanh */}
-                              <button
-                                onClick={() => handleToggleReaction(m.id, '❤️')}
-                                title="Thả tim"
-                                className="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs"
-                              >
-                                ❤️
-                              </button>
-                              <button
-                                onClick={() => handleToggleReaction(m.id, '👍')}
-                                title="Thích"
-                                className="p-1 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs"
-                              >
-                                👍
-                              </button>
+                              {/* Thả 6 cảm xúc chuẩn Messenger/Zalo */}
+                              <div className="flex items-center bg-white/95 dark:bg-slate-800/95 backdrop-blur-md rounded-full shadow-md border border-slate-200/80 dark:border-slate-700/80 px-1 py-0.5">
+                                {REACTION_EMOJIS.map(emo => (
+                                  <button
+                                    key={emo}
+                                    onClick={() => handleToggleReaction(m.id, emo)}
+                                    title={`Thả cảm xúc ${emo}`}
+                                    className="p-1 hover:scale-130 transition-transform cursor-pointer text-xs"
+                                  >
+                                    {emo}
+                                  </button>
+                                ))}
+                              </div>
 
                               {/* Trả lời (Quote) */}
                               <button
@@ -999,6 +1037,16 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
                                   <ExternalLink size={13} />
                                 </a>
                               </div>
+                            ) : m.type === 'STICKER' || m.content.startsWith('🏷️ [STICKER]:') ? (
+                              /* NẾU LÀ STICKER ĐẲNG CẤP */
+                              <div className="py-1 px-2 text-center select-none animate-in zoom-in-90">
+                                <div className="text-4xl sm:text-5xl mb-1 filter drop-shadow-sm hover:scale-110 transition-transform">
+                                  {m.content.split('|')[0].replace('🏷️ [STICKER]:', '').trim()}
+                                </div>
+                                <div className={`text-xs font-black tracking-wide ${isMe ? 'text-indigo-100' : 'text-indigo-600 dark:text-indigo-300'}`}>
+                                  {m.content.includes('|') ? m.content.split('|')[1].trim() : ''}
+                                </div>
+                              </div>
                             ) : (
                               /* TIN NHẮN VĂN BẢN & EMOJI */
                               <div>
@@ -1020,12 +1068,19 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
                               </div>
                             )}
 
-                            {/* Giờ gửi & Checkmark đã nhận */}
+                            {/* Giờ gửi & Trạng thái: Đã gửi / Đã nhận / Đã xem */}
                             <div className={`flex items-center justify-end gap-1 mt-1 text-[10px] ${
                               isMe ? 'text-indigo-200' : 'text-slate-400 dark:text-slate-500'
                             }`}>
                               <span>{timeStr}</span>
-                              {isMe && <CheckCheck size={12} className="text-indigo-200" />}
+                              {isMe && (
+                                <span className="flex items-center gap-0.5" title={activeFriend.isOnline ? 'Đã xem' : 'Đã nhận'}>
+                                  <CheckCheck size={12} className={activeFriend.isOnline ? 'text-cyan-300' : 'text-indigo-200'} />
+                                  <span className="text-[9px] font-semibold opacity-90">
+                                    {activeFriend.isOnline ? 'Đã xem' : 'Đã nhận'}
+                                  </span>
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1057,22 +1112,91 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
                 </div>
               )}
 
-              {/* Dải Emoji Nhanh */}
+              {/* Dải Emoji & Sticker Nhanh (Messenger / Zalo style) */}
               {showEmojiPicker && (
-                <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto scrollbar-none animate-in fade-in duration-200">
-                  {QUICK_EMOJIS.map(emoji => (
+                <div className="bg-slate-50 dark:bg-slate-800/90 border-t border-slate-200/80 dark:border-slate-800 animate-in fade-in duration-200">
+                  {/* Tab chuyển đổi Emoji / Sticker */}
+                  <div className="flex items-center gap-2 px-4 pt-2 border-b border-slate-200/60 dark:border-slate-700/60 text-xs">
                     <button
-                      key={emoji}
                       type="button"
-                      onClick={() => {
-                        setMessageInput(prev => prev + emoji)
-                        setShowEmojiPicker(false)
-                      }}
-                      className="w-8 h-8 rounded-xl hover:bg-white dark:hover:bg-slate-700 flex items-center justify-center text-lg transition-transform active:scale-125 cursor-pointer flex-shrink-0"
+                      onClick={() => setPickerTab('emoji')}
+                      className={`pb-1.5 font-bold transition border-b-2 cursor-pointer ${
+                        pickerTab === 'emoji'
+                          ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                          : 'border-transparent text-slate-500 hover:text-slate-700'
+                      }`}
                     >
-                      {emoji}
+                      😃 Biểu Cảm (Emoji)
                     </button>
-                  ))}
+                    <button
+                      type="button"
+                      onClick={() => setPickerTab('sticker')}
+                      className={`pb-1.5 font-bold transition border-b-2 cursor-pointer flex items-center gap-1 ${
+                        pickerTab === 'sticker'
+                          ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                          : 'border-transparent text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      <span>🏷️ Sticker Đẳng Cấp</span>
+                      <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-rose-500 text-white font-extrabold">HOT</span>
+                    </button>
+                  </div>
+
+                  {pickerTab === 'emoji' ? (
+                    <div className="px-4 py-2 flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+                      {QUICK_EMOJIS.map(emoji => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => {
+                            setMessageInput(prev => prev + emoji)
+                            setShowEmojiPicker(false)
+                          }}
+                          className="w-8 h-8 rounded-xl hover:bg-white dark:hover:bg-slate-700 flex items-center justify-center text-lg transition-transform active:scale-125 cursor-pointer flex-shrink-0"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-3 grid grid-cols-2 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto">
+                      {STICKER_PACKS.map(st => (
+                        <button
+                          key={st.id}
+                          type="button"
+                          onClick={async () => {
+                            setShowEmojiPicker(false)
+                            // Gửi Sticker trực tiếp
+                            const stickerText = `🏷️ [STICKER]: ${st.emoji} | ${st.text}`
+                            try {
+                              setIsSending(true)
+                              const res = await fetch('/api/teachers/chat', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  receiverId: activeFriend.id,
+                                  content: stickerText,
+                                  type: 'STICKER'
+                                })
+                              })
+                              const data = await res.json()
+                              if (data.success && data.message) {
+                                setMessages(prev => [...prev, data.message])
+                              }
+                            } catch (e) {} finally {
+                              setIsSending(false)
+                            }
+                          }}
+                          className="p-2.5 rounded-2xl bg-white dark:bg-slate-700/70 border border-slate-200/80 dark:border-slate-600 hover:border-indigo-500 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/40 transition-all text-center flex flex-col items-center justify-center gap-1 cursor-pointer group active:scale-95"
+                        >
+                          <span className="text-2xl group-hover:scale-120 transition-transform">{st.emoji}</span>
+                          <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 truncate max-w-full">
+                            {st.text}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1083,7 +1207,7 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
                     type="button"
                     onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                     className="p-2.5 rounded-2xl text-slate-400 hover:text-amber-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-                    title="Chọn Emoji vui"
+                    title="Chọn Emoji & Sticker"
                   >
                     <Smile size={20} />
                   </button>

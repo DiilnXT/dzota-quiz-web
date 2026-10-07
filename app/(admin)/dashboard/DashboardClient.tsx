@@ -381,9 +381,84 @@ export default function DashboardClient({
   ]
   const [availableModels, setAvailableModels] = useState<string[]>(defaultModels)
   const [customModelInput, setCustomModelInput] = useState('')
-  const [geminiModel, setGeminiModel] = useState('gemini-2.5-flash')
   const [activeBgEnabled, setActiveBgEnabled] = useState(true)
+  const [activeBgDesktop, setActiveBgDesktop] = useState('')
+  const [activeBgMobile, setActiveBgMobile] = useState('')
+  const [activeBgGallery, setActiveBgGallery] = useState<any[]>([])
+  const [isUploadingBg, setIsUploadingBg] = useState(false)
+  const [bgUploadDevice, setBgUploadDevice] = useState<'desktop' | 'mobile'>('desktop')
+  const [bgUploadName, setBgUploadName] = useState('')
+  const bgFileInputRef = useRef<HTMLInputElement>(null)
   const [isSavingSettings, setIsSavingSettings] = useState(false)
+
+  const handleUploadBgFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('Ảnh nền vượt quá 8MB! Vui lòng chọn ảnh nhẹ hơn.', 'error')
+      if (bgFileInputRef.current) bgFileInputRef.current.value = ''
+      return
+    }
+
+    setIsUploadingBg(true)
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const maxW = bgUploadDevice === 'desktop' ? 1920 : 1080
+        let width = img.width
+        let height = img.height
+        if (width > maxW) {
+          height = Math.round((height * maxW) / width)
+          width = maxW
+        }
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height)
+          const compressed = canvas.toDataURL('image/jpeg', 0.88)
+          const newBgItem = {
+            id: 'bg_' + Date.now(),
+            name: bgUploadName.trim() || `Hình nền ${bgUploadDevice === 'desktop' ? 'Laptop/PC' : 'Điện thoại'} (${new Date().toLocaleTimeString('vi-VN')})`,
+            device: bgUploadDevice,
+            url: compressed
+          }
+          const updatedGallery = [newBgItem, ...activeBgGallery]
+          setActiveBgGallery(updatedGallery)
+          if (bgUploadDevice === 'desktop') {
+            setActiveBgDesktop(compressed)
+          } else {
+            setActiveBgMobile(compressed)
+          }
+          setBgUploadName('')
+          if (bgFileInputRef.current) bgFileInputRef.current.value = ''
+          showToast(`Đã tải lên và chọn ảnh nền cho ${bgUploadDevice === 'desktop' ? 'Laptop/PC' : 'Điện thoại'}!`, 'success')
+        }
+        setIsUploadingBg(false)
+      }
+      img.onerror = () => {
+        showToast('Không thể đọc file ảnh', 'error')
+        setIsUploadingBg(false)
+      }
+      img.src = event.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleDeleteBgItem = (id: string) => {
+    if (!confirm('Bạn có chắc muốn xóa ảnh nền này khỏi thư viện?')) return
+    const target = activeBgGallery.find(g => g.id === id)
+    const updated = activeBgGallery.filter(g => g.id !== id)
+    setActiveBgGallery(updated)
+    if (target) {
+      if (activeBgDesktop === target.url) setActiveBgDesktop('')
+      if (activeBgMobile === target.url) setActiveBgMobile('')
+    }
+    showToast('Đã xóa ảnh nền khỏi thư viện!')
+  }
 
   const handleAddCustomModel = () => {
     const trimmed = customModelInput.trim()
@@ -547,6 +622,9 @@ export default function DashboardClient({
             setAvailableModels(prev => prev.includes(data.activeModel) ? prev : [...prev, data.activeModel])
           }
           if (data.activeBgEnabled !== undefined) setActiveBgEnabled(Boolean(data.activeBgEnabled))
+          if (data.activeBgDesktop) setActiveBgDesktop(data.activeBgDesktop)
+          if (data.activeBgMobile) setActiveBgMobile(data.activeBgMobile)
+          if (Array.isArray(data.activeBgGallery)) setActiveBgGallery(data.activeBgGallery)
         })
         .catch(() => {})
     }
@@ -1217,11 +1295,14 @@ export default function DashboardClient({
         body: JSON.stringify({
           apiKeys: geminiKeys,
           activeModel: geminiModel,
-          activeBgEnabled
+          activeBgEnabled,
+          activeBgDesktop,
+          activeBgMobile,
+          activeBgGallery
         })
       })
       if (res.ok) {
-        showToast('Đã lưu cấu hình hệ thống & AI thành công!')
+        showToast('Đã lưu cấu hình hệ thống & hình nền sống động thành công!')
       } else {
         const d = await res.json()
         showToast(d.error || 'Lỗi lưu cấu hình', 'error')
@@ -2789,27 +2870,216 @@ export default function DashboardClient({
                 </div>
               </div>
 
-              {/* Card 2: Hình nền phòng thi */}
-              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between">
-                <div>
-                  <div className="font-extrabold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                    <GlobeIcon size={18} className="text-emerald-600 dark:text-emerald-400" />
-                    <span>Hình Nền Thi Sống Động (Active Background)</span>
+              {/* Card 2: Hình nền phòng thi sống động & Quản lý thư viện ảnh nền */}
+              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-extrabold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                      <GlobeIcon size={18} className="text-emerald-600 dark:text-emerald-400" />
+                      <span>Hình Nền Thi Sống Động (Active Background)</span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 max-w-md">
+                      Hiển thị các ảnh phong cảnh thiên nhiên chất lượng cao chuyển động nhẹ khi thí sinh làm bài thi. Tải ảnh lên riêng cho Laptop/PC và Điện thoại.
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 max-w-md">
-                    Hiển thị các ảnh phong cảnh thiên nhiên chất lượng cao chuyển động nhẹ khi thí sinh làm bài thi.
-                  </p>
+
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={activeBgEnabled}
+                      onChange={e => setActiveBgEnabled(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                  </label>
                 </div>
 
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={activeBgEnabled}
-                    onChange={e => setActiveBgEnabled(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                </label>
+                {/* Khu vực upload ảnh nền mới và cấu hình theo thiết bị */}
+                {activeBgEnabled && (
+                  <div className="pt-3 border-t border-slate-200/80 dark:border-slate-700 space-y-4">
+                    <div className="bg-white dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200/70 dark:border-slate-700/70 space-y-3">
+                      <div className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                        <Upload size={15} className="text-indigo-600 dark:text-indigo-400" />
+                        <span>Tải Ảnh Mới Lên Thư Viện</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <input
+                          type="text"
+                          placeholder="Tên ảnh (vd: Hoàng hôn Đà Lạt...)"
+                          value={bgUploadName}
+                          onChange={e => setBgUploadName(e.target.value)}
+                          className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-500"
+                        />
+
+                        <select
+                          value={bgUploadDevice}
+                          onChange={e => setBgUploadDevice(e.target.value as any)}
+                          className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-500 cursor-pointer"
+                        >
+                          <option value="desktop">💻 Dành cho Laptop / PC (Khổ ngang)</option>
+                          <option value="mobile">📱 Dành cho Điện thoại (Khổ dọc)</option>
+                        </select>
+
+                        <div>
+                          <input
+                            ref={bgFileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleUploadBgFile}
+                            className="hidden"
+                            id="bg-upload-file-input"
+                          />
+                          <button
+                            type="button"
+                            disabled={isUploadingBg}
+                            onClick={() => bgFileInputRef.current?.click()}
+                            className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+                          >
+                            <Upload size={14} />
+                            <span>{isUploadingBg ? 'Đang nén ảnh...' : 'Chọn File Ảnh Từ Máy'}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Trạng thái ảnh nền đang áp dụng */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div className="p-3 bg-white dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5">
+                        <div className="font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                          <span>💻 Nền Laptop/PC hiện tại:</span>
+                          {activeBgDesktop && (
+                            <button
+                              type="button"
+                              onClick={() => setActiveBgDesktop('')}
+                              className="text-[10px] text-rose-500 hover:underline font-semibold cursor-pointer"
+                            >
+                              Đặt về mặc định
+                            </button>
+                          )}
+                        </div>
+                        {activeBgDesktop ? (
+                          <div className="relative h-20 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 group">
+                            <img src={activeBgDesktop} alt="PC Active BG" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
+                              Đang kích hoạt PC
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="h-14 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 text-[11px] font-medium">
+                            Đang dùng ảnh nền thiên nhiên mặc định PC
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="p-3 bg-white dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5">
+                        <div className="font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                          <span>📱 Nền Điện thoại hiện tại:</span>
+                          {activeBgMobile && (
+                            <button
+                              type="button"
+                              onClick={() => setActiveBgMobile('')}
+                              className="text-[10px] text-rose-500 hover:underline font-semibold cursor-pointer"
+                            >
+                              Đặt về mặc định
+                            </button>
+                          )}
+                        </div>
+                        {activeBgMobile ? (
+                          <div className="relative h-20 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 group">
+                            <img src={activeBgMobile} alt="Mobile Active BG" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
+                              Đang kích hoạt Mobile
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="h-14 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 text-[11px] font-medium">
+                            Đang dùng ảnh nền thiên nhiên mặc định Mobile
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Thư viện ảnh để Admin lựa chọn linh động thay đổi hoặc xóa */}
+                    <div className="space-y-2">
+                      <div className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                        <span>🖼️ Thư Viện Hình Nền ({activeBgGallery.length} ảnh):</span>
+                        <span className="text-[10px] text-slate-400">Bấm &quot;Chọn PC&quot; hoặc &quot;Chọn Mobile&quot; để áp dụng ngay</span>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-56 overflow-y-auto p-1 border border-slate-200/80 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900/40">
+                        {activeBgGallery.map(item => {
+                          const isCurPC = activeBgDesktop === item.url
+                          const isCurMB = activeBgMobile === item.url
+                          return (
+                            <div
+                              key={item.id}
+                              className={`p-2 rounded-xl border flex flex-col justify-between gap-1.5 transition-all text-xs ${
+                                isCurPC || isCurMB
+                                  ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30 ring-1 ring-indigo-500'
+                                  : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                              }`}
+                            >
+                              <div className="relative h-20 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0">
+                                <img src={item.url} alt={item.name} className="w-full h-full object-cover" />
+                                <span className={`absolute top-1 left-1 text-[9px] font-black px-1.5 py-0.2 rounded-md ${
+                                  item.device === 'desktop' ? 'bg-blue-600 text-white' : 'bg-purple-600 text-white'
+                                }`}>
+                                  {item.device === 'desktop' ? 'Laptop/PC' : 'Mobile'}
+                                </span>
+                              </div>
+
+                              <div className="font-bold text-[11px] text-slate-800 dark:text-slate-100 truncate" title={item.name}>
+                                {item.name}
+                              </div>
+
+                              <div className="flex items-center gap-1 pt-1 border-t border-slate-100 dark:border-slate-800">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveBgDesktop(item.url)
+                                    showToast(`Đã chọn "${item.name}" làm nền Laptop/PC! Bấm Lưu Cài Đặt.`, 'info')
+                                  }}
+                                  className={`flex-1 py-1 text-[10px] font-bold rounded-lg transition cursor-pointer ${
+                                    isCurPC
+                                      ? 'bg-blue-600 text-white'
+                                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-blue-50'
+                                  }`}
+                                >
+                                  {isCurPC ? '✓ Nền PC' : 'Chọn PC'}
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveBgMobile(item.url)
+                                    showToast(`Đã chọn "${item.name}" làm nền Điện thoại! Bấm Lưu Cài Đặt.`, 'info')
+                                  }}
+                                  className={`flex-1 py-1 text-[10px] font-bold rounded-lg transition cursor-pointer ${
+                                    isCurMB
+                                      ? 'bg-purple-600 text-white'
+                                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-purple-50'
+                                  }`}
+                                >
+                                  {isCurMB ? '✓ Mobile' : 'Mobile'}
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteBgItem(item.id)}
+                                  className="p-1 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                                  title="Xóa ảnh này khỏi thư viện"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Card 3: Thông tin máy chủ & cơ sở dữ liệu */}

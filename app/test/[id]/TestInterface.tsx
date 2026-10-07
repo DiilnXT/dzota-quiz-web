@@ -20,7 +20,12 @@ import {
   Check,
   Lightbulb,
   RotateCcw,
-  CheckSquare
+  CheckSquare,
+  CloudDownload,
+  CloudOff,
+  Trash2,
+  WifiOff,
+  Download
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -39,6 +44,12 @@ export default function TestInterface({ test }: { test: any }) {
   const [savedSession, setSavedSession] = useState<any | null>(null)
   const [restoredToast, setRestoredToast] = useState<string | null>(null)
   const [activeBgEnabled, setActiveBgEnabled] = useState(true)
+  const [activeBgDesktop, setActiveBgDesktop] = useState('')
+  const [activeBgMobile, setActiveBgMobile] = useState('')
+
+  // Offline Quiz Storage State (Lưu trữ đề để làm offline khi mất mạng)
+  const [isSavedOffline, setIsSavedOffline] = useState(false)
+  const [offlineToast, setOfflineToast] = useState<string | null>(null)
 
   // AI Question Explanation Modal states
   const [activeExplainQ, setActiveExplainQ] = useState<any | null>(null)
@@ -47,7 +58,45 @@ export default function TestInterface({ test }: { test: any }) {
   const [explainError, setExplainError] = useState<string | null>(null)
   const [explanationCache, setExplanationCache] = useState<Record<string, string>>({})
 
-  // Fetch admin settings for active background mode
+  // Check offline storage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && test?.id) {
+      try {
+        const stored = localStorage.getItem(`dzota_offline_quiz_${test.id}`)
+        if (stored) setIsSavedOffline(true)
+      } catch (e) {}
+    }
+  }, [test?.id])
+
+  const handleSaveOffline = () => {
+    if (typeof window === 'undefined' || !test?.id) return
+    try {
+      const payload = {
+        test,
+        savedAt: Date.now(),
+        offlineVersion: '1.0'
+      }
+      localStorage.setItem(`dzota_offline_quiz_${test.id}`, JSON.stringify(payload))
+      setIsSavedOffline(true)
+      setOfflineToast('Đã lưu trữ đề thi vào bộ nhớ máy! Bạn có thể mở link và làm bài bất cứ lúc nào kể cả khi mất kết nối mạng.')
+      setTimeout(() => setOfflineToast(null), 5000)
+    } catch (e) {
+      alert('Không thể lưu trữ do bộ nhớ máy đã đầy!')
+    }
+  }
+
+  const handleRemoveOffline = () => {
+    if (typeof window === 'undefined' || !test?.id) return
+    if (!confirm('Bạn có chắc muốn xóa bản lưu trữ offline của đề thi này khỏi thiết bị?')) return
+    try {
+      localStorage.removeItem(`dzota_offline_quiz_${test.id}`)
+      setIsSavedOffline(false)
+      setOfflineToast('Đã xóa dữ liệu đề thi offline thành công!')
+      setTimeout(() => setOfflineToast(null), 4000)
+    } catch (e) {}
+  }
+
+  // Fetch admin settings for active background mode and custom images
   useEffect(() => {
     fetch('/api/admin/settings')
       .then(res => res.json())
@@ -55,6 +104,8 @@ export default function TestInterface({ test }: { test: any }) {
         if (data && data.activeBgEnabled !== undefined) {
           setActiveBgEnabled(Boolean(data.activeBgEnabled))
         }
+        if (data?.activeBgDesktop) setActiveBgDesktop(data.activeBgDesktop)
+        if (data?.activeBgMobile) setActiveBgMobile(data.activeBgMobile)
       })
       .catch(() => {})
   }, [])
@@ -569,6 +620,58 @@ export default function TestInterface({ test }: { test: any }) {
               </div>
             )}
 
+            {/* Offline Toast Notification */}
+            {offlineToast && (
+              <div className="mb-4 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 animate-fade-in shadow-xs text-left">
+                <CheckCircle size={16} className="text-emerald-600 flex-shrink-0" />
+                <span>{offlineToast}</span>
+              </div>
+            )}
+
+            {/* Offline Storage Actions: Lưu đề làm offline khi mất mạng & Xóa lưu trữ */}
+            <div className="mb-4 flex items-center justify-between gap-2 p-3 bg-slate-50 border border-slate-200/80 rounded-2xl text-left">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${isSavedOffline ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
+                  {isSavedOffline ? <Check size={16} /> : <CloudDownload size={16} />}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                    <span>Làm bài khi mất mạng (Offline)</span>
+                    {isSavedOffline && (
+                      <span className="text-[10px] bg-emerald-600 text-white font-black px-1.5 py-0.2 rounded-md">
+                        Đã Lưu
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-medium truncate">
+                    {isSavedOffline ? 'Đề thi đã sẵn sàng trong máy không cần internet' : 'Lưu trữ đề vào thiết bị để làm bài khi không có mạng'}
+                  </div>
+                </div>
+              </div>
+
+              {isSavedOffline ? (
+                <button
+                  onClick={handleRemoveOffline}
+                  type="button"
+                  className="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs flex items-center gap-1 transition cursor-pointer border border-rose-200 flex-shrink-0"
+                  title="Xóa đề đã lưu trữ offline"
+                >
+                  <Trash2 size={13} />
+                  <span>Xóa lưu trữ</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleSaveOffline}
+                  type="button"
+                  className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1 transition cursor-pointer shadow-xs flex-shrink-0"
+                  title="Tải về máy để làm bài khi offline"
+                >
+                  <CloudDownload size={14} />
+                  <span>Lưu Offline</span>
+                </button>
+              )}
+            </div>
+
             {/* CTA Button */}
             <button
               onClick={() => handleStartTest(false)}
@@ -591,7 +694,7 @@ export default function TestInterface({ test }: { test: any }) {
           </div>
         </div>
 
-        {/* Global style tag for test background */}
+        {/* Global style tag for test background & customizable active background */}
         <style>{`
           .dzota-test-bg {
             background-image: url('/bg-test-mobile.png'), url('https://i.ibb.co/N6fH63P0/e4606e83-bd1f-4029-9c91-189d9e1b12db.png');
@@ -612,7 +715,7 @@ export default function TestInterface({ test }: { test: any }) {
 
           /* Responsive Background cho lúc đang làm bài thi / bài text ôn luyện */
           .dzota-active-bg {
-            background-image: url('/bg-active-mobile.png'), url('https://i.ibb.co/7NnQtYVb/b93ce28c-a278-4123-8650-771eb2a3be79.png');
+            background-image: ${activeBgMobile ? `url('${activeBgMobile}')` : `url('/bg-active-mobile.png'), url('https://i.ibb.co/7NnQtYVb/b93ce28c-a278-4123-8650-771eb2a3be79.png')`};
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -620,7 +723,7 @@ export default function TestInterface({ test }: { test: any }) {
           }
           @media (min-width: 1024px) {
             .dzota-active-bg {
-              background-image: url('/bg-active-desktop.png'), url('https://i.ibb.co/xqxLMLNj/1a348e38-aec7-4e9a-9bbe-69ff1c4af67d.png');
+              background-image: ${activeBgDesktop ? `url('${activeBgDesktop}')` : `url('/bg-active-desktop.png'), url('https://i.ibb.co/xqxLMLNj/1a348e38-aec7-4e9a-9bbe-69ff1c4af67d.png')`};
               background-size: cover;
               background-position: center;
               background-repeat: no-repeat;
