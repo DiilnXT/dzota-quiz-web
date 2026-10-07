@@ -1,0 +1,21 @@
+{
+  "name": "Dzota - Hệ Thống Thi Trắc Nghiệm",
+  "short_name": "Dzota",
+  "description": "Làm bài thi trắc nghiệm trực tuyến và ngoại tuyến (offline) mượt mà",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/logo-dzota.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-dzota.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

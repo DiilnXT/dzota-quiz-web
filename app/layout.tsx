@@ -15,6 +15,7 @@ export const metadata: Metadata = {
     shortcut: '/logo-dzota.png',
     apple: '/logo-dzota.png',
   },
+  manifest: '/manifest.json',
   openGraph: {
     title: 'Dzota - Thư Viện Đề Thi & Trắc Nghiệm',
     description: 'Hệ thống thi trắc nghiệm trực quan, hiện đại Dzota. Bấm để bắt đầu làm bài.',
@@ -69,6 +70,17 @@ export default function RootLayout({
         </ThemeProvider>
         <Script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" strategy="beforeInteractive" />
         <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                  navigator.serviceWorker.register('/sw.js').catch(() => {});
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   )

@@ -17,6 +17,7 @@
     <meta property="og:type" content="website" />
     <link rel="icon" type="image/png" href="/logo-dzota.png" />
     <link rel="apple-touch-icon" href="/logo-dzota.png" />
+    <link rel="manifest" href="/manifest.json" />
 
     <script>
       // Đọc URL param cố gắng update title sớm nhất có thể
@@ -30,6 +31,17 @@
               }
           }
       } catch(e) {}
+
+      // Đăng ký Service Worker để hỗ trợ mở link và F5 kể cả khi mất kết nối mạng (Offline)
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then((reg) => {
+            console.log('Dzota Offline Service Worker ready:', reg.scope);
+          }).catch((err) => {
+            console.warn('Dzota Service Worker error:', err);
+          });
+        });
+      }
     </script>
     <title>Dzota</title>
     
@@ -537,6 +549,57 @@
         const [activeBgMobile, setActiveBgMobile] = useState('');
         const [isSavedOffline, setIsSavedOffline] = useState(false);
         const [offlineToast, setOfflineToast] = useState(null);
+        const [offlineSavedList, setOfflineSavedList] = useState([]);
+
+        const refreshOfflineSavedList = () => {
+          try {
+            const list = [];
+            for (let i = 0; i < localStorage.length; i++) {
+              const k = localStorage.key(i);
+              if (k && k.startsWith('dzota_offline_quiz_')) {
+                try {
+                  const raw = localStorage.getItem(k);
+                  if (raw) {
+                    const parsed = JSON.parse(raw);
+                    const qData = parsed.test || parsed;
+                    if (qData && (qData.title || qData.questions)) {
+                      list.push({ ...qData, storageKey: k });
+                    }
+                  }
+                } catch (e) {}
+              }
+            }
+            setOfflineSavedList(list);
+          } catch (e) {}
+        };
+
+        useEffect(() => {
+          refreshOfflineSavedList();
+        }, []);
+
+        const handleLoadOfflineQuizDirectly = (offData) => {
+          setQuizConfig({
+            title: offData.title || offData.config?.title || 'Bài Thi (Offline)',
+            timeLimit: offData.timeLimit || offData.config?.timeLimit || 15,
+            mode: offData.mode || offData.config?.mode || 'exam',
+            category: offData.category || offData.config?.category || 'Chung',
+            password: '',
+            shuffleQuestions: false,
+            shuffleOptions: false,
+            isActive: true,
+            randomPickCount: 0,
+            quizType: 'standard'
+          });
+          let qList = offData.questions || [];
+          if (qList.length > 0 && !qList[0].variants) {
+            qList = qList.map(q => ({ id: 'slot_' + (q.id || Math.random()), variants: [q] }));
+          }
+          setParsedQuestions(qList);
+          setQuizIdTracker(offData.id);
+          setIsSavedOffline(true);
+          setAppMode('entry');
+          addToast('⚡ Đã mở đề thi offline thành công!', 'success');
+        };
 
         // AI Giảng Viên Giải Thích States
         const [activeExplainQ, setActiveExplainQ] = useState(null);
@@ -1883,6 +1946,48 @@
                 </header>
 
                 <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+                    {/* Banner Đề thi Offline khi mất mạng */}
+                    {offlineSavedList && offlineSavedList.length > 0 && (
+                      <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-emerald-500/10 border border-blue-200/80 shadow-xs text-left">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-sm shadow-xs">
+                              ⚡
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-extrabold text-slate-800">Đề Thi Đã Lưu Ngoại Tuyến ({offlineSavedList.length})</h3>
+                              <p className="text-xs text-slate-500 font-medium">Làm bài mượt mà ngay cả khi hoàn toàn không có kết nối Internet</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          {offlineSavedList.map((item, idx) => (
+                            <div key={idx} className="bg-white p-3 rounded-xl border border-slate-200/80 flex items-center justify-between gap-3 shadow-xs hover:border-blue-400 transition">
+                              <div className="min-w-0">
+                                <h4 className="text-xs sm:text-sm font-bold text-slate-800 truncate">{item.title}</h4>
+                                <div className="text-[11px] text-slate-500 font-medium flex items-center gap-2 mt-0.5">
+                                  <span>⏱️ {item.timeLimit} phút</span>
+                                  <span>•</span>
+                                  <span>📝 {item.questions?.length || 0} câu hỏi</span>
+                                  <span className="text-[10px] bg-emerald-100 text-emerald-700 font-bold px-1.5 py-0.2 rounded-md">Sẵn sàng Offline</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <button
+                                  onClick={() => handleLoadOfflineQuizDirectly(item)}
+                                  type="button"
+                                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-xs flex items-center gap-1.5"
+                                >
+                                  <span>Vào thi ngay</span>
+                                  <Icons.ArrowRight size={13} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex flex-col md:flex-row gap-4 mb-6 relative z-20">
                         <div className="bg-white border border-gray-200 rounded-xl flex items-center px-4 py-3 flex-1 shadow-sm transition-shadow focus-within:ring-2 focus-within:ring-ios-blue/20 focus-within:border-ios-blue">
                             <Icons.Search className="text-gray-400" size={18}/>
@@ -2551,6 +2656,7 @@
                             try {
                               localStorage.removeItem('dzota_offline_quiz_' + targetId);
                               setIsSavedOffline(false);
+                              refreshOfflineSavedList();
                               setOfflineToast('Đã xóa dữ liệu đề thi offline thành công!');
                               setTimeout(() => setOfflineToast(null), 4000);
                             } catch (e) {}
@@ -2583,8 +2689,29 @@
                             };
                             localStorage.setItem('dzota_offline_quiz_' + targetId, JSON.stringify(payload));
                             setIsSavedOffline(true);
-                            setOfflineToast('Đã lưu trữ đề thi vào bộ nhớ máy! Bạn có thể mở link và làm bài bất cứ lúc nào kể cả khi mất kết nối mạng.');
-                            setTimeout(() => setOfflineToast(null), 5000);
+                            refreshOfflineSavedList();
+
+                            // Lưu đệm HTML và tài nguyên web để mở lại link hoặc F5 khi không có internet
+                            if ('caches' in window) {
+                              caches.open('dzota-quiz-offline-v2').then(async (cache) => {
+                                try { await cache.add(window.location.href); } catch (e) {}
+                                try { await cache.add('/'); } catch (e) {}
+                                try { await cache.add('/index.html'); } catch (e) {}
+                                const resources = Array.from(document.querySelectorAll('script[src], link[rel="stylesheet"]'))
+                                  .map(el => el.src || el.href)
+                                  .filter(Boolean);
+                                resources.forEach(url => cache.add(url).catch(() => {}));
+                              }).catch(() => {});
+                            }
+                            if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                              navigator.serviceWorker.controller.postMessage({
+                                type: 'CACHE_OFFLINE_QUIZ',
+                                url: window.location.href
+                              });
+                            }
+
+                            setOfflineToast('⚡ Đã lưu đề vào máy! Bạn có thể mở link hoặc F5 làm bài bất kỳ lúc nào kể cả khi ngắt toàn bộ kết nối mạng.');
+                            setTimeout(() => setOfflineToast(null), 6000);
                           } catch (e) {
                             alert('Không thể lưu trữ do bộ nhớ máy đã đầy!');
                           }

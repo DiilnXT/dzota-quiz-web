@@ -78,8 +78,22 @@ export default function TestInterface({ test }: { test: any }) {
       }
       localStorage.setItem(`dzota_offline_quiz_${test.id}`, JSON.stringify(payload))
       setIsSavedOffline(true)
-      setOfflineToast('Đã lưu trữ đề thi vào bộ nhớ máy! Bạn có thể mở link và làm bài bất cứ lúc nào kể cả khi mất kết nối mạng.')
-      setTimeout(() => setOfflineToast(null), 5000)
+
+      if ('caches' in window) {
+        caches.open('dzota-quiz-offline-v2').then(async (cache) => {
+          try { await cache.add(window.location.href) } catch (e) {}
+          try { await cache.add('/') } catch (e) {}
+        }).catch(() => {})
+      }
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'CACHE_OFFLINE_QUIZ',
+          url: window.location.href
+        })
+      }
+
+      setOfflineToast('⚡ Đã lưu trữ đề thi vào bộ nhớ máy! Bạn có thể mở lại link hoặc F5 làm bài bất cứ lúc nào kể cả khi ngắt kết nối mạng.')
+      setTimeout(() => setOfflineToast(null), 6000)
     } catch (e) {
       alert('Không thể lưu trữ do bộ nhớ máy đã đầy!')
     }
