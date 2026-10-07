@@ -163,13 +163,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ users: [] })
       }
 
-      // Tìm kiếm user là TEACHER hoặc ADMIN (khác chính mình)
+      // Tìm kiếm user (khác chính mình) qua UID, Gmail, Tên đăng nhập hoặc Họ tên
+      // Tự động tìm kiếm linh hoạt, không phân biệt hoa thường
       const users = await prisma.user.findMany({
         where: {
           id: { not: myId },
-          role: { in: ['TEACHER', 'ADMIN'] },
           OR: [
             { id: { equals: q } },
+            { id: { contains: q, mode: 'insensitive' } },
             { username: { contains: q, mode: 'insensitive' } },
             { email: { contains: q, mode: 'insensitive' } },
             { name: { contains: q, mode: 'insensitive' } }

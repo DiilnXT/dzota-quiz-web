@@ -2598,7 +2598,22 @@ export default function DashboardClient({
                                   </span>
                                 )}
                               </div>
-                              <div className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">@{u.username}</div>
+                              <div className="flex items-center gap-2 text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">
+                                <span>@{u.username}</span>
+                                <span>•</span>
+                                <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-1.5 py-0.2 rounded text-[10px] select-all cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (typeof navigator !== 'undefined') {
+                                      navigator.clipboard.writeText(u.id)
+                                      showToast(`Đã sao chép UID: ${u.id}`)
+                                    }
+                                  }}
+                                  title="Bấm để sao chép UID"
+                                >
+                                  UID: {u.id.slice(0, 10)}...
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -2854,6 +2869,33 @@ export default function DashboardClient({
           </div>
 
           <form onSubmit={handleSaveProfile} className="space-y-5">
+            {/* Mã UID Tài Khoản Duy Nhất */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
+                  Mã UID Tài Khoản Của Bạn (Dùng Để Kết Bạn)
+                </span>
+                <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400 text-xs sm:text-sm select-all break-all">
+                  {currentUserInfo?.id || session?.id || 'Chưa xác định'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const uid = currentUserInfo?.id || session?.id || ''
+                  if (uid && typeof navigator !== 'undefined') {
+                    navigator.clipboard.writeText(uid)
+                    showToast('Đã sao chép mã UID của bạn!')
+                  }
+                }}
+                className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 font-bold text-xs rounded-xl border border-indigo-200 dark:border-indigo-800/60 transition cursor-pointer flex-shrink-0 flex items-center gap-1"
+                title="Sao chép UID"
+              >
+                <Copy size={13} />
+                <span>Sao Chép UID</span>
+              </button>
+            </div>
+
             {/* Tên hiển thị */}
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">

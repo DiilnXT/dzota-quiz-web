@@ -22,7 +22,8 @@ import {
   ChevronRight,
   User as UserIcon,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Copy
 } from 'lucide-react'
 
 interface TeacherChatTabProps {
@@ -893,6 +894,31 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
             </div>
 
             <div className="p-5 space-y-4 flex-1 overflow-y-auto min-h-0">
+              {/* Box hiển thị UID của chính mình để copy gửi cho bạn bè */}
+              <div className="p-3 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-2xl border border-indigo-100 dark:border-indigo-900/50 flex items-center justify-between gap-3 text-xs">
+                <div className="min-w-0">
+                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 block uppercase">
+                    Mã UID của bạn:
+                  </span>
+                  <span className="font-mono font-bold text-indigo-700 dark:text-indigo-300 text-xs truncate block select-all">
+                    {myId}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (myId && typeof navigator !== 'undefined') {
+                      navigator.clipboard.writeText(myId)
+                      alert('Đã sao chép mã UID của bạn!')
+                    }
+                  }}
+                  className="px-2.5 py-1 bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 font-bold text-[11px] rounded-lg border border-indigo-200 dark:border-indigo-800/80 transition flex items-center gap-1 cursor-pointer flex-shrink-0"
+                >
+                  <Copy size={12} />
+                  <span>Sao chép</span>
+                </button>
+              </div>
+
               <form onSubmit={handleSearchTeachers} className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -900,7 +926,7 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Nhập Gmail, User ID hoặc tên giáo viên..."
+                    placeholder="Dán mã UID, Gmail hoặc Tên giáo viên..."
                     className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600"
                     autoFocus
                   />
@@ -935,11 +961,37 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-black text-slate-800 dark:text-slate-100 truncate">{u.name}</p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-xs font-black text-slate-800 dark:text-slate-100 truncate">{u.name}</p>
+                            <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded-md ${
+                              u.role === 'ADMIN'
+                                ? 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300'
+                                : u.role === 'TEACHER'
+                                ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
+                                : 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300'
+                            }`}>
+                              {u.role === 'ADMIN' ? 'Admin' : u.role === 'TEACHER' ? 'Giáo viên' : 'Học sinh'}
+                            </span>
+                          </div>
                           <p className="text-[10px] text-slate-400 truncate">{u.email || `@${u.username}`}</p>
-                          <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold">
-                            {u.quizCount} bài test đã tạo
-                          </span>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold">
+                              {u.quizCount} bài test đã tạo
+                            </span>
+                            <span>•</span>
+                            <span
+                              onClick={() => {
+                                if (typeof navigator !== 'undefined') {
+                                  navigator.clipboard.writeText(u.id)
+                                  alert(`Đã sao chép UID của ${u.name}!`)
+                                }
+                              }}
+                              className="text-[9px] font-mono text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer bg-slate-100 dark:bg-slate-700/60 px-1 py-0.2 rounded"
+                              title="Bấm để sao chép UID"
+                            >
+                              UID: {u.id.slice(0, 8)}...
+                            </span>
+                          </div>
                         </div>
                       </div>
 
