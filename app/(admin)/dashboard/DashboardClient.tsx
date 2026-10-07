@@ -317,10 +317,41 @@ export default function DashboardClient({
   // System Settings Modal State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [geminiKeys, setGeminiKeys] = useState('')
+  const defaultModels = [
+    'gemini-2.5-flash',
+    'gemini-2.5-pro',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash',
+    'gemini-1.5-pro'
+  ]
+  const [availableModels, setAvailableModels] = useState<string[]>(defaultModels)
+  const [customModelInput, setCustomModelInput] = useState('')
   const [geminiModel, setGeminiModel] = useState('gemini-2.5-flash')
-  const availableModels = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-1.5-flash', 'gemini-1.5-pro']
   const [activeBgEnabled, setActiveBgEnabled] = useState(true)
   const [isSavingSettings, setIsSavingSettings] = useState(false)
+
+  const handleAddCustomModel = () => {
+    const trimmed = customModelInput.trim()
+    if (!trimmed) return
+    if (!availableModels.includes(trimmed)) {
+      const updated = [...availableModels, trimmed]
+      setAvailableModels(updated)
+      setGeminiModel(trimmed)
+      setCustomModelInput('')
+      try {
+        const savedCustom = localStorage.getItem('dzota_custom_gemini_models')
+        const currentList: string[] = savedCustom ? JSON.parse(savedCustom) : []
+        if (!currentList.includes(trimmed)) {
+          localStorage.setItem('dzota_custom_gemini_models', JSON.stringify([...currentList, trimmed]))
+        }
+      } catch (e) {}
+      showToast(`Đã thêm model "${trimmed}" vào danh sách!`, 'success')
+    } else {
+      setGeminiModel(trimmed)
+      setCustomModelInput('')
+      showToast(`Đã chọn model "${trimmed}"`, 'info')
+    }
+  }
 
   // Quiz Password Change Modal State
   const [editingQuizPass, setEditingQuizPass] = useState<QuizItem | null>(null)
@@ -426,14 +457,27 @@ export default function DashboardClient({
     }
   }, [isStudent])
 
-  // Tải cài đặt hệ thống cho Admin
+  // Tải cài đặt hệ thống cho Admin & custom models
   useEffect(() => {
+    try {
+      const savedCustom = localStorage.getItem('dzota_custom_gemini_models')
+      if (savedCustom) {
+        const parsed = JSON.parse(savedCustom)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setAvailableModels(prev => Array.from(new Set([...prev, ...parsed])))
+        }
+      }
+    } catch (e) {}
+
     if (!isTeacher && !isStudent) {
       fetch('/api/admin/settings')
         .then(r => r.json())
         .then(data => {
           if (data.apiKeys) setGeminiKeys(data.apiKeys)
-          if (data.activeModel) setGeminiModel(data.activeModel)
+          if (data.activeModel) {
+            setGeminiModel(data.activeModel)
+            setAvailableModels(prev => prev.includes(data.activeModel) ? prev : [...prev, data.activeModel])
+          }
           if (data.activeBgEnabled !== undefined) setActiveBgEnabled(Boolean(data.activeBgEnabled))
         })
         .catch(() => {})
@@ -1161,7 +1205,7 @@ export default function DashboardClient({
     : '0.0'
 
   return (
-    <div className="min-h-screen bg-slate-50/70 p-3 sm:p-6 lg:p-8 space-y-6">
+    <div className="min-h-screen bg-slate-50/70 dark:bg-transparent p-3 sm:p-6 lg:p-8 space-y-6">
       {/* Toast Alert */}
       {toast && (
         <div className={`fixed bottom-6 right-6 z-50 px-5 py-3.5 rounded-2xl shadow-xl text-white font-bold flex items-center gap-3 transition-all animate-bounce-short ${
@@ -1235,9 +1279,9 @@ export default function DashboardClient({
       )}
 
       {/* TOP HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-3xl border border-slate-100 shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#1E293B] p-5 sm:p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm transition-colors">
         <div className="flex items-center gap-4">
-          <div className="w-13 h-13 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center p-2 flex-shrink-0">
+          <div className="w-13 h-13 rounded-2xl bg-indigo-50 dark:bg-slate-800 border border-indigo-100 dark:border-slate-700 flex items-center justify-center p-2 flex-shrink-0">
             {profileAvatar ? (
               <img src={profileAvatar} alt="Avatar" className="w-full h-full object-cover rounded-xl" />
             ) : (
@@ -1248,19 +1292,19 @@ export default function DashboardClient({
             <div className="flex items-center gap-2">
               <span className={`text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
                 isStudent
-                  ? 'bg-amber-100 text-amber-800'
+                  ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
                   : isTeacher
-                    ? 'bg-emerald-100 text-emerald-800'
-                    : 'bg-indigo-100 text-indigo-800'
+                    ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
+                    : 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300'
               }`}>
                 {isStudent ? 'Học Sinh (Student)' : isTeacher ? 'Giáo Viên (Teacher)' : 'Quản Trị Viên (Super Admin)'}
               </span>
-              <span className="text-slate-400 text-xs font-semibold">• Đang trực tuyến</span>
+              <span className="text-slate-400 dark:text-slate-500 text-xs font-semibold">• Đang trực tuyến</span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight mt-0.5">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight mt-0.5">
               {profileName || session.username}
             </h1>
-            <p className="text-xs text-slate-500 font-medium">
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
               {isStudent
                 ? `Tài khoản Google: ${session.email || 'Chưa cập nhật'} • Lịch sử tự động làm mới hàng ngày`
                 : isTeacher
@@ -1275,10 +1319,10 @@ export default function DashboardClient({
           {/* Chuông Thông Báo */}
           <button
             onClick={() => setIsNotifOpen(true)}
-            className="relative bg-white border border-slate-200 text-slate-700 p-2.5 sm:px-3.5 sm:py-2.5 rounded-xl font-bold shadow-xs hover:bg-slate-50 hover:text-indigo-600 transition-all flex items-center gap-2 cursor-pointer text-xs"
+            className="relative bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 p-2.5 sm:px-3.5 sm:py-2.5 rounded-xl font-bold shadow-xs hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all flex items-center gap-2 cursor-pointer text-xs"
             title="Xem thông báo"
           >
-            <Bell size={16} className={unreadCount > 0 ? 'text-indigo-600 animate-wiggle' : ''} />
+            <Bell size={16} className={unreadCount > 0 ? 'text-indigo-600 dark:text-indigo-400 animate-wiggle' : ''} />
             <span className="hidden sm:inline">Thông báo</span>
             {unreadCount > 0 && (
               <span className="bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full min-w-4 h-4 flex items-center justify-center">
@@ -1290,7 +1334,7 @@ export default function DashboardClient({
           <button
             onClick={refreshData}
             disabled={isLoading}
-            className="bg-white border border-slate-200 text-slate-700 px-3.5 py-2.5 rounded-xl font-semibold shadow-xs hover:bg-slate-50 transition-all flex items-center gap-1.5 text-xs cursor-pointer"
+            className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 px-3.5 py-2.5 rounded-xl font-semibold shadow-xs hover:bg-slate-50 dark:hover:bg-slate-700 transition-all flex items-center gap-1.5 text-xs cursor-pointer"
             title="Làm mới dữ liệu"
           >
             <RefreshCw size={14} className={isLoading ? 'animate-spin text-indigo-600' : ''} />
@@ -1299,7 +1343,7 @@ export default function DashboardClient({
 
           <button
             onClick={() => setIsChangeAccPassOpen(true)}
-            className="bg-white border border-slate-200 text-slate-700 px-3.5 py-2.5 rounded-xl font-semibold shadow-xs hover:bg-slate-50 hover:text-indigo-600 transition-all flex items-center gap-1.5 text-xs cursor-pointer"
+            className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 px-3.5 py-2.5 rounded-xl font-semibold shadow-xs hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all flex items-center gap-1.5 text-xs cursor-pointer"
           >
             <Key size={14} />
             <span className="hidden sm:inline">Đổi Mật Khẩu</span>
@@ -1323,15 +1367,15 @@ export default function DashboardClient({
       {isStudent && (activeTab === 'history' || activeTab === 'dashboard') && (
         <div className="space-y-6">
           {/* Banner thông báo dọn dẹp hàng ngày */}
-          <div className="bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 border border-indigo-200/80 rounded-3xl p-5 flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-indigo-300">
+          <div className="bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 dark:from-blue-950/40 dark:via-indigo-950/40 dark:to-purple-950/40 border border-indigo-200/80 dark:border-indigo-900/50 rounded-3xl p-5 flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-indigo-300 dark:shadow-indigo-950">
               <Sparkles size={20} />
             </div>
             <div>
-              <h3 className="font-extrabold text-slate-800 text-sm sm:text-base">
+              <h3 className="font-extrabold text-slate-800 dark:text-slate-100 text-sm sm:text-base">
                 Lịch sử làm bài thi cá nhân hôm nay
               </h3>
-              <p className="text-xs sm:text-sm text-slate-600 mt-0.5 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
                 Mọi bài thi bạn làm khi đăng nhập tài khoản Google sẽ được lưu lại tự động tại đây. Để tối ưu tốc độ và dung lượng máy chủ, lịch sử làm bài sẽ được <strong>làm mới tự động mỗi ngày</strong>.
               </p>
             </div>
@@ -1339,55 +1383,55 @@ export default function DashboardClient({
 
           {/* Student Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+            <div className="bg-white dark:bg-[#1E293B] rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-xs flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
                 <FileText size={22} />
               </div>
               <div>
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Đề thi đã làm hôm nay</p>
-                <p className="text-2xl font-black text-slate-800 mt-0.5">{totalTestsTakenToday} bài</p>
+                <p className="text-2xl font-black text-slate-800 dark:text-slate-100 mt-0.5">{totalTestsTakenToday} bài</p>
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+            <div className="bg-white dark:bg-[#1E293B] rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-xs flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
                 <Award size={22} />
               </div>
               <div>
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Điểm cao nhất hôm nay</p>
-                <p className="text-2xl font-black text-emerald-600 mt-0.5">{highestScoreToday} / 10</p>
+                <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">{highestScoreToday} / 10</p>
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+            <div className="bg-white dark:bg-[#1E293B] rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-xs flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
                 <BarChart3 size={22} />
               </div>
               <div>
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Điểm trung bình hôm nay</p>
-                <p className="text-2xl font-black text-indigo-600 mt-0.5">{avgScoreToday} / 10</p>
+                <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-0.5">{avgScoreToday} / 10</p>
               </div>
             </div>
           </div>
 
           {/* History List Table */}
-          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm">
-            <h3 className="font-extrabold text-slate-800 text-base mb-4 flex items-center gap-2">
-              <Clock size={18} className="text-indigo-600" />
+          <div className="bg-white dark:bg-[#1E293B] rounded-3xl p-5 sm:p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
+            <h3 className="font-extrabold text-slate-800 dark:text-slate-100 text-base mb-4 flex items-center gap-2">
+              <Clock size={18} className="text-indigo-600 dark:text-indigo-400" />
               Chi Tiết Các Lần Làm Bài Hôm Nay
             </h3>
 
             {history.length === 0 ? (
-              <div className="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                <FileText size={40} className="mx-auto text-slate-300 mb-2" />
-                <p className="font-bold text-slate-600 text-sm">Hôm nay bạn chưa làm bài thi nào</p>
+              <div className="text-center py-12 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+                <FileText size={40} className="mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+                <p className="font-bold text-slate-600 dark:text-slate-300 text-sm">Hôm nay bạn chưa làm bài thi nào</p>
                 <p className="text-xs text-slate-400 mt-0.5">Hãy chọn một đề thi và bắt đầu làm bài để ghi nhận điểm số!</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs sm:text-sm">
                   <thead>
-                    <tr className="border-b border-slate-100 text-slate-400 text-[11px] font-bold uppercase tracking-wider">
+                    <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 text-[11px] font-bold uppercase tracking-wider">
                       <th className="pb-3 font-extrabold">Tên Bài Thi</th>
                       <th className="pb-3 font-extrabold text-center">Điểm Số</th>
                       <th className="pb-3 font-extrabold text-center">Số Câu Đúng</th>
@@ -1396,16 +1440,16 @@ export default function DashboardClient({
                       <th className="pb-3 font-extrabold text-right">Thao Tác</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {history.map(item => {
                       const scoreColor =
-                        item.score >= 8 ? 'text-emerald-600 bg-emerald-50 border-emerald-200' :
-                        item.score >= 5 ? 'text-amber-600 bg-amber-50 border-amber-200' :
-                        'text-rose-600 bg-rose-50 border-rose-200'
+                        item.score >= 8 ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800' :
+                        item.score >= 5 ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800' :
+                        'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800'
 
                       return (
-                        <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
-                          <td className="py-3.5 font-bold text-slate-800 max-w-xs truncate">
+                        <tr key={item.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/60 transition-colors">
+                          <td className="py-3.5 font-bold text-slate-800 dark:text-slate-100 max-w-xs truncate">
                             {item.quizTitle}
                           </td>
                           <td className="py-3.5 text-center">
@@ -1413,10 +1457,10 @@ export default function DashboardClient({
                               {item.score.toFixed(1)} / 10
                             </span>
                           </td>
-                          <td className="py-3.5 text-center font-bold text-slate-700">
+                          <td className="py-3.5 text-center font-bold text-slate-700 dark:text-slate-300">
                             {item.correctCount} / {item.totalCount}
                           </td>
-                          <td className="py-3.5 text-center text-slate-500 font-medium">
+                          <td className="py-3.5 text-center text-slate-500 dark:text-slate-400 font-medium">
                             {Math.floor(item.timeSpent / 60)}p {item.timeSpent % 60}s
                           </td>
                           <td className="py-3.5 text-right text-slate-400 text-xs">
@@ -1425,7 +1469,7 @@ export default function DashboardClient({
                           <td className="py-3.5 text-right">
                             <a
                               href={`/?id=${item.quizId}`}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition no-underline"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 font-bold text-xs transition no-underline"
                             >
                               Làm Lại
                             </a>
@@ -1489,21 +1533,21 @@ export default function DashboardClient({
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
             <div
               onClick={() => switchTab('quizzes')}
-              className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-xs relative overflow-hidden group cursor-pointer hover:border-blue-300 hover:shadow-md transition-all"
+              className="bg-white dark:bg-[#1E293B] rounded-2xl p-4 sm:p-5 border border-slate-100 dark:border-slate-800 shadow-xs relative overflow-hidden group cursor-pointer hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-md transition-all"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   {isTeacher ? 'Đề thi của bạn' : 'Tổng Đề Thi'}
                 </span>
-                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <FileText size={16} />
                 </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-slate-800">
+              <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100">
                 {isTeacher ? `${quizzes.length}/${teacherLimit}` : quizzes.length}
               </div>
               {isTeacher && (
-                <div className="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                <div className="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full mt-3 overflow-hidden">
                   <div
                     className={`h-full rounded-full ${
                       quizzes.length >= teacherLimit ? 'bg-rose-500' : 'bg-indigo-600'
@@ -1512,7 +1556,7 @@ export default function DashboardClient({
                   />
                 </div>
               )}
-              <div className="text-[11px] text-blue-600 font-semibold mt-2 flex items-center gap-1 group-hover:underline">
+              <div className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold mt-2 flex items-center gap-1 group-hover:underline">
                 <span>Xem chi tiết</span>
                 <ChevronRight size={12} />
               </div>
@@ -1520,18 +1564,18 @@ export default function DashboardClient({
 
             <div
               onClick={() => switchTab('quizzes')}
-              className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-xs relative overflow-hidden group cursor-pointer hover:border-emerald-300 hover:shadow-md transition-all"
+              className="bg-white dark:bg-[#1E293B] rounded-2xl p-4 sm:p-5 border border-slate-100 dark:border-slate-800 shadow-xs relative overflow-hidden group cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-500 hover:shadow-md transition-all"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Đang Mở</span>
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Đang Mở</span>
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <CheckCircle2 size={16} />
                 </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-slate-800">
+              <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100">
                 {activeQuizzesCount}
               </div>
-              <div className="text-[11px] text-emerald-600 font-semibold mt-2 flex items-center gap-1 group-hover:underline">
+              <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-2 flex items-center gap-1 group-hover:underline">
                 <span>Học sinh có thể làm</span>
                 <ChevronRight size={12} />
               </div>
@@ -1539,18 +1583,18 @@ export default function DashboardClient({
 
             <div
               onClick={() => switchTab('quizzes')}
-              className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-xs relative overflow-hidden group cursor-pointer hover:border-rose-300 hover:shadow-md transition-all"
+              className="bg-white dark:bg-[#1E293B] rounded-2xl p-4 sm:p-5 border border-slate-100 dark:border-slate-800 shadow-xs relative overflow-hidden group cursor-pointer hover:border-rose-300 dark:hover:border-rose-500 hover:shadow-md transition-all"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Đã Khóa</span>
-                <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Đã Khóa</span>
+                <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Lock size={16} />
                 </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-slate-800">
+              <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100">
                 {inactiveQuizzesCount}
               </div>
-              <div className="text-[11px] text-rose-600 font-semibold mt-2 flex items-center gap-1 group-hover:underline">
+              <div className="text-[11px] text-rose-600 dark:text-rose-400 font-semibold mt-2 flex items-center gap-1 group-hover:underline">
                 <span>Tạm dừng truy cập</span>
                 <ChevronRight size={12} />
               </div>
@@ -1558,20 +1602,20 @@ export default function DashboardClient({
 
             <div
               onClick={() => switchTab('classes')}
-              className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-xs relative overflow-hidden group cursor-pointer hover:border-purple-300 hover:shadow-md transition-all"
+              className="bg-white dark:bg-[#1E293B] rounded-2xl p-4 sm:p-5 border border-slate-100 dark:border-slate-800 shadow-xs relative overflow-hidden group cursor-pointer hover:border-purple-300 dark:hover:border-purple-500 hover:shadow-md transition-all"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   {isAdmin ? 'Lớp & Học Sinh' : 'Lớp Của Bạn'}
                 </span>
-                <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <School size={16} />
                 </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-slate-800">
+              <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100">
                 {classes.length}
               </div>
-              <div className="text-[11px] text-purple-600 font-semibold mt-2 flex items-center gap-1 group-hover:underline">
+              <div className="text-[11px] text-purple-600 dark:text-purple-400 font-semibold mt-2 flex items-center gap-1 group-hover:underline">
                 <span>Quản lý phân quyền</span>
                 <ChevronRight size={12} />
               </div>
@@ -1580,28 +1624,28 @@ export default function DashboardClient({
 
           {/* Quick Modules Shortcuts Grid */}
           <div>
-            <h3 className="text-base font-extrabold text-slate-800 tracking-tight mb-3 flex items-center gap-2">
-              <LayoutDashboard size={18} className="text-blue-600" />
+            <h3 className="text-base font-extrabold text-slate-800 dark:text-slate-100 tracking-tight mb-3 flex items-center gap-2">
+              <LayoutDashboard size={18} className="text-blue-600 dark:text-blue-400" />
               <span>Phân Hệ Quản Lý Chính</span>
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Card 1: Quản lý đề thi */}
               <div
                 onClick={() => switchTab('quizzes')}
-                className="bg-white p-5 rounded-3xl border border-slate-100 shadow-xs hover:border-blue-400 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+                className="bg-white dark:bg-[#1E293B] p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
               >
                 <div>
-                  <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <FileText size={24} />
                   </div>
-                  <h4 className="font-extrabold text-slate-800 text-base group-hover:text-blue-600 transition-colors">
+                  <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-base group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                     {isTeacher ? 'Đề Thi Của Tôi' : 'Quản Lý Bài Test'}
                   </h4>
-                  <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 leading-relaxed">
                     Xem danh sách, tìm kiếm, lọc đề thi, khóa/mở bài test, xem mật khẩu, sao chép link và phân quyền học sinh.
                   </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-blue-600">
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-blue-600 dark:text-blue-400">
                   <span>Mở Quản Lý Bài Test</span>
                   <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </div>
@@ -1610,20 +1654,20 @@ export default function DashboardClient({
               {/* Card 2: Lớp học & Học sinh */}
               <div
                 onClick={() => switchTab('classes')}
-                className="bg-white p-5 rounded-3xl border border-slate-100 shadow-xs hover:border-purple-400 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+                className="bg-white dark:bg-[#1E293B] p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs hover:border-purple-400 dark:hover:border-purple-500 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
               >
                 <div>
-                  <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <School size={24} />
                   </div>
-                  <h4 className="font-extrabold text-slate-800 text-base group-hover:text-purple-600 transition-colors">
+                  <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-base group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                     Lớp Học & Học Sinh
                   </h4>
-                  <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 leading-relaxed">
                     Tạo lớp học, quản lý danh sách học sinh theo Gmail, gán học sinh vào lớp và thiết lập quyền làm bài cho từng môn.
                   </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-purple-600">
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-purple-600 dark:text-purple-400">
                   <span>Mở Quản Lý Lớp Học</span>
                   <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </div>
@@ -1633,20 +1677,20 @@ export default function DashboardClient({
               {isAdmin && (
                 <div
                   onClick={() => switchTab('teachers')}
-                  className="bg-white p-5 rounded-3xl border border-slate-100 shadow-xs hover:border-amber-400 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+                  className="bg-white dark:bg-[#1E293B] p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs hover:border-amber-400 dark:hover:border-amber-500 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
                 >
                   <div>
-                    <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                       <Shield size={24} />
                     </div>
-                    <h4 className="font-extrabold text-slate-800 text-base group-hover:text-amber-600 transition-colors">
+                    <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-base group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
                       Người Dùng & Phân Quyền
                     </h4>
-                    <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 leading-relaxed">
                       Phê duyệt quyền Giáo viên, chỉnh sửa hạn mức tạo đề, quản lý tài khoản Học sinh và gửi thông báo toàn hệ thống.
                     </p>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-amber-600">
+                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-amber-600 dark:text-amber-400">
                     <span>Mở Phân Quyền</span>
                     <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                   </div>
@@ -1657,20 +1701,20 @@ export default function DashboardClient({
               {isAdmin && (
                 <div
                   onClick={() => switchTab('settings')}
-                  className="bg-white p-5 rounded-3xl border border-slate-100 shadow-xs hover:border-emerald-400 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+                  className="bg-white dark:bg-[#1E293B] p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs hover:border-emerald-400 dark:hover:border-emerald-500 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
                 >
                   <div>
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                       <Settings size={24} />
                     </div>
-                    <h4 className="font-extrabold text-slate-800 text-base group-hover:text-emerald-600 transition-colors">
+                    <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-base group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                       Cài Đặt Web & AI
                     </h4>
-                    <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 leading-relaxed">
                       Cấu hình Gemini API Keys đa tầng, chọn model Gemini 2.5 Flash / Pro, quản lý hiệu ứng và hình nền đăng nhập.
                     </p>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-600">
+                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-emerald-600 dark:text-emerald-400">
                     <span>Mở Cài Đặt Hệ Thống</span>
                     <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                   </div>
@@ -1680,20 +1724,20 @@ export default function DashboardClient({
               {/* Card 5: Cá nhân & Zalo */}
               <div
                 onClick={() => switchTab('profile')}
-                className="bg-white p-5 rounded-3xl border border-slate-100 shadow-xs hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+                className="bg-white dark:bg-[#1E293B] p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
               >
                 <div>
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <UserIcon size={24} />
                   </div>
-                  <h4 className="font-extrabold text-slate-800 text-base group-hover:text-indigo-600 transition-colors">
+                  <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-base group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     Hồ Sơ & Zalo Liên Hệ
                   </h4>
-                  <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 leading-relaxed">
                     Cập nhật Tên hiển thị, Ảnh đại diện, và Số điện thoại Zalo để học sinh bấm liên hệ trực tiếp khi làm bài.
                   </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-indigo-600">
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-indigo-600 dark:text-indigo-400">
                   <span>Cập Nhật Thông Tin</span>
                   <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </div>
@@ -1702,21 +1746,21 @@ export default function DashboardClient({
           </div>
 
           {/* Recent Quizzes Preview Table */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-[#1E293B] rounded-3xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-lg font-black text-slate-800 tracking-tight flex items-center gap-2">
-                  <FileText size={20} className="text-blue-600" />
+                <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
+                  <FileText size={20} className="text-blue-600 dark:text-blue-400" />
                   <span>{isTeacher ? 'Đề Thi Gần Đây Của Bạn' : 'Đề Thi Mới Nhất Trên Hệ Thống'}</span>
                 </h3>
-                <p className="text-xs text-slate-500 font-medium">
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                   {quizzes.length > 0 ? `Hiển thị 5 đề mới nhất trong tổng số ${quizzes.length} đề thi` : 'Chưa có đề thi nào'}
                 </p>
               </div>
 
               <button
                 onClick={() => switchTab('quizzes')}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition cursor-pointer self-start sm:self-auto"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-bold text-xs transition cursor-pointer self-start sm:self-auto"
               >
                 <span>Xem tất cả trong Quản lý Bài test</span>
                 <ChevronRight size={14} />
@@ -1724,14 +1768,14 @@ export default function DashboardClient({
             </div>
 
             {quizzes.length === 0 ? (
-              <div className="py-12 text-center text-slate-400 text-sm">
+              <div className="py-12 text-center text-slate-400 dark:text-slate-500 text-sm">
                 Chưa có bài test nào. Bấm nút <strong>&quot;Tạo Đề Mới&quot;</strong> để bắt đầu soạn đề!
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="border-b border-slate-100 text-[11px] font-black uppercase text-slate-400">
+                    <tr className="border-b border-slate-100 dark:border-slate-800 text-[11px] font-black uppercase text-slate-400 dark:text-slate-500">
                       <th className="pb-3">Tên Đề Thi</th>
                       <th className="pb-3 text-center">Môn Học</th>
                       <th className="pb-3 text-center">Trạng Thái</th>
@@ -1740,43 +1784,43 @@ export default function DashboardClient({
                       <th className="pb-3 text-right">Thao Tác Nhanh</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-50">
+                  <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                     {quizzes.slice(0, 5).map(quiz => (
-                      <tr key={quiz.id} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="py-3.5 font-bold text-slate-800 max-w-xs truncate">
+                      <tr key={quiz.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/60 transition-colors">
+                        <td className="py-3.5 font-bold text-slate-800 dark:text-slate-100 max-w-xs truncate">
                           <a
                             href={`/?id=${quiz.id}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-slate-800 hover:text-blue-600 transition no-underline flex items-center gap-1.5"
+                            className="text-slate-800 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 transition no-underline flex items-center gap-1.5"
                           >
                             <span>{quiz.title}</span>
                             <ExternalLink size={12} className="text-slate-400 flex-shrink-0" />
                           </a>
                         </td>
                         <td className="py-3.5 text-center">
-                          <span className="inline-block px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold text-xs">
+                          <span className="inline-block px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs">
                             {quiz.category || 'Chung'}
                           </span>
                         </td>
                         <td className="py-3.5 text-center">
                           <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-black text-[11px] ${
-                            quiz.isActive !== false ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                            quiz.isActive !== false ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300' : 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300'
                           }`}>
                             {quiz.isActive !== false ? <CheckCircle2 size={12} /> : <Lock size={12} />}
                             <span>{quiz.isActive !== false ? 'Đang mở' : 'Đã khóa'}</span>
                           </span>
                         </td>
-                        <td className="py-3.5 text-center font-bold text-slate-700">
+                        <td className="py-3.5 text-center font-bold text-slate-700 dark:text-slate-300">
                           {quiz.questions?.length || 0}
                         </td>
-                        <td className="py-3.5 text-right text-slate-400 text-xs font-medium">
+                        <td className="py-3.5 text-right text-slate-400 dark:text-slate-500 text-xs font-medium">
                           {formatTimeAgo(quiz.createdAt)}
                         </td>
                         <td className="py-3.5 text-right space-x-2">
                           <button
                             onClick={() => copyShareLink(quiz.id)}
-                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition cursor-pointer inline-flex items-center"
+                            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition cursor-pointer inline-flex items-center"
                             title="Copy link làm bài"
                           >
                             <Copy size={13} />
@@ -1785,7 +1829,7 @@ export default function DashboardClient({
                             href={`/?id=${quiz.id}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 transition cursor-pointer inline-flex items-center no-underline"
+                            className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 transition cursor-pointer inline-flex items-center no-underline"
                             title="Làm thử"
                           >
                             <ExternalLink size={13} />
@@ -1808,20 +1852,20 @@ export default function DashboardClient({
         <div className="space-y-6">
           {/* Stats Overview */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
-            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-xs relative overflow-hidden group">
+            <div className="bg-white dark:bg-[#1E293B] rounded-2xl p-4 sm:p-5 border border-slate-100 dark:border-slate-800 shadow-xs relative overflow-hidden group">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   {isTeacher ? 'Đề thi của bạn' : 'Tổng Đề Thi'}
                 </span>
-                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                   <FileText size={16} />
                 </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-slate-800">
+              <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100">
                 {isTeacher ? `${quizzes.length}/${teacherLimit}` : quizzes.length}
               </div>
               {isTeacher && (
-                <div className="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                <div className="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full mt-3 overflow-hidden">
                   <div
                     className={`h-full rounded-full ${
                       quizzes.length >= teacherLimit ? 'bg-rose-500' : 'bg-indigo-600'
@@ -1832,37 +1876,37 @@ export default function DashboardClient({
               )}
             </div>
 
-            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-xs relative overflow-hidden group">
+            <div className="bg-white dark:bg-[#1E293B] rounded-2xl p-4 sm:p-5 border border-slate-100 dark:border-slate-800 shadow-xs relative overflow-hidden group">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Đang Mở</span>
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Đang Mở</span>
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                   <Activity size={16} />
                 </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-slate-800">{activeQuizzesCount}</div>
-              <div className="text-[11px] font-medium text-emerald-600 mt-1">Học sinh có thể làm bài</div>
+              <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100">{activeQuizzesCount}</div>
+              <div className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 mt-1">Học sinh có thể làm bài</div>
             </div>
 
-            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-xs relative overflow-hidden group">
+            <div className="bg-white dark:bg-[#1E293B] rounded-2xl p-4 sm:p-5 border border-slate-100 dark:border-slate-800 shadow-xs relative overflow-hidden group">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Đã Khóa</span>
-                <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Đã Khóa</span>
+                <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center">
                   <Lock size={16} />
                 </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-slate-800">{inactiveQuizzesCount}</div>
-              <div className="text-[11px] font-medium text-slate-400 mt-1">Tạm dừng nhận bài</div>
+              <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100">{inactiveQuizzesCount}</div>
+              <div className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mt-1">Tạm dừng nhận bài</div>
             </div>
 
-            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-xs relative overflow-hidden group">
+            <div className="bg-white dark:bg-[#1E293B] rounded-2xl p-4 sm:p-5 border border-slate-100 dark:border-slate-800 shadow-xs relative overflow-hidden group">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Lớp Học</span>
-                <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Lớp Học</span>
+                <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center">
                   <School size={16} />
                 </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-slate-800">{classes.length}</div>
-              <div className="text-[11px] font-bold text-indigo-600 mt-1 cursor-pointer" onClick={() => setActiveTab('classes')}>
+              <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100">{classes.length}</div>
+              <div className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 mt-1 cursor-pointer" onClick={() => setActiveTab('classes')}>
                 Xem danh sách lớp ➔
               </div>
             </div>
@@ -1901,7 +1945,7 @@ export default function DashboardClient({
           )}
 
           {/* Quizzes Table Card */}
-          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-[#1E293B] rounded-3xl p-5 sm:p-6 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
             {/* Table Filters & Search */}
             <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
               <div className="relative flex-1 max-w-md">
@@ -1911,7 +1955,7 @@ export default function DashboardClient({
                   placeholder="Tìm kiếm theo tên đề thi..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 transition"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600 transition"
                 />
               </div>
 
@@ -1920,7 +1964,7 @@ export default function DashboardClient({
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none cursor-pointer"
+                  className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
                 >
                   {allCategories.map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
@@ -1931,7 +1975,7 @@ export default function DashboardClient({
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as any)}
-                  className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none cursor-pointer"
+                  className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
                 >
                   <option value="all">Tất cả trạng thái</option>
                   <option value="active">Đang mở</option>
@@ -1944,7 +1988,7 @@ export default function DashboardClient({
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs sm:text-sm">
                 <thead>
-                  <tr className="border-b border-slate-100 text-slate-400 text-[11px] font-bold uppercase tracking-wider">
+                  <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-[11px] font-bold uppercase tracking-wider">
                     <th className="pb-3 w-8">
                       <input
                         type="checkbox"
@@ -1962,10 +2006,10 @@ export default function DashboardClient({
                     <th className="pb-3 font-extrabold text-right">Thao Tác</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {filteredQuizzes.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="text-center py-10 text-slate-400 font-medium">
+                      <td colSpan={7} className="text-center py-10 text-slate-400 dark:text-slate-500 font-medium">
                         Không tìm thấy bài test nào phù hợp.
                       </td>
                     </tr>
@@ -1976,7 +2020,7 @@ export default function DashboardClient({
                       const gmailsCount = quiz.allowedGmails?.length || 0
 
                       return (
-                        <tr key={quiz.id} className={`hover:bg-slate-50/70 transition-colors ${isSelected ? 'bg-indigo-50/40' : ''}`}>
+                        <tr key={quiz.id} className={`hover:bg-slate-50/70 dark:hover:bg-slate-800/60 transition-colors ${isSelected ? 'bg-indigo-50/40 dark:bg-indigo-950/30' : ''}`}>
                           <td className="py-3.5">
                             <input
                               type="checkbox"
@@ -1985,14 +2029,14 @@ export default function DashboardClient({
                               className="w-4 h-4 rounded-md accent-indigo-600 cursor-pointer"
                             />
                           </td>
-                          <td className="py-3.5 max-w-xs font-bold text-slate-800">
+                          <td className="py-3.5 max-w-xs font-bold text-slate-800 dark:text-slate-100">
                             <div className="truncate">{quiz.title}</div>
-                            <div className="text-[11px] text-slate-400 font-normal">
+                            <div className="text-[11px] text-slate-400 dark:text-slate-500 font-normal">
                               Tạo {formatTimeAgo(quiz.createdAt)}
                             </div>
                           </td>
                           <td className="py-3.5">
-                            <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
+                            <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                               {quiz.category || 'Chung'}
                             </span>
                           </td>
@@ -2000,7 +2044,7 @@ export default function DashboardClient({
                             {isRestricted ? (
                               <button
                                 onClick={() => handleOpenAccessModal([quiz])}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-black bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition cursor-pointer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-black bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition cursor-pointer"
                                 title="Bấm để chỉnh sửa danh sách Gmail được phép"
                               >
                                 <Lock size={11} /> {gmailsCount} Gmail
@@ -2008,7 +2052,7 @@ export default function DashboardClient({
                             ) : (
                               <button
                                 onClick={() => handleOpenAccessModal([quiz])}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition cursor-pointer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-black bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition cursor-pointer"
                                 title="Bấm để phân quyền giới hạn Gmail"
                               >
                                 <GlobeIcon size={11} /> Công khai
@@ -2020,8 +2064,8 @@ export default function DashboardClient({
                               onClick={() => handleToggleQuizStatus(quiz)}
                               className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-black border transition cursor-pointer ${
                                 quiz.isActive !== false
-                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                  : 'bg-rose-50 text-rose-700 border-rose-200'
+                                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/60'
+                                  : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900/60'
                               }`}
                             >
                               {quiz.isActive !== false ? <Unlock size={11} /> : <Lock size={11} />}
@@ -2036,8 +2080,8 @@ export default function DashboardClient({
                               }}
                               className={`p-1.5 rounded-lg border text-xs font-mono transition cursor-pointer ${
                                 quiz.password
-                                  ? 'bg-amber-50 text-amber-800 border-amber-200'
-                                  : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-slate-700'
+                                  ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900/60'
+                                  : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-slate-700 dark:hover:text-slate-300'
                               }`}
                               title={quiz.password ? `Pass: ${quiz.password}` : 'Chưa đặt mật khẩu'}
                             >
@@ -2049,7 +2093,7 @@ export default function DashboardClient({
                               {/* Nút phân quyền siêu đặc biệt */}
                               <button
                                 onClick={() => handleOpenAccessModal([quiz])}
-                                className="p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition cursor-pointer"
+                                className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 transition cursor-pointer"
                                 title="Phân quyền truy cập đề thi theo Gmail / Lớp học"
                               >
                                 <Shield size={15} />
@@ -2062,7 +2106,7 @@ export default function DashboardClient({
                                   navigator.clipboard.writeText(url)
                                   showToast('Đã copy link bài thi!')
                                 }}
-                                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+                                className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition cursor-pointer"
                                 title="Copy link làm bài"
                               >
                                 <Copy size={15} />
@@ -2071,7 +2115,7 @@ export default function DashboardClient({
                               {/* Edit in Creator */}
                               <Link
                                 href={`/creator?id=${quiz.id}`}
-                                className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 transition cursor-pointer"
+                                className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 transition cursor-pointer"
                                 title="Mở trong trình soạn thảo"
                               >
                                 <Edit2 size={15} />
@@ -2080,7 +2124,7 @@ export default function DashboardClient({
                               {/* Delete */}
                               <button
                                 onClick={() => handleDeleteQuiz(quiz)}
-                                className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition cursor-pointer"
+                                className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-300 transition cursor-pointer"
                                 title="Xóa bài thi"
                               >
                                 <Trash2 size={15} />
@@ -2104,13 +2148,13 @@ export default function DashboardClient({
       {!isStudent && activeTab === 'classes' && (
         <div className="space-y-6">
           {/* Header Bar Lớp học */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 sm:p-6 rounded-3xl border border-slate-100 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#1E293B] p-5 sm:p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
             <div>
-              <h2 className="text-lg sm:text-xl font-black text-slate-800 flex items-center gap-2">
-                <School size={22} className="text-indigo-600" />
+              <h2 className="text-lg sm:text-xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <School size={22} className="text-indigo-600 dark:text-indigo-400" />
                 {activeClassView ? `Lớp Học: ${activeClassView.name}` : 'Quản Lý Lớp Học & Học Sinh'}
               </h2>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
                 {activeClassView
                   ? `Danh sách ${activeClassView.students?.length || 0} học sinh • Cài đặt phân quyền môn học & đề thi chi tiết`
                   : 'Tạo lớp học, lưu danh sách Gmail học sinh và phân quyền làm bài thi tiện lợi'}
@@ -2122,7 +2166,7 @@ export default function DashboardClient({
                 <>
                   <button
                     onClick={() => setActiveClassView(null)}
-                    className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5"
+                    className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5"
                   >
                     <ChevronLeft size={16} /> Quay lại danh sách lớp
                   </button>
@@ -2136,7 +2180,7 @@ export default function DashboardClient({
               ) : (
                 <button
                   onClick={() => setIsCreateClassOpen(true)}
-                  className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-md shadow-indigo-200"
+                  className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-md shadow-indigo-200 dark:shadow-indigo-950"
                 >
                   <Plus size={16} /> Tạo Lớp Học Mới
                 </button>
@@ -2148,9 +2192,9 @@ export default function DashboardClient({
           {!activeClassView && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {classes.length === 0 ? (
-                <div className="col-span-full text-center py-12 bg-white rounded-3xl border border-dashed border-slate-200">
-                  <School size={44} className="mx-auto text-slate-300 mb-2" />
-                  <p className="font-bold text-slate-700 text-base">Chưa có lớp học nào được tạo</p>
+                <div className="col-span-full text-center py-12 bg-white dark:bg-[#1E293B] rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">
+                  <School size={44} className="mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+                  <p className="font-bold text-slate-700 dark:text-slate-200 text-base">Chưa có lớp học nào được tạo</p>
                   <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
                     Tạo lớp học giúp bạn gom danh sách Gmail học sinh để cấp quyền làm bài nhanh chóng chỉ trong 1 click!
                   </p>
@@ -2163,21 +2207,21 @@ export default function DashboardClient({
                 </div>
               ) : (
                 classes.map(c => (
-                  <div key={c.id} className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition space-y-3">
+                  <div key={c.id} className="bg-white dark:bg-[#1E293B] rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-xs hover:shadow-md transition space-y-3">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+                        <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300">
                           {c.students?.length || 0} Học Sinh
                         </span>
-                        <h3 className="font-black text-slate-900 text-base mt-1.5">{c.name}</h3>
+                        <h3 className="font-black text-slate-900 dark:text-slate-100 text-base mt-1.5">{c.name}</h3>
                         {c.description && (
-                          <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">{c.description}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">{c.description}</p>
                         )}
                       </div>
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleDeleteClass(c.id, c.name)}
-                          className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                          className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition cursor-pointer"
                           title="Xóa lớp học"
                         >
                           <Trash2 size={15} />
@@ -2185,13 +2229,13 @@ export default function DashboardClient({
                       </div>
                     </div>
 
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                      <span className="text-[11px] text-slate-400">
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                      <span className="text-[11px] text-slate-400 dark:text-slate-500">
                         Tạo {formatTimeAgo(c.createdAt || new Date())}
                       </span>
                       <button
                         onClick={() => setActiveClassView(c)}
-                        className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1"
+                        className="px-3.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1"
                       >
                         <span>Xem Học Sinh</span>
                         <ChevronRight size={14} />
@@ -2205,21 +2249,21 @@ export default function DashboardClient({
 
           {/* VIEW 2: DANH SÁCH HỌC SINH TRONG LỚP */}
           {activeClassView && (
-            <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4">
+            <div className="bg-white dark:bg-[#1E293B] rounded-3xl p-5 sm:p-6 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs sm:text-sm">
                   <thead>
-                    <tr className="border-b border-slate-100 text-slate-400 text-[11px] font-bold uppercase tracking-wider">
+                    <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-[11px] font-bold uppercase tracking-wider">
                       <th className="pb-3 font-extrabold">Tên Học Sinh</th>
                       <th className="pb-3 font-extrabold">Gmail (Google Login)</th>
                       <th className="pb-3 font-extrabold text-center">Môn & Đề Được Cấp</th>
                       <th className="pb-3 font-extrabold text-right">Thao Tác</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {(!activeClassView.students || activeClassView.students.length === 0) ? (
                       <tr>
-                        <td colSpan={4} className="text-center py-10 text-slate-400 font-medium">
+                        <td colSpan={4} className="text-center py-10 text-slate-400 dark:text-slate-500 font-medium">
                           Lớp này chưa có học sinh nào. Bấm nút <strong>"+ Thêm Học Sinh"</strong> ở trên để thêm.
                         </td>
                       </tr>
@@ -2233,15 +2277,15 @@ export default function DashboardClient({
                         } catch (e) {}
 
                         return (
-                          <tr key={student.id} className="hover:bg-slate-50/70 transition-colors">
-                            <td className="py-3.5 font-bold text-slate-800">
+                          <tr key={student.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/60 transition-colors">
+                            <td className="py-3.5 font-bold text-slate-800 dark:text-slate-100">
                               {student.name || student.email.split('@')[0]}
                             </td>
-                            <td className="py-3.5 font-mono text-slate-600">
+                            <td className="py-3.5 font-mono text-slate-600 dark:text-slate-300">
                               {student.email}
                             </td>
                             <td className="py-3.5 text-center">
-                              <span className="inline-block px-2.5 py-1 rounded-full text-[11px] font-black bg-indigo-50 text-indigo-700 border border-indigo-100">
+                              <span className="inline-block px-2.5 py-1 rounded-full text-[11px] font-black bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900/50">
                                 {parsedSubs.length > 0 ? `${parsedSubs.length} Môn` : ''} {parsedQs.length > 0 ? `${parsedQs.length} Đề` : (parsedSubs.length === 0 ? 'Mặc định' : '')}
                               </span>
                             </td>
@@ -2249,14 +2293,14 @@ export default function DashboardClient({
                               <div className="flex items-center justify-end gap-2">
                                 <button
                                   onClick={() => handleOpenStudentPerms(student)}
-                                  className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5"
+                                  className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5"
                                   title="Cài đặt phân quyền môn học & bài test riêng biệt cho học sinh này"
                                 >
                                   <Settings size={14} /> Cài Đặt Quyền
                                 </button>
                                 <button
                                   onClick={() => handleDeleteStudentFromClass(student.id, student.email)}
-                                  className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                                  className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition cursor-pointer"
                                   title="Xóa khỏi lớp"
                                 >
                                   <Trash2 size={15} />
@@ -2279,15 +2323,15 @@ export default function DashboardClient({
           TAB: QUẢN LÝ NGƯỜI DÙNG & PHÂN QUYỀN (ADMIN ONLY)
       ───────────────────────────────────────────────────────────── */}
       {!isTeacher && !isStudent && activeTab === 'teachers' && (
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-5">
+        <div className="bg-white dark:bg-[#1E293B] rounded-3xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm space-y-5">
           {/* Header & Gửi Thông Báo Toàn Hệ Thống */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-100">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-100 dark:border-slate-800">
             <div>
-              <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
-                <Shield size={22} className="text-purple-600" />
+              <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <Shield size={22} className="text-purple-600 dark:text-purple-400" />
                 Quản Lý Người Dùng & Phân Quyền Hệ Thống
               </h2>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
                 Xem danh sách thành viên, nâng cấp vai trò Giáo viên / Học sinh, điều chỉnh hạn mức tạo đề và gửi thông báo cá nhân.
               </p>
             </div>
@@ -2305,13 +2349,13 @@ export default function DashboardClient({
           </div>
 
           {/* Cấp quyền giáo viên nhanh bằng Gmail */}
-          <div className="bg-gradient-to-r from-indigo-50/80 via-blue-50/50 to-slate-50 p-4 sm:p-5 rounded-2xl border border-indigo-100 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+          <div className="bg-gradient-to-r from-indigo-50/80 via-blue-50/50 to-slate-50 dark:from-indigo-950/40 dark:via-blue-950/30 dark:to-slate-900/40 p-4 sm:p-5 rounded-2xl border border-indigo-100 dark:border-indigo-900/50 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
             <div>
-              <h3 className="font-extrabold text-slate-800 text-sm sm:text-base flex items-center gap-2">
-                <Sparkles size={18} className="text-indigo-600" />
+              <h3 className="font-extrabold text-slate-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2">
+                <Sparkles size={18} className="text-indigo-600 dark:text-indigo-400" />
                 Cấp Quyền Giáo Viên Nhanh Bằng Gmail
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Nhập địa chỉ Gmail của giáo viên và bấm Enter hoặc Cấp Quyền để kích hoạt ngay
               </p>
             </div>
@@ -2345,7 +2389,7 @@ export default function DashboardClient({
                 placeholder="Ví dụ: giaovien@gmail.com..."
                 value={quickGmail}
                 onChange={(e) => setQuickGmail(e.target.value)}
-                className="px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 w-64 shadow-xs"
+                className="px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600 w-64 shadow-xs"
                 required
               />
               <button
@@ -2365,7 +2409,7 @@ export default function DashboardClient({
                 className={`px-3 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer ${
                   userRoleFilter === 'all'
                     ? 'bg-slate-900 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
                 Tất cả ({users.length})
@@ -2375,7 +2419,7 @@ export default function DashboardClient({
                 className={`px-3 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer flex items-center gap-1 ${
                   userRoleFilter === 'teacher'
                     ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
                 <span>👨‍🏫 Giáo viên</span>
@@ -2386,7 +2430,7 @@ export default function DashboardClient({
                 className={`px-3 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer flex items-center gap-1 ${
                   userRoleFilter === 'student'
                     ? 'bg-blue-600 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
                 <span>🎓 Học sinh</span>
@@ -2397,7 +2441,7 @@ export default function DashboardClient({
                 className={`px-3 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer flex items-center gap-1 ${
                   userRoleFilter === 'admin'
                     ? 'bg-purple-600 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
                 <span>🛡️ Quản trị viên</span>
@@ -2411,7 +2455,7 @@ export default function DashboardClient({
                 placeholder="Tìm kiếm tài khoản..."
                 value={userSearchTerm}
                 onChange={e => setUserSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-indigo-600"
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600"
               />
               <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
             </div>
@@ -2421,7 +2465,7 @@ export default function DashboardClient({
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs sm:text-sm">
               <thead>
-                <tr className="border-b border-slate-100 text-slate-400 text-[11px] font-bold uppercase tracking-wider">
+                <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-[11px] font-bold uppercase tracking-wider">
                   <th className="pb-3 font-extrabold">Tài Khoản</th>
                   <th className="pb-3 font-extrabold">Gmail / Liên Hệ</th>
                   <th className="pb-3 font-extrabold text-center">Vai Trò (Bấm Đổi)</th>
@@ -2429,7 +2473,7 @@ export default function DashboardClient({
                   <th className="pb-3 font-extrabold text-right">Thao Tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {users
                   .filter(u => {
                     if (userRoleFilter === 'teacher') return u.role === 'TEACHER' || u.role === 'USER'
@@ -2449,31 +2493,31 @@ export default function DashboardClient({
                   .map(u => {
                     const isMainAdmin = u.username?.toLowerCase() === 'duylniedu' || u.email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com'
                     return (
-                      <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
+                      <tr key={u.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/60 transition-colors">
                         <td className="py-3.5">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-black text-xs flex items-center justify-center flex-shrink-0 border border-slate-200">
+                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-black text-xs flex items-center justify-center flex-shrink-0 border border-slate-200 dark:border-slate-600">
                               {(u.name || u.username).charAt(0).toUpperCase()}
                             </div>
                             <div>
-                              <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                              <div className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
                                 <span>{u.name || u.username}</span>
                                 {isMainAdmin && (
-                                  <span className="text-[10px] bg-rose-100 text-rose-700 font-extrabold px-1.5 py-0.2 rounded-full">
+                                  <span className="text-[10px] bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 font-extrabold px-1.5 py-0.2 rounded-full">
                                     Root
                                   </span>
                                 )}
                               </div>
-                              <div className="text-[11px] text-slate-400 font-mono">@{u.username}</div>
+                              <div className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">@{u.username}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="py-3.5 font-mono text-slate-600">
-                          {u.email || <span className="text-slate-400 italic">Chưa có Gmail</span>}
+                        <td className="py-3.5 font-mono text-slate-600 dark:text-slate-300">
+                          {u.email || <span className="text-slate-400 dark:text-slate-500 italic">Chưa có Gmail</span>}
                         </td>
                         <td className="py-3.5 text-center">
                           {isMainAdmin ? (
-                            <span className="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800">
+                            <span className="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300">
                               ADMIN
                             </span>
                           ) : (
@@ -2482,10 +2526,10 @@ export default function DashboardClient({
                               onChange={(e) => handleQuickUpdateRole(u.id, e.target.value)}
                               className={`px-2 py-1 rounded-lg text-xs font-bold border border-transparent outline-none cursor-pointer transition ${
                                 u.role === 'ADMIN'
-                                  ? 'bg-purple-100 text-purple-800 hover:border-purple-300'
+                                  ? 'bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 hover:border-purple-300'
                                   : u.role === 'TEACHER' || u.role === 'USER'
-                                  ? 'bg-emerald-100 text-emerald-800 hover:border-emerald-300'
-                                  : 'bg-blue-100 text-blue-800 hover:border-blue-300'
+                                  ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 hover:border-emerald-300'
+                                  : 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 hover:border-blue-300'
                               }`}
                               title="Bấm để đổi quyền hạn trực tiếp"
                             >
@@ -2498,7 +2542,7 @@ export default function DashboardClient({
                         <td className="py-3.5 text-center">
                           <button
                             onClick={() => handleOpenEditUser(u)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg hover:bg-slate-100 font-bold text-slate-700 transition cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 font-bold text-slate-700 dark:text-slate-300 transition cursor-pointer"
                             title="Bấm để chỉnh sửa hạn mức đề"
                           >
                             <span>{u._count?.quizzes || 0} / {u.maxTests}</span>
@@ -2509,7 +2553,7 @@ export default function DashboardClient({
                           <div className="inline-flex items-center gap-1.5">
                             <button
                               onClick={() => handleOpenEditUser(u)}
-                              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+                              className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition cursor-pointer"
                               title="Chỉnh sửa thông tin & hạn mức"
                             >
                               <Edit2 size={14} />
@@ -2521,7 +2565,7 @@ export default function DashboardClient({
                                 setNotifTargetName(u.name || u.username)
                                 setIsNotifSendOpen(true)
                               }}
-                              className="p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition cursor-pointer"
+                              className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 transition cursor-pointer"
                               title="Gửi thông báo cá nhân"
                             >
                               <Send size={14} />
@@ -2531,7 +2575,7 @@ export default function DashboardClient({
                               <button
                                 onClick={() => handleDeleteUser(u.id, u.name || u.username)}
                                 disabled={isDeletingUser === u.id}
-                                className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition cursor-pointer disabled:opacity-50"
+                                className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-300 transition cursor-pointer disabled:opacity-50"
                                 title="Xóa tài khoản"
                               >
                                 <Trash2 size={14} />
@@ -2553,27 +2597,27 @@ export default function DashboardClient({
       ───────────────────────────────────────────────────────────── */}
       {!isTeacher && !isStudent && activeTab === 'settings' && (
         <div className="max-w-4xl mx-auto space-y-6">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm space-y-6">
+          <div className="bg-white dark:bg-[#1E293B] rounded-3xl p-6 sm:p-8 border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
             <div>
-              <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
-                <Settings size={22} className="text-indigo-600" />
+              <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <Settings size={22} className="text-indigo-600 dark:text-indigo-400" />
                 Cài Đặt Hệ Thống & Cấu Hình Trí Tuệ Nhân Tạo (AI)
               </h2>
-              <p className="text-xs text-slate-500 font-medium mt-1">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
                 Quản lý chìa khóa Gemini API, lựa chọn mô hình AI giải thích câu hỏi, bật tắt ảnh nền thi và thông tin vận hành máy chủ.
               </p>
             </div>
 
             <form onSubmit={handleSaveSettings} className="space-y-6">
               {/* Card 1: Gemini API Keys & Model */}
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-4">
-                <div className="flex items-center gap-2 text-indigo-900 font-extrabold text-sm">
-                  <Sparkles size={18} className="text-indigo-600" />
+              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 space-y-4">
+                <div className="flex items-center gap-2 text-indigo-900 dark:text-indigo-300 font-extrabold text-sm">
+                  <Sparkles size={18} className="text-indigo-600 dark:text-indigo-400" />
                   <span>Google Gemini API (Giải thích câu hỏi tự động)</span>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                     Danh Sách Gemini API Keys
                   </label>
                   <textarea
@@ -2581,39 +2625,73 @@ export default function DashboardClient({
                     placeholder="Dán các API Key của Google AI Studio tại đây, phân tách bởi dấu phẩy nếu dùng nhiều key xoay vòng..."
                     value={geminiKeys}
                     onChange={e => setGeminiKeys(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-800 outline-none focus:border-indigo-600 leading-relaxed"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600 leading-relaxed"
                   />
-                  <p className="text-[11px] text-slate-500 mt-1">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                     💡 Hỗ trợ xoay vòng nhiều keys tự động: key1, key2, key3... giúp không bao giờ bị giới hạn lượt gọi (Rate Limit).
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                     Mô Hình Gemini Mặc Định
                   </label>
-                  <select
-                    value={geminiModel}
-                    onChange={e => setGeminiModel(e.target.value)}
-                    className="w-full sm:w-80 px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-indigo-600 cursor-pointer"
-                  >
-                    <option value="gemini-2.5-flash">⚡ gemini-2.5-flash (Siêu nhanh, tối ưu nhất)</option>
-                    <option value="gemini-2.5-pro">🧠 gemini-2.5-pro (Thông minh chuyên sâu)</option>
-                    <option value="gemini-2.0-flash">🚀 gemini-2.0-flash (Tốc độ cao)</option>
-                    <option value="gemini-1.5-flash">⚡ gemini-1.5-flash (Bản ổn định)</option>
-                    <option value="gemini-1.5-pro">🎯 gemini-1.5-pro (Suy luận tốt)</option>
-                  </select>
+                  <div className="space-y-2.5">
+                    <select
+                      value={geminiModel}
+                      onChange={e => setGeminiModel(e.target.value)}
+                      className="w-full sm:w-80 px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-indigo-600 cursor-pointer"
+                    >
+                      {availableModels.map(m => (
+                        <option key={m} value={m}>
+                          {m === 'gemini-2.5-flash' ? '⚡ gemini-2.5-flash (Siêu nhanh, tối ưu nhất)' :
+                           m === 'gemini-2.5-pro' ? '🧠 gemini-2.5-pro (Thông minh chuyên sâu)' :
+                           m === 'gemini-2.0-flash' ? '🚀 gemini-2.0-flash (Tốc độ cao)' :
+                           m === 'gemini-1.5-flash' ? '⚡ gemini-1.5-flash (Bản ổn định)' :
+                           m === 'gemini-1.5-pro' ? '🎯 gemini-1.5-pro (Suy luận tốt)' :
+                           `✨ ${m} (Tùy chỉnh)`}
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Input tự điền model tùy chỉnh và lưu */}
+                    <div className="flex items-center gap-2 max-w-lg">
+                      <input
+                        type="text"
+                        placeholder="Tự điền model ID (vd: gemini-2.5-flash-thinking, gemini-3.0-pro)..."
+                        value={customModelInput}
+                        onChange={(e) => setCustomModelInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            handleAddCustomModel()
+                          }
+                        }}
+                        className="flex-1 px-3.5 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddCustomModel}
+                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer whitespace-nowrap active:scale-95"
+                      >
+                        + Thêm & Chọn Model
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      💡 Bạn có thể tự điền bất kỳ mã model Gemini nào được Google AI Studio hỗ trợ, hệ thống sẽ tự động lưu lại để sử dụng cho các lần sau.
+                    </p>
+                  </div>
                 </div>
               </div>
 
               {/* Card 2: Hình nền phòng thi */}
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between">
                 <div>
-                  <div className="font-extrabold text-sm text-slate-800 flex items-center gap-2">
-                    <GlobeIcon size={18} className="text-emerald-600" />
+                  <div className="font-extrabold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                    <GlobeIcon size={18} className="text-emerald-600 dark:text-emerald-400" />
                     <span>Hình Nền Thi Sống Động (Active Background)</span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5 max-w-md">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 max-w-md">
                     Hiển thị các ảnh phong cảnh thiên nhiên chất lượng cao chuyển động nhẹ khi thí sinh làm bài thi.
                   </p>
                 </div>
@@ -2625,25 +2703,25 @@ export default function DashboardClient({
                     onChange={e => setActiveBgEnabled(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                  <div className="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                 </label>
               </div>
 
               {/* Card 3: Thông tin máy chủ & cơ sở dữ liệu */}
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
-                <div className="text-xs font-bold text-slate-500 uppercase">Hạ tầng & Dịch vụ</div>
+              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 space-y-3">
+                <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Hạ tầng & Dịch vụ</div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                  <div className="p-3 bg-white rounded-xl border border-slate-200">
+                  <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                     <div className="text-slate-400 font-medium">Cơ sở dữ liệu</div>
-                    <div className="font-black text-slate-800 mt-0.5">PostgreSQL (Neon)</div>
+                    <div className="font-black text-slate-800 dark:text-slate-100 mt-0.5">PostgreSQL (Neon)</div>
                   </div>
-                  <div className="p-3 bg-white rounded-xl border border-slate-200">
+                  <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                     <div className="text-slate-400 font-medium">Máy chủ & CDN</div>
-                    <div className="font-black text-slate-800 mt-0.5">Vercel Edge Cloud</div>
+                    <div className="font-black text-slate-800 dark:text-slate-100 mt-0.5">Vercel Edge Cloud</div>
                   </div>
-                  <div className="p-3 bg-white rounded-xl border border-slate-200">
+                  <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                     <div className="text-slate-400 font-medium">Tài khoản Quản trị</div>
-                    <div className="font-black text-indigo-600 mt-0.5 truncate">DuylniEdu (Root)</div>
+                    <div className="font-black text-indigo-600 dark:text-indigo-400 mt-0.5 truncate">DuylniEdu (Root)</div>
                   </div>
                 </div>
               </div>
@@ -2653,7 +2731,7 @@ export default function DashboardClient({
                 <button
                   type="submit"
                   disabled={isSavingSettings}
-                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-sm rounded-2xl transition shadow-md shadow-indigo-200 cursor-pointer disabled:opacity-60"
+                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-sm rounded-2xl transition shadow-md shadow-indigo-200 dark:shadow-indigo-950 cursor-pointer disabled:opacity-60"
                 >
                   {isSavingSettings ? 'Đang lưu cấu hình...' : 'Lưu Thay Đổi Cấu Hình'}
                 </button>
@@ -2667,13 +2745,13 @@ export default function DashboardClient({
           TAB: THÔNG TIN CÁ NHÂN, AVATAR & SỐ ĐIỆN THOẠI ZALO
       ───────────────────────────────────────────────────────────── */}
       {activeTab === 'profile' && (
-        <div className="max-w-2xl mx-auto bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm space-y-6">
+        <div className="max-w-2xl mx-auto bg-white dark:bg-[#1E293B] rounded-3xl p-6 sm:p-8 border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
           <div>
-            <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
-              <UserIcon size={22} className="text-indigo-600" />
+            <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <UserIcon size={22} className="text-indigo-600 dark:text-indigo-400" />
               Cài Đặt Thông Tin Cá Nhân & Liên Hệ Zalo
             </h2>
-            <p className="text-xs text-slate-500 font-medium mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
               Thông tin này giúp học sinh nhận diện và hiển thị nút liên hệ Zalo khi cần xin quyền làm bài thi.
             </p>
           </div>
@@ -2681,7 +2759,7 @@ export default function DashboardClient({
           <form onSubmit={handleSaveProfile} className="space-y-5">
             {/* Tên hiển thị */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                 Tên Hiển Thị (Display Name)
               </label>
               <input
@@ -2689,18 +2767,18 @@ export default function DashboardClient({
                 value={profileName}
                 onChange={(e) => setProfileName(e.target.value)}
                 placeholder="Ví dụ: Thầy Nhật Duy, Cô Mai Anh..."
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 outline-none focus:border-indigo-600 transition"
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600 transition"
                 required
               />
             </div>
 
             {/* Avatar URL & Preset Selector */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                 Ảnh Đại Diện (Avatar)
               </label>
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-16 h-16 rounded-2xl bg-slate-100 border-2 border-indigo-200 overflow-hidden flex-shrink-0 flex items-center justify-center shadow-xs">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 border-2 border-indigo-200 dark:border-indigo-800 overflow-hidden flex-shrink-0 flex items-center justify-center shadow-xs">
                   {profileAvatar ? (
                     <img src={profileAvatar} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
@@ -2712,13 +2790,13 @@ export default function DashboardClient({
                   value={profileAvatar}
                   onChange={(e) => setProfileAvatar(e.target.value)}
                   placeholder="Dán link ảnh đại diện (https://...)"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600"
                 />
               </div>
 
               {/* Preset avatar selector */}
               <div>
-                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Hoặc chọn avatar có sẵn:</p>
+                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Hoặc chọn avatar có sẵn:</p>
                 <div className="flex items-center gap-2.5 overflow-x-auto pb-2 scrollbar-none">
                   {PRESET_AVATARS.map(av => (
                     <button
@@ -2726,7 +2804,7 @@ export default function DashboardClient({
                       type="button"
                       onClick={() => setProfileAvatar(av.url)}
                       className={`w-11 h-11 rounded-xl overflow-hidden border-2 flex-shrink-0 transition-all cursor-pointer ${
-                        profileAvatar === av.url ? 'border-indigo-600 scale-105 shadow-md' : 'border-slate-200 hover:border-slate-300'
+                        profileAvatar === av.url ? 'border-indigo-600 scale-105 shadow-md' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
                       }`}
                       title={av.label}
                     >
@@ -2739,7 +2817,7 @@ export default function DashboardClient({
 
             {/* Số điện thoại Zalo */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                 Số Điện Thoại Zalo (Bắt đầu bằng số 0, đủ 10 chữ số)
               </label>
               <div className="relative">
@@ -2753,8 +2831,8 @@ export default function DashboardClient({
                     validatePhone(val)
                   }}
                   placeholder="Ví dụ: 0912345678"
-                  className={`w-full px-4 py-2.5 bg-slate-50 border rounded-xl text-sm font-mono font-bold text-slate-800 outline-none transition ${
-                    phoneError ? 'border-rose-400 focus:border-rose-500 bg-rose-50/20' : 'border-slate-200 focus:border-indigo-600'
+                  className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border rounded-xl text-sm font-mono font-bold text-slate-800 dark:text-slate-100 outline-none transition ${
+                    phoneError ? 'border-rose-400 focus:border-rose-500 bg-rose-50/20 dark:bg-rose-950/20' : 'border-slate-200 dark:border-slate-700 focus:border-indigo-600'
                   }`}
                 />
                 {profilePhone && !phoneError && (
@@ -2767,17 +2845,17 @@ export default function DashboardClient({
                   <AlertCircle size={13} /> {phoneError}
                 </p>
               ) : (
-                <p className="text-[11px] text-slate-500 font-medium mt-1.5 leading-relaxed">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1.5 leading-relaxed">
                   💡 Số điện thoại Zalo này sẽ hiển thị thành <strong>Nút Nhắn Zalo</strong> trực tiếp trên màn hình bài thi khi học sinh chưa có quyền làm bài cần liên hệ với bạn.
                 </p>
               )}
             </div>
 
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end">
               <button
                 type="submit"
                 disabled={isSavingProfile}
-                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs sm:text-sm rounded-xl shadow-md shadow-indigo-200 transition cursor-pointer disabled:opacity-60"
+                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs sm:text-sm rounded-xl shadow-md shadow-indigo-200 dark:shadow-none transition cursor-pointer disabled:opacity-60"
               >
                 {isSavingProfile ? 'Đang lưu...' : 'Lưu Thay Đổi'}
               </button>
@@ -2791,24 +2869,24 @@ export default function DashboardClient({
       ───────────────────────────────────────────────────────────── */}
       {isAccessModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-fade-in">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full border border-slate-100 flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 my-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
+          <div className="bg-white dark:bg-[#1E293B] rounded-3xl shadow-2xl max-w-xl w-full border border-slate-100 dark:border-slate-800 flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 my-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex-shrink-0 bg-white dark:bg-[#1E293B]">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center flex-shrink-0">
                   <Shield size={16} />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-slate-900 text-sm sm:text-base">
+                  <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-sm sm:text-base">
                     Phân Quyền Truy Cập Đề Thi
                   </h3>
-                  <p className="text-[11px] text-slate-400 font-medium">
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                     Áp dụng cho {accessTargetQuizzes.length} bài thi được chọn
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsAccessModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -2817,13 +2895,13 @@ export default function DashboardClient({
             <form onSubmit={handleSaveAccessControl} className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 min-h-0 overscroll-contain">
                 {/* Danh sách đề thi áp dụng */}
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5">
-                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-3.5">
+                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
                     Các bài thi sẽ được áp dụng:
                   </p>
                   <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
                     {accessTargetQuizzes.map(q => (
-                      <span key={q.id} className="text-xs font-bold bg-white text-indigo-900 px-2.5 py-1 rounded-lg border border-slate-200 truncate max-w-xs">
+                      <span key={q.id} className="text-xs font-bold bg-white dark:bg-slate-800 text-indigo-900 dark:text-indigo-300 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 truncate max-w-xs">
                         {q.title}
                       </span>
                     ))}
@@ -2832,22 +2910,22 @@ export default function DashboardClient({
 
                 {/* Chọn hình thức quyền */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-2">Hình Thức Truy Cập</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-2">Hình Thức Truy Cập</label>
                   <div className="grid grid-cols-2 gap-2.5">
                     <button
                       type="button"
                       onClick={() => setAccessTypeChoice('public')}
                       className={`p-3 rounded-2xl border text-left transition cursor-pointer ${
                         accessTypeChoice === 'public'
-                          ? 'border-indigo-600 bg-indigo-50/50 text-indigo-950 font-bold shadow-xs'
-                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                          ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/40 text-indigo-950 dark:text-indigo-200 font-bold shadow-xs'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <GlobeIcon size={16} className={accessTypeChoice === 'public' ? 'text-indigo-600' : 'text-slate-400'} />
+                        <GlobeIcon size={16} className={accessTypeChoice === 'public' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'} />
                         <span className="text-xs font-extrabold">Công Khai</span>
                       </div>
-                      <p className="text-[11px] text-slate-400 font-normal mt-1">Mọi học sinh có link đều làm được bài</p>
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500 font-normal mt-1">Mọi học sinh có link đều làm được bài</p>
                     </button>
 
                     <button
@@ -2855,15 +2933,15 @@ export default function DashboardClient({
                       onClick={() => setAccessTypeChoice('restricted')}
                       className={`p-3 rounded-2xl border text-left transition cursor-pointer ${
                         accessTypeChoice === 'restricted'
-                          ? 'border-indigo-600 bg-indigo-50/50 text-indigo-950 font-bold shadow-xs'
-                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                          ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/40 text-indigo-950 dark:text-indigo-200 font-bold shadow-xs'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <Lock size={16} className={accessTypeChoice === 'restricted' ? 'text-indigo-600' : 'text-slate-400'} />
+                        <Lock size={16} className={accessTypeChoice === 'restricted' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'} />
                         <span className="text-xs font-extrabold">Giới Hạn Gmail</span>
                       </div>
-                      <p className="text-[11px] text-slate-400 font-normal mt-1">Chỉ Gmail chỉ định mới được làm bài</p>
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500 font-normal mt-1">Chỉ Gmail chỉ định mới được làm bài</p>
                     </button>
                   </div>
                 </div>
@@ -2872,10 +2950,10 @@ export default function DashboardClient({
                 {accessTypeChoice === 'restricted' && (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-slate-700 uppercase">
+                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">
                         Danh sách Gmail được phép (mỗi Gmail 1 dòng riêng biệt)
                       </label>
-                      <span className="text-[11px] text-indigo-600 font-bold">
+                      <span className="text-[11px] text-indigo-600 dark:text-indigo-400 font-bold">
                         {allowedGmailsInput.split('\n').filter(e => e.trim().includes('@')).length} Gmail hợp lệ
                       </span>
                     </div>
@@ -2885,18 +2963,18 @@ export default function DashboardClient({
                       value={allowedGmailsInput}
                       onChange={(e) => setAllowedGmailsInput(e.target.value)}
                       placeholder="hocsinh1@gmail.com&#10;hocsinh2@gmail.com&#10;hocsinh3@gmail.com"
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 outline-none focus:border-indigo-600"
+                      className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono font-bold text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600"
                     />
 
                     {/* Thêm nhanh từ Lớp học */}
                     {classes.length > 0 && (
-                      <div className="p-3 bg-indigo-50/60 rounded-2xl border border-indigo-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                      <div className="p-3 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-2xl border border-indigo-100 dark:border-indigo-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                         <div className="flex items-center gap-2 flex-1">
-                          <School size={16} className="text-indigo-600 flex-shrink-0" />
+                          <School size={16} className="text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
                           <select
                             value={selectedClassToAdd}
                             onChange={(e) => setSelectedClassToAdd(e.target.value)}
-                            className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none"
+                            className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 outline-none"
                           >
                             <option value="">-- Chọn Lớp Học Đã Tạo --</option>
                             {classes.map(c => (
@@ -2922,20 +3000,20 @@ export default function DashboardClient({
                       <button
                         type="button"
                         onClick={() => setShowQuickCreateClass(true)}
-                        className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1.5 cursor-pointer"
+                        className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 flex items-center gap-1.5 cursor-pointer"
                       >
                         <FolderPlus size={14} />
                         Lưu danh sách Gmail này thành Lớp Học mới...
                       </button>
                     ) : (
-                      <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                      <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
                         <div className="flex items-center gap-2">
                           <input
                             type="text"
                             placeholder="Nhập tên lớp học mới..."
                             value={quickClassName}
                             onChange={(e) => setQuickClassName(e.target.value)}
-                            className="flex-1 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none"
+                            className="flex-1 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 outline-none"
                           />
                           <button
                             type="button"
@@ -2947,7 +3025,7 @@ export default function DashboardClient({
                           <button
                             type="button"
                             onClick={() => setShowQuickCreateClass(false)}
-                            className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-pointer"
                           >
                             <X size={15} />
                           </button>
@@ -2958,11 +3036,11 @@ export default function DashboardClient({
                 )}
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex-shrink-0 sticky bottom-0 z-10">
+              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-100 dark:border-slate-800 flex-shrink-0 sticky bottom-0 z-10">
                 <button
                   type="button"
                   onClick={() => setIsAccessModalOpen(false)}
-                  className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                  className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl cursor-pointer"
                 >
                   Hủy
                 </button>
@@ -2984,15 +3062,15 @@ export default function DashboardClient({
       ───────────────────────────────────────────────────────────── */}
       {isCreateClassOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-fade-in">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-slate-100 flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 my-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
-              <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
-                <School size={18} className="text-indigo-600" />
+          <div className="bg-white dark:bg-[#1E293B] rounded-3xl shadow-2xl max-w-md w-full border border-slate-100 dark:border-slate-800 flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 my-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex-shrink-0 bg-white dark:bg-[#1E293B]">
+              <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-base flex items-center gap-2">
+                <School size={18} className="text-indigo-600 dark:text-indigo-400" />
                 Tạo Lớp Học Mới
               </h3>
               <button
                 onClick={() => setIsCreateClassOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -3001,7 +3079,7 @@ export default function DashboardClient({
             <form onSubmit={handleCreateClass} className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 min-h-0 overscroll-contain">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                     Tên Lớp Học
                   </label>
                   <input
@@ -3009,13 +3087,13 @@ export default function DashboardClient({
                     placeholder="Ví dụ: Lớp 12A1 - Toán VIP..."
                     value={newClassName}
                     onChange={(e) => setNewClassName(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-indigo-600"
+                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                     Mô Tả Lớp (Tùy chọn)
                   </label>
                   <input
@@ -3023,12 +3101,12 @@ export default function DashboardClient({
                     placeholder="Ví dụ: Nhóm ôn thi tốt nghiệp THPT 2026..."
                     value={newClassDesc}
                     onChange={(e) => setNewClassDesc(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none"
+                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                     Danh Sách Gmail Học Sinh (Mỗi dòng 1 email)
                   </label>
                   <textarea
@@ -3036,16 +3114,16 @@ export default function DashboardClient({
                     placeholder="hocsinh1@gmail.com&#10;hocsinh2@gmail.com"
                     value={newClassGmails}
                     onChange={(e) => setNewClassGmails(e.target.value)}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 outline-none focus:border-indigo-600"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono font-bold text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex-shrink-0 sticky bottom-0 z-10">
+              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-100 dark:border-slate-800 flex-shrink-0 sticky bottom-0 z-10">
                 <button
                   type="button"
                   onClick={() => setIsCreateClassOpen(false)}
-                  className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                  className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl cursor-pointer"
                 >
                   Hủy
                 </button>
@@ -3067,15 +3145,15 @@ export default function DashboardClient({
       ───────────────────────────────────────────────────────────── */}
       {isAddStudentOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-fade-in">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full border border-slate-100 flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 my-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
-              <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
-                <UserPlus size={18} className="text-indigo-600" />
+          <div className="bg-white dark:bg-[#1E293B] rounded-3xl shadow-2xl max-w-sm w-full border border-slate-100 dark:border-slate-800 flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 my-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex-shrink-0 bg-white dark:bg-[#1E293B]">
+              <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-base flex items-center gap-2">
+                <UserPlus size={18} className="text-indigo-600 dark:text-indigo-400" />
                 Thêm Học Sinh Vào Lớp
               </h3>
               <button
                 onClick={() => setIsAddStudentOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -3084,7 +3162,7 @@ export default function DashboardClient({
             <form onSubmit={handleAddStudentToClass} className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 min-h-0 overscroll-contain">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                     Gmail Học Sinh (Google Login)
                   </label>
                   <input
@@ -3092,14 +3170,14 @@ export default function DashboardClient({
                     placeholder="hocsinh@gmail.com"
                     value={newStudentEmail}
                     onChange={(e) => setNewStudentEmail(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-indigo-600"
+                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600"
                     required
                     autoFocus
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                     Tên Học Sinh (Tùy chọn)
                   </label>
                   <input
@@ -3107,16 +3185,16 @@ export default function DashboardClient({
                     placeholder="Ví dụ: Nguyễn Văn A"
                     value={newStudentName}
                     onChange={(e) => setNewStudentName(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none"
+                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 outline-none"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex-shrink-0 sticky bottom-0 z-10">
+              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-100 dark:border-slate-800 flex-shrink-0 sticky bottom-0 z-10">
                 <button
                   type="button"
                   onClick={() => setIsAddStudentOpen(false)}
-                  className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                  className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl cursor-pointer"
                 >
                   Hủy
                 </button>
@@ -3138,31 +3216,31 @@ export default function DashboardClient({
       ───────────────────────────────────────────────────────────── */}
       {editingStudentPerms && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-fade-in">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full border border-slate-100 flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 my-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
+          <div className="bg-white dark:bg-[#1E293B] rounded-3xl shadow-2xl max-w-xl w-full border border-slate-100 dark:border-slate-800 flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 my-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex-shrink-0 bg-white dark:bg-[#1E293B]">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center flex-shrink-0">
                   <UserCheck size={16} />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-slate-900 text-sm sm:text-base">
+                  <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-sm sm:text-base">
                     Cài Đặt Quyền Cho: {editingStudentPerms.name || editingStudentPerms.email}
                   </h3>
-                  <p className="text-[11px] text-slate-400 font-medium">
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                     {editingStudentPerms.email}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setEditingStudentPerms(null)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 min-h-0 overscroll-contain">
-              <p className="text-xs text-slate-500 font-medium leading-relaxed">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
                 Chọn môn học hoặc các bài test cụ thể mà học sinh này được phép làm. Khi được tick, học sinh sẽ có quyền làm bài test tương ứng.
               </p>
 
@@ -3178,9 +3256,9 @@ export default function DashboardClient({
                     const isExpanded = expandedSubjectId === sub.id
 
                     return (
-                      <div key={sub.id} className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-2xs">
+                      <div key={sub.id} className="border border-slate-200 dark:border-slate-700/80 rounded-2xl overflow-hidden bg-white dark:bg-[#1E293B] shadow-2xs">
                         {/* Môn Học Header */}
-                        <div className="p-3.5 bg-slate-50/70 flex items-center justify-between gap-3">
+                        <div className="p-3.5 bg-slate-50/70 dark:bg-slate-800/70 flex items-center justify-between gap-3">
                           <label className="flex items-center gap-2.5 cursor-pointer flex-1">
                             <input
                               type="checkbox"
@@ -3189,10 +3267,10 @@ export default function DashboardClient({
                               className="w-4 h-4 rounded-md accent-indigo-600 cursor-pointer"
                             />
                             <div>
-                              <span className="font-black text-slate-900 text-xs sm:text-sm">
+                              <span className="font-black text-slate-900 dark:text-slate-100 text-xs sm:text-sm">
                                 {sub.name}
                               </span>
-                              <span className="text-[11px] text-slate-400 font-medium ml-2">
+                              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium ml-2">
                                 ({sub.quizzes.length} bài test)
                               </span>
                             </div>
@@ -3201,7 +3279,7 @@ export default function DashboardClient({
                           <button
                             type="button"
                             onClick={() => setExpandedSubjectId(isExpanded ? null : sub.id)}
-                            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer px-2 py-1 rounded-lg hover:bg-indigo-50"
+                            className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center gap-1 cursor-pointer px-2 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
                           >
                             <span>{isExpanded ? 'Ẩn đề' : 'Xem đề'}</span>
                             <ChevronDown size={14} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
@@ -3210,14 +3288,14 @@ export default function DashboardClient({
 
                         {/* Collapsible Danh sách các bài test của môn học */}
                         {isExpanded && (
-                          <div className="p-3.5 bg-white border-t border-slate-100 space-y-2 max-h-48 overflow-y-auto">
+                          <div className="p-3.5 bg-white dark:bg-slate-900/40 border-t border-slate-100 dark:border-slate-800 space-y-2 max-h-48 overflow-y-auto">
                             {sub.quizzes.length === 0 ? (
                               <p className="text-xs text-slate-400 italic">Môn này chưa có bài test nào.</p>
                             ) : (
                               sub.quizzes.map(q => {
                                 const isQuizChecked = studentPermQuizIds.includes(q.id)
                                 return (
-                                  <label key={q.id} className="flex items-center gap-2 text-xs text-slate-700 hover:text-slate-900 cursor-pointer">
+                                  <label key={q.id} className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer">
                                     <input
                                       type="checkbox"
                                       checked={isQuizChecked}
@@ -3238,11 +3316,11 @@ export default function DashboardClient({
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex-shrink-0 sticky bottom-0 z-10">
+            <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-100 dark:border-slate-800 flex-shrink-0 sticky bottom-0 z-10">
               <button
                 type="button"
                 onClick={() => setEditingStudentPerms(null)}
-                className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl cursor-pointer"
               >
                 Hủy
               </button>
@@ -3264,24 +3342,24 @@ export default function DashboardClient({
       ───────────────────────────────────────────────────────────── */}
       {editingQuizPass && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-fade-in">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-slate-100 flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 my-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
+          <div className="bg-white dark:bg-[#1E293B] rounded-3xl shadow-2xl max-w-md w-full border border-slate-100 dark:border-slate-800 flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 my-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex-shrink-0 bg-white dark:bg-[#1E293B]">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0">
                   <Key size={16} />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-slate-900 text-sm sm:text-base">
+                  <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-sm sm:text-base">
                     Đổi Mật Khẩu Bài Thi
                   </h3>
-                  <p className="text-[11px] text-slate-400 font-medium truncate max-w-[240px]">
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium truncate max-w-[240px]">
                     {editingQuizPass.title}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setEditingQuizPass(null)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -3290,7 +3368,7 @@ export default function DashboardClient({
             <form onSubmit={handleSaveQuizPass} className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 min-h-0 overscroll-contain">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                     Mật khẩu bài thi (để trống nếu muốn mở tự do)
                   </label>
                   <input
@@ -3298,20 +3376,20 @@ export default function DashboardClient({
                     placeholder="Nhập mật khẩu hoặc để trống..."
                     value={quizPassInput}
                     onChange={(e) => setQuizPassInput(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 outline-none focus:border-indigo-600"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono font-bold text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600"
                     autoFocus
                   />
-                  <p className="text-[11px] text-slate-500 mt-1.5">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">
                     Học sinh sẽ cần nhập mật khẩu này để làm bài. Để trống nếu muốn ai có quyền cũng vào được trực tiếp.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex-shrink-0 sticky bottom-0 z-10">
+              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-100 dark:border-slate-800 flex-shrink-0 sticky bottom-0 z-10">
                 <button
                   type="button"
                   onClick={() => setEditingQuizPass(null)}
-                  className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                  className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl cursor-pointer"
                 >
                   Hủy
                 </button>
@@ -3333,17 +3411,17 @@ export default function DashboardClient({
       ───────────────────────────────────────────────────────────── */}
       {isChangeAccPassOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-fade-in">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-slate-100 flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 my-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
+          <div className="bg-white dark:bg-[#1E293B] rounded-3xl shadow-2xl max-w-md w-full border border-slate-100 dark:border-slate-800 flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 my-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex-shrink-0 bg-white dark:bg-[#1E293B]">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center flex-shrink-0">
                   <Shield size={16} />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-slate-900 text-sm sm:text-base">
+                  <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-sm sm:text-base">
                     Đổi Mật Khẩu Tài Khoản
                   </h3>
-                  <p className="text-[11px] text-slate-400 font-medium">
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                     Tài khoản: {session.username || session.email}
                   </p>
                 </div>
@@ -3354,7 +3432,7 @@ export default function DashboardClient({
                   setNewAccPassword('')
                   setConfirmAccPassword('')
                 }}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -3363,30 +3441,30 @@ export default function DashboardClient({
             <form onSubmit={handleSaveAccPassword} className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 min-h-0 overscroll-contain">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Mật khẩu mới</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Mật khẩu mới</label>
                   <input
                     type="password"
                     placeholder="Nhập mật khẩu mới..."
                     value={newAccPassword}
                     onChange={(e) => setNewAccPassword(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Xác nhận mật khẩu mới</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Xác nhận mật khẩu mới</label>
                   <input
                     type="password"
                     placeholder="Nhập lại mật khẩu mới..."
                     value={confirmAccPassword}
                     onChange={(e) => setConfirmAccPassword(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600"
                     required
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex-shrink-0 sticky bottom-0 z-10">
+              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-100 dark:border-slate-800 flex-shrink-0 sticky bottom-0 z-10">
                 <button
                   type="button"
                   onClick={() => {
@@ -3394,7 +3472,7 @@ export default function DashboardClient({
                     setNewAccPassword('')
                     setConfirmAccPassword('')
                   }}
-                  className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                  className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl cursor-pointer"
                 >
                   Hủy
                 </button>
@@ -3416,24 +3494,24 @@ export default function DashboardClient({
       ───────────────────────────────────────────────────────────── */}
       {editingUser && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-fade-in">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-slate-100 flex flex-col max-h-[90vh] overflow-hidden my-auto animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
+          <div className="bg-white dark:bg-[#1E293B] rounded-3xl shadow-2xl max-w-md w-full border border-slate-100 dark:border-slate-800 flex flex-col max-h-[90vh] overflow-hidden my-auto animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex-shrink-0 bg-white dark:bg-[#1E293B]">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center flex-shrink-0">
                   <Edit2 size={16} />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-slate-900 text-sm sm:text-base">
+                  <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-sm sm:text-base">
                     Sửa Tài Khoản: {editingUser.name || editingUser.username}
                   </h3>
-                  <p className="text-[11px] text-slate-400 font-medium truncate max-w-[240px]">
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium truncate max-w-[240px]">
                     @{editingUser.username} • {editingUser.email || 'Chưa có email'}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setEditingUser(null)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -3442,41 +3520,41 @@ export default function DashboardClient({
             <form onSubmit={handleSaveEditUser} className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 min-h-0">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                     Tên hiển thị
                   </label>
                   <input
                     type="text"
                     value={editName}
                     onChange={e => setEditName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-indigo-600"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600"
                     placeholder="Ví dụ: Thầy Nguyễn Văn A..."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                     Địa chỉ Gmail
                   </label>
                   <input
                     type="email"
                     value={editEmail}
                     onChange={e => setEditEmail(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-medium text-slate-800 outline-none focus:border-indigo-600"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono font-medium text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600"
                     placeholder="giaovien@gmail.com..."
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                       Vai trò
                     </label>
                     <select
                       value={editRole}
                       onChange={e => setEditRole(e.target.value)}
                       disabled={editingUser.username?.toLowerCase() === 'duylniedu' || editingUser.email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com'}
-                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-indigo-600 disabled:opacity-50"
+                      className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600 disabled:opacity-50"
                     >
                       <option value="STUDENT">🎓 Học sinh</option>
                       <option value="TEACHER">👨‍🏫 Giáo viên</option>
@@ -3485,7 +3563,7 @@ export default function DashboardClient({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                       Hạn mức đề tạo
                     </label>
                     <input
@@ -3494,30 +3572,30 @@ export default function DashboardClient({
                       max="9999"
                       value={editMaxTests}
                       onChange={e => setEditMaxTests(Number(e.target.value))}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-indigo-600"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                    Đổi mật khẩu mới <span className="text-slate-400 font-normal lowercase">(để trống nếu không đổi)</span>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
+                    Đổi mật khẩu mới <span className="text-slate-400 dark:text-slate-500 font-normal lowercase">(để trống nếu không đổi)</span>
                   </label>
                   <input
                     type="password"
                     value={editPassword}
                     onChange={e => setEditPassword(e.target.value)}
                     placeholder="Nhập mật khẩu mới hoặc bỏ trống..."
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-indigo-600"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex-shrink-0">
+              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => setEditingUser(null)}
-                  className="px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                  className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl cursor-pointer"
                 >
                   Hủy
                 </button>
@@ -3539,17 +3617,17 @@ export default function DashboardClient({
       ───────────────────────────────────────────────────────────── */}
       {isNotifSendOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-fade-in">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-slate-100 flex flex-col max-h-[90vh] overflow-hidden my-auto animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
+          <div className="bg-white dark:bg-[#1E293B] rounded-3xl shadow-2xl max-w-md w-full border border-slate-100 dark:border-slate-800 flex flex-col max-h-[90vh] overflow-hidden my-auto animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex-shrink-0 bg-white dark:bg-[#1E293B]">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center flex-shrink-0">
                   <Send size={16} />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-slate-900 text-sm sm:text-base">
+                  <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-sm sm:text-base">
                     Gửi Thông Báo
                   </h3>
-                  <p className="text-[11px] text-slate-400 font-medium">
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                     {notifTargetUserId ? `Gửi tới: ${notifTargetName}` : 'Gửi cho TẤT CẢ thành viên'}
                   </p>
                 </div>
@@ -3561,7 +3639,7 @@ export default function DashboardClient({
                   setNotifTitle('')
                   setNotifMessage('')
                 }}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -3569,7 +3647,7 @@ export default function DashboardClient({
 
             <form onSubmit={handleSendNotification} className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 min-h-0">
-                <div className="p-3 rounded-xl bg-indigo-50/70 border border-indigo-100 text-xs text-indigo-900 flex items-center justify-between">
+                <div className="p-3 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 text-xs text-indigo-900 dark:text-indigo-200 flex items-center justify-between">
                   <span className="font-bold">
                     Người nhận: {notifTargetUserId ? notifTargetName : '📢 Toàn bộ hệ thống'}
                   </span>
@@ -3580,7 +3658,7 @@ export default function DashboardClient({
                         setNotifTargetUserId(null)
                         setNotifTargetName('Tất cả người dùng')
                       }}
-                      className="text-[11px] font-bold text-indigo-600 hover:underline cursor-pointer"
+                      className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
                     >
                       Đổi sang gửi tất cả
                     </button>
@@ -3588,7 +3666,7 @@ export default function DashboardClient({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                     Tiêu đề thông báo
                   </label>
                   <input
@@ -3597,12 +3675,12 @@ export default function DashboardClient({
                     value={notifTitle}
                     onChange={e => setNotifTitle(e.target.value)}
                     placeholder="Ví dụ: Chào mừng bạn / Thông báo quan trọng..."
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-indigo-600"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                     Nội dung thông báo
                   </label>
                   <textarea
@@ -3611,16 +3689,16 @@ export default function DashboardClient({
                     value={notifMessage}
                     onChange={e => setNotifMessage(e.target.value)}
                     placeholder="Nhập nội dung thông báo gửi vào hộp thư..."
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-indigo-600 leading-relaxed"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600 leading-relaxed"
                   />
                 </div>
 
-                <div className="text-[11px] text-slate-400 font-medium">
-                  🕒 Thời gian gửi: <span className="font-semibold text-slate-600">{new Date().toLocaleTimeString('vi-VN')} ngày {new Date().toLocaleDateString('vi-VN')}</span>
+                <div className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                  🕒 Thời gian gửi: <span className="font-semibold text-slate-600 dark:text-slate-300">{new Date().toLocaleTimeString('vi-VN')} ngày {new Date().toLocaleDateString('vi-VN')}</span>
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex-shrink-0">
+              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => {
@@ -3629,7 +3707,7 @@ export default function DashboardClient({
                     setNotifTitle('')
                     setNotifMessage('')
                   }}
-                  className="px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                  className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl cursor-pointer"
                 >
                   Hủy
                 </button>
@@ -3652,15 +3730,15 @@ export default function DashboardClient({
       ───────────────────────────────────────────────────────────── */}
       {isNotifOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-end overflow-hidden animate-fade-in">
-          <div className="bg-white h-full w-full max-w-md shadow-2xl flex flex-col animate-slide-left">
-            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-white">
+          <div className="bg-white dark:bg-[#1E293B] h-full w-full max-w-md shadow-2xl flex flex-col border-l border-slate-200 dark:border-slate-800 animate-slide-left">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-[#1E293B]">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
                   <Bell size={18} />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-slate-900 text-base">Hộp Thư Thông Báo</h3>
-                  <p className="text-[11px] text-slate-400 font-medium">
+                  <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-base">Hộp Thư Thông Báo</h3>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                     {unreadCount > 0 ? `${unreadCount} tin nhắn chưa đọc` : 'Không có tin mới'}
                   </p>
                 </div>
@@ -3669,14 +3747,14 @@ export default function DashboardClient({
                 {unreadCount > 0 && (
                   <button
                     onClick={handleMarkAllNotificationsAsRead}
-                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 px-2.5 py-1 rounded-lg hover:bg-indigo-50 transition cursor-pointer"
+                    className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 px-2.5 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition cursor-pointer"
                   >
                     Đã đọc tất cả
                   </button>
                 )}
                 <button
                   onClick={() => setIsNotifOpen(false)}
-                  className="text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-slate-100 cursor-pointer"
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                 >
                   <X size={18} />
                 </button>
@@ -3685,8 +3763,8 @@ export default function DashboardClient({
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
               {notifications.length === 0 ? (
-                <div className="text-center py-16 text-slate-400">
-                  <Bell size={36} className="mx-auto text-slate-300 mb-2 opacity-60" />
+                <div className="text-center py-16 text-slate-400 dark:text-slate-500">
+                  <Bell size={36} className="mx-auto text-slate-300 dark:text-slate-600 mb-2 opacity-60" />
                   <p className="font-bold text-sm">Hộp thư trống</p>
                   <p className="text-xs">Bạn chưa có thông báo nào.</p>
                 </div>
@@ -3696,17 +3774,17 @@ export default function DashboardClient({
                     key={n.id}
                     className={`p-4 rounded-2xl border transition-all ${
                       n.isRead
-                        ? 'bg-white border-slate-100 text-slate-600'
-                        : 'bg-indigo-50/50 border-indigo-100 text-slate-900 shadow-2xs'
+                        ? 'bg-white dark:bg-slate-800/80 border-slate-100 dark:border-slate-700/60 text-slate-600 dark:text-slate-300'
+                        : 'bg-indigo-50/50 dark:bg-indigo-950/40 border-indigo-100 dark:border-indigo-900/60 text-slate-900 dark:text-slate-100 shadow-2xs'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <h4 className="font-extrabold text-xs sm:text-sm text-slate-900">{n.title}</h4>
-                      <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">
+                      <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-slate-100">{n.title}</h4>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium whitespace-nowrap">
                         {formatTimeAgo(n.createdAt)}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">{n.message}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">{n.message}</p>
                   </div>
                 ))
               )}
