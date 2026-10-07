@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { cookies } from 'next/headers'
 import fs from 'fs'
 import path from 'path'
 
@@ -12,6 +13,24 @@ export async function GET(request: Request) {
     
     let html = fs.readFileSync(path.join(process.cwd(), 'public/index.html'), 'utf8')
     
+    const cookieStore = await cookies()
+    const sessionStr = cookieStore.get('dzota_session')?.value
+    let sessionData = null
+    if (sessionStr) {
+      try {
+        sessionData = JSON.parse(sessionStr)
+      } catch (e) {}
+    }
+
+    if (sessionData) {
+      const injectionScript = `<script>window.__DZOTA_SESSION__ = ${JSON.stringify(sessionData)};</script>`
+      if (html.includes('</head>')) {
+        html = html.replace('</head>', `${injectionScript}</head>`)
+      } else {
+        html = injectionScript + html
+      }
+    }
+
     if (id) {
       const quiz = await prisma.quickQuiz.findUnique({ where: { id } })
       if (quiz) {

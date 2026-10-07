@@ -68,6 +68,7 @@ export default function RootLayout({
           {children}
         </ThemeProvider>
         <Script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" strategy="beforeInteractive" />
+        <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
       </body>
     </html>
   )

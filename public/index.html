@@ -310,6 +310,8 @@
         Image: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>,
         Repeat: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>,
         ShieldAlert: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
+        Shield: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+        User: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
         Folder: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>,
         FilePlus: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>,
         MessageCircle: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>,
@@ -477,6 +479,17 @@
         const [showCreateMenu, setShowCreateMenu] = useState(false);
         const [selectedItemAction, setSelectedItemAction] = useState(null);
         const [generateBankConfig, setGenerateBankConfig] = useState(null);
+
+        // Quản lý phiên đăng nhập và phân quyền giáo viên / admin
+        const [currentUser, setCurrentUser] = useState(window.__DZOTA_SESSION__ || null);
+        const [adminScope, setAdminScope] = useState('all'); // 'all' hoặc 'mine'
+        const isUserAdmin = currentUser?.role === 'ADMIN' || currentUser?.username?.toLowerCase() === 'duylniedu';
+        const canEditQuiz = (quiz) => {
+            if (!currentUser) return true;
+            if (isUserAdmin) return true;
+            if (!quiz || !quiz.authorId) return true;
+            return quiz.authorId === currentUser.id;
+        };
 
         const [userAnswers, setUserAnswers] = useState({});
         const [timeLeft, setTimeLeft] = useState(0);
@@ -895,10 +908,34 @@
         // --- 1. INITIALIZATION ---
         useEffect(() => { document.body.classList.toggle('mode-simple', appMode === 'result'); }, [appMode]);
 
+        const fetchQuizzes = async (scope = adminScope) => {
+            try {
+                const url = `/api/quick-quiz?id=all${isUserAdmin ? `&filter=${scope}` : ''}`;
+                const serverRes = await fetch(url);
+                if (serverRes.ok) {
+                    const serverQuizzes = await serverRes.json();
+                    if (Array.isArray(serverQuizzes)) {
+                        setSavedQuizzes(serverQuizzes);
+                        try { localStorage.setItem('myQuizzes', JSON.stringify(serverQuizzes)); } catch (e) {}
+                    }
+                }
+            } catch (err) {
+                console.warn('Could not sync quizzes from server:', err);
+            }
+        };
+
+        const handleAdminScopeChange = async (scope) => {
+            setAdminScope(scope);
+            await fetchQuizzes(scope);
+        };
+
         useEffect(() => {
           const initApp = async () => {
             let localQuizzes = [];
             try { localQuizzes = JSON.parse(localStorage.getItem('myQuizzes') || '[]'); } catch (e) {}
+            if (currentUser && !isUserAdmin) {
+                localQuizzes = localQuizzes.filter(q => !q.authorId || q.authorId === currentUser.id);
+            }
             setSavedQuizzes(localQuizzes);
 
             // Fetch admin settings for active background state
@@ -912,24 +949,8 @@
               }
             } catch (err) {}
 
-            // Fetch from database so mobile / other devices show all created quizzes
-            try {
-              const serverRes = await fetch('/api/quick-quiz?id=all');
-              if (serverRes.ok) {
-                const serverQuizzes = await serverRes.json();
-                if (Array.isArray(serverQuizzes) && serverQuizzes.length > 0) {
-                  // Merge server quizzes with local quizzes, preferring server version
-                  const mergedMap = new Map();
-                  serverQuizzes.forEach(q => mergedMap.set(q.id, q));
-                  localQuizzes.forEach(q => { if (!mergedMap.has(q.id)) mergedMap.set(q.id, q); });
-                  const merged = Array.from(mergedMap.values());
-                  setSavedQuizzes(merged);
-                  try { localStorage.setItem('myQuizzes', JSON.stringify(merged)); } catch (e) {}
-                }
-              }
-            } catch (err) {
-              console.warn('Could not sync quizzes from server:', err);
-            }
+            // Đồng bộ dữ liệu đề thi theo quyền giáo viên / admin
+            await fetchQuizzes(adminScope);
 
             const handleLoadQuiz = async (id) => {
                 setIsLoading(true);
@@ -1072,6 +1093,10 @@
         };
 
         const handleEditQuiz = (quiz) => {
+             if (!canEditQuiz(quiz)) {
+                 addToast("Bạn không có quyền chỉnh sửa đề thi của người khác!", 'error');
+                 return;
+             }
              setQuizIdTracker(quiz.id);
              setQuizConfig({
                  title: quiz.config?.title || 'Bài Kiểm Tra Mới', category: quiz.config?.category || 'Chung', timeLimit: quiz.config?.timeLimit || 15,
@@ -1085,19 +1110,59 @@
         };
 
         const handleDeleteQuiz = (id) => {
-            showConfirm("Xóa dữ liệu?", "Bạn có chắc muốn xóa không? Hành động này không thể hoàn tác.", () => {
-                const updated = savedQuizzes.filter(q => q.id !== id);
-                setSavedQuizzes(updated); try { localStorage.setItem('myQuizzes', JSON.stringify(updated)); } catch(e){}
-                addToast("Đã xóa thành công", 'success');
+            const targetQuiz = savedQuizzes.find(q => q.id === id);
+            if (targetQuiz && !canEditQuiz(targetQuiz)) {
+                addToast("Bạn không có quyền xóa đề thi của người khác!", 'error');
+                return;
+            }
+            showConfirm("Xóa dữ liệu?", "Bạn có chắc muốn xóa không? Hành động này không thể hoàn tác.", async () => {
+                try {
+                    const res = await fetch('/api/quick-quiz', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id })
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                        addToast(data.error || "Không có quyền xóa đề thi này!", 'error');
+                        return;
+                    }
+                    const updated = savedQuizzes.filter(q => q.id !== id);
+                    setSavedQuizzes(updated); 
+                    try { localStorage.setItem('myQuizzes', JSON.stringify(updated)); } catch(e){}
+                    addToast("Đã xóa thành công", 'success');
+                } catch (err) {
+                    addToast("Lỗi khi kết nối xóa đề thi", 'error');
+                }
             });
         };
 
-        const handleToggleStatus = (id, currentStatus, e) => {
+        const handleToggleStatus = async (id, currentStatus, e) => {
             if(e) e.stopPropagation();
+            const targetQuiz = savedQuizzes.find(q => q.id === id);
+            if (targetQuiz && !canEditQuiz(targetQuiz)) {
+                addToast("Bạn không có quyền thay đổi trạng thái đề thi của người khác!", 'error');
+                return;
+            }
             const newStatus = !currentStatus;
-            const updated = savedQuizzes.map(q => q.id === id ? {...q, config: {...q.config, isActive: newStatus}} : q);
-            setSavedQuizzes(updated); try { localStorage.setItem('myQuizzes', JSON.stringify(updated)); } catch(e){}
-            addToast(`Đã ${newStatus ? 'Mở' : 'Khóa'}`, 'success');
+            try {
+                const res = await fetch('/api/quick-quiz', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, isActive: newStatus })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    addToast(data.error || "Không thể thay đổi trạng thái!", 'error');
+                    return;
+                }
+                const updated = savedQuizzes.map(q => q.id === id ? {...q, config: {...q.config, isActive: newStatus}} : q);
+                setSavedQuizzes(updated); 
+                try { localStorage.setItem('myQuizzes', JSON.stringify(updated)); } catch(e){}
+                addToast(`Đã ${newStatus ? 'Mở' : 'Khóa'}`, 'success');
+            } catch (err) {
+                addToast("Lỗi cập nhật trạng thái", 'error');
+            }
         };
 
         const handleCopyLink = (id) => {
@@ -1132,13 +1197,21 @@
 
         const filteredQuizzes = useMemo(() => {
             return savedQuizzes.filter(q => {
+                // Phân quyền cho giáo viên thông thường: Chỉ hiển thị đề của chính mình
+                if (currentUser && !isUserAdmin) {
+                    if (q.authorId && q.authorId !== currentUser.id) return false;
+                }
+                // Admin: lọc theo phạm vi 'mine' nếu được chọn
+                if (isUserAdmin && adminScope === 'mine') {
+                    if (q.authorId && q.authorId !== currentUser.id) return false;
+                }
                 const matchesSearch = (q.title || '').toLowerCase().includes(searchTerm.toLowerCase());
                 const matchesCategory = selectedCategory === 'Tất cả' || (q.config && q.config.category === selectedCategory);
                 const isActive = q.config?.isActive !== false;
                 const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' && isActive) || (statusFilter === 'inactive' && !isActive);
                 return matchesSearch && matchesCategory && matchesStatus;
             });
-        }, [savedQuizzes, searchTerm, selectedCategory, statusFilter]);
+        }, [savedQuizzes, searchTerm, selectedCategory, statusFilter, currentUser, adminScope, isUserAdmin]);
 
         // --- 3. PARSING LOGIC ---
         const parseDomToLines = (rootNode) => {
@@ -1597,7 +1670,14 @@
                                 <span className="font-extrabold text-base tracking-tight text-gray-900 group-hover:text-blue-600 transition-colors">Dzota</span>
                             </a>
                             <span className="hidden sm:inline-block w-px h-5 bg-gray-200"></span>
-                            <h1 className="text-xl font-bold text-gray-900 tracking-tight">Thư viện của bạn</h1>
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-xl font-bold text-gray-900 tracking-tight">Thư viện</h1>
+                                {currentUser && (
+                                    <span className="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-xl font-bold flex items-center gap-1 border border-indigo-100/80">
+                                        <Icons.User size={12}/> {currentUser.username}{isUserAdmin ? ' (Admin)' : ''}
+                                    </span>
+                                )}
+                            </div>
                             <span className="hidden sm:inline-block w-px h-5 bg-gray-200"></span>
                             <div className="hidden sm:flex items-center gap-2">
                                 <a 
@@ -1674,6 +1754,29 @@
                         </div>
                     </div>
 
+                    {/* Admin Scope Switcher */}
+                    {isUserAdmin && (
+                        <div className="flex flex-wrap items-center gap-2 mb-4 bg-indigo-50/70 border border-indigo-100 p-2 sm:p-2.5 rounded-2xl">
+                            <span className="text-xs font-bold text-indigo-900 px-1 flex items-center gap-1.5">
+                                <Icons.Shield size={14} className="text-indigo-600" /> Quản trị Admin:
+                            </span>
+                            <div className="flex gap-1.5 bg-white p-1 rounded-xl shadow-xs border border-indigo-100">
+                                <button
+                                    onClick={() => handleAdminScopeChange('all')}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${adminScope === 'all' ? 'bg-indigo-600 text-white shadow-xs' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}
+                                >
+                                    📚 Tất cả đề thi (Toàn trường)
+                                </button>
+                                <button
+                                    onClick={() => handleAdminScopeChange('mine')}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${adminScope === 'mine' ? 'bg-indigo-600 text-white shadow-xs' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}
+                                >
+                                    👤 Chỉ đề của Admin
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="flex gap-2 mb-6 bg-gray-200/50 p-1.5 rounded-xl w-fit">
                         <button onClick={() => setStatusFilter('all')} className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${statusFilter === 'all' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Tất cả</button>
                         <button onClick={() => setStatusFilter('active')} className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${statusFilter === 'active' ? 'bg-white text-ios-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Đang mở</button>
@@ -1701,6 +1804,11 @@
                                                 {quiz.config.isActive !== false ? <Icons.Check size={10}/> : <Icons.Lock size={10}/>}
                                                 {quiz.config.isActive !== false ? 'Đang mở' : 'Đã khóa'}
                                             </span>
+                                            {quiz.author?.username && (
+                                                <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-1 rounded-md flex items-center gap-1">
+                                                    <Icons.User size={10}/> {quiz.author.username === currentUser?.username ? 'Của bạn' : `Tác giả: ${quiz.author.username}`}
+                                                </span>
+                                            )}
                                         </div>
                                         <h3 className="text-[18px] font-bold text-gray-900 leading-tight mb-1.5 truncate group-hover:text-ios-blue transition-colors">{quiz.title}</h3>
                                         <p className="text-[13px] text-gray-500 flex items-center gap-4 font-medium">
@@ -1709,10 +1817,14 @@
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-2 w-full sm:w-auto justify-end border-t border-gray-100 sm:border-0 pt-3 sm:pt-0 mt-2 sm:mt-0">
-                                        <div className="flex items-center mr-2" onClick={(e) => e.stopPropagation()}>
-                                            <input type="checkbox" id={`toggle-${quiz.id}`} className="toggle-checkbox-ios hidden" checked={quiz.config.isActive !== false} onChange={(e) => handleToggleStatus(quiz.id, quiz.config.isActive !== false, e)} />
-                                            <label htmlFor={`toggle-${quiz.id}`} className="toggle-label-ios"></label>
-                                        </div>
+                                        {canEditQuiz(quiz) ? (
+                                            <div className="flex items-center mr-2" onClick={(e) => e.stopPropagation()}>
+                                                <input type="checkbox" id={`toggle-${quiz.id}`} className="toggle-checkbox-ios hidden" checked={quiz.config.isActive !== false} onChange={(e) => handleToggleStatus(quiz.id, quiz.config.isActive !== false, e)} />
+                                                <label htmlFor={`toggle-${quiz.id}`} className="toggle-label-ios"></label>
+                                            </div>
+                                        ) : (
+                                            <span className="text-[11px] font-medium text-slate-400 bg-slate-50 px-2 py-1 rounded-md mr-2">Chỉ xem</span>
+                                        )}
                                         <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 group-hover:bg-blue-50 group-hover:text-ios-blue transition-colors">
                                             <Icons.ArrowRight size={18}/>
                                         </div>
@@ -2526,25 +2638,45 @@
                             <p className="text-sm text-gray-500 mt-1">{selectedItemAction.questions?.length || 0} {selectedItemAction.config.quizType === 'bank' ? 'nhóm câu hỏi' : 'câu hỏi'}</p>
                         </div>
                         
-                        <div className="p-3 bg-gray-50">
-                            <button onClick={() => { handleEditQuiz(selectedItemAction); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
-                                <div className="text-ios-blue bg-blue-50 p-2 rounded-lg"><Icons.Edit3 size={18}/></div> Chỉnh sửa nội dung
-                            </button>
-                            
-                            {selectedItemAction.config.quizType === 'bank' && (
-                                <button onClick={() => { setGenerateBankConfig({ bank: selectedItemAction }); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
-                                    <div className="text-emerald-600 bg-emerald-50 p-2 rounded-lg"><Icons.RefreshCw size={18}/></div> Tạo đề thi từ ngân hàng này
-                                </button>
-                            )}
-                            
-                            <button onClick={() => { handleCopyLink(selectedItemAction.id); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
-                                <div className="text-orange-500 bg-orange-50 p-2 rounded-lg"><Icons.LinkIcon size={18}/></div> Copy link chia sẻ
-                            </button>
-                            
-                            <button onClick={() => { handleDeleteQuiz(selectedItemAction.id); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-red-600 font-medium">
-                                <div className="text-red-600 bg-red-50 p-2 rounded-lg"><Icons.Trash size={18}/></div> Xóa {selectedItemAction.config.quizType === 'bank' ? 'ngân hàng' : 'đề thi'}
-                            </button>
-                        </div>
+                        {(() => {
+                            const isOwnerOrAdmin = canEditQuiz(selectedItemAction);
+                            return (
+                                <div className="p-3 bg-gray-50 space-y-1">
+                                    {!isOwnerOrAdmin && (
+                                        <div className="mb-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-medium flex items-center gap-2">
+                                            <Icons.Lock size={16} className="text-amber-600 flex-shrink-0" />
+                                            <span>Đề thi được tạo bởi <b>{selectedItemAction.author?.username || 'giáo viên khác'}</b>. Bạn chỉ có quyền xem thử hoặc copy link.</span>
+                                        </div>
+                                    )}
+
+                                    {isOwnerOrAdmin && (
+                                        <button onClick={() => { handleEditQuiz(selectedItemAction); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
+                                            <div className="text-ios-blue bg-blue-50 p-2 rounded-lg"><Icons.Edit3 size={18}/></div> Chỉnh sửa nội dung
+                                        </button>
+                                    )}
+                                    
+                                    {selectedItemAction.config.quizType === 'bank' && isOwnerOrAdmin && (
+                                        <button onClick={() => { setGenerateBankConfig({ bank: selectedItemAction }); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
+                                            <div className="text-emerald-600 bg-emerald-50 p-2 rounded-lg"><Icons.RefreshCw size={18}/></div> Tạo đề thi từ ngân hàng này
+                                        </button>
+                                    )}
+                                    
+                                    <button onClick={() => { window.open(`/?id=${selectedItemAction.id}`, '_blank'); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
+                                        <div className="text-emerald-600 bg-emerald-50 p-2 rounded-lg"><Icons.Eye size={18}/></div> Xem / Làm thử đề thi
+                                    </button>
+
+                                    <button onClick={() => { handleCopyLink(selectedItemAction.id); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
+                                        <div className="text-orange-500 bg-orange-50 p-2 rounded-lg"><Icons.LinkIcon size={18}/></div> Copy link chia sẻ
+                                    </button>
+                                    
+                                    {isOwnerOrAdmin && (
+                                        <button onClick={() => { handleDeleteQuiz(selectedItemAction.id); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-red-600 font-medium">
+                                            <div className="text-red-600 bg-red-50 p-2 rounded-lg"><Icons.Trash size={18}/></div> Xóa {selectedItemAction.config.quizType === 'bank' ? 'ngân hàng' : 'đề thi'}
+                                        </button>
+                                    )}
+                                </div>
+                            );
+                        })()}
                         
                         <div className="p-4 bg-white sm:hidden border-t border-gray-100">
                             <button onClick={() => setSelectedItemAction(null)} className="w-full py-3 bg-gray-100 text-gray-800 font-bold rounded-xl active:bg-gray-200 transition-colors">Đóng</button>

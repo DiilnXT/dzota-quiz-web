@@ -12,7 +12,20 @@ export async function GET(request: Request) {
   }
   
   try {
-    const html = fs.readFileSync(path.join(process.cwd(), 'public/index.html'), 'utf8')
+    let html = fs.readFileSync(path.join(process.cwd(), 'public/index.html'), 'utf8')
+    let sessionData = {}
+    try {
+      sessionData = JSON.parse(sessionStr)
+    } catch (e) {}
+
+    // Inject session info into window.__DZOTA_SESSION__ so client knows who is logged in
+    const injectionScript = `<script>window.__DZOTA_SESSION__ = ${JSON.stringify(sessionData)};</script>`
+    if (html.includes('</head>')) {
+      html = html.replace('</head>', `${injectionScript}</head>`)
+    } else {
+      html = injectionScript + html
+    }
+
     return new NextResponse(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
   } catch (error) {
     return new NextResponse('Error loading creator', { status: 500 })
