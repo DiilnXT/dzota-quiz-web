@@ -1129,9 +1129,9 @@ export default function DashboardClient({
           MODAL: XEM DANH SÁCH BÀI TEST CỦA MỘT GIÁO VIÊN (ADMIN)
       ───────────────────────────────────────────────────────────── */}
       {viewingUserQuizzes && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-6 border border-slate-100 animate-in fade-in zoom-in-95 max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full border border-slate-100 animate-in fade-in zoom-in-95 max-h-[85vh] sm:max-h-[88vh] flex flex-col overflow-hidden my-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
               <div>
                 <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
                   <FileText size={20} className="text-indigo-600" />
@@ -1143,13 +1143,13 @@ export default function DashboardClient({
               </div>
               <button
                 onClick={() => setViewingUserQuizzes(null)}
-                className="text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-slate-100 cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-slate-100 cursor-pointer flex-shrink-0"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto py-4 space-y-3">
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-3 min-h-0">
               {!viewingUserQuizzes.quizzes || viewingUserQuizzes.quizzes.length === 0 ? (
                 <div className="py-12 text-center text-slate-400">
                   <FileText size={32} className="mx-auto mb-2 text-slate-300" />
@@ -1199,10 +1199,10 @@ export default function DashboardClient({
               )}
             </div>
 
-            <div className="pt-3 border-t border-slate-100 flex justify-end">
+            <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex justify-end flex-shrink-0">
               <button
                 onClick={() => setViewingUserQuizzes(null)}
-                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                className="px-5 py-2.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
               >
                 Đóng
               </button>
@@ -1215,62 +1215,64 @@ export default function DashboardClient({
           MODAL: GỬI THÔNG BÁO CHO GIÁO VIÊN (ADMIN)
       ───────────────────────────────────────────────────────────── */}
       {sendNotifModal.isOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-slate-100 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-slate-100 animate-in fade-in zoom-in-95 max-h-[85vh] sm:max-h-[88vh] flex flex-col overflow-hidden my-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
                   <Send size={16} />
                 </div>
-                <div>
-                  <h3 className="font-extrabold text-slate-900 text-base">
+                <div className="min-w-0">
+                  <h3 className="font-extrabold text-slate-900 text-sm sm:text-base truncate">
                     {sendNotifModal.targetAll
                       ? 'Gửi Thông Báo Toàn Trường'
                       : `Gửi Cho: ${sendNotifModal.targetUser?.name || sendNotifModal.targetUser?.username}`}
                   </h3>
-                  <p className="text-[11px] text-slate-400 font-medium">
-                    Thông báo sẽ xuất hiện ngay lập tức trong hộp thư của tài khoản
+                  <p className="text-[11px] text-slate-400 font-medium truncate">
+                    Thông báo sẽ xuất hiện ngay trong hộp thư của tài khoản
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setSendNotifModal({ isOpen: false, targetUser: null, targetAll: false })}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 cursor-pointer flex-shrink-0"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleSendNotification} className="space-y-3.5 mt-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Tiêu đề thông báo</label>
-                <input
-                  type="text"
-                  placeholder="Ví dụ: Cập nhật hạn mức đề thi mới / Chúc mừng bạn..."
-                  value={notifTitle}
-                  onChange={(e) => setNotifTitle(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600"
-                  required
-                />
+            <form onSubmit={handleSendNotification} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-3.5 min-h-0">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Tiêu đề thông báo</label>
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: Cập nhật hạn mức đề thi mới / Chúc mừng bạn..."
+                    value={notifTitle}
+                    onChange={(e) => setNotifTitle(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nội dung thông báo</label>
+                  <textarea
+                    rows={4}
+                    placeholder="Nhập nội dung chi tiết muốn gửi..."
+                    value={notifMessage}
+                    onChange={(e) => setNotifMessage(e.target.value)}
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600"
+                    required
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nội dung thông báo</label>
-                <textarea
-                  rows={4}
-                  placeholder="Nhập nội dung chi tiết muốn gửi..."
-                  value={notifMessage}
-                  onChange={(e) => setNotifMessage(e.target.value)}
-                  className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600"
-                  required
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => setSendNotifModal({ isOpen: false, targetUser: null, targetAll: false })}
-                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                  className="px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
                 >
                   Hủy
                 </button>
@@ -1292,9 +1294,9 @@ export default function DashboardClient({
           MODAL: THÊM / SỬA TÀI KHOẢN GIÁO VIÊN
       ───────────────────────────────────────────────────────────── */}
       {isAddUserOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-slate-100 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-slate-100 animate-in fade-in zoom-in-95 max-h-[85vh] sm:max-h-[88vh] flex flex-col overflow-hidden my-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
               <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
                 <Plus size={18} className="text-indigo-600" />
                 {editingUser ? `Chỉnh Sửa: ${editingUser.name || editingUser.username}` : 'Cấp Quyền Giáo Viên Mới'}
@@ -1310,89 +1312,91 @@ export default function DashboardClient({
               </button>
             </div>
 
-            <form onSubmit={handleSaveUser} className="space-y-3.5 mt-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Tên Giáo Viên</label>
-                <input
-                  type="text"
-                  placeholder="Ví dụ: Thầy Nguyễn Văn Nam"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Email / Gmail (Đăng nhập Google)</label>
-                <input
-                  type="email"
-                  placeholder="ví dụ: giaovien@gmail.com"
-                  value={formEmail}
-                  onChange={(e) => setFormEmail(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Tên đăng nhập (Username)</label>
-                <input
-                  type="text"
-                  placeholder="Username đăng nhập"
-                  value={formUsername}
-                  onChange={(e) => setFormUsername(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleSaveUser} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-3.5 min-h-0">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Quyền Hạn</label>
-                  <select
-                    value={formRole}
-                    onChange={(e) => setFormRole(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none"
-                  >
-                    <option value="TEACHER">Giáo Viên</option>
-                    <option value="ADMIN">Quản Trị Viên</option>
-                  </select>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Tên Giáo Viên</label>
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: Thầy Nguyễn Văn Nam"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600"
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Hạn Mức Đề Thi</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Email / Gmail (Đăng nhập Google)</label>
                   <input
-                    type="number"
-                    min="1"
-                    max="9999"
-                    value={formMaxTests}
-                    onChange={(e) => setFormMaxTests(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none"
+                    type="email"
+                    placeholder="ví dụ: giaovien@gmail.com"
+                    value={formEmail}
+                    onChange={(e) => setFormEmail(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Tên đăng nhập (Username)</label>
+                  <input
+                    type="text"
+                    placeholder="Username đăng nhập"
+                    value={formUsername}
+                    onChange={(e) => setFormUsername(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600"
                     required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Quyền Hạn</label>
+                    <select
+                      value={formRole}
+                      onChange={(e) => setFormRole(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none"
+                    >
+                      <option value="TEACHER">Giáo Viên</option>
+                      <option value="ADMIN">Quản Trị Viên</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Hạn Mức Đề Thi</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="9999"
+                      value={formMaxTests}
+                      onChange={(e) => setFormMaxTests(Number(e.target.value))}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    {editingUser ? 'Mật khẩu mới (Để trống nếu không đổi)' : 'Mật khẩu dự phòng'}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder={editingUser ? 'Nhập mật khẩu mới...' : 'Mặc định: Gv@123456'}
+                    value={formPassword}
+                    onChange={(e) => setFormPassword(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 outline-none"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                  {editingUser ? 'Mật khẩu mới (Để trống nếu không đổi)' : 'Mật khẩu dự phòng'}
-                </label>
-                <input
-                  type="text"
-                  placeholder={editingUser ? 'Nhập mật khẩu mới...' : 'Mặc định: Gv@123456'}
-                  value={formPassword}
-                  onChange={(e) => setFormPassword(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 outline-none"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => {
                     setIsAddUserOpen(false)
                     setEditingUser(null)
                   }}
-                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                  className="px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
                 >
                   Hủy
                 </button>
@@ -1413,9 +1417,9 @@ export default function DashboardClient({
           MODAL: CÀI ĐẶT HỆ THỐNG & GEMINI API (ADMIN)
       ───────────────────────────────────────────────────────────── */}
       {isSettingsOpen && !isTeacher && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full p-6 border border-slate-100 animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full border border-slate-100 animate-in fade-in zoom-in-95 max-h-[85vh] sm:max-h-[88vh] flex flex-col overflow-hidden my-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
               <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
                 <Settings size={18} className="text-indigo-600" />
                 Cài Đặt Hệ Thống & Trí Tuệ Nhân Tạo
@@ -1428,7 +1432,7 @@ export default function DashboardClient({
               </button>
             </div>
 
-            <div className="space-y-5 mt-4">
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 min-h-0">
               {/* Active Background Switch */}
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
                 <div>
@@ -1441,7 +1445,7 @@ export default function DashboardClient({
                   type="checkbox"
                   checked={activeBgEnabled}
                   onChange={(e) => setActiveBgEnabled(e.target.checked)}
-                  className="w-5 h-5 accent-indigo-600 cursor-pointer"
+                  className="w-5 h-5 accent-indigo-600 cursor-pointer flex-shrink-0 ml-3"
                 />
               </div>
 
@@ -1472,24 +1476,24 @@ export default function DashboardClient({
                   ))}
                 </select>
               </div>
+            </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setIsSettingsOpen(false)}
-                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
-                >
-                  Đóng
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSaveAiSettings}
-                  disabled={isSavingSettings}
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer disabled:opacity-60"
-                >
-                  {isSavingSettings ? 'Đang lưu...' : 'Lưu Cài Đặt'}
-                </button>
-              </div>
+            <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsSettingsOpen(false)}
+                className="px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+              >
+                Đóng
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAiSettings}
+                disabled={isSavingSettings}
+                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer disabled:opacity-60"
+              >
+                {isSavingSettings ? 'Đang lưu...' : 'Lưu Cài Đặt'}
+              </button>
             </div>
           </div>
         </div>
