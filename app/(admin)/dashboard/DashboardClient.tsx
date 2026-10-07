@@ -246,8 +246,9 @@ export default function DashboardClient({
   const [isLoading, setIsLoading] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
 
-  // Notifications Drawer
+  // Notifications Drawer & Alert
   const [isNotifOpen, setIsNotifOpen] = useState(false)
+  const [notifAlert, setNotifAlert] = useState<{ show: boolean; count: number } | null>(null)
   const unreadCount = notifications.filter(n => !n.isRead).length
 
   // Quick Gmail Grant State (Admin)
@@ -335,12 +336,63 @@ export default function DashboardClient({
     setTimeout(() => setToast(null), 4000)
   }
 
-  // Load classes and history if needed
+  const handleMarkAllNotificationsAsRead = async () => {
+    try {
+      await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ markAllAsRead: true })
+      })
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+    } catch (e) {}
+  }
+
+  // Kiểm tra và hiển thị thông báo mới: chỉ hiển thị 1 lần duy nhất, khi nào có thông báo mới nữa mới hiển thị lại
   useEffect(() => {
-    if (unreadCount > 0) {
-      showToast(`🔔 Bạn có ${unreadCount} thông báo mới! Bấm chuông để xem chi tiết.`, 'info')
+    const checkNotificationAlert = (notifs: NotificationItem[]) => {
+      const unreads = notifs.filter(n => !n.isRead)
+      if (unreads.length === 0) return
+
+      const latestUnread = unreads[0]
+      const storageKey = `dzota_alerted_notif_${session?.id || 'current'}`
+      const lastAlertedId = typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null
+
+      if (lastAlertedId !== latestUnread.id) {
+        setNotifAlert({ show: true, count: unreads.length })
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(storageKey, latestUnread.id)
+        }
+      }
     }
-  }, [])
+
+    checkNotificationAlert(notifications)
+
+    // Polling định kỳ mỗi 45s để phát hiện thông báo mới theo thời gian thực
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch('/api/notifications')
+        if (res.ok) {
+          const data = await res.json()
+          if (Array.isArray(data.notifications)) {
+            setNotifications(data.notifications)
+            checkNotificationAlert(data.notifications)
+          }
+        }
+      } catch (e) {}
+    }, 45000)
+
+    return () => clearInterval(interval)
+  }, [session?.id])
+
+  // Tự động ẩn popup thông báo mới sau 10 giây nếu người dùng không thao tác
+  useEffect(() => {
+    if (notifAlert?.show) {
+      const timer = setTimeout(() => {
+        setNotifAlert(null)
+      }, 10000)
+      return () => clearTimeout(timer)
+    }
+  }, [notifAlert])
 
   // Listen for tab navigation from the left vertical sidebar
   useEffect(() => {
@@ -437,6 +489,29 @@ export default function DashboardClient({
           if (hData.history) setHistory(hData.history)
         }
       }
+
+      // Làm mới thông báo
+      try {
+        const notifRes = await fetch('/api/notifications')
+        if (notifRes.ok) {
+          const nData = await notifRes.json()
+          if (Array.isArray(nData.notifications)) {
+            setNotifications(nData.notifications)
+            const unreads = nData.notifications.filter((n: any) => !n.isRead)
+            if (unreads.length > 0) {
+              const latestUnread = unreads[0]
+              const storageKey = `dzota_alerted_notif_${session?.id || 'current'}`
+              const lastAlertedId = typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null
+              if (lastAlertedId !== latestUnread.id) {
+                setNotifAlert({ show: true, count: unreads.length })
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem(storageKey, latestUnread.id)
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {}
 
       showToast('Đã làm mới dữ liệu!')
     } catch (e) {
@@ -1090,6 +1165,68 @@ export default function DashboardClient({
         }`}>
           {toast.type === 'success' ? <Check size={18} /> : toast.type === 'info' ? <Bell size={18} /> : <X size={18} />}
           <span className="text-sm">{toast.message}</span>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          POPUP THÔNG BÁO MỚI (CHỈ HIỂN THỊ 1 LẦN DUY NHẤT CHO MỖI THÔNG BÁO MỚI)
+      ───────────────────────────────────────────────────────────── */}
+      {notifAlert?.show && !toast && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm w-full animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="bg-slate-900/95 dark:bg-[#111827]/95 backdrop-blur-md border border-indigo-500/40 text-white p-4 rounded-2xl shadow-2xl shadow-indigo-950/50 flex items-center justify-between gap-3 relative overflow-hidden group">
+            {/* Glow effect */}
+            <div className="absolute -left-6 -top-6 w-20 h-20 bg-indigo-500/20 rounded-full blur-xl pointer-events-none" />
+
+            <div
+              onClick={() => {
+                setIsNotifOpen(true)
+                setNotifAlert(null)
+              }}
+              className="flex items-center gap-3.5 flex-1 cursor-pointer"
+            >
+              <div className="relative flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/30 group-hover:scale-105 transition-transform">
+                  <Bell size={18} className="animate-wiggle" />
+                </div>
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+                </span>
+              </div>
+
+              <div>
+                <h4 className="font-black text-sm text-white tracking-tight flex items-center gap-2">
+                  <span>Bạn có thông báo mới</span>
+                  <span className="text-[10px] bg-rose-500 text-white font-black px-1.5 py-0.5 rounded-full">
+                    Mới
+                  </span>
+                </h4>
+                <p className="text-[11px] text-slate-300 font-medium mt-0.5 flex items-center gap-1">
+                  <span>Bấm để xem chi tiết tin nhắn</span>
+                  <ChevronRight size={12} className="text-indigo-400 group-hover:translate-x-1 transition-transform" />
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <button
+                onClick={() => {
+                  setIsNotifOpen(true)
+                  setNotifAlert(null)
+                }}
+                className="px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition cursor-pointer shadow-xs active:scale-95"
+              >
+                Xem
+              </button>
+              <button
+                onClick={() => setNotifAlert(null)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                title="Đóng thông báo"
+              >
+                <X size={15} />
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -3524,12 +3661,22 @@ export default function DashboardClient({
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() => setIsNotifOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-slate-100 cursor-pointer"
-              >
-                <X size={18} />
-              </button>
+              <div className="flex items-center gap-2">
+                {unreadCount > 0 && (
+                  <button
+                    onClick={handleMarkAllNotificationsAsRead}
+                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 px-2.5 py-1 rounded-lg hover:bg-indigo-50 transition cursor-pointer"
+                  >
+                    Đã đọc tất cả
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsNotifOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-slate-100 cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
