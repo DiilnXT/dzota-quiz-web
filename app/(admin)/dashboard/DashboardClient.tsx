@@ -53,7 +53,8 @@ import {
   UserCheck,
   CheckCircle2,
   ChevronLeft,
-  User as UserIcon
+  User as UserIcon,
+  LayoutDashboard
 } from 'lucide-react'
 
 interface TeacherQuiz {
@@ -211,8 +212,16 @@ export default function DashboardClient({
   session
 }: DashboardClientProps) {
   // Navigation Tabs State
-  const defaultTab = isStudent ? 'history' : 'quizzes'
-  const [activeTab, setActiveTab] = useState<'quizzes' | 'classes' | 'teachers' | 'settings' | 'profile' | 'history'>(defaultTab)
+  const defaultTab = isStudent ? 'history' : 'dashboard'
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'quizzes' | 'classes' | 'teachers' | 'settings' | 'profile' | 'history'>(defaultTab)
+
+  const switchTab = (tab: 'dashboard' | 'quizzes' | 'classes' | 'teachers' | 'settings' | 'profile' | 'history') => {
+    setActiveTab(tab)
+    if (typeof window !== 'undefined') {
+      window.history.pushState({}, '', `/dashboard?tab=${tab}`)
+      window.dispatchEvent(new CustomEvent('dzota_tab_change', { detail: tab }))
+    }
+  }
 
   // User management filtering & editing
   const [userRoleFilter, setUserRoleFilter] = useState<'all' | 'teacher' | 'student' | 'admin'>('all')
@@ -333,12 +342,25 @@ export default function DashboardClient({
     }
   }, [])
 
+  // Listen for tab navigation from the left vertical sidebar
+  useEffect(() => {
+    const handleSidebarTabChange = (e: any) => {
+      if (e.detail) {
+        setActiveTab(e.detail)
+      }
+    }
+    window.addEventListener('dzota_tab_change', handleSidebarTabChange)
+    return () => {
+      window.removeEventListener('dzota_tab_change', handleSidebarTabChange)
+    }
+  }, [])
+
   // Sync tab with URL search parameter (?tab=...)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       const tab = params.get('tab')
-      if (tab && ['quizzes', 'classes', 'teachers', 'settings', 'profile', 'history'].includes(tab)) {
+      if (tab && ['dashboard', 'overview', 'quizzes', 'classes', 'teachers', 'settings', 'profile', 'history'].includes(tab)) {
         if (isStudent && (tab === 'history' || tab === 'profile')) {
           setActiveTab(tab as any)
         } else if (!isStudent) {
@@ -1142,21 +1164,6 @@ export default function DashboardClient({
             <span className="hidden sm:inline">Đổi Mật Khẩu</span>
           </button>
 
-          {!isTeacher && !isStudent && (
-            <button
-              onClick={() => setActiveTab('settings')}
-              className={`border px-3.5 py-2.5 rounded-xl font-bold shadow-xs transition-all flex items-center gap-1.5 text-xs cursor-pointer ${
-                activeTab === 'settings'
-                  ? 'bg-indigo-600 text-white border-indigo-600'
-                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600'
-              }`}
-              title="Cài đặt Web & Hệ thống"
-            >
-              <Settings size={14} />
-              <span className="hidden sm:inline">Cài Đặt Web</span>
-            </button>
-          )}
-
           {!isStudent && (
             <Link
               href="/creator"
@@ -1170,109 +1177,9 @@ export default function DashboardClient({
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          NAVIGATION TABS (CHO TỪNG VAI TRÒ)
-      ───────────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 border-b border-slate-200/80 pb-2 overflow-x-auto scrollbar-none">
-        {isStudent ? (
-          <>
-            <button
-              onClick={() => setActiveTab('history')}
-              className={`px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === 'history'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-              }`}
-            >
-              <BarChart2 size={16} /> Lịch Sử Làm Bài Hôm Nay
-            </button>
-            <button
-              onClick={() => setActiveTab('profile')}
-              className={`px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === 'profile'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-              }`}
-            >
-              <UserIcon size={16} /> Thông Tin Cá Nhân & Zalo
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              onClick={() => setActiveTab('quizzes')}
-              className={`px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === 'quizzes'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-              }`}
-            >
-              <FileText size={16} /> {isTeacher ? 'Đề Thi Của Tôi' : 'Quản Lý Đề Thi'}
-              <span className={`text-[10px] px-2 py-0.5 rounded-full ${activeTab === 'quizzes' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'}`}>
-                {quizzes.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('classes')}
-              className={`px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === 'classes'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-              }`}
-            >
-              <School size={16} /> Quản Lý Lớp Học & Học Sinh
-              <span className={`text-[10px] px-2 py-0.5 rounded-full ${activeTab === 'classes' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'}`}>
-                {classes.length}
-              </span>
-            </button>
-
-            {!isTeacher && (
-              <button
-                onClick={() => setActiveTab('teachers')}
-                className={`px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
-                  activeTab === 'teachers'
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-                }`}
-              >
-                <Shield size={16} /> Quản Lý Người Dùng & Phân Quyền
-                <span className={`text-[10px] px-2 py-0.5 rounded-full ${activeTab === 'teachers' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'}`}>
-                  {users.length}
-                </span>
-              </button>
-            )}
-
-            {!isTeacher && (
-              <button
-                onClick={() => setActiveTab('settings')}
-                className={`px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
-                  activeTab === 'settings'
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-                }`}
-              >
-                <Settings size={16} /> Cài Đặt Web & AI
-              </button>
-            )}
-
-            <button
-              onClick={() => setActiveTab('profile')}
-              className={`px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === 'profile'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-              }`}
-            >
-              <UserIcon size={16} /> Thông Tin Cá Nhân & Zalo
-            </button>
-          </>
-        )}
-      </div>
-
-      {/* ─────────────────────────────────────────────────────────────
           TAB: STUDENT PORTAL (LỊCH SỬ LÀM BÀI HÔM NAY)
       ───────────────────────────────────────────────────────────── */}
-      {isStudent && activeTab === 'history' && (
+      {isStudent && (activeTab === 'history' || activeTab === 'dashboard') && (
         <div className="space-y-6">
           {/* Banner thông báo dọn dẹp hàng ngày */}
           <div className="bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 border border-indigo-200/80 rounded-3xl p-5 flex items-start gap-3.5">
@@ -1385,6 +1292,366 @@ export default function DashboardClient({
                         </tr>
                       )
                     })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          TAB: TỔNG QUAN DASHBOARD (ADMIN & GIÁO VIÊN)
+      ───────────────────────────────────────────────────────────── */}
+      {!isStudent && activeTab === 'dashboard' && (
+        <div className="space-y-6">
+          {/* Welcome Banner & Quick Action Shortcuts */}
+          <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-700 rounded-3xl p-6 sm:p-8 text-white shadow-lg shadow-indigo-500/20 relative overflow-hidden">
+            <div className="absolute -right-10 -bottom-10 w-60 h-60 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-2 max-w-xl">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold text-white">
+                  <Sparkles size={14} className="text-amber-300" />
+                  <span>{isTeacher ? 'Bảng Điều Khiển Giáo Viên' : 'Trung Tâm Điều Hành Quản Trị'}</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+                  Xin chào, {profileName || session.username}! 👋
+                </h2>
+                <p className="text-white/80 text-sm font-medium leading-relaxed">
+                  {isTeacher
+                    ? `Bạn đã tạo ${quizzes.length}/${teacherLimit} đề thi được phân bổ. Dễ dàng quản lý bài test, phân quyền danh sách học sinh theo lớp và theo dõi kết quả.`
+                    : 'Toàn quyền kiểm soát hệ thống thi trắc nghiệm Dzota: quản lý đề thi, phê duyệt giáo viên, cấu hình trí tuệ nhân tạo Gemini và phân quyền lớp học.'}
+                </p>
+              </div>
+
+              {/* Fast Actions in Banner */}
+              <div className="flex flex-wrap items-center gap-3">
+                <Link
+                  href="/creator"
+                  className="px-5 py-3 rounded-2xl bg-white text-indigo-700 hover:bg-slate-50 font-black text-sm shadow-md transition-all flex items-center gap-2 active:scale-95 no-underline cursor-pointer"
+                >
+                  <Plus size={18} />
+                  <span>Tạo Đề Mới</span>
+                </Link>
+                <button
+                  onClick={() => switchTab('quizzes')}
+                  className="px-5 py-3 rounded-2xl bg-white/15 hover:bg-white/25 backdrop-blur-md text-white font-bold text-sm transition-all flex items-center gap-2 active:scale-95 cursor-pointer border border-white/20"
+                >
+                  <FileText size={18} />
+                  <span>{isTeacher ? 'Đề thi của tôi' : 'Quản lý Bài test'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Overview Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+            <div
+              onClick={() => switchTab('quizzes')}
+              className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-xs relative overflow-hidden group cursor-pointer hover:border-blue-300 hover:shadow-md transition-all"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  {isTeacher ? 'Đề thi của bạn' : 'Tổng Đề Thi'}
+                </span>
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <FileText size={16} />
+                </div>
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-slate-800">
+                {isTeacher ? `${quizzes.length}/${teacherLimit}` : quizzes.length}
+              </div>
+              {isTeacher && (
+                <div className="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${
+                      quizzes.length >= teacherLimit ? 'bg-rose-500' : 'bg-indigo-600'
+                    }`}
+                    style={{ width: `${Math.min(100, (quizzes.length / teacherLimit) * 100)}%` }}
+                  />
+                </div>
+              )}
+              <div className="text-[11px] text-blue-600 font-semibold mt-2 flex items-center gap-1 group-hover:underline">
+                <span>Xem chi tiết</span>
+                <ChevronRight size={12} />
+              </div>
+            </div>
+
+            <div
+              onClick={() => switchTab('quizzes')}
+              className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-xs relative overflow-hidden group cursor-pointer hover:border-emerald-300 hover:shadow-md transition-all"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Đang Mở</span>
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <CheckCircle2 size={16} />
+                </div>
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-slate-800">
+                {activeQuizzesCount}
+              </div>
+              <div className="text-[11px] text-emerald-600 font-semibold mt-2 flex items-center gap-1 group-hover:underline">
+                <span>Học sinh có thể làm</span>
+                <ChevronRight size={12} />
+              </div>
+            </div>
+
+            <div
+              onClick={() => switchTab('quizzes')}
+              className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-xs relative overflow-hidden group cursor-pointer hover:border-rose-300 hover:shadow-md transition-all"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Đã Khóa</span>
+                <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Lock size={16} />
+                </div>
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-slate-800">
+                {inactiveQuizzesCount}
+              </div>
+              <div className="text-[11px] text-rose-600 font-semibold mt-2 flex items-center gap-1 group-hover:underline">
+                <span>Tạm dừng truy cập</span>
+                <ChevronRight size={12} />
+              </div>
+            </div>
+
+            <div
+              onClick={() => switchTab('classes')}
+              className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-xs relative overflow-hidden group cursor-pointer hover:border-purple-300 hover:shadow-md transition-all"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  {isAdmin ? 'Lớp & Học Sinh' : 'Lớp Của Bạn'}
+                </span>
+                <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <School size={16} />
+                </div>
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-slate-800">
+                {classes.length}
+              </div>
+              <div className="text-[11px] text-purple-600 font-semibold mt-2 flex items-center gap-1 group-hover:underline">
+                <span>Quản lý phân quyền</span>
+                <ChevronRight size={12} />
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Modules Shortcuts Grid */}
+          <div>
+            <h3 className="text-base font-extrabold text-slate-800 tracking-tight mb-3 flex items-center gap-2">
+              <LayoutDashboard size={18} className="text-blue-600" />
+              <span>Phân Hệ Quản Lý Chính</span>
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Card 1: Quản lý đề thi */}
+              <div
+                onClick={() => switchTab('quizzes')}
+                className="bg-white p-5 rounded-3xl border border-slate-100 shadow-xs hover:border-blue-400 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+              >
+                <div>
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <FileText size={24} />
+                  </div>
+                  <h4 className="font-extrabold text-slate-800 text-base group-hover:text-blue-600 transition-colors">
+                    {isTeacher ? 'Đề Thi Của Tôi' : 'Quản Lý Bài Test'}
+                  </h4>
+                  <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">
+                    Xem danh sách, tìm kiếm, lọc đề thi, khóa/mở bài test, xem mật khẩu, sao chép link và phân quyền học sinh.
+                  </p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-blue-600">
+                  <span>Mở Quản Lý Bài Test</span>
+                  <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+
+              {/* Card 2: Lớp học & Học sinh */}
+              <div
+                onClick={() => switchTab('classes')}
+                className="bg-white p-5 rounded-3xl border border-slate-100 shadow-xs hover:border-purple-400 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+              >
+                <div>
+                  <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <School size={24} />
+                  </div>
+                  <h4 className="font-extrabold text-slate-800 text-base group-hover:text-purple-600 transition-colors">
+                    Lớp Học & Học Sinh
+                  </h4>
+                  <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">
+                    Tạo lớp học, quản lý danh sách học sinh theo Gmail, gán học sinh vào lớp và thiết lập quyền làm bài cho từng môn.
+                  </p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-purple-600">
+                  <span>Mở Quản Lý Lớp Học</span>
+                  <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+
+              {/* Card 3: Người dùng & Phân quyền (Admin only) */}
+              {isAdmin && (
+                <div
+                  onClick={() => switchTab('teachers')}
+                  className="bg-white p-5 rounded-3xl border border-slate-100 shadow-xs hover:border-amber-400 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                      <Shield size={24} />
+                    </div>
+                    <h4 className="font-extrabold text-slate-800 text-base group-hover:text-amber-600 transition-colors">
+                      Người Dùng & Phân Quyền
+                    </h4>
+                    <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">
+                      Phê duyệt quyền Giáo viên, chỉnh sửa hạn mức tạo đề, quản lý tài khoản Học sinh và gửi thông báo toàn hệ thống.
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-amber-600">
+                    <span>Mở Phân Quyền</span>
+                    <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              )}
+
+              {/* Card 4: Cài đặt Web & AI (Admin only) */}
+              {isAdmin && (
+                <div
+                  onClick={() => switchTab('settings')}
+                  className="bg-white p-5 rounded-3xl border border-slate-100 shadow-xs hover:border-emerald-400 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                      <Settings size={24} />
+                    </div>
+                    <h4 className="font-extrabold text-slate-800 text-base group-hover:text-emerald-600 transition-colors">
+                      Cài Đặt Web & AI
+                    </h4>
+                    <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">
+                      Cấu hình Gemini API Keys đa tầng, chọn model Gemini 2.5 Flash / Pro, quản lý hiệu ứng và hình nền đăng nhập.
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-600">
+                    <span>Mở Cài Đặt Hệ Thống</span>
+                    <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              )}
+
+              {/* Card 5: Cá nhân & Zalo */}
+              <div
+                onClick={() => switchTab('profile')}
+                className="bg-white p-5 rounded-3xl border border-slate-100 shadow-xs hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+              >
+                <div>
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <UserIcon size={24} />
+                  </div>
+                  <h4 className="font-extrabold text-slate-800 text-base group-hover:text-indigo-600 transition-colors">
+                    Hồ Sơ & Zalo Liên Hệ
+                  </h4>
+                  <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">
+                    Cập nhật Tên hiển thị, Ảnh đại diện, và Số điện thoại Zalo để học sinh bấm liên hệ trực tiếp khi làm bài.
+                  </p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-indigo-600">
+                  <span>Cập Nhật Thông Tin</span>
+                  <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Quizzes Preview Table */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-black text-slate-800 tracking-tight flex items-center gap-2">
+                  <FileText size={20} className="text-blue-600" />
+                  <span>{isTeacher ? 'Đề Thi Gần Đây Của Bạn' : 'Đề Thi Mới Nhất Trên Hệ Thống'}</span>
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">
+                  {quizzes.length > 0 ? `Hiển thị 5 đề mới nhất trong tổng số ${quizzes.length} đề thi` : 'Chưa có đề thi nào'}
+                </p>
+              </div>
+
+              <button
+                onClick={() => switchTab('quizzes')}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition cursor-pointer self-start sm:self-auto"
+              >
+                <span>Xem tất cả trong Quản lý Bài test</span>
+                <ChevronRight size={14} />
+              </button>
+            </div>
+
+            {quizzes.length === 0 ? (
+              <div className="py-12 text-center text-slate-400 text-sm">
+                Chưa có bài test nào. Bấm nút <strong>&quot;Tạo Đề Mới&quot;</strong> để bắt đầu soạn đề!
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-[11px] font-black uppercase text-slate-400">
+                      <th className="pb-3">Tên Đề Thi</th>
+                      <th className="pb-3 text-center">Môn Học</th>
+                      <th className="pb-3 text-center">Trạng Thái</th>
+                      <th className="pb-3 text-center">Số Câu</th>
+                      <th className="pb-3 text-right">Ngày Tạo</th>
+                      <th className="pb-3 text-right">Thao Tác Nhanh</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {quizzes.slice(0, 5).map(quiz => (
+                      <tr key={quiz.id} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="py-3.5 font-bold text-slate-800 max-w-xs truncate">
+                          <a
+                            href={`/?id=${quiz.id}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-slate-800 hover:text-blue-600 transition no-underline flex items-center gap-1.5"
+                          >
+                            <span>{quiz.title}</span>
+                            <ExternalLink size={12} className="text-slate-400 flex-shrink-0" />
+                          </a>
+                        </td>
+                        <td className="py-3.5 text-center">
+                          <span className="inline-block px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold text-xs">
+                            {quiz.category || 'Chung'}
+                          </span>
+                        </td>
+                        <td className="py-3.5 text-center">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-black text-[11px] ${
+                            quiz.isActive !== false ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                          }`}>
+                            {quiz.isActive !== false ? <CheckCircle2 size={12} /> : <Lock size={12} />}
+                            <span>{quiz.isActive !== false ? 'Đang mở' : 'Đã khóa'}</span>
+                          </span>
+                        </td>
+                        <td className="py-3.5 text-center font-bold text-slate-700">
+                          {quiz.questions?.length || 0}
+                        </td>
+                        <td className="py-3.5 text-right text-slate-400 text-xs font-medium">
+                          {formatTimeAgo(quiz.createdAt)}
+                        </td>
+                        <td className="py-3.5 text-right space-x-2">
+                          <button
+                            onClick={() => copyShareLink(quiz.id)}
+                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition cursor-pointer inline-flex items-center"
+                            title="Copy link làm bài"
+                          >
+                            <Copy size={13} />
+                          </button>
+                          <a
+                            href={`/?id=${quiz.id}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 transition cursor-pointer inline-flex items-center no-underline"
+                            title="Làm thử"
+                          >
+                            <ExternalLink size={13} />
+                          </a>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>

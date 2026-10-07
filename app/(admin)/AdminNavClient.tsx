@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -42,7 +42,6 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
   const { theme, isDark, toggleTheme } = useTheme()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [activeModal, setActiveModal] = useState<ModalType>(null)
-  const [modalFeedback, setModalFeedback] = useState<string | null>(null)
 
   const isTestsActive = pathname.startsWith('/tests')
   const isDashboardActive = pathname === '/dashboard'
@@ -64,6 +63,47 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
     ? 'Giáo viên'
     : 'Học sinh'
 
+  // Tab điều hướng chính
+  const [activeTab, setActiveTab] = useState<string>(isStudent ? 'history' : 'dashboard')
+
+  useEffect(() => {
+    const handleTabChange = (e: any) => {
+      if (e.detail) setActiveTab(e.detail)
+    }
+    window.addEventListener('dzota_tab_change', handleTabChange)
+
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const tab = params.get('tab')
+      if (tab) {
+        setActiveTab(tab)
+      }
+    }
+
+    return () => {
+      window.removeEventListener('dzota_tab_change', handleTabChange)
+    }
+  }, [isStudent])
+
+  const handleNavigateTab = (tab: string) => {
+    setMobileMenuOpen(false)
+    setActiveTab(tab)
+    if (pathname === '/dashboard') {
+      window.history.pushState({}, '', `/dashboard?tab=${tab}`)
+      window.dispatchEvent(new CustomEvent('dzota_tab_change', { detail: tab }))
+    } else {
+      window.location.href = `/dashboard?tab=${tab}`
+    }
+  }
+
+  // Active status checks
+  const isDashboardItemActive = isDashboardActive && (activeTab === 'dashboard' || activeTab === 'overview' || (isStudent && activeTab === 'history'))
+  const isQuizzesActive = isDashboardActive && activeTab === 'quizzes'
+  const isClassesActive = isDashboardActive && activeTab === 'classes'
+  const isTeachersActive = isDashboardActive && activeTab === 'teachers'
+  const isSettingsActive = isDashboardActive && activeTab === 'settings'
+  const isProfileActive = isDashboardActive && activeTab === 'profile'
+
   return (
     <>
       {/* Mobile Top Navigation Header */}
@@ -76,7 +116,10 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
           >
             {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
-          <Link href="/dashboard" className="flex items-center gap-2.5">
+          <button
+            onClick={() => handleNavigateTab(isStudent ? 'history' : 'dashboard')}
+            className="flex items-center gap-2.5 text-left cursor-pointer"
+          >
             <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 p-1 flex items-center justify-center shadow-xs border border-slate-200/60 dark:border-slate-700/60">
               <img src="/logo-dzota.png" alt="Dzota Logo" className="w-full h-full object-contain" />
             </div>
@@ -88,12 +131,11 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                 {isStudent ? 'Cổng học sinh' : 'Quản lý thi trắc nghiệm'}
               </span>
             </div>
-          </Link>
+          </button>
         </div>
 
         {/* Right tools (Theme switch, create, avatar) */}
         <div className="flex items-center gap-2">
-          {/* Theme switch button */}
           <button
             onClick={toggleTheme}
             className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
@@ -102,7 +144,6 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
             {isDark ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} />}
           </button>
 
-          {/* Chỉ Giáo viên & Admin mới có nút Tạo đề */}
           {!isStudent && (
             <Link
               href="/creator"
@@ -135,7 +176,10 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
       >
         {/* Sidebar Header Brand */}
         <div className="h-20 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800/80">
-          <Link href="/dashboard" className="flex items-center gap-3 group">
+          <button
+            onClick={() => handleNavigateTab(isStudent ? 'history' : 'dashboard')}
+            className="flex items-center gap-3 group text-left cursor-pointer"
+          >
             <div className="w-11 h-11 rounded-2xl bg-white dark:bg-slate-800 p-1.5 flex items-center justify-center shadow-sm border border-slate-200/70 dark:border-slate-700/70 transform transition-transform group-hover:scale-105">
               <img src="/logo-dzota.png" alt="Dzota Logo" className="w-full h-full object-contain" />
             </div>
@@ -147,7 +191,7 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                 {isStudent ? 'Cổng rèn luyện học sinh' : 'Hệ thống quản lý đề thi'}
               </span>
             </div>
-          </Link>
+          </button>
           <button
             onClick={() => setMobileMenuOpen(false)}
             className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
@@ -164,22 +208,21 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
               Tổng quan
             </h3>
             <div className="space-y-1">
-              <Link
-                href="/dashboard"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all ${
-                  isDashboardActive
-                    ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 shadow-xs'
+              <button
+                onClick={() => handleNavigateTab(isStudent ? 'history' : 'dashboard')}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
+                  isDashboardItemActive
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
                     : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                 }`}
               >
                 <LayoutDashboard size={18} />
                 <span>Dashboard {isStudent ? '(Lịch sử làm bài)' : ''}</span>
-              </Link>
+              </button>
             </div>
           </div>
 
-          {/* Section 2: QUẢN LÝ HỆ THỐNG (CHỈ DÀNH CHO GIÁO VIÊN & ADMIN - ẨN HOÀN TOÀN VỚI HỌC SINH) */}
+          {/* Section 2: QUẢN LÝ HỆ THỐNG (CHỈ DÀNH CHO GIÁO VIÊN & ADMIN) */}
           {!isStudent && (
             <div>
               <h3 className="px-3 text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
@@ -187,59 +230,65 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
               </h3>
               <div className="space-y-1">
                 {/* Quản lý đề thi */}
-                <Link
-                  href="/dashboard?tab=quizzes"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all relative ${
-                    isTestsActive
-                      ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 shadow-xs'
+                <button
+                  onClick={() => handleNavigateTab('quizzes')}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
+                    isQuizzesActive
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
                       : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <FileText size={18} className="text-blue-600 dark:text-blue-400" />
-                    <span>{isTeacher ? 'Đề thi của tôi' : 'Quản lý Bài test'}</span>
-                  </div>
-                </Link>
+                  <FileText size={18} />
+                  <span>{isTeacher ? 'Đề thi của tôi' : 'Quản lý Bài test'}</span>
+                </button>
 
                 {/* Quản lý Lớp học & Học sinh */}
-                <Link
-                  href="/dashboard?tab=classes"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all text-left"
+                <button
+                  onClick={() => handleNavigateTab('classes')}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
+                    isClassesActive
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                  }`}
                 >
-                  <School size={18} className="text-indigo-500" />
+                  <School size={18} />
                   <span>Lớp học & Học sinh</span>
-                </Link>
+                </button>
 
                 {/* Quản lý Người dùng & Phân quyền (Chỉ Admin) */}
                 {isAdmin && (
-                  <Link
-                    href="/dashboard?tab=teachers"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all text-left"
+                  <button
+                    onClick={() => handleNavigateTab('teachers')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
+                      isTeachersActive
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                    }`}
                   >
-                    <Shield size={18} className="text-purple-500" />
+                    <Shield size={18} />
                     <span>Người dùng & Phân quyền</span>
-                  </Link>
+                  </button>
                 )}
 
                 {/* Cài đặt Web & Hệ thống (Chỉ Admin) */}
                 {isAdmin && (
-                  <Link
-                    href="/dashboard?tab=settings"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all text-left"
+                  <button
+                    onClick={() => handleNavigateTab('settings')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
+                      isSettingsActive
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                    }`}
                   >
-                    <Settings size={18} className="text-amber-500" />
+                    <Settings size={18} />
                     <span>Cài đặt Web & AI</span>
-                  </Link>
+                  </button>
                 )}
               </div>
             </div>
           )}
 
-          {/* Section 3: CÔNG CỤ GIÁO DỤC (CHỈ DÀNH CHO GIÁO VIÊN & ADMIN - ẨN HOÀN TOÀN VỚI HỌC SINH) */}
+          {/* Section 3: CÔNG CỤ GIÁO DỤC (CHỈ DÀNH CHO GIÁO VIÊN & ADMIN) */}
           {!isStudent && (
             <div>
               <h3 className="px-3 text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
@@ -251,15 +300,17 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all ${
                     isCreatorActive
-                      ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 shadow-xs'
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
                       : 'text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Sparkles size={18} className="text-blue-500" />
+                    <Sparkles size={18} className={isCreatorActive ? 'text-white' : 'text-blue-500'} />
                     <span>Tạo Đề Mới (Bản Gốc)</span>
                   </div>
-                  <span className="bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-extrabold">
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold ${
+                    isCreatorActive ? 'bg-white/20 text-white' : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
+                  }`}>
                     Mới
                   </span>
                 </Link>
@@ -281,14 +332,17 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
               Tài khoản
             </h3>
             <div className="space-y-1">
-              <Link
-                href="/dashboard?tab=profile"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all text-left"
+              <button
+                onClick={() => handleNavigateTab('profile')}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
+                  isProfileActive
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                }`}
               >
-                <UserIcon size={18} className="text-emerald-500" />
+                <UserIcon size={18} />
                 <span>Cá nhân & Zalo</span>
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -343,7 +397,6 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
       {activeModal === 'bank' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
           <div className="bg-white dark:bg-[#1E293B] rounded-3xl max-w-lg w-full p-6 border border-slate-200 dark:border-slate-700 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center">
@@ -364,7 +417,6 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
               </button>
             </div>
 
-            {/* Modal Content */}
             <div className="py-4 text-sm text-slate-600 dark:text-slate-300 space-y-4">
               <div className="p-3 bg-blue-50 dark:bg-blue-950/60 rounded-xl border border-blue-100 dark:border-blue-900 text-xs text-blue-700 dark:text-blue-300">
                 Ngân hàng câu hỏi cho phép bạn import hàng trăm câu hỏi và tự động bốc ngẫu nhiên (random pick) theo từng lần thi!
@@ -378,7 +430,6 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
               </Link>
             </div>
 
-            {/* Modal Footer */}
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
               <button
                 onClick={() => setActiveModal(null)}
