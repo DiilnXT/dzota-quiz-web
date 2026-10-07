@@ -372,6 +372,7 @@ export default function DashboardClient({
   // System Settings Modal State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [geminiKeys, setGeminiKeys] = useState('')
+  const [geminiModel, setGeminiModel] = useState('gemini-2.5-flash')
   const defaultModels = [
     'gemini-2.5-flash',
     'gemini-2.5-pro',
