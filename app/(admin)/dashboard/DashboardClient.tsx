@@ -233,12 +233,12 @@ export default function DashboardClient({
   const [editEmail, setEditEmail] = useState('')
   const [isDeletingUser, setIsDeletingUser] = useState<string | null>(null)
 
-  const [users, setUsers] = useState<UserItem[]>(initialUsers)
-  const [quizzes, setQuizzes] = useState<QuizItem[]>(initialQuizzes)
-  const [notifications, setNotifications] = useState<NotificationItem[]>(initialNotifications)
-  const [classes, setClasses] = useState<ClassroomItem[]>(initialClasses)
-  const [history, setHistory] = useState<QuizHistoryItem[]>(initialHistory)
-  const [subjects, setSubjects] = useState<SubjectItem[]>(availableSubjects)
+  const [users, setUsers] = useState<UserItem[]>(initialUsers || [])
+  const [quizzes, setQuizzes] = useState<QuizItem[]>(initialQuizzes || [])
+  const [notifications, setNotifications] = useState<NotificationItem[]>(initialNotifications || [])
+  const [classes, setClasses] = useState<ClassroomItem[]>(initialClasses || [])
+  const [history, setHistory] = useState<QuizHistoryItem[]>(initialHistory || [])
+  const [subjects, setSubjects] = useState<SubjectItem[]>(availableSubjects || [])
 
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Tất cả')
@@ -249,7 +249,7 @@ export default function DashboardClient({
   // Notifications Drawer & Alert
   const [isNotifOpen, setIsNotifOpen] = useState(false)
   const [notifAlert, setNotifAlert] = useState<{ show: boolean; count: number } | null>(null)
-  const unreadCount = notifications.filter(n => !n.isRead).length
+  const unreadCount = (notifications || []).filter(n => !n?.isRead).length
 
   // Quick Gmail Grant State (Admin)
   const [quickGmail, setQuickGmail] = useState('')
@@ -350,10 +350,12 @@ export default function DashboardClient({
   // Kiểm tra và hiển thị thông báo mới: chỉ hiển thị 1 lần duy nhất, khi nào có thông báo mới nữa mới hiển thị lại
   useEffect(() => {
     const checkNotificationAlert = (notifs: NotificationItem[]) => {
-      const unreads = notifs.filter(n => !n.isRead)
+      if (!Array.isArray(notifs)) return
+      const unreads = notifs.filter(n => !n?.isRead)
       if (unreads.length === 0) return
 
       const latestUnread = unreads[0]
+      if (!latestUnread?.id) return
       const storageKey = `dzota_alerted_notif_${session?.id || 'current'}`
       const lastAlertedId = typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null
 
@@ -1140,20 +1142,20 @@ export default function DashboardClient({
   })
 
   // Stats
-  const activeQuizzesCount = quizzes.filter(q => q.isActive !== false).length
-  const inactiveQuizzesCount = quizzes.filter(q => q.isActive === false).length
+  const activeQuizzesCount = (quizzes || []).filter(q => q.isActive !== false).length
+  const inactiveQuizzesCount = (quizzes || []).filter(q => q.isActive === false).length
   const teacherLimit = currentUserInfo?.maxTests || 10
 
   // Categories list
-  const allCategories = ['Tất cả', ...Array.from(new Set(quizzes.map(q => q.category || 'Chung')))]
+  const allCategories = ['Tất cả', ...Array.from(new Set((quizzes || []).map(q => q.category || 'Chung')))]
 
   // Student Stats Calculation
-  const totalTestsTakenToday = history.length
+  const totalTestsTakenToday = (history || []).length
   const avgScoreToday = totalTestsTakenToday > 0
-    ? (history.reduce((acc, cur) => acc + (cur.score || 0), 0) / totalTestsTakenToday).toFixed(1)
+    ? ((history || []).reduce((acc, cur) => acc + (cur.score || 0), 0) / totalTestsTakenToday).toFixed(1)
     : '0.0'
   const highestScoreToday = totalTestsTakenToday > 0
-    ? Math.max(...history.map(h => h.score || 0)).toFixed(1)
+    ? Math.max(...(history || []).map(h => h.score || 0)).toFixed(1)
     : '0.0'
 
   return (

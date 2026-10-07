@@ -21,85 +21,103 @@ export default async function AdminDashboard() {
     redirect('/login')
   }
 
-  // Lấy thông tin user hiện tại từ database để đảm bảo mới nhất
-  const currentUser = await prisma.user.findFirst({
-    where: {
-      OR: [
-        { id: session.id },
-        ...(session.email ? [{ email: session.email }] : []),
-        ...(session.username ? [{ username: session.username }] : [])
-      ]
-    },
-    select: {
-      id: true,
-      username: true,
-      email: true,
-      name: true,
-      avatar: true,
-      phone: true,
-      role: true,
-      maxTests: true,
-      createdAt: true
+  if (!session) {
+    redirect('/login')
+  }
+
+  // Lấy thông tin user hiện tại từ database an toàn
+  let currentUser: any = null
+  try {
+    const orConditions: any[] = []
+    if (session.id) orConditions.push({ id: session.id })
+    if (session.email) orConditions.push({ email: session.email })
+    if (session.username) orConditions.push({ username: session.username })
+
+    if (orConditions.length > 0) {
+      currentUser = await prisma.user.findFirst({
+        where: { OR: orConditions },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          name: true,
+          avatar: true,
+          phone: true,
+          role: true,
+          maxTests: true,
+          createdAt: true
+        }
+      })
     }
-  })
+  } catch (e) {
+    console.error('Error fetching currentUser in dashboard:', e)
+  }
+
+  const userId = currentUser?.id || session.id || ''
 
   // Phân biệt quyền Admin, Giáo viên và Học sinh
-  const isSuperAdminEmail = session.email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com'
-  const isDuylni = session.username?.toLowerCase() === 'duylniedu'
+  const sessionEmail = (session.email || currentUser?.email || '').toLowerCase()
+  const sessionUsername = (session.username || currentUser?.username || '').toLowerCase()
+  const isSuperAdminEmail = sessionEmail === 'lenhatduy.vietnam@gmail.com'
+  const isDuylni = sessionUsername === 'duylniedu'
   const isUserAdmin = currentUser?.role?.toLowerCase() === 'admin' || session.role?.toLowerCase() === 'admin' || isDuylni || isSuperAdminEmail
   const isTeacher = !isUserAdmin && currentUser?.role?.toUpperCase() === 'TEACHER'
   const isStudent = !isUserAdmin && !isTeacher
 
   const currentRole = isUserAdmin ? 'ADMIN' : (isTeacher ? 'TEACHER' : 'STUDENT')
 
-  // Lấy danh sách thông báo của user
+  // Lấy danh sách thông báo của user an toàn
   let notifications: any[] = []
-  try {
-    if ((prisma as any).notification) {
-      notifications = await (prisma as any).notification.findMany({
-        where: { userId: session.id },
-        orderBy: { createdAt: 'desc' }
-      })
+  if (userId) {
+    try {
+      if ((prisma as any).notification) {
+        notifications = await (prisma as any).notification.findMany({
+          where: { userId },
+          orderBy: { createdAt: 'desc' }
+        })
+      }
+    } catch (e) {
+      console.error('Error fetching notifications:', e)
     }
-  } catch (e) {}
+  }
 
   // ─── 1. DÀNH CHO HỌC SINH (STUDENT PORTAL) ──────────────────────────
   if (isStudent) {
-    // Dọn dẹp dữ liệu cũ (chỉ giữ lại bài thi đã làm trong ngày hôm nay)
-    const startOfToday = new Date()
-    startOfToday.setHours(0, 0, 0, 0)
-    try {
-      await prisma.quizHistory.deleteMany({
-        where: {
-          userId: session.id,
-          createdAt: { lt: startOfToday }
-        }
-      })
-    } catch (e) {}
-
-    // Lấy lịch sử làm bài thi hôm nay
     let studentHistory: any[] = []
-    try {
-      studentHistory = await prisma.quizHistory.findMany({
-        where: { userId: session.id },
-        orderBy: { createdAt: 'desc' }
-      })
-    } catch (e) {}
+    if (userId) {
+      const startOfToday = new Date()
+      startOfToday.setHours(0, 0, 0, 0)
+      try {
+        await prisma.quizHistory.deleteMany({
+          where: {
+            userId,
+            createdAt: { lt: startOfToday }
+          }
+        })
+      } catch (e) {}
+
+      try {
+        studentHistory = await prisma.quizHistory.findMany({
+          where: { userId },
+          orderBy: { createdAt: 'desc' }
+        })
+      } catch (e) {}
+    }
 
     return (
       <DashboardClient
         initialUsers={currentUser ? [JSON.parse(JSON.stringify(currentUser))] : []}
         initialQuizzes={[]}
-        initialNotifications={JSON.parse(JSON.stringify(notifications))}
+        initialNotifications={JSON.parse(JSON.stringify(notifications || []))}
         initialClasses={[]}
-        initialHistory={JSON.parse(JSON.stringify(studentHistory))}
+        initialHistory={JSON.parse(JSON.stringify(studentHistory || []))}
         availableSubjects={[]}
         isTeacher={false}
         isStudent={true}
         currentUserInfo={currentUser ? JSON.parse(JSON.stringify(currentUser)) : null}
         session={{
-          id: session.id,
-          username: currentUser?.name || session.username,
+          id: userId,
+          username: currentUser?.name || session.username || 'Học sinh',
           role: 'STUDENT',
           email: currentUser?.email || session.email,
           avatar: currentUser?.avatar || session.avatar,
@@ -110,11 +128,12 @@ export default async function AdminDashboard() {
   }
 
   // ─── 2. DÀNH CHO ADMIN & GIÁO VIÊN ──────────────────────────────────
-  // Lấy danh sách lớp học
+  // Lấy danh sách lớp học an toàn
   let classes: any[] = []
   try {
+    const classWhereClause = isUserAdmin ? {} : (userId ? { teacherId: userId } : { id: 'none' })
     classes = await prisma.classroom.findMany({
-      where: isUserAdmin ? {} : { teacherId: session.id },
+      where: classWhereClause,
       include: {
         students: {
           orderBy: { createdAt: 'desc' }
@@ -125,28 +144,40 @@ export default async function AdminDashboard() {
       },
       orderBy: { createdAt: 'desc' }
     })
-  } catch (e) {}
+  } catch (e) {
+    console.error('Error fetching classes:', e)
+  }
 
-  // Lấy danh sách bài test
-  const quizWhereClause = isUserAdmin ? {} : { authorId: session.id }
-  const quizzes = await prisma.quickQuiz.findMany({
-    where: quizWhereClause,
-    orderBy: { createdAt: 'desc' },
-    include: {
-      author: {
-        select: { id: true, username: true, name: true, phone: true }
+  // Lấy danh sách bài test an toàn
+  let quizzes: any[] = []
+  try {
+    const quizWhereClause = isUserAdmin ? {} : (userId ? { authorId: userId } : { id: 'none' })
+    quizzes = await prisma.quickQuiz.findMany({
+      where: quizWhereClause,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        author: {
+          select: { id: true, username: true, name: true, phone: true }
+        }
       }
-    }
-  })
+    })
+  } catch (e) {
+    console.error('Error fetching quizzes:', e)
+  }
 
   // Lấy tất cả bài test hệ thống để xây dựng danh sách môn học cho phân quyền học sinh
-  const allSystemQuizzes = await prisma.quickQuiz.findMany({
-    select: { id: true, title: true, data: true },
-    orderBy: { createdAt: 'desc' }
-  })
+  let allSystemQuizzes: any[] = []
+  try {
+    allSystemQuizzes = await prisma.quickQuiz.findMany({
+      select: { id: true, title: true, data: true },
+      orderBy: { createdAt: 'desc' }
+    })
+  } catch (e) {
+    console.error('Error fetching all system quizzes:', e)
+  }
 
   const subjectMap: Record<string, { id: string; name: string; quizzes: { id: string; title: string }[] }> = {}
-  allSystemQuizzes.forEach(q => {
+  ;(allSystemQuizzes || []).forEach(q => {
     let parsedConfig: any = {}
     try { parsedConfig = JSON.parse(q.data)?.config || {} } catch (e) {}
     const catName = parsedConfig.category || parsedConfig.subject || 'Chung'
@@ -157,41 +188,47 @@ export default async function AdminDashboard() {
   })
   const availableSubjects = Object.values(subjectMap)
 
-  // Danh sách người dùng (nếu là admin)
+  // Danh sách người dùng (nếu là admin) an toàn
   let users: any[] = []
   if (isUserAdmin) {
-    users = await prisma.user.findMany({
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        name: true,
-        avatar: true,
-        phone: true,
-        role: true,
-        maxTests: true,
-        password: true,
-        createdAt: true,
-        _count: {
-          select: { quizzes: true, notifications: true }
+    try {
+      users = await prisma.user.findMany({
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          name: true,
+          avatar: true,
+          phone: true,
+          role: true,
+          maxTests: true,
+          password: true,
+          createdAt: true,
+          quizzes: {
+            select: {
+              id: true,
+              title: true,
+              createdAt: true,
+              data: true
+            },
+            orderBy: { createdAt: 'desc' }
+          }
         },
-        quizzes: {
-          select: {
-            id: true,
-            title: true,
-            createdAt: true,
-            data: true
-          },
+        orderBy: { createdAt: 'desc' }
+      })
+    } catch (e) {
+      console.error('Error fetching admin users list:', e)
+      try {
+        users = await prisma.user.findMany({
           orderBy: { createdAt: 'desc' }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    })
+        })
+      } catch (e2) {}
+    }
   }
 
-  const formattedUsers = users.map(u => ({
+  const formattedUsers = (users || []).map(u => ({
     ...u,
-    quizzes: u.quizzes.map((q: any) => {
+    quizzes: (u.quizzes || []).map((q: any) => {
       let parsedConfig: any = {}
       try {
         const d = JSON.parse(q.data)
@@ -200,7 +237,7 @@ export default async function AdminDashboard() {
       return {
         id: q.id,
         title: q.title,
-        createdAt: q.createdAt.toISOString(),
+        createdAt: q.createdAt ? new Date(q.createdAt).toISOString() : new Date().toISOString(),
         isActive: parsedConfig.isActive !== false,
         category: parsedConfig.category || 'Chung',
         timeLimit: parsedConfig.timeLimit || 15
@@ -208,7 +245,7 @@ export default async function AdminDashboard() {
     })
   }))
 
-  const formattedQuizzes = quizzes.map(q => {
+  const formattedQuizzes = (quizzes || []).map(q => {
     let parsedConfig: any = {}
     try {
       const d = JSON.parse(q.data)
@@ -217,7 +254,7 @@ export default async function AdminDashboard() {
     return {
       id: q.id,
       title: q.title,
-      createdAt: q.createdAt.toISOString(),
+      createdAt: q.createdAt ? new Date(q.createdAt).toISOString() : new Date().toISOString(),
       isActive: parsedConfig.isActive !== false,
       category: parsedConfig.category || 'Chung',
       timeLimit: parsedConfig.timeLimit || 15,
@@ -237,16 +274,16 @@ export default async function AdminDashboard() {
     <DashboardClient
       initialUsers={isUserAdmin ? JSON.parse(JSON.stringify(formattedUsers)) : (currentUser ? [JSON.parse(JSON.stringify(currentUser))] : [])}
       initialQuizzes={JSON.parse(JSON.stringify(formattedQuizzes))}
-      initialNotifications={JSON.parse(JSON.stringify(notifications))}
-      initialClasses={JSON.parse(JSON.stringify(classes))}
+      initialNotifications={JSON.parse(JSON.stringify(notifications || []))}
+      initialClasses={JSON.parse(JSON.stringify(classes || []))}
       initialHistory={[]}
-      availableSubjects={JSON.parse(JSON.stringify(availableSubjects))}
+      availableSubjects={JSON.parse(JSON.stringify(availableSubjects || []))}
       isTeacher={isTeacher}
       isStudent={false}
       currentUserInfo={currentUser ? JSON.parse(JSON.stringify(currentUser)) : null}
       session={{
-        id: session.id,
-        username: currentUser?.name || session.username,
+        id: userId,
+        username: currentUser?.name || session.username || 'Người dùng',
         role: currentRole,
         email: currentUser?.email || session.email,
         avatar: currentUser?.avatar || session.avatar,
