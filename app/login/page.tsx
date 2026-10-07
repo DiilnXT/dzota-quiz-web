@@ -17,6 +17,8 @@ import {
   Key
 } from 'lucide-react'
 
+const DEFAULT_GOOGLE_CLIENT_ID = '900284408463-uie2edl4gq37pkk81a7bkhuud3fooeh2.apps.googleusercontent.com'
+
 export default function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -27,10 +29,10 @@ export default function LoginPage() {
   const [focusedField, setFocusedField] = useState<string | null>(null)
   const [logoClicked, setLogoClicked] = useState(false)
 
-  // Google OAuth States
-  const [googleClientId, setGoogleClientId] = useState('')
+  // Google OAuth States (Đã gắn Client ID chính thức của bạn)
+  const [googleClientId, setGoogleClientId] = useState(DEFAULT_GOOGLE_CLIENT_ID)
   const [showGoogleModal, setShowGoogleModal] = useState(false)
-  const [tempClientId, setTempClientId] = useState('')
+  const [tempClientId, setTempClientId] = useState(DEFAULT_GOOGLE_CLIENT_ID)
   const [isSavingClientId, setIsSavingClientId] = useState(false)
   
   // Interactive 3D Card Tilt & Mouse Spotlight Glow
@@ -45,7 +47,7 @@ export default function LoginPage() {
       try {
         const localId = typeof window !== 'undefined' ? localStorage.getItem('dzota_google_client_id') || '' : ''
         const envId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
-        let id = envId || localId
+        let id = envId || localId || DEFAULT_GOOGLE_CLIENT_ID
         if (!id) {
           const res = await fetch('/api/auth/google-config')
           if (res.ok) {
@@ -240,9 +242,8 @@ export default function LoginPage() {
   }
 
   const triggerGooglePrompt = () => {
-    const activeId = googleClientId || (typeof window !== 'undefined' ? localStorage.getItem('dzota_google_client_id') : '')
+    const activeId = googleClientId || (typeof window !== 'undefined' ? localStorage.getItem('dzota_google_client_id') : '') || DEFAULT_GOOGLE_CLIENT_ID
     if (!activeId || !activeId.includes('.apps.googleusercontent.com')) {
-      // Chưa cấu hình Client ID thật: Mở bảng hướng dẫn miễn phí 100% kèm ô dán ID
       setShowGoogleModal(true)
       return
     }

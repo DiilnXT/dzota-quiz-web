@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { cookies } from 'next/headers'
 
+const DEFAULT_GOOGLE_CLIENT_ID = '900284408463-uie2edl4gq37pkk81a7bkhuud3fooeh2.apps.googleusercontent.com'
+
 // GET: Lấy Google Client ID đã cấu hình
 export async function GET() {
   try {
@@ -20,9 +22,13 @@ export async function GET() {
       } catch (e) {}
     }
 
+    if (!clientId) {
+      clientId = DEFAULT_GOOGLE_CLIENT_ID
+    }
+
     return NextResponse.json({ clientId: clientId.trim() })
   } catch (error: any) {
-    return NextResponse.json({ clientId: '' })
+    return NextResponse.json({ clientId: DEFAULT_GOOGLE_CLIENT_ID })
   }
 }
 
