@@ -16,6 +16,7 @@ import {
   ExternalLink,
   MoreVertical,
   Check,
+  CheckCheck,
   Clock,
   Sparkles,
   X,
@@ -23,7 +24,15 @@ import {
   User as UserIcon,
   Calendar,
   AlertCircle,
-  Copy
+  Copy,
+  Reply,
+  Pin,
+  Heart,
+  ThumbsUp,
+  Image as ImageIcon,
+  CornerDownRight,
+  Phone,
+  Video
 } from 'lucide-react'
 
 interface TeacherChatTabProps {
@@ -71,7 +80,48 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // 1. Fetch friend list & requests
+  // Search & Filter friends in sidebar
+  const [friendFilter, setFriendFilter] = useState('')
+
+  // Messenger / Zalo enhanced features
+  const [replyingMessage, setReplyingMessage] = useState<any | null>(null)
+  const [pinnedMessage, setPinnedMessage] = useState<any | null>(null)
+  const [reactions, setReactions] = useState<{ [msgId: string]: string }>({})
+  const [isTyping, setIsTyping] = useState(false)
+
+  // Use ref to keep track of active friend ID without triggering re-render loops or resetting active friend
+  const activeFriendIdRef = useRef<string | null>(null)
+  useEffect(() => {
+    activeFriendIdRef.current = activeFriend?.id || null
+    // Load pinned message for this friend from localStorage
+    if (activeFriend?.id && typeof window !== 'undefined') {
+      try {
+        const savedPin = localStorage.getItem(`dzota_pin_${myId}_${activeFriend.id}`)
+        setPinnedMessage(savedPin ? JSON.parse(savedPin) : null)
+      } catch (e) {
+        setPinnedMessage(null)
+      }
+    } else {
+      setPinnedMessage(null)
+    }
+    setReplyingMessage(null)
+  }, [activeFriend?.id, myId])
+
+  // Load reactions from localStorage
+  useEffect(() => {
+    if (activeFriend?.id && typeof window !== 'undefined') {
+      try {
+        const savedReactions = localStorage.getItem(`dzota_reactions_${myId}_${activeFriend.id}`)
+        if (savedReactions) {
+          setReactions(JSON.parse(savedReactions))
+        } else {
+          setReactions({})
+        }
+      } catch (e) {}
+    }
+  }, [activeFriend?.id, myId])
+
+  // 1. Fetch friend list & requests (STABLE: does not mutate or reset active conversation)
   const fetchFriends = async () => {
     try {
       const res = await fetch('/api/teachers/friends')
@@ -81,11 +131,18 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
         setIncomingRequests(data.incomingRequests || [])
         setOutgoingRequests(data.outgoingRequests || [])
 
-        // Update active friend online status if selected
-        if (activeFriend) {
-          const updated = (data.friends || []).find((f: any) => f.id === activeFriend.id)
+        // Update online status ONLY without replacing or jumping active friend
+        const curId = activeFriendIdRef.current
+        if (curId) {
+          const updated = (data.friends || []).find((f: any) => f.id === curId)
           if (updated) {
-            setActiveFriend(updated)
+            setActiveFriend((prev: any) => {
+              if (!prev || prev.id !== curId) return prev
+              if (prev.isOnline === updated.isOnline && prev.name === updated.name && prev.avatar === updated.avatar) {
+                return prev
+              }
+              return { ...prev, isOnline: updated.isOnline, name: updated.name, avatar: updated.avatar }
+            })
           }
         }
       }
@@ -94,22 +151,29 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
     }
   }
 
+  // Poll friend list on interval ONLY once mounted (not depending on activeFriend object)
   useEffect(() => {
     fetchFriends()
-    const interval = setInterval(fetchFriends, 8000) // Poll friends & online status every 8s
+    const interval = setInterval(fetchFriends, 8000)
     return () => clearInterval(interval)
-  }, [activeFriend?.id])
+  }, [])
 
-  // 2. Fetch messages when activeFriend changes
+  // 2. Fetch messages for the currently selected friend
   const fetchMessages = async (friendId: string) => {
     if (!friendId) return
     try {
       const res = await fetch(`/api/teachers/chat?friendId=${encodeURIComponent(friendId)}`)
       const data = await res.json()
       if (data.success) {
-        setMessages(data.messages || [])
-        if (data.friend) {
-          setActiveFriend((prev: any) => ({ ...prev, ...data.friend }))
+        // Chỉ cập nhật nếu vẫn đang trò chuyện với đúng friendId này (tránh race-condition khi bấm chuyển đổi)
+        if (activeFriendIdRef.current === friendId) {
+          setMessages(data.messages || [])
+          if (data.friend) {
+            setActiveFriend((prev: any) => {
+              if (!prev || prev.id !== friendId) return prev
+              return { ...prev, ...data.friend }
+            })
+          }
         }
       }
     } catch (e) {
@@ -118,13 +182,20 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
   }
 
   useEffect(() => {
-    if (!activeFriend?.id) return
+    const friendId = activeFriend?.id
+    if (!friendId) {
+      setMessages([])
+      return
+    }
+
     setIsLoadingMessages(true)
-    fetchMessages(activeFriend.id).finally(() => setIsLoadingMessages(false))
+    fetchMessages(friendId).finally(() => setIsLoadingMessages(false))
 
     // Real-time delta polling every 3 seconds for active conversation
     const interval = setInterval(() => {
-      fetchMessages(activeFriend.id)
+      if (activeFriendIdRef.current === friendId) {
+        fetchMessages(friendId)
+      }
     }, 3000)
 
     return () => clearInterval(interval)
@@ -133,7 +204,7 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
   // Scroll to bottom when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages.length])
 
   // 3. Search teachers
   const handleSearchTeachers = async (e?: React.FormEvent) => {
@@ -240,13 +311,21 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
     }
   }
 
-  // 5. Send Message (Text)
-  const handleSendMessage = async (e?: React.FormEvent) => {
+  // 5. Send Message (Text & Reply Quote)
+  const handleSendMessage = async (e?: React.FormEvent, customText?: string) => {
     if (e) e.preventDefault()
-    if (!messageInput.trim() || !activeFriend?.id || isSending) return
+    const rawText = customText !== undefined ? customText : messageInput
+    if (!rawText.trim() || !activeFriend?.id || isSending) return
 
-    const textToSend = messageInput.trim()
+    let textToSend = rawText.trim()
+    if (replyingMessage) {
+      const senderPrefix = replyingMessage.isMe ? 'Bạn' : (activeFriend?.name || 'Đồng nghiệp')
+      const snippet = replyingMessage.content.slice(0, 60).replace(/\n/g, ' ')
+      textToSend = `> 💬 Trả lời ${senderPrefix}: "${snippet}"\n\n${textToSend}`
+    }
+
     setMessageInput('')
+    setReplyingMessage(null)
     setIsSending(true)
 
     try {
@@ -269,6 +348,44 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
       console.error('Lỗi gửi tin nhắn:', e)
     } finally {
       setIsSending(false)
+    }
+  }
+
+  // Quick Like (Gửi nút Like nhanh giống Messenger / Zalo)
+  const handleSendQuickLike = () => {
+    handleSendMessage(undefined, '👍')
+  }
+
+  // Toggle Reaction Emoji (Thả cảm xúc ❤️ 👍 😂 🔥 👏)
+  const handleToggleReaction = (messageId: string, emoji: string) => {
+    if (!activeFriend?.id) return
+    const newReactions = { ...reactions }
+    if (newReactions[messageId] === emoji) {
+      delete newReactions[messageId]
+    } else {
+      newReactions[messageId] = emoji
+    }
+    setReactions(newReactions)
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(`dzota_reactions_${myId}_${activeFriend.id}`, JSON.stringify(newReactions))
+      } catch (e) {}
+    }
+  }
+
+  // Pin / Unpin message (Ghim tin nhắn quan trọng giống Zalo)
+  const handleTogglePinMessage = (msg: any) => {
+    if (!activeFriend?.id) return
+    if (pinnedMessage?.id === msg.id) {
+      setPinnedMessage(null)
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(`dzota_pin_${myId}_${activeFriend.id}`)
+      }
+    } else {
+      setPinnedMessage(msg)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`dzota_pin_${myId}_${activeFriend.id}`, JSON.stringify(msg))
+      }
     }
   }
 
@@ -444,6 +561,22 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
             </button>
           </div>
 
+          {/* Ô lọc nhanh bạn bè giống Messenger / Zalo */}
+          {friendSubTab === 'friends' && friends.length > 0 && (
+            <div className="p-2 border-b border-slate-100 dark:border-slate-800">
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={friendFilter}
+                  onChange={(e) => setFriendFilter(e.target.value)}
+                  placeholder="Lọc tên, gmail bạn bè..."
+                  className="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-200 outline-none focus:border-indigo-600"
+                />
+              </div>
+            </div>
+          )}
+
           {/* Danh sách người dùng */}
           <div className="flex-1 overflow-y-auto p-2.5 space-y-1.5">
             {friendSubTab === 'friends' ? (
@@ -456,15 +589,27 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
                   </p>
                 </div>
               ) : (
-                friends.map(f => {
+                friends
+                  .filter(f => {
+                    if (!friendFilter.trim()) return true
+                    const q = friendFilter.toLowerCase().trim()
+                    return (
+                      (f.name || '').toLowerCase().includes(q) ||
+                      (f.email || '').toLowerCase().includes(q) ||
+                      (f.username || '').toLowerCase().includes(q)
+                    )
+                  })
+                  .map(f => {
                   const isSelected = activeFriend?.id === f.id
                   return (
                     <div
                       key={f.id}
-                      onClick={() => setActiveFriend(f)}
+                      onClick={() => {
+                        setActiveFriend(f)
+                      }}
                       className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
                         isSelected
-                          ? 'bg-indigo-50/90 dark:bg-indigo-950/50 border-indigo-200 dark:border-indigo-800/80 shadow-xs'
+                          ? 'bg-indigo-50/90 dark:bg-indigo-950/50 border-indigo-200 dark:border-indigo-800/80 shadow-xs ring-1 ring-indigo-500/30'
                           : 'bg-white dark:bg-slate-800/80 border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50/70 dark:hover:bg-slate-800'
                       }`}
                     >
@@ -693,6 +838,29 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
                 </div>
               </div>
 
+              {/* Ghim tin nhắn trên đầu đoạn chat (Zalo Pin Message) */}
+              {pinnedMessage && (
+                <div className="px-4 py-2.5 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200/60 dark:border-amber-800/60 flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Pin size={15} className="text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                    <span className="font-bold text-amber-800 dark:text-amber-200 text-[11px] flex-shrink-0">
+                      Tin ghim:
+                    </span>
+                    <span className="truncate text-slate-700 dark:text-slate-300 font-medium">
+                      {pinnedMessage.type === 'QUIZ' ? `[Đề thi] ${pinnedMessage.quizTitle || pinnedMessage.content}` : pinnedMessage.content}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleTogglePinMessage(pinnedMessage)}
+                    className="text-slate-400 hover:text-rose-500 font-bold text-[10px] uppercase tracking-wider flex items-center gap-1 cursor-pointer flex-shrink-0"
+                    title="Bỏ ghim tin nhắn này"
+                  >
+                    <X size={13} />
+                    <span>Bỏ ghim</span>
+                  </button>
+                </div>
+              )}
+
               {/* Danh sách Tin nhắn (Chat Flow) */}
               <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 min-h-0 bg-slate-50/30 dark:bg-slate-900/20">
                 {isLoadingMessages ? (
@@ -714,36 +882,81 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
                       hour: '2-digit',
                       minute: '2-digit'
                     })
+                    const reaction = reactions[m.id]
+                    const isPinned = pinnedMessage?.id === m.id
 
                     return (
                       <div
                         key={m.id}
-                        className={`flex flex-col group ${isMe ? 'items-end' : 'items-start'}`}
+                        className={`flex flex-col group ${isMe ? 'items-end' : 'items-start'} relative`}
                       >
                         <div className="flex items-end gap-1.5 max-w-[85%] sm:max-w-[75%]">
-                          {/* Nút hành động tin nhắn (Thu hồi / Xóa) */}
-                          {isMe && !m.isRecalled && (
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 mb-1">
+                          {/* Nút hành động Messenger / Zalo khi rê chuột vào tin nhắn */}
+                          {!m.isRecalled && (
+                            <div className={`opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 mb-1 ${
+                              isMe ? 'order-first mr-1' : 'order-last ml-1'
+                            }`}>
+                              {/* Thả cảm xúc nhanh */}
                               <button
-                                onClick={() => handleRecallMessage(m.id)}
-                                title="Thu hồi tin nhắn"
-                                className="p-1 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                                onClick={() => handleToggleReaction(m.id, '❤️')}
+                                title="Thả tim"
+                                className="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs"
                               >
-                                <RotateCcw size={13} />
+                                ❤️
                               </button>
                               <button
-                                onClick={() => handleDeleteMessage(m.id)}
-                                title="Xóa tin nhắn ở phía tôi"
-                                className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                                onClick={() => handleToggleReaction(m.id, '👍')}
+                                title="Thích"
+                                className="p-1 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-xs"
                               >
-                                <Trash2 size={13} />
+                                👍
                               </button>
+
+                              {/* Trả lời (Quote) */}
+                              <button
+                                onClick={() => setReplyingMessage(m)}
+                                title="Trả lời tin nhắn"
+                                className="p-1 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                              >
+                                <Reply size={13} />
+                              </button>
+
+                              {/* Ghim tin nhắn */}
+                              <button
+                                onClick={() => handleTogglePinMessage(m)}
+                                title={isPinned ? 'Bỏ ghim' : 'Ghim tin nhắn'}
+                                className={`p-1 rounded-lg cursor-pointer ${
+                                  isPinned ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/40' : 'text-slate-400 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                }`}
+                              >
+                                <Pin size={13} />
+                              </button>
+
+                              {/* Thu hồi & Xóa chỉ dành cho tin của mình */}
+                              {isMe && (
+                                <>
+                                  <button
+                                    onClick={() => handleRecallMessage(m.id)}
+                                    title="Thu hồi tin nhắn"
+                                    className="p-1 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                                  >
+                                    <RotateCcw size={13} />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteMessage(m.id)}
+                                    title="Xóa tin nhắn ở phía tôi"
+                                    className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </>
+                              )}
                             </div>
                           )}
 
                           {/* Bubble tin nhắn */}
                           <div
-                            className={`p-3.5 rounded-3xl transition-all shadow-xs ${
+                            className={`p-3.5 rounded-3xl transition-all shadow-xs relative ${
                               isMe
                                 ? 'bg-indigo-600 text-white rounded-br-xs'
                                 : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-bl-xs border border-slate-100 dark:border-slate-700'
@@ -788,17 +1001,31 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
                               </div>
                             ) : (
                               /* TIN NHẮN VĂN BẢN & EMOJI */
-                              <p className="text-xs sm:text-sm whitespace-pre-wrap break-words leading-relaxed">
-                                {m.content}
-                              </p>
+                              <div>
+                                {m.content.startsWith('> 💬') ? (
+                                  <div className="mb-1 pb-1.5 border-b border-white/20 dark:border-slate-700/60 text-[11px] opacity-80 italic">
+                                    {m.content.split('\n\n')[0]}
+                                  </div>
+                                ) : null}
+                                <p className="text-xs sm:text-sm whitespace-pre-wrap break-words leading-relaxed">
+                                  {m.content.startsWith('> 💬') ? m.content.split('\n\n').slice(1).join('\n\n') : m.content}
+                                </p>
+                              </div>
                             )}
 
-                            {/* Giờ gửi */}
+                            {/* Badge phản ứng emoji (Zalo / Messenger Reaction Badge) */}
+                            {reaction && (
+                              <div className={`absolute -bottom-2 ${isMe ? 'left-2' : 'right-2'} bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full px-1.5 py-0.2 shadow-sm text-xs flex items-center animate-in zoom-in-75`}>
+                                <span>{reaction}</span>
+                              </div>
+                            )}
+
+                            {/* Giờ gửi & Checkmark đã nhận */}
                             <div className={`flex items-center justify-end gap-1 mt-1 text-[10px] ${
                               isMe ? 'text-indigo-200' : 'text-slate-400 dark:text-slate-500'
                             }`}>
                               <span>{timeStr}</span>
-                              {isMe && <Check size={11} />}
+                              {isMe && <CheckCheck size={12} className="text-indigo-200" />}
                             </div>
                           </div>
                         </div>
@@ -808,6 +1035,27 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
                 )}
                 <div ref={messagesEndRef} />
               </div>
+
+              {/* Hộp trả lời tin nhắn (Reply preview bar) */}
+              {replyingMessage && (
+                <div className="px-4 py-2 bg-indigo-50/90 dark:bg-indigo-950/50 border-t border-indigo-100 dark:border-indigo-900/60 flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <CornerDownRight size={14} className="text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
+                    <span className="font-bold text-indigo-700 dark:text-indigo-300">
+                      Đang trả lời {replyingMessage.isMe ? 'chính bạn' : activeFriend?.name}:
+                    </span>
+                    <span className="text-slate-600 dark:text-slate-300 truncate max-w-xs italic">
+                      &quot;{replyingMessage.content.slice(0, 50)}&quot;
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setReplyingMessage(null)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
 
               {/* Dải Emoji Nhanh */}
               {showEmojiPicker && (
@@ -844,18 +1092,30 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
                     type="text"
                     value={messageInput}
                     onChange={(e) => setMessageInput(e.target.value)}
-                    placeholder="Nhập tin nhắn với giáo viên..."
+                    placeholder={replyingMessage ? "Nhập câu trả lời..." : "Nhập tin nhắn với giáo viên..."}
                     className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600 transition"
                   />
 
-                  <button
-                    type="submit"
-                    disabled={!messageInput.trim() || isSending}
-                    className="p-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white rounded-2xl font-bold shadow-md shadow-indigo-200 dark:shadow-none transition flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Send size={16} />
-                    <span className="hidden sm:inline text-xs">Gửi</span>
-                  </button>
+                  {/* Nút gửi hoặc Thích nhanh 👍 */}
+                  {messageInput.trim() ? (
+                    <button
+                      type="submit"
+                      disabled={isSending}
+                      className="p-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white rounded-2xl font-bold shadow-md shadow-indigo-200 dark:shadow-none transition flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Send size={16} />
+                      <span className="hidden sm:inline text-xs">Gửi</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleSendQuickLike}
+                      className="p-2.5 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded-2xl font-bold transition flex items-center gap-1 cursor-pointer"
+                      title="Gửi Like nhanh 👍"
+                    >
+                      <ThumbsUp size={18} />
+                    </button>
+                  )}
                 </form>
               </div>
             </>

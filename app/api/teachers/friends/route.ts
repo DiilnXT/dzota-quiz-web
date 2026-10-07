@@ -156,6 +156,9 @@ export async function GET() {
       }
     }
 
+    // Sắp xếp danh sách bạn bè ổn định theo tên / ID để không bị nhảy vị trí khi polling
+    friends.sort((a, b) => (a.name || '').localeCompare(b.name || '') || a.id.localeCompare(b.id))
+
     return NextResponse.json({
       success: true,
       friends,
