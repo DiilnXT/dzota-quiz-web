@@ -64,8 +64,9 @@ export async function POST(request: Request) {
             email,
             name: resolvedGoogleUser.name || (isSuperAdminEmail ? 'DuylniEdu' : uniqueUsername),
             password: 'GOOGLE_OAUTH_USER',
-            role: isSuperAdminEmail ? 'ADMIN' : 'USER',
-            maxTests: isSuperAdminEmail ? 9999 : 10
+            role: isSuperAdminEmail ? 'ADMIN' : 'STUDENT',
+            maxTests: isSuperAdminEmail ? 9999 : 0,
+            avatar: resolvedGoogleUser.picture || null
           }
         })
       } else {
@@ -75,6 +76,11 @@ export async function POST(request: Request) {
         if (isSuperAdminEmail) {
           updateData.role = 'ADMIN'
           updateData.maxTests = 9999
+        } else if (user.role === 'USER') {
+          updateData.role = 'STUDENT'
+        }
+        if (!user.avatar && resolvedGoogleUser.picture) {
+          updateData.avatar = resolvedGoogleUser.picture
         }
         if (Object.keys(updateData).length > 0) {
           user = await prisma.user.update({
@@ -84,15 +90,24 @@ export async function POST(request: Request) {
         }
       }
 
-      const role = isSuperAdminEmail ? 'ADMIN' : user.role
+      const role = isSuperAdminEmail ? 'ADMIN' : (user.role || 'STUDENT')
       const cookieStore = await cookies()
+      const sessionData = {
+        id: user.id,
+        role,
+        username: user.username,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+        phone: user.phone
+      }
       cookieStore.set(
         'dzota_session',
-        JSON.stringify({ id: user.id, role, username: user.username, email }),
+        JSON.stringify(sessionData),
         { maxAge: 60 * 60 * 24 * 30, httpOnly: true, path: '/' }
       )
 
-      return NextResponse.json({ success: true, role, username: user.username, email })
+      return NextResponse.json({ success: true, ...sessionData })
     }
 
     // ─── 2. XỬ LÝ ĐĂNG NHẬP BẰNG TÀI KHOẢN CŨ (TRUYỀN THỐNG) ────────────

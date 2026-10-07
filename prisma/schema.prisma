@@ -77,16 +77,56 @@ model QuickQuiz {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  username      String         @unique
-  email         String?        @unique
+  id            String             @id @default(cuid())
+  username      String             @unique
+  email         String?            @unique
   name          String?
   password      String
-  role          String         @default("USER")
-  maxTests      Int            @default(10)
-  createdAt     DateTime       @default(now())
+  role          String             @default("STUDENT")
+  maxTests      Int                @default(10)
+  avatar        String?
+  phone         String?            // Zalo phone number (10 digits, starts with 0)
+  createdAt     DateTime           @default(now())
   quizzes       QuickQuiz[]
   notifications Notification[]
+  history       QuizHistory[]
+  classes       Classroom[]        @relation("TeacherClasses")
+}
+
+model QuizHistory {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizId       String
+  quizTitle    String
+  score        Float
+  correctCount Int
+  totalCount   Int
+  timeSpent    Int      @default(0) // seconds
+  details      String?  // JSON string of answers / details
+  createdAt    DateTime @default(now())
+}
+
+model Classroom {
+  id          String             @id @default(cuid())
+  name        String
+  description String?
+  teacherId   String
+  teacher     User               @relation("TeacherClasses", fields: [teacherId], references: [id], onDelete: Cascade)
+  students    ClassroomStudent[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+}
+
+model ClassroomStudent {
+  id              String    @id @default(cuid())
+  classId         String
+  class           Classroom @relation(fields: [classId], references: [id], onDelete: Cascade)
+  email           String
+  name            String?
+  allowedSubjects String?   // JSON string array of subject names
+  allowedQuizIds  String?   // JSON string array of quiz IDs
+  createdAt       DateTime  @default(now())
 }
 
 model Notification {

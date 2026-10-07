@@ -157,7 +157,7 @@ export async function GET(request: Request) {
     const quiz = await prisma.quickQuiz.findUnique({
       where: { id },
       include: {
-        author: { select: { id: true, username: true } }
+        author: { select: { id: true, username: true, name: true, phone: true, avatar: true } }
       }
     })
     
@@ -165,13 +165,54 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
     
-    const parsed = JSON.parse(quiz.data)
+    let parsed: any = {}
+    try {
+      parsed = JSON.parse(quiz.data)
+    } catch (e) {
+      parsed = {}
+    }
+
+    const isOwner = quiz.authorId && currentSession?.id === quiz.authorId
+    const isConfigRestricted =
+      parsed.config?.accessType === 'restricted' ||
+      (Array.isArray(parsed.config?.allowedGmails) && parsed.config.allowedGmails.length > 0)
+
+    if (isConfigRestricted && !isUserAdmin && !isOwner) {
+      const allowedGmails: string[] = Array.isArray(parsed.config?.allowedGmails)
+        ? parsed.config.allowedGmails.map((g: string) => String(g).trim().toLowerCase())
+        : []
+
+      const visitorEmail = currentSession?.email ? String(currentSession.email).trim().toLowerCase() : ''
+
+      if (!visitorEmail || !allowedGmails.includes(visitorEmail)) {
+        return NextResponse.json({
+          accessDenied: true,
+          id: quiz.id,
+          title: quiz.title,
+          category: parsed.config?.category || 'Chung',
+          author: {
+            name: quiz.author?.name || quiz.author?.username || 'Chủ sở hữu đề thi',
+            phone: quiz.author?.phone || null,
+            avatar: quiz.author?.avatar || null
+          },
+          visitorEmail: visitorEmail || null,
+          isLoggedIn: !!currentSession?.id
+        }, { status: 403 })
+      }
+    }
+
     return NextResponse.json({
       ...parsed,
       id: quiz.id,
       title: quiz.title,
       authorId: quiz.authorId,
-      author: quiz.author ? { id: quiz.author.id, username: quiz.author.username } : (parsed.author || null)
+      author: quiz.author ? {
+        id: quiz.author.id,
+        username: quiz.author.username,
+        name: quiz.author.name,
+        phone: quiz.author.phone,
+        avatar: quiz.author.avatar
+      } : (parsed.author || null)
     })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })

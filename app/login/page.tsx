@@ -53,6 +53,20 @@ export default function LoginPage() {
   const [spotlight, setSpotlight] = useState({ x: 50, y: 50, active: false })
 
   useEffect(() => {
+    // Tự động chuyển hướng nếu người dùng đã đăng nhập từ trước
+    const checkExistingSession = async () => {
+      try {
+        const res = await fetch('/api/auth/me')
+        if (res.ok) {
+          const data = await res.json()
+          if (data && data.authenticated && data.user) {
+            router.replace('/dashboard')
+          }
+        }
+      } catch (e) {}
+    }
+    checkExistingSession()
+
     const fetchGoogleConfig = async () => {
       try {
         const localId = typeof window !== 'undefined' ? localStorage.getItem('dzota_google_client_id') || '' : ''
@@ -72,28 +86,46 @@ export default function LoginPage() {
       } catch (e) {}
     }
     fetchGoogleConfig()
-  }, [])
+  }, [router])
 
-  // Xử lý di chuyển chuột tạo hiệu ứng 3D Parallax & vệt sáng spotlight
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return
-    const rect = cardRef.current.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-    const centerX = rect.width / 2
-    const centerY = rect.height / 2
-
-    // 3D Tilt mượt mà
-    const tiltX = ((y - centerY) / centerY) * -6
-    const tiltY = ((x - centerX) / centerX) * 6
-
-    setTilt({ x: tiltX, y: tiltY })
-    setSpotlight({
-      x: (x / rect.width) * 100,
-      y: (y / rect.height) * 100,
-      active: true
-    })
+  // Xử lý di chuyển chuột toàn trang tạo hiệu ứng 3D Parallax & vệt sáng spotlight tương tác
+  const handleGlobalMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     setMousePos({ x: e.clientX, y: e.clientY })
+    if (cardRef.current) {
+      const rect = cardRef.current.getBoundingClientRect()
+      const isOverCard =
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom
+
+      if (isOverCard) {
+        const x = e.clientX - rect.left
+        const y = e.clientY - rect.top
+        const centerX = rect.width / 2
+        const centerY = rect.height / 2
+        const tiltX = ((y - centerY) / centerY) * -6
+        const tiltY = ((x - centerX) / centerX) * 6
+        setTilt({ x: tiltX, y: tiltY })
+        setSpotlight({
+          x: (x / rect.width) * 100,
+          y: (y / rect.height) * 100,
+          active: true
+        })
+      } else {
+        // Nghiêng nhẹ thẻ hướng về vị trí chuột từ bên ngoài
+        const screenCenterX = window.innerWidth / 2
+        const screenCenterY = window.innerHeight / 2
+        const tiltX = ((e.clientY - screenCenterY) / screenCenterY) * -2.5
+        const tiltY = ((e.clientX - screenCenterX) / screenCenterX) * 2.5
+        setTilt({ x: tiltX, y: tiltY })
+        setSpotlight(prev => ({ ...prev, active: false }))
+      }
+    }
+  }
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    handleGlobalMouseMove(e)
   }
 
   const handleMouseLeave = () => {
@@ -129,11 +161,10 @@ export default function LoginPage() {
       const data = await res.json()
 
       if (res.ok) {
-        if (data.role === 'ADMIN') {
-          router.push('/dashboard')
-        } else {
-          router.push('/creator')
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('dzota_user', JSON.stringify(data))
         }
+        router.push('/dashboard')
       } else {
         setError(data.error || 'Tên đăng nhập hoặc mật khẩu không chính xác.')
       }
@@ -157,11 +188,10 @@ export default function LoginPage() {
       const data = await res.json()
 
       if (res.ok) {
-        if (data.role === 'ADMIN') {
-          router.push('/dashboard')
-        } else {
-          router.push('/creator')
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('dzota_user', JSON.stringify(data))
         }
+        router.push('/dashboard')
       } else {
         setError(data.error || 'Đăng nhập Google thất bại.')
       }
@@ -230,8 +260,10 @@ export default function LoginPage() {
                 })
                 const data = await res.json()
                 if (res.ok) {
-                  if (data.role === 'ADMIN') router.push('/dashboard')
-                  else router.push('/creator')
+                  if (typeof window !== 'undefined') {
+                    localStorage.setItem('dzota_user', JSON.stringify(data))
+                  }
+                  router.push('/dashboard')
                 } else {
                   setError(data.error || 'Đăng nhập Google thất bại.')
                 }
@@ -301,6 +333,7 @@ export default function LoginPage() {
   return (
     <main
       ref={containerRef}
+      onMouseMove={handleGlobalMouseMove}
       className={`min-h-screen h-[100dvh] max-h-screen w-full relative flex items-center justify-center overflow-hidden p-3 sm:p-5 select-none dzota-login-bg ${
         isDark ? 'dark-login' : 'light-login'
       }`}
@@ -310,18 +343,34 @@ export default function LoginPage() {
         isDark ? 'bg-slate-950/60 backdrop-blur-[2px]' : 'bg-slate-900/[0.04]'
       }`} />
 
+      {/* Floating Dynamic Parallax Orbs in Background */}
+      <div
+        className="absolute -left-20 top-1/4 w-80 h-80 rounded-full pointer-events-none blur-3xl transition-transform duration-300 opacity-60 dark:opacity-35"
+        style={{
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.45) 0%, transparent 70%)',
+          transform: `translate(${(mousePos.x - 500) * 0.04}px, ${(mousePos.y - 400) * 0.04}px)`
+        }}
+      />
+      <div
+        className="absolute -right-20 bottom-1/4 w-96 h-96 rounded-full pointer-events-none blur-3xl transition-transform duration-300 opacity-60 dark:opacity-35"
+        style={{
+          background: 'radial-gradient(circle, rgba(236, 72, 153, 0.4) 0%, transparent 70%)',
+          transform: `translate(${(mousePos.x - 500) * -0.04}px, ${(mousePos.y - 400) * -0.04}px)`
+        }}
+      />
+
       {/* Interactive Cursor Spotlight Aura in Background */}
       <div
         className="absolute pointer-events-none transition-opacity duration-300 blur-3xl rounded-full"
         style={{
-          width: '500px',
-          height: '500px',
-          left: `${mousePos.x - 250}px`,
-          top: `${mousePos.y - 250}px`,
+          width: '520px',
+          height: '520px',
+          left: `${mousePos.x - 260}px`,
+          top: `${mousePos.y - 260}px`,
           background: isDark
-            ? 'radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, rgba(59, 130, 246, 0.08) 50%, transparent 70%)'
-            : 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(217, 70, 239, 0.08) 50%, transparent 70%)',
-          opacity: spotlight.active ? 1 : 0.4
+            ? 'radial-gradient(circle, rgba(99, 102, 241, 0.22) 0%, rgba(59, 130, 246, 0.1) 50%, transparent 70%)'
+            : 'radial-gradient(circle, rgba(59, 130, 246, 0.18) 0%, rgba(217, 70, 239, 0.1) 50%, transparent 70%)',
+          opacity: spotlight.active ? 1 : 0.5
         }}
       />
 
