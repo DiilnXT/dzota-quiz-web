@@ -178,6 +178,17 @@ export default function DashboardClient({
   const [activeBgEnabled, setActiveBgEnabled] = useState(true)
   const [isSavingSettings, setIsSavingSettings] = useState(false)
 
+  // Quiz Password Change Modal State
+  const [editingQuizPass, setEditingQuizPass] = useState<QuizItem | null>(null)
+  const [quizPassInput, setQuizPassInput] = useState('')
+  const [isSavingQuizPass, setIsSavingQuizPass] = useState(false)
+
+  // Account Password Change Modal State
+  const [isChangeAccPassOpen, setIsChangeAccPassOpen] = useState(false)
+  const [newAccPassword, setNewAccPassword] = useState('')
+  const [confirmAccPassword, setConfirmAccPassword] = useState('')
+  const [isSavingAccPass, setIsSavingAccPass] = useState(false)
+
   // Show welcome notification toast when logging in with unread items
   useEffect(() => {
     if (unreadCount > 0) {
@@ -377,6 +388,72 @@ export default function DashboardClient({
     }
   }
 
+  // --- SAVE QUIZ PASSWORD ---
+  const handleSaveQuizPass = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingQuizPass) return
+    setIsSavingQuizPass(true)
+    try {
+      const res = await fetch('/api/quick-quiz', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editingQuizPass.id, password: quizPassInput.trim() })
+      })
+      const result = await res.json()
+      if (res.ok) {
+        setQuizzes(prev =>
+          prev.map(q => q.id === editingQuizPass.id ? { ...q, password: quizPassInput.trim() } : q)
+        )
+        showToast(quizPassInput.trim() ? 'Đã cập nhật mật khẩu đề thi thành công!' : 'Đã gỡ mật khẩu, đề thi hiện là công khai!')
+        setEditingQuizPass(null)
+      } else {
+        showToast(result.error || 'Lỗi khi lưu mật khẩu đề thi', 'error')
+      }
+    } catch (e) {
+      showToast('Lỗi kết nối máy chủ', 'error')
+    } finally {
+      setIsSavingQuizPass(false)
+    }
+  }
+
+  // --- SAVE ACCOUNT PASSWORD ---
+  const handleSaveAccPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newAccPassword.trim()) {
+      showToast('Vui lòng nhập mật khẩu mới', 'error')
+      return
+    }
+    if (newAccPassword.length < 4) {
+      showToast('Mật khẩu mới phải có ít nhất 4 ký tự', 'error')
+      return
+    }
+    if (newAccPassword !== confirmAccPassword) {
+      showToast('Mật khẩu xác nhận không khớp', 'error')
+      return
+    }
+    setIsSavingAccPass(true)
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword: newAccPassword.trim() })
+      })
+      const result = await res.json()
+      if (res.ok) {
+        showToast(result.message || 'Đổi mật khẩu tài khoản thành công!')
+        setIsChangeAccPassOpen(false)
+        setNewAccPassword('')
+        setConfirmAccPassword('')
+      } else {
+        showToast(result.error || 'Đổi mật khẩu thất bại', 'error')
+      }
+    } catch (e) {
+      showToast('Lỗi kết nối khi đổi mật khẩu', 'error')
+    } finally {
+      setIsSavingAccPass(false)
+    }
+  }
+
   // --- QUIZ ACTIONS (TEACHER & ADMIN) ---
   const handleToggleQuizStatus = async (id: string, currentStatus: boolean) => {
     const newStatus = !currentStatus
@@ -558,6 +635,15 @@ export default function DashboardClient({
           >
             <RefreshCw size={15} className={isLoading ? 'animate-spin text-indigo-600' : ''} />
             <span className="hidden sm:inline">Làm mới</span>
+          </button>
+
+          <button
+            onClick={() => setIsChangeAccPassOpen(true)}
+            className="bg-white border border-slate-200 text-slate-700 px-3.5 py-2.5 rounded-xl font-semibold shadow-xs hover:bg-slate-50 hover:text-indigo-600 transition-all flex items-center gap-1.5 text-xs cursor-pointer"
+            title="Đổi mật khẩu tài khoản"
+          >
+            <Key size={15} />
+            <span>Đổi Mật Khẩu</span>
           </button>
 
           {!isTeacher && (
@@ -962,23 +1048,36 @@ export default function DashboardClient({
                     </td>
 
                     <td className="p-3.5">
-                      {q.password ? (
-                        <div className="flex items-center gap-1.5">
-                          <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-mono text-slate-700">
-                            {showPasswordMap[q.id] ? q.password : '••••••'}
-                          </code>
-                          <button
-                            type="button"
-                            onClick={() => setShowPasswordMap(prev => ({ ...prev, [q.id]: !prev[q.id] }))}
-                            className="text-slate-400 hover:text-slate-600 p-0.5"
-                            title="Hiện/Ẩn mật khẩu"
-                          >
-                            {showPasswordMap[q.id] ? <EyeOff size={13} /> : <Eye size={13} />}
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-slate-400 text-xs italic">Không có</span>
-                      )}
+                      <div className="flex items-center gap-1.5">
+                        {q.password ? (
+                          <>
+                            <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-mono text-slate-700">
+                              {showPasswordMap[q.id] ? q.password : '••••••'}
+                            </code>
+                            <button
+                              type="button"
+                              onClick={() => setShowPasswordMap(prev => ({ ...prev, [q.id]: !prev[q.id] }))}
+                              className="text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                              title="Hiện/Ẩn mật khẩu"
+                            >
+                              {showPasswordMap[q.id] ? <EyeOff size={13} /> : <Eye size={13} />}
+                            </button>
+                          </>
+                        ) : (
+                          <span className="text-slate-400 text-xs italic">Không có</span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingQuizPass(q)
+                            setQuizPassInput(q.password || '')
+                          }}
+                          className="text-slate-400 hover:text-indigo-600 p-1 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer"
+                          title="Đổi hoặc gỡ mật khẩu bài thi này"
+                        >
+                          <Key size={13} />
+                        </button>
+                      </div>
                     </td>
 
                     <td className="p-3.5">
@@ -1129,8 +1228,8 @@ export default function DashboardClient({
           MODAL: XEM DANH SÁCH BÀI TEST CỦA MỘT GIÁO VIÊN (ADMIN)
       ───────────────────────────────────────────────────────────── */}
       {viewingUserQuizzes && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full border border-slate-100 animate-in fade-in zoom-in-95 max-h-[85vh] sm:max-h-[88vh] flex flex-col overflow-hidden my-auto">
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full border border-slate-100 flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 my-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
               <div>
                 <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
@@ -1149,7 +1248,7 @@ export default function DashboardClient({
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-3 min-h-0">
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-3 min-h-0 overscroll-contain">
               {!viewingUserQuizzes.quizzes || viewingUserQuizzes.quizzes.length === 0 ? (
                 <div className="py-12 text-center text-slate-400">
                   <FileText size={32} className="mx-auto mb-2 text-slate-300" />
@@ -1199,7 +1298,7 @@ export default function DashboardClient({
               )}
             </div>
 
-            <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex justify-end flex-shrink-0">
+            <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex justify-end flex-shrink-0 sticky bottom-0 z-10">
               <button
                 onClick={() => setViewingUserQuizzes(null)}
                 className="px-5 py-2.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
@@ -1215,8 +1314,8 @@ export default function DashboardClient({
           MODAL: GỬI THÔNG BÁO CHO GIÁO VIÊN (ADMIN)
       ───────────────────────────────────────────────────────────── */}
       {sendNotifModal.isOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-slate-100 animate-in fade-in zoom-in-95 max-h-[85vh] sm:max-h-[88vh] flex flex-col overflow-hidden my-auto">
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-slate-100 flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 my-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
@@ -1242,7 +1341,7 @@ export default function DashboardClient({
             </div>
 
             <form onSubmit={handleSendNotification} className="flex flex-col flex-1 min-h-0 overflow-hidden">
-              <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-3.5 min-h-0">
+              <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-3.5 min-h-0 overscroll-contain">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Tiêu đề thông báo</label>
                   <input
@@ -1268,7 +1367,7 @@ export default function DashboardClient({
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex-shrink-0">
+              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex-shrink-0 sticky bottom-0 z-10">
                 <button
                   type="button"
                   onClick={() => setSendNotifModal({ isOpen: false, targetUser: null, targetAll: false })}
@@ -1294,8 +1393,8 @@ export default function DashboardClient({
           MODAL: THÊM / SỬA TÀI KHOẢN GIÁO VIÊN
       ───────────────────────────────────────────────────────────── */}
       {isAddUserOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-slate-100 animate-in fade-in zoom-in-95 max-h-[85vh] sm:max-h-[88vh] flex flex-col overflow-hidden my-auto">
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-slate-100 flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 my-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
               <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
                 <Plus size={18} className="text-indigo-600" />
@@ -1313,7 +1412,7 @@ export default function DashboardClient({
             </div>
 
             <form onSubmit={handleSaveUser} className="flex flex-col flex-1 min-h-0 overflow-hidden">
-              <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-3.5 min-h-0">
+              <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-3.5 min-h-0 overscroll-contain">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Tên Giáo Viên</label>
                   <input
@@ -1389,7 +1488,7 @@ export default function DashboardClient({
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex-shrink-0">
+              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex-shrink-0 sticky bottom-0 z-10">
                 <button
                   type="button"
                   onClick={() => {
@@ -1417,8 +1516,8 @@ export default function DashboardClient({
           MODAL: CÀI ĐẶT HỆ THỐNG & GEMINI API (ADMIN)
       ───────────────────────────────────────────────────────────── */}
       {isSettingsOpen && !isTeacher && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full border border-slate-100 animate-in fade-in zoom-in-95 max-h-[85vh] sm:max-h-[88vh] flex flex-col overflow-hidden my-auto">
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full border border-slate-100 flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 my-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
               <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
                 <Settings size={18} className="text-indigo-600" />
@@ -1432,7 +1531,7 @@ export default function DashboardClient({
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 min-h-0">
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 min-h-0 overscroll-contain">
               {/* Active Background Switch */}
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
                 <div>
@@ -1478,7 +1577,7 @@ export default function DashboardClient({
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex-shrink-0">
+            <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex-shrink-0 sticky bottom-0 z-10">
               <button
                 type="button"
                 onClick={() => setIsSettingsOpen(false)}
@@ -1495,6 +1594,163 @@ export default function DashboardClient({
                 {isSavingSettings ? 'Đang lưu...' : 'Lưu Cài Đặt'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          MODAL: ĐỔI MẬT KHẨU BÀI THI (CHO GIÁO VIÊN & ADMIN)
+      ───────────────────────────────────────────────────────────── */}
+      {editingQuizPass && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-slate-100 flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 my-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
+                  <Key size={16} />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-sm sm:text-base">
+                    Đổi Mật Khẩu Bài Thi
+                  </h3>
+                  <p className="text-[11px] text-slate-400 font-medium truncate max-w-[240px]">
+                    {editingQuizPass.title}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditingQuizPass(null)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveQuizPass} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 min-h-0 overscroll-contain">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    Mật khẩu bài thi (để trống nếu muốn công khai)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Nhập mật khẩu (ví dụ: 123456) hoặc để trống..."
+                    value={quizPassInput}
+                    onChange={(e) => setQuizPassInput(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 outline-none focus:border-indigo-600"
+                    autoFocus
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1.5">
+                    Học sinh sẽ cần nhập mật khẩu này để vào làm bài thi. Nếu để trống, bất kỳ ai có link đều vào làm được.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex-shrink-0 sticky bottom-0 z-10">
+                <button
+                  type="button"
+                  onClick={() => setEditingQuizPass(null)}
+                  className="px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingQuizPass}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer disabled:opacity-60"
+                >
+                  {isSavingQuizPass ? 'Đang lưu...' : 'Lưu Mật Khẩu'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          MODAL: ĐỔI MẬT KHẨU TÀI KHOẢN (CHO NGƯỜI ĐANG ĐĂNG NHẬP)
+      ───────────────────────────────────────────────────────────── */}
+      {isChangeAccPassOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-slate-100 flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 my-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                  <Shield size={16} />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-sm sm:text-base">
+                    Đổi Mật Khẩu Tài Khoản
+                  </h3>
+                  <p className="text-[11px] text-slate-400 font-medium">
+                    Tài khoản: {session.username || session.email}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setIsChangeAccPassOpen(false)
+                  setNewAccPassword('')
+                  setConfirmAccPassword('')
+                }}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveAccPassword} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 min-h-0 overscroll-contain">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    Mật khẩu mới
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="Nhập mật khẩu mới (ít nhất 4 ký tự)..."
+                    value={newAccPassword}
+                    onChange={(e) => setNewAccPassword(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    Xác nhận mật khẩu mới
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="Nhập lại mật khẩu mới..."
+                    value={confirmAccPassword}
+                    onChange={(e) => setConfirmAccPassword(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-indigo-600"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex-shrink-0 sticky bottom-0 z-10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsChangeAccPassOpen(false)
+                    setNewAccPassword('')
+                    setConfirmAccPassword('')
+                  }}
+                  className="px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingAccPass}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer disabled:opacity-60"
+                >
+                  {isSavingAccPass ? 'Đang lưu...' : 'Xác Nhận Đổi'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

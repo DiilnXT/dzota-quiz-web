@@ -42,6 +42,7 @@ export async function POST(request: Request) {
       let user = await prisma.user.findFirst({
         where: {
           OR: [
+            { email: { equals: email, mode: 'insensitive' as const } },
             { username: { equals: email, mode: 'insensitive' as const } },
             ...(isSuperAdminEmail ? [{ username: { equals: 'DuylniEdu', mode: 'insensitive' as const } }] : [])
           ]
@@ -51,7 +52,6 @@ export async function POST(request: Request) {
       if (!user) {
         // Tự động tạo user mới nếu đăng nhập lần đầu bằng Google
         const targetUsername = isSuperAdminEmail ? 'DuylniEdu' : (resolvedGoogleUser.name || email.split('@')[0])
-        // Tránh trùng username
         let uniqueUsername = targetUsername
         const exists = await prisma.user.findUnique({ where: { username: uniqueUsername } })
         if (exists && !isSuperAdminEmail) {
@@ -61,17 +61,27 @@ export async function POST(request: Request) {
         user = await prisma.user.create({
           data: {
             username: isSuperAdminEmail ? 'DuylniEdu' : uniqueUsername,
+            email,
+            name: resolvedGoogleUser.name || (isSuperAdminEmail ? 'DuylniEdu' : uniqueUsername),
             password: 'GOOGLE_OAUTH_USER',
             role: isSuperAdminEmail ? 'ADMIN' : 'USER',
             maxTests: isSuperAdminEmail ? 9999 : 10
           }
         })
-      } else if (isSuperAdminEmail && user.role !== 'ADMIN') {
-        // Luôn bảo đảm lenhatduy.vietnam@gmail.com là ADMIN tối cao
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: { role: 'ADMIN', maxTests: 9999 }
-        })
+      } else {
+        // Cập nhật thông tin nếu cần
+        const updateData: any = {}
+        if (!user.email) updateData.email = email
+        if (isSuperAdminEmail) {
+          updateData.role = 'ADMIN'
+          updateData.maxTests = 9999
+        }
+        if (Object.keys(updateData).length > 0) {
+          user = await prisma.user.update({
+            where: { id: user.id },
+            data: updateData
+          })
+        }
       }
 
       const role = isSuperAdminEmail ? 'ADMIN' : user.role

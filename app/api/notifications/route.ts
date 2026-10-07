@@ -36,7 +36,10 @@ export async function GET() {
 // POST: Gửi thông báo (Chỉ Admin)
 export async function POST(request: Request) {
   const session = await getSession()
-  const isUserAdmin = session?.role?.toLowerCase() === 'admin' || session?.username?.toLowerCase() === 'duylniedu'
+  const isUserAdmin =
+    session?.role?.toLowerCase() === 'admin' ||
+    session?.username?.toLowerCase() === 'duylniedu' ||
+    session?.email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com'
   if (!isUserAdmin) {
     return NextResponse.json({ error: 'Chỉ Quản trị viên mới có quyền gửi thông báo' }, { status: 403 })
   }

@@ -58,7 +58,9 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
   const isSubjectsActive = pathname.startsWith('/subjects')
 
   const username = session.username || 'DuylniEdu'
-  const isDuylni = username.toLowerCase() === 'duylniedu'
+  const isDuylni =
+    username.toLowerCase() === 'duylniedu' ||
+    (session as any).email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com'
   const roleName = isDuylni || session.role?.toLowerCase() === 'admin' ? 'Quản trị viên' : 'Giáo viên'
 
   const showFeedback = (msg: string) => {

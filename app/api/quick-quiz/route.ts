@@ -18,7 +18,10 @@ export async function POST(request: Request) {
         const session = JSON.parse(sessionStr)
         authorId = session.id
         currentUsername = session.username || 'DuylniEdu'
-        isUserAdmin = session.role?.toLowerCase() === 'admin' || session.username?.toLowerCase() === 'duylniedu'
+        isUserAdmin =
+          session.role?.toLowerCase() === 'admin' ||
+          session.username?.toLowerCase() === 'duylniedu' ||
+          session.email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com'
         
         // Check max limits for non-admin
         if (!isUserAdmin) {
@@ -90,7 +93,10 @@ export async function GET(request: Request) {
     if (sessionStr) {
       try {
         currentSession = JSON.parse(sessionStr)
-        isUserAdmin = currentSession.role?.toLowerCase() === 'admin' || currentSession.username?.toLowerCase() === 'duylniedu'
+        isUserAdmin =
+          currentSession.role?.toLowerCase() === 'admin' ||
+          currentSession.username?.toLowerCase() === 'duylniedu' ||
+          currentSession.email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com'
       } catch (e) {}
     }
 
@@ -184,7 +190,10 @@ export async function DELETE(request: Request) {
     }
 
     const session = JSON.parse(sessionStr)
-    const isUserAdmin = session.role?.toLowerCase() === 'admin' || session.username?.toLowerCase() === 'duylniedu'
+    const isUserAdmin =
+      session.role?.toLowerCase() === 'admin' ||
+      session.username?.toLowerCase() === 'duylniedu' ||
+      session.email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com'
 
     const existing = await prisma.quickQuiz.findUnique({ where: { id }, select: { authorId: true } })
     if (!existing) {
@@ -207,7 +216,7 @@ export async function DELETE(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { id, isActive } = await request.json()
+    const { id, isActive, password } = await request.json()
     if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
     const cookieStore = await cookies()
@@ -217,17 +226,20 @@ export async function PUT(request: Request) {
     }
 
     const session = JSON.parse(sessionStr)
-    const isUserAdmin = session.role?.toLowerCase() === 'admin' || session.username?.toLowerCase() === 'duylniedu'
+    const isUserAdmin =
+      session.role?.toLowerCase() === 'admin' ||
+      session.username?.toLowerCase() === 'duylniedu' ||
+      session.email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com'
 
     const existing = await prisma.quickQuiz.findUnique({ where: { id } })
     if (!existing) {
       return NextResponse.json({ error: 'Không tìm thấy đề thi' }, { status: 404 })
     }
 
-    // Phân quyền bật/tắt (khóa/mở): Admin hoặc chính tác giả
+    // Phân quyền bật/tắt (khóa/mở) & đổi mật khẩu: Admin hoặc chính tác giả
     if (!isUserAdmin && existing.authorId && existing.authorId !== session.id) {
       return NextResponse.json({ 
-        error: 'Bạn không có quyền thay đổi trạng thái đề thi của người khác!' 
+        error: 'Bạn không có quyền chỉnh sửa đề thi của người khác!' 
       }, { status: 403 })
     }
 
@@ -237,13 +249,20 @@ export async function PUT(request: Request) {
     if (isActive !== undefined) {
       parsed.config.isActive = Boolean(isActive)
     }
+    if (password !== undefined) {
+      parsed.config.password = String(password).trim()
+    }
 
     await prisma.quickQuiz.update({
       where: { id },
       data: { data: JSON.stringify(parsed) }
     })
 
-    return NextResponse.json({ success: true, isActive: parsed.config.isActive })
+    return NextResponse.json({
+      success: true,
+      isActive: parsed.config.isActive,
+      password: parsed.config.password
+    })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }

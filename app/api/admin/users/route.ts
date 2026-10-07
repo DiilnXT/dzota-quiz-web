@@ -8,7 +8,11 @@ async function isAdmin() {
   if (!sessionStr) return false
   try {
     const session = JSON.parse(sessionStr)
-    return session.role?.toLowerCase() === 'admin' || session.username?.toLowerCase() === 'duylniedu'
+    return (
+      session.role?.toLowerCase() === 'admin' ||
+      session.username?.toLowerCase() === 'duylniedu' ||
+      session.email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com'
+    )
   } catch (e) { return false }
 }
 

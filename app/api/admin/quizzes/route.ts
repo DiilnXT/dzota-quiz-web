@@ -8,7 +8,11 @@ async function isAdmin() {
   if (!sessionStr) return false
   try {
     const session = JSON.parse(sessionStr)
-    return session.role?.toLowerCase() === 'admin' || session.username?.toLowerCase() === 'duylniedu'
+    return (
+      session.role?.toLowerCase() === 'admin' ||
+      session.username?.toLowerCase() === 'duylniedu' ||
+      session.email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com'
+    )
   } catch (e) { return false }
 }
 
@@ -51,7 +55,7 @@ export async function GET() {
 export async function PUT(request: Request) {
   if (!(await isAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   try {
-    const { id, isActive } = await request.json()
+    const { id, isActive, password } = await request.json()
     const quiz = await prisma.quickQuiz.findUnique({ where: { id } })
     if (!quiz) return NextResponse.json({ error: 'Không tìm thấy đề thi' }, { status: 404 })
 
@@ -61,13 +65,16 @@ export async function PUT(request: Request) {
     if (isActive !== undefined) {
       parsed.config.isActive = Boolean(isActive)
     }
+    if (password !== undefined) {
+      parsed.config.password = String(password).trim()
+    }
 
     await prisma.quickQuiz.update({
       where: { id },
       data: { data: JSON.stringify(parsed) }
     })
 
-    return NextResponse.json({ success: true, isActive: parsed.config.isActive })
+    return NextResponse.json({ success: true, isActive: parsed.config.isActive, password: parsed.config.password })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 400 })
   }

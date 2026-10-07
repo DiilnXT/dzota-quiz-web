@@ -22,7 +22,12 @@ export default async function AdminDashboard() {
   }
 
   // Phân biệt quyền Admin và Giáo viên
-  const isUserAdmin = session.role?.toLowerCase() === 'admin' || session.username?.toLowerCase() === 'duylniedu'
+  const isSuperAdminEmail = session.email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com'
+  const isDuylni = session.username?.toLowerCase() === 'duylniedu'
+  const isUserAdmin = session.role?.toLowerCase() === 'admin' || isDuylni || isSuperAdminEmail
+  if (isSuperAdminEmail || isDuylni) {
+    session.role = 'ADMIN'
+  }
 
   // ─── 1. DÀNH CHO ADMIN ───────────────────────────────────────────────
   if (isUserAdmin) {
