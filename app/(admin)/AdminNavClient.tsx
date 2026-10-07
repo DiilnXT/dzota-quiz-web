@@ -19,7 +19,8 @@ import {
   Moon,
   User as UserIcon,
   BarChart2,
-  CheckCircle2
+  CheckCircle2,
+  MessageCircle
 } from 'lucide-react'
 import { useTheme } from '../ThemeContext'
 
@@ -101,6 +102,7 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
   const isQuizzesActive = isDashboardActive && activeTab === 'quizzes'
   const isClassesActive = isDashboardActive && activeTab === 'classes'
   const isTeachersActive = isDashboardActive && activeTab === 'teachers'
+  const isFriendsActive = isDashboardActive && activeTab === 'friends'
   const isSettingsActive = isDashboardActive && activeTab === 'settings'
   const isProfileActive = isDashboardActive && activeTab === 'profile'
 
@@ -253,6 +255,19 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                 >
                   <School size={18} />
                   <span>Lớp học & Học sinh</span>
+                </button>
+
+                {/* Kết Bạn & Chat Giáo Viên */}
+                <button
+                  onClick={() => handleNavigateTab('friends')}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
+                    isFriendsActive
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                  }`}
+                >
+                  <MessageCircle size={18} />
+                  <span>Kết Bạn & Chat Giáo Viên</span>
                 </button>
 
                 {/* Quản lý Người dùng & Phân quyền (Chỉ Admin) */}

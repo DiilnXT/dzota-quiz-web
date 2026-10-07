@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import {
   Users,
@@ -54,8 +54,10 @@ import {
   CheckCircle2,
   ChevronLeft,
   User as UserIcon,
-  LayoutDashboard
+  LayoutDashboard,
+  Upload
 } from 'lucide-react'
+import TeacherChatTab from './TeacherChatTab'
 
 interface TeacherQuiz {
   id: string
@@ -215,9 +217,9 @@ export default function DashboardClient({
 
   // Navigation Tabs State
   const defaultTab = isStudent ? 'history' : 'dashboard'
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'quizzes' | 'classes' | 'teachers' | 'settings' | 'profile' | 'history'>(defaultTab)
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'quizzes' | 'classes' | 'teachers' | 'friends' | 'settings' | 'profile' | 'history'>(defaultTab)
 
-  const switchTab = (tab: 'dashboard' | 'quizzes' | 'classes' | 'teachers' | 'settings' | 'profile' | 'history') => {
+  const switchTab = (tab: 'dashboard' | 'quizzes' | 'classes' | 'teachers' | 'friends' | 'settings' | 'profile' | 'history') => {
     setActiveTab(tab)
     if (typeof window !== 'undefined') {
       window.history.pushState({}, '', `/dashboard?tab=${tab}`)
@@ -295,6 +297,59 @@ export default function DashboardClient({
   const [profilePhone, setProfilePhone] = useState(currentUserInfo?.phone || session.phone || '')
   const [isSavingProfile, setIsSavingProfile] = useState(false)
   const [phoneError, setPhoneError] = useState<string | null>(null)
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const avatarFileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleAvatarFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Ảnh vượt quá dung lượng 5MB! Vui lòng chọn ảnh nhỏ hơn 5MB.', 'error')
+      if (avatarFileInputRef.current) avatarFileInputRef.current.value = ''
+      return
+    }
+
+    setIsUploadingAvatar(true)
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const img = new Image()
+      img.onload = () => {
+        // Nén ảnh gọn nhẹ tối đa 320x320 px với chất lượng cao
+        const canvas = document.createElement('canvas')
+        const maxSize = 320
+        let width = img.width
+        let height = img.height
+        if (width > height) {
+          if (width > maxSize) {
+            height = Math.round((height * maxSize) / width)
+            width = maxSize
+          }
+        } else {
+          if (height > maxSize) {
+            width = Math.round((width * maxSize) / height)
+            height = maxSize
+          }
+        }
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height)
+          const compressed = canvas.toDataURL('image/jpeg', 0.85)
+          setProfileAvatar(compressed)
+          showToast('Đã tải ảnh lên thành công! Hãy bấm Lưu Thay Đổi.', 'success')
+        }
+        setIsUploadingAvatar(false)
+      }
+      img.onerror = () => {
+        showToast('Không thể xử lý file ảnh!', 'error')
+        setIsUploadingAvatar(false)
+      }
+      img.src = event.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  }
 
   // Modals state: Add User / Edit User
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
@@ -377,6 +432,19 @@ export default function DashboardClient({
         body: JSON.stringify({ markAllAsRead: true })
       })
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+      showToast('Đã đánh dấu xem tất cả thông báo!', 'success')
+    } catch (e) {}
+  }
+
+  const handleMarkSingleNotificationAsRead = async (id: string) => {
+    try {
+      await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      })
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n))
+      showToast('Đã xem thông báo', 'info')
     } catch (e) {}
   }
 
@@ -447,7 +515,7 @@ export default function DashboardClient({
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       const tab = params.get('tab')
-      if (tab && ['dashboard', 'overview', 'quizzes', 'classes', 'teachers', 'settings', 'profile', 'history'].includes(tab)) {
+      if (tab && ['dashboard', 'overview', 'quizzes', 'classes', 'teachers', 'friends', 'settings', 'profile', 'history'].includes(tab)) {
         if (isStudent && (tab === 'history' || tab === 'profile')) {
           setActiveTab(tab as any)
         } else if (!isStudent) {
@@ -1721,7 +1789,29 @@ export default function DashboardClient({
                 </div>
               )}
 
-              {/* Card 5: Cá nhân & Zalo */}
+              {/* Card 5: Kết bạn & Chat Giáo viên */}
+              <div
+                onClick={() => switchTab('friends')}
+                className="bg-white dark:bg-[#1E293B] p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs hover:border-violet-400 dark:hover:border-violet-500 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+              >
+                <div>
+                  <div className="w-12 h-12 rounded-2xl bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <MessageSquare size={24} />
+                  </div>
+                  <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-base group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                    Kết Bạn & Chat Giáo Viên
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 leading-relaxed">
+                    Kết nối với đồng nghiệp bằng ID/Gmail, nhắn tin trực tuyến thời gian thực, xem trạng thái online và chia sẻ kho đề thi chỉ xem.
+                  </p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-violet-600 dark:text-violet-400">
+                  <span>Mở Chat Trực Tuyến</span>
+                  <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+
+              {/* Card 6: Cá nhân & Zalo */}
               <div
                 onClick={() => switchTab('profile')}
                 className="bg-white dark:bg-[#1E293B] p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
@@ -1734,7 +1824,7 @@ export default function DashboardClient({
                     Hồ Sơ & Zalo Liên Hệ
                   </h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 leading-relaxed">
-                    Cập nhật Tên hiển thị, Ảnh đại diện, và Số điện thoại Zalo để học sinh bấm liên hệ trực tiếp khi làm bài.
+                    Cập nhật Tên hiển thị, Tải ảnh đại diện từ máy (&lt;5MB), và Số điện thoại Zalo để học sinh bấm liên hệ trực tiếp khi làm bài.
                   </p>
                 </div>
                 <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-indigo-600 dark:text-indigo-400">
@@ -2742,6 +2832,13 @@ export default function DashboardClient({
       )}
 
       {/* ─────────────────────────────────────────────────────────────
+          TAB: CỘNG ĐỒNG GIÁO VIÊN & CHAT TRỰC TUYẾN
+      ───────────────────────────────────────────────────────────── */}
+      {activeTab === 'friends' && (
+        <TeacherChatTab session={session} userQuizzes={quizzes} />
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
           TAB: THÔNG TIN CÁ NHÂN, AVATAR & SỐ ĐIỆN THOẠI ZALO
       ───────────────────────────────────────────────────────────── */}
       {activeTab === 'profile' && (
@@ -2772,26 +2869,62 @@ export default function DashboardClient({
               />
             </div>
 
-            {/* Avatar URL & Preset Selector */}
+            {/* Avatar URL, Upload from device (<5MB) & Preset Selector */}
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                 Ảnh Đại Diện (Avatar)
               </label>
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 border-2 border-indigo-200 dark:border-indigo-800 overflow-hidden flex-shrink-0 flex items-center justify-center shadow-xs">
-                  {profileAvatar ? (
-                    <img src={profileAvatar} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <UserIcon size={30} className="text-slate-400" />
+                <div className="relative group flex-shrink-0">
+                  <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 border-2 border-indigo-200 dark:border-indigo-800 overflow-hidden flex items-center justify-center shadow-xs">
+                    {profileAvatar ? (
+                      <img src={profileAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <UserIcon size={30} className="text-slate-400" />
+                    )}
+                  </div>
+                  {profileAvatar && (
+                    <button
+                      type="button"
+                      onClick={() => setProfileAvatar('')}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center text-[10px] shadow-xs cursor-pointer"
+                      title="Xóa avatar"
+                    >
+                      ✕
+                    </button>
                   )}
                 </div>
-                <input
-                  type="url"
-                  value={profileAvatar}
-                  onChange={(e) => setProfileAvatar(e.target.value)}
-                  placeholder="Dán link ảnh đại diện (https://...)"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600"
-                />
+
+                <div className="flex-1 space-y-2">
+                  <input
+                    type="url"
+                    value={profileAvatar}
+                    onChange={(e) => setProfileAvatar(e.target.value)}
+                    placeholder="Dán link ảnh đại diện (https://...)"
+                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-600"
+                  />
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      ref={avatarFileInputRef}
+                      accept="image/*"
+                      onChange={handleAvatarFileUpload}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => avatarFileInputRef.current?.click()}
+                      className="px-3.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 font-bold text-xs rounded-xl border border-indigo-200 dark:border-indigo-800/60 flex items-center gap-1.5 cursor-pointer transition shadow-2xs"
+                    >
+                      <Upload size={13} />
+                      <span>📁 Tải ảnh từ máy (&lt; 5MB)</span>
+                    </button>
+                    {isUploadingAvatar && (
+                      <span className="text-[11px] text-slate-400 animate-pulse font-medium">Đang nén & tải ảnh...</span>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Preset avatar selector */}
@@ -3744,14 +3877,6 @@ export default function DashboardClient({
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {unreadCount > 0 && (
-                  <button
-                    onClick={handleMarkAllNotificationsAsRead}
-                    className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 px-2.5 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition cursor-pointer"
-                  >
-                    Đã đọc tất cả
-                  </button>
-                )}
                 <button
                   onClick={() => setIsNotifOpen(false)}
                   className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
@@ -3759,6 +3884,21 @@ export default function DashboardClient({
                   <X size={18} />
                 </button>
               </div>
+            </div>
+
+            {/* Thanh công cụ tick đã xem hết thông báo */}
+            <div className="px-5 py-2.5 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                {unreadCount > 0 ? `${unreadCount} thông báo mới chưa đọc` : 'Đã xem tất cả'}
+              </span>
+              <button
+                onClick={handleMarkAllNotificationsAsRead}
+                className="px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-slate-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 border border-slate-200 dark:border-slate-700 hover:border-emerald-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                title="Bấm để đánh dấu đã xem tất cả thông báo"
+              >
+                <CheckCircle2 size={14} className="text-emerald-500" />
+                <span>Tick đã xem hết thông báo</span>
+              </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
@@ -3779,12 +3919,25 @@ export default function DashboardClient({
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-slate-100">{n.title}</h4>
+                      <div className="flex items-center gap-2">
+                        {!n.isRead ? (
+                          <button
+                            onClick={() => handleMarkSingleNotificationAsRead(n.id)}
+                            className="p-1 rounded-lg text-indigo-500 hover:text-emerald-600 hover:bg-indigo-100/50 dark:hover:bg-indigo-900/50 transition cursor-pointer"
+                            title="Tick đánh dấu đã xem tin này"
+                          >
+                            <CheckCircle2 size={15} className="text-indigo-600 dark:text-indigo-400 hover:text-emerald-500" />
+                          </button>
+                        ) : (
+                          <CheckCircle2 size={15} className="text-slate-300 dark:text-slate-600 flex-shrink-0" />
+                        )}
+                        <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-slate-100">{n.title}</h4>
+                      </div>
                       <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium whitespace-nowrap">
                         {formatTimeAgo(n.createdAt)}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">{n.message}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1.5 leading-relaxed pl-6">{n.message}</p>
                   </div>
                 ))
               )}

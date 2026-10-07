@@ -77,20 +77,54 @@ model QuickQuiz {
 }
 
 model User {
-  id            String             @id @default(cuid())
-  username      String             @unique
-  email         String?            @unique
-  name          String?
-  password      String
-  role          String             @default("STUDENT")
-  maxTests      Int                @default(10)
-  avatar        String?
-  phone         String?            // Zalo phone number (10 digits, starts with 0)
-  createdAt     DateTime           @default(now())
-  quizzes       QuickQuiz[]
-  notifications Notification[]
-  history       QuizHistory[]
-  classes       Classroom[]        @relation("TeacherClasses")
+  id                  String             @id @default(cuid())
+  username            String             @unique
+  email               String?            @unique
+  name                String?
+  password            String
+  role                String             @default("STUDENT")
+  maxTests            Int                @default(10)
+  avatar              String?
+  phone               String?            // Zalo phone number (10 digits, starts with 0)
+  lastActiveAt        DateTime?
+  createdAt           DateTime           @default(now())
+  quizzes             QuickQuiz[]
+  notifications       Notification[]
+  history             QuizHistory[]
+  classes             Classroom[]        @relation("TeacherClasses")
+  sentFriendships     Friendship[]       @relation("SentFriendships")
+  receivedFriendships Friendship[]       @relation("ReceivedFriendships")
+  sentMessages        ChatMessage[]      @relation("SentMessages")
+  receivedMessages    ChatMessage[]      @relation("ReceivedMessages")
+}
+
+model Friendship {
+  id           String   @id @default(cuid())
+  requesterId  String
+  requester    User     @relation("SentFriendships", fields: [requesterId], references: [id], onDelete: Cascade)
+  addresseeId  String
+  addressee    User     @relation("ReceivedFriendships", fields: [addresseeId], references: [id], onDelete: Cascade)
+  status       String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([requesterId, addresseeId])
+}
+
+model ChatMessage {
+  id                 String   @id @default(cuid())
+  senderId           String
+  sender             User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId         String
+  receiver           User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  content            String
+  type               String   @default("TEXT") // TEXT, QUIZ
+  quizId             String?
+  quizTitle          String?
+  isRecalled         Boolean  @default(false)
+  deletedForSender   Boolean  @default(false)
+  deletedForReceiver Boolean  @default(false)
+  createdAt          DateTime @default(now())
 }
 
 model QuizHistory {
