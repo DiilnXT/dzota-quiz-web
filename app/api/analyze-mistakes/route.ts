@@ -77,18 +77,32 @@ Dưới đây là danh sách ${mistakes.length} câu hỏi trắc nghiệm mà h
 ${formattedQuestions}
 
 NHIỆM VỤ & YÊU CẦU SƯ PHẠM (RẤT QUAN TRỌNG):
-1. BẢO ĐẢM ĐỘ SÂU & ĐẦY ĐỦ KIẾN THỨC: KHÔNG tóm tắt qua loa, KHÔNG rút gọn sơ sài. Phải bao quát ĐẦY ĐỦ VÀ TOÀN DIỆN kiến thức của TẤT CẢ các câu hỏi có trong danh sách trên.
-2. MỤC TIÊU 100% ĐIỂM SỐ: Khi học sinh đọc và nắm vững bài phân tích này, đảm bảo 100% LÀM ĐÚNG HẾT tất cả các câu hỏi này và TỰ TIN LÀM ĐƯỢC TẤT CẢ CÁC CÂU HỎI MỞ RỘNG / TƯƠNG TỰ CÙNG CHUYÊN ĐỀ.
+1. BẢO ĐẢM ĐỘ SÂU & ĐẦY ĐỦ KIẾN THỨC: KHÔNG tóm tắt qua loa, KHÔNG rút gọn sơ sài. Phải bao quát ĐẦY ĐỦ VÀ TOÀN DIỆN tất cả các câu hỏi có trong danh sách trên.
+2. MỤC TIÊU 100% ĐIỂM SỐ: Học sinh đọc xong bài phân tích này phải nhớ trọn vẹn câu hỏi, hiểu tường tận đáp án đúng, thấu hiểu bẫy của từng phương án sai và tự tin làm đúng 100% khi gặp lại dạng câu này hoặc câu hỏi tương tự.
 3. CẤU TRÚC PHÂN CHIA HỆ THỐNG:
 Phân chia thành các CHUYÊN ĐỀ / NHÓM BÀI HỌC CỐT LÕI (ví dụ: '### NHÓM 1: TÊN CHUYÊN ĐỀ (Bao gồm các câu: ...)').
-Trong TỪNG CHUYÊN ĐỀ / NHÓM:
-- **Bản chất kiến thức & Cơ chế toàn diện**: Trình bày rõ ràng, sâu sắc bản chất khoa học, định lý, cơ chế dược lý/sinh lý/toán lý hóa, chỉ định, chống chỉ định, nguyên lý hoạt động... Đủ sâu để hiểu tận gốc rễ vấn đề.
-- **Phân tích bẫy đề thi & Tại sao chọn đáp án đúng**: Chỉ rõ vì sao đáp án đúng là chính xác tuyệt đối, bẫy tinh vi của từng phương án sai nằm ở đâu.
-- **Quy tắc vàng / Mẹo phản xạ nhanh**: Khẩu quyết, câu thần chú ghi nhớ, bảng so sánh đối chiếu giúp phản xạ ngay lập tức khi gặp dạng câu này và các câu tương tự.
+
+Trong TỪNG CHUYÊN ĐỀ / NHÓM, BẮT BUỘC CÓ ĐỦ 3 PHẦN:
+
+PHẦN 1. **Bản chất kiến thức cốt lõi & Cơ chế toàn diện**:
+Trình bày rõ ràng, sâu sắc bản chất khoa học, định lý, cơ chế dược lý/sinh lý/hóa sinh/toán học, chỉ định, chống chỉ định, nguyên lý hoạt động... Đủ sâu để hiểu tận gốc rễ vấn đề.
+
+PHẦN 2. **Phân tích chi tiết từng câu hỏi & Bẫy đề thi**:
+(CỰC KỲ QUAN TRỌNG: Học sinh đọc lại bài phân tích này cần NHỚ RÕ CÂU HỎI HỎI GÌ VÀ CÁC PHƯƠNG ÁN LÀ GÌ. TUYỆT ĐỐI KHÔNG CHỈ GHI MỖI "Câu 1 (Đáp án A)" MỘT CÁCH TRƠ TRỌI!)
+Đối với TỪNG CÂU HỎI trong chuyên đề, BẮT BUỘC trình bày theo đúng khuôn mẫu sau:
++ **Câu [Số] - [Tóm tắt đề bài hỏi gì: ví dụ "Kháng sinh ưu tiên điều trị ban đầu viêm phổi mắc phải cộng đồng"]**:
+  * ✅ **Đáp án đúng [Ký tự] ([Nội dung phương án đúng])**: Giải thích ngắn gọn bản chất vì sao đúng tuyệt đối.
+  * ⚠️ **Bẫy các phương án sai & Cách phân biệt**:
+    - [Ký tự phương án] ([Nội dung phương án]): Bẫy tinh vi ở chỗ nào? Vì sao sai?
+    - [Ký tự phương án] ([Nội dung phương án]): Bẫy tinh vi ở chỗ nào? Vì sao sai?
+
+PHẦN 3. **Quy tắc vàng / Mẹo phản xạ nhanh**:
+Khẩu quyết, câu thần chú ghi nhớ, bảng so sánh đối chiếu giúp phản xạ ngay lập tức khi gặp dạng câu này và các câu tương tự trong đề thi thật.
 
 QUY TẮC ĐỊNH DẠNG:
 - Dùng tiêu đề chuẩn: \`### NHÓM 1: ...\` cho chuyên đề.
 - Dùng gạch đầu dòng: \`- **Tên mục**: Nội dung...\`
+- Dùng ký hiệu: \`✅ **Đáp án đúng...**\`, \`⚠️ **Bẫy các phương án sai...**\`
 - TUYỆT ĐỐI KHÔNG để dấu hoa thị lộn xộn hoặc \`**:\` lơ lửng.
 - Công thức khoa học: dùng LaTeX \`$công thức$\` (ví dụ: $\\alpha$, $H_2SO_4$, $f'(x)$).`
 

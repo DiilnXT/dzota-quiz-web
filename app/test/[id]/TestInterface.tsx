@@ -564,7 +564,62 @@ export default function TestInterface({ test }: { test: any }) {
             )
           }
 
-          // 3. Sub-bullets (+ hoặc thụt dòng)
+          // 3. Question Item Card (Ví dụ: "+ Câu 7 - Kháng sinh ưu tiên..." hoặc "Câu 1 (Đáp án A)...")
+          const isQuestionItem = /^(?:[+\-*•]\s*)?(?:\*\*)?Câu\s+\d+/i.test(trimmed)
+          if (isQuestionItem) {
+            const content = trimmed.replace(/^[+\-*•]\s*/, '')
+            return (
+              <div key={idx} className="mt-4 mb-2 p-3 sm:p-3.5 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/60 shadow-xs flex items-start gap-2.5">
+                <span className="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5 shadow-xs">
+                  ?
+                </span>
+                <div className="flex-1 font-bold text-indigo-950 dark:text-indigo-200 text-xs sm:text-sm">
+                  {parseInline(content, `q_${idx}`)}
+                </div>
+              </div>
+            )
+          }
+
+          // 4. Correct Answer Row (Ví dụ: "* ✅ Đáp án đúng C..." hoặc "-> Do đó, Beta-lactam (C)...")
+          const isCorrectAnswer = /^(?:[+\-*•]\s*)?(?:✅|->\s*|=>\s*)?(?:\*\*)?Đáp án đúng/i.test(trimmed) || trimmed.includes('✅') || /->\s*Do đó/i.test(trimmed)
+          if (isCorrectAnswer) {
+            const content = trimmed.replace(/^[+\-*•]\s*/, '')
+            return (
+              <div key={idx} className="flex items-start gap-2.5 ml-3 sm:ml-5 my-1.5 p-2 sm:p-2.5 rounded-xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200/70 dark:border-emerald-800/60 text-emerald-950 dark:text-emerald-200 text-xs sm:text-sm">
+                <span className="shrink-0 text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">✅</span>
+                <div className="flex-1 leading-relaxed">
+                  {parseInline(content.replace(/^[✅\s]+/, ''), `ca_${idx}`)}
+                </div>
+              </div>
+            )
+          }
+
+          // 5. Trap Header (Ví dụ: "* ⚠️ Bẫy các phương án sai..." hoặc "⚠️ Bẫy...")
+          const isTrapHeader = /^(?:[+\-*•]\s*)?⚠️/i.test(trimmed) || cleanLine.startsWith('Bẫy các phương án') || cleanLine.startsWith('Bẫy phương án')
+          if (isTrapHeader) {
+            return (
+              <div key={idx} className="flex items-center gap-2 ml-3 sm:ml-5 mt-2.5 mb-1 text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200">
+                <span className="shrink-0 text-amber-600 dark:text-amber-400">⚠️</span>
+                <span>{cleanLine.replace(/:$/, '')}</span>
+              </div>
+            )
+          }
+
+          // 6. Trap Option Details (Ví dụ: "- A (Macrolid): ..." hoặc "Macrolid (A): ...")
+          const isOptionTrap = /^[+\-*•]\s*(?:Phương án\s*)?[A-D]\s*[\(:]/i.test(trimmed) || /^[+\-*•]\s*[\w\s-]+\s*\([A-D]\)\s*:/i.test(trimmed)
+          if (isOptionTrap) {
+            const content = trimmed.replace(/^[+\-*•]\s*/, '')
+            return (
+              <div key={idx} className="flex items-start gap-2 ml-5 sm:ml-7 my-1 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 mt-2 shrink-0" />
+                <div className="flex-1 leading-relaxed">
+                  {parseInline(content, `ot_${idx}`)}
+                </div>
+              </div>
+            )
+          }
+
+          // 7. Sub-bullets (+ hoặc thụt dòng)
           if (trimmed.startsWith('+ ') || trimmed.startsWith('  + ') || trimmed.startsWith('    - ')) {
             const content = trimmed.replace(/^[\s+]+/, '')
             return (
@@ -575,7 +630,7 @@ export default function TestInterface({ test }: { test: any }) {
             )
           }
 
-          // 4. Bullets thông thường (- hoặc * hoặc •)
+          // 8. Bullets thông thường (- hoặc * hoặc •)
           if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('• ')) {
             const content = trimmed.slice(2)
             return (
@@ -586,7 +641,7 @@ export default function TestInterface({ test }: { test: any }) {
             )
           }
 
-          // 5. Đoạn văn thường
+          // 9. Đoạn văn thường
           return (
             <p key={idx} className="my-1.5 leading-relaxed">
               {parseInline(trimmed, `p_${idx}`)}
