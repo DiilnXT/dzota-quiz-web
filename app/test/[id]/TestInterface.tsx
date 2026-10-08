@@ -58,12 +58,36 @@ export default function TestInterface({ test }: { test: any }) {
   const [explainError, setExplainError] = useState<string | null>(null)
   const [explanationCache, setExplanationCache] = useState<Record<string, string>>({})
 
+  // Review Wrong Questions & AI Analysis states
+  const [wrongQuestionsList, setWrongQuestionsList] = useState<any[]>([])
+  const [firstAttempts, setFirstAttempts] = useState<Record<string, string>>({})
+  const [isWrongReviewMode, setIsWrongReviewMode] = useState(false)
+  const [reviewQuestions, setReviewQuestions] = useState<any[]>([])
+  const [showMistakeReviewModal, setShowMistakeReviewModal] = useState(false)
+  const [showMistakeAnalysisModal, setShowMistakeAnalysisModal] = useState(false)
+  const [isAnalyzingMistakes, setIsAnalyzingMistakes] = useState(false)
+  const [mistakeAnalysisText, setMistakeAnalysisText] = useState<string | null>(null)
+  const [mistakeAnalysisSaved, setMistakeAnalysisSaved] = useState(false)
+
   // Check offline storage on mount
   useEffect(() => {
     if (typeof window !== 'undefined' && test?.id) {
       try {
         const stored = localStorage.getItem(`dzota_offline_quiz_${test.id}`)
         if (stored) setIsSavedOffline(true)
+      } catch (e) {}
+    }
+  }, [test?.id])
+
+  // Load wrong questions for this test from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined' && test?.id) {
+      try {
+        const raw = localStorage.getItem(`dzota_wrong_questions_${test.id}`)
+        if (raw) {
+          const list = JSON.parse(raw)
+          if (Array.isArray(list)) setWrongQuestionsList(list)
+        }
       } catch (e) {}
     }
   }, [test?.id])
@@ -277,6 +301,8 @@ export default function TestInterface({ test }: { test: any }) {
   }
 
   const handleStartTest = (isResume = false) => {
+    setIsWrongReviewMode(false)
+    setFirstAttempts({})
     const key = `dzota_quiz_session_${test.id}`
     if (!isResume) {
       try { localStorage.removeItem(key) } catch (e) {}
@@ -303,13 +329,23 @@ export default function TestInterface({ test }: { test: any }) {
 
   const handleSelectAnswer = (qId: string, optKey: string) => {
     if (submitted && test.mode === 'exam') return
+    if (!isWrongReviewMode) {
+      setFirstAttempts(prev => {
+        if (prev[qId] === undefined) {
+          return { ...prev, [qId]: optKey }
+        }
+        return prev
+      })
+    }
     const nextAnswers = { ...answers, [qId]: optKey }
     setAnswers(nextAnswers)
     
     let nextExp = showExplanation
     if (test.mode === 'practice') {
-      const q = test.questions.find((tq: any) => tq.question.id === qId).question
-      if (q.correctOption === optKey) {
+      const activeList = isWrongReviewMode ? reviewQuestions : test.questions
+      const foundItem = activeList.find((tq: any) => (tq.question?.id || tq.id) === qId)
+      const q = foundItem?.question || foundItem
+      if (q && q.correctOption === optKey) {
         nextExp = { ...showExplanation, [qId]: 'correct' }
       } else {
         nextExp = { ...showExplanation, [qId]: 'incorrect' }
@@ -437,18 +473,348 @@ export default function TestInterface({ test }: { test: any }) {
     )
   }
 
+  const renderMistakeModals = () => (
+    <>
+      {/* Modal 1: Ôn Lại Câu Sai */}
+      {showMistakeReviewModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden animate-pop-in">
+            {/* Header */}
+            <div className="px-5 sm:px-6 py-4 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+                  <RotateCcw size={20} />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-800 text-base sm:text-lg flex items-center gap-2">
+                    <span>Ôn Lại Câu Sai</span>
+                    <span className="text-xs bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full font-bold">
+                      {wrongQuestionsList.length} câu
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-500 truncate max-w-[260px] sm:max-w-xs">{test.title || 'Bài thi'}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowMistakeReviewModal(false)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-5 overflow-y-auto space-y-4 text-xs sm:text-sm text-slate-600">
+              <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80 text-amber-900 space-y-1.5 leading-relaxed">
+                <div className="font-bold flex items-center gap-1.5 text-amber-800">
+                  <HelpCircle size={15} />
+                  <span>Quy tắc ôn luyện thông minh:</span>
+                </div>
+                <p className="text-[12px] text-amber-800/90 leading-relaxed">
+                  Các câu hỏi trong danh sách này <strong>chỉ biến mất</strong> khi bạn làm lượt thi chính thức ở phần <strong>"Bắt Đầu Làm Bài"</strong> và trả lời đúng ngay lần đầu tiên.
+                </p>
+              </div>
+
+              <div className="border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100">
+                <div className="px-4 py-2.5 bg-slate-50 font-bold text-slate-700 text-xs flex justify-between items-center">
+                  <span>Danh sách câu hỏi cần củng cố</span>
+                  <span className="text-slate-400 font-normal">{wrongQuestionsList.length} câu</span>
+                </div>
+                <div className="max-h-56 overflow-y-auto divide-y divide-slate-100 p-1">
+                  {wrongQuestionsList.map((q, idx) => (
+                    <div key={idx} className="p-2.5 text-xs text-slate-700 hover:bg-slate-50 rounded-xl transition flex gap-2 items-start">
+                      <span className="w-5 h-5 rounded-full bg-rose-100 text-rose-700 font-bold flex items-center justify-center shrink-0 text-[11px] mt-0.5">
+                        {idx + 1}
+                      </span>
+                      <span className="line-clamp-2 leading-relaxed" dangerouslySetInnerHTML={{ __html: q.content || q.text || 'Câu hỏi' }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row gap-2.5 items-center justify-between shrink-0">
+              <button
+                type="button"
+                onClick={handleRequestMistakeAnalysis}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+              >
+                <Sparkles size={16} />
+                <span>✨ Phân tích lỗi sai với AI</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleStartWrongQuestionsPractice}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+              >
+                <Play size={15} fill="currentColor" />
+                <span>Bắt đầu ôn luyện ngay</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 2: Phân Tích Lỗi Sai Với AI */}
+      {showMistakeAnalysisModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden animate-pop-in">
+            {/* Header */}
+            <div className="px-5 sm:px-6 py-4 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 border-b border-indigo-100 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+                  <Sparkles size={20} />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-800 text-base sm:text-lg flex items-center gap-2">
+                    <span>Giảng Viên AI - Phân Tích Lỗi Sai</span>
+                  </h3>
+                  <p className="text-xs text-indigo-700 font-medium">Tổng hợp kiến thức trọng tâm cho {wrongQuestionsList.length} câu hỏi sai</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowMistakeAnalysisModal(false)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-5 sm:p-6 flex-1 overflow-y-auto space-y-4">
+              {isAnalyzingMistakes ? (
+                <div className="py-12 flex flex-col items-center justify-center text-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center justify-center animate-spin">
+                    <RotateCcw size={24} className="text-indigo-600" />
+                  </div>
+                  <h4 className="font-bold text-slate-800 text-sm sm:text-base">Đang tổng hợp kiến thức từ Giảng viên AI...</h4>
+                  <p className="text-xs text-slate-500 max-w-sm">
+                    Hệ thống đang phân tích các câu hỏi bạn làm sai, cô đọng kiến thức then chốt để giúp bạn làm đúng 100% trong lần ôn tập này.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 text-indigo-900 text-xs flex items-center justify-between">
+                    <span>💡 Hãy đọc kỹ phần tóm tắt cốt lõi bên dưới trước khi bắt đầu ôn luyện.</span>
+                    <span className="font-bold shrink-0 ml-2">{wrongQuestionsList.length} câu hỏi</span>
+                  </div>
+                  <div className="bg-slate-50/80 p-4 sm:p-5 rounded-2xl border border-slate-200 text-xs sm:text-sm leading-relaxed max-h-[50vh] overflow-y-auto">
+                    {renderFormattedMarkdown(mistakeAnalysisText || '')}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 sm:px-6 py-4 bg-slate-50 border-t border-slate-100 flex flex-wrap gap-2.5 items-center justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleCopyMistakeAnalysis}
+                  disabled={isAnalyzingMistakes || !mistakeAnalysisText}
+                  className="px-3.5 py-2 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
+                  title="Sao chép nội dung phân tích"
+                >
+                  <FileText size={14} />
+                  <span>Sao chép</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSaveMistakeAnalysisToAccount}
+                  disabled={isAnalyzingMistakes || !mistakeAnalysisText || mistakeAnalysisSaved}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                    mistakeAnalysisSaved
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200'
+                  } disabled:opacity-50`}
+                  title="Lưu bài phân tích này vào tab Sổ tay lỗi sai"
+                >
+                  <BookOpen size={14} />
+                  <span>{mistakeAnalysisSaved ? '✓ Đã lưu vào sổ tay' : 'Lưu vào sổ tay'}</span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMistakeAnalysisModal(false)
+                  handleStartWrongQuestionsPractice()
+                }}
+                disabled={isAnalyzingMistakes}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-500/20 transition-all flex items-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
+              >
+                <span>Đóng & Vào làm bài</span>
+                <ArrowRight size={15} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+
   const handleSubmit = () => {
+    const questionsToGrade = isWrongReviewMode ? reviewQuestions : test.questions
     let correctCount = 0
-    test.questions.forEach((tq: any) => {
-      if (answers[tq.question.id] === tq.question.correctOption) {
+    questionsToGrade.forEach((tq: any) => {
+      const q = tq.question || tq
+      if (answers[q.id] === q.correctOption) {
         correctCount++
       }
     })
-    setScore(parseFloat(((correctCount / test.questions.length) * 10).toFixed(1)))
+    setScore(parseFloat(((correctCount / questionsToGrade.length) * 10).toFixed(1)))
     setSubmitted(true)
+
+    // Cập nhật ngân hàng câu sai chỉ khi làm ở lượt thi chính thức (!isWrongReviewMode)
+    if (!isWrongReviewMode && test?.id) {
+      try {
+        let currentWrong: any[] = []
+        try {
+          const raw = localStorage.getItem(`dzota_wrong_questions_${test.id}`)
+          if (raw) currentWrong = JSON.parse(raw) || []
+        } catch (e) {}
+
+        test.questions.forEach((tq: any) => {
+          const q = tq.question || tq
+          const firstAns = firstAttempts[q.id] !== undefined ? firstAttempts[q.id] : answers[q.id]
+          const isFirstTryCorrect = firstAns !== undefined && firstAns !== null && firstAns === q.correctOption
+
+          if (isFirstTryCorrect) {
+            // Đúng ngay lần đầu làm bài chính thức -> xóa khỏi danh sách câu sai
+            currentWrong = currentWrong.filter((wq: any) => wq.id !== q.id && wq.content !== q.content)
+          } else {
+            // Sai hoặc chưa chọn lần đầu -> thêm vào danh sách câu sai nếu chưa có
+            const alreadyIn = currentWrong.some((wq: any) => wq.id === q.id || wq.content === q.content)
+            if (!alreadyIn) {
+              currentWrong.push({
+                id: q.id,
+                content: q.content,
+                options: q.options,
+                correctOption: q.correctOption,
+                explanation: q.explanation || ''
+              })
+            }
+          }
+        })
+
+        localStorage.setItem(`dzota_wrong_questions_${test.id}`, JSON.stringify(currentWrong))
+        setWrongQuestionsList(currentWrong)
+      } catch (e) {
+        console.error("Lỗi cập nhật danh sách câu sai:", e)
+      }
+    }
+
     if (test?.id) {
       try { localStorage.removeItem(`dzota_quiz_session_${test.id}`) } catch (e) {}
     }
+  }
+
+  const handleStartWrongQuestionsPractice = () => {
+    if (wrongQuestionsList.length === 0) {
+      alert("Bạn chưa có dữ liệu câu sai nào trong bài này!")
+      return
+    }
+    setShowMistakeReviewModal(false)
+    setShowMistakeAnalysisModal(false)
+    setIsWrongReviewMode(true)
+    setFirstAttempts({})
+    setAnswers({})
+    setShowExplanation({})
+    setSubmitted(false)
+    setScore(0)
+    setTimeLeft(test.timeLimit * 60)
+    
+    const formatted = wrongQuestionsList.map((wq, idx) => ({
+      id: `review_${wq.id || idx}`,
+      question: {
+        id: wq.id || `q_rev_${idx}`,
+        content: wq.content || wq.question || wq.questionText || wq.text || '',
+        options: typeof wq.options === 'string' ? wq.options : JSON.stringify(wq.options || {}),
+        correctOption: wq.correctOption || wq.correct || '',
+        explanation: wq.explanation || ''
+      }
+    }))
+    setReviewQuestions(formatted)
+    setIsStarted(true)
+  }
+
+  const handleRequestMistakeAnalysis = async () => {
+    if (wrongQuestionsList.length === 0) return
+    setShowMistakeAnalysisModal(true)
+    setMistakeAnalysisSaved(false)
+    if (mistakeAnalysisText) return
+
+    setIsAnalyzingMistakes(true)
+    try {
+      const res = await fetch('/api/analyze-mistakes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quizTitle: test.title || 'Bài thi',
+          subjectName: test.subject || 'Chung',
+          mistakes: wrongQuestionsList.map((q: any) => ({
+            questionText: q.content || q.question || q.questionText || q.text || '',
+            options: typeof q.options === 'string' ? JSON.parse(q.options || '{}') : (q.options || {}),
+            correctOption: q.correctOption || q.correct || ''
+          }))
+        })
+      })
+      const data = await res.json()
+      if (res.ok && data.analysis) {
+        setMistakeAnalysisText(data.analysis)
+      } else {
+        setMistakeAnalysisText(`❌ Không thể phân tích: ${data.error || 'Lỗi kết nối máy chủ'}`)
+      }
+    } catch (err: any) {
+      setMistakeAnalysisText('❌ Lỗi kết nối đến máy chủ giảng viên AI. Vui lòng thử lại sau.')
+    } finally {
+      setIsAnalyzingMistakes(false)
+    }
+  }
+
+  const handleSaveMistakeAnalysisToAccount = async () => {
+    if (!mistakeAnalysisText || !test?.id) return
+    try {
+      const localSaved = JSON.parse(localStorage.getItem('dzota_saved_mistake_analyses') || '[]')
+      const newItem = {
+        id: 'analysis_' + Date.now(),
+        quizId: test.id,
+        quizTitle: test.title || 'Bài thi',
+        subject: test.subject || 'Chung',
+        mistakeCount: wrongQuestionsList.length,
+        analysisText: mistakeAnalysisText,
+        createdAt: new Date().toISOString()
+      }
+      const updatedLocal = [newItem, ...localSaved.filter((item: any) => item.quizId !== test.id)]
+      localStorage.setItem('dzota_saved_mistake_analyses', JSON.stringify(updatedLocal))
+
+      await fetch('/api/student/mistakes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quizId: test.id,
+          quizTitle: test.title || 'Bài thi',
+          subject: test.subject || 'Chung',
+          mistakeCount: wrongQuestionsList.length,
+          analysisText: mistakeAnalysisText
+        })
+      }).catch(() => {})
+
+      setMistakeAnalysisSaved(true)
+      alert("💾 Đã lưu bài phân tích vào Sổ tay lỗi sai thành công!")
+    } catch (e: any) {
+      alert("Lưu bài phân tích thất bại: " + e.message)
+    }
+  }
+
+  const handleCopyMistakeAnalysis = () => {
+    if (!mistakeAnalysisText) return
+    navigator.clipboard.writeText(mistakeAnalysisText)
+      .then(() => alert("📋 Đã sao chép nội dung phân tích vào clipboard!"))
+      .catch(() => alert("Không thể sao chép tự động."))
   }
 
   const handleRestartPractice = () => {
@@ -702,6 +1068,30 @@ export default function TestInterface({ test }: { test: any }) {
               <ArrowRight size={19} className="transition-transform group-hover:translate-x-1.5" />
             </button>
 
+            {/* Subtle Review Wrong Questions Button */}
+            <button
+              type="button"
+              onClick={() => {
+                if (!wrongQuestionsList || wrongQuestionsList.length === 0) {
+                  alert('Bạn chưa có dữ liệu câu sai nào cho đề thi này!')
+                  return
+                }
+                setShowMistakeReviewModal(true)
+              }}
+              className="w-full mt-2.5 py-2.5 px-4 rounded-xl sm:rounded-2xl border border-amber-200/90 bg-amber-50/70 hover:bg-amber-100/80 text-amber-900 text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.99]"
+              title="Ôn tập lại các câu hỏi từng làm sai"
+            >
+              <RotateCcw size={15} className="text-amber-600 flex-shrink-0" />
+              <span>Ôn lại câu sai</span>
+              <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                wrongQuestionsList && wrongQuestionsList.length > 0
+                  ? 'bg-amber-500 text-white shadow-xs'
+                  : 'bg-amber-200/70 text-amber-800'
+              }`}>
+                {wrongQuestionsList ? wrongQuestionsList.length : 0} câu
+              </span>
+            </button>
+
             {/* Copyright Badge */}
             {renderCopyrightBadge('mt-4')}
 
@@ -745,6 +1135,7 @@ export default function TestInterface({ test }: { test: any }) {
             }
           }
         `}</style>
+        {renderMistakeModals()}
       </div>
     )
   }
@@ -761,8 +1152,27 @@ export default function TestInterface({ test }: { test: any }) {
           <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-2">
             Chế độ: {test.mode === 'practice' ? 'Ôn tập & Luyện tập' : 'Thi chính thức'}
           </p>
-          <button onClick={() => window.location.reload()} className="mt-6 bg-slate-100 text-[#007AFF] px-6 py-3 rounded-xl font-bold hover:bg-slate-200 transition-colors">
+          <button onClick={() => window.location.reload()} className="mt-6 w-full bg-slate-100 text-[#007AFF] px-6 py-3 rounded-xl font-bold hover:bg-slate-200 transition-colors">
             Làm lại
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (wrongQuestionsList.length === 0) {
+                alert('Chúc mừng! Bạn không có câu sai nào cần ôn tập.')
+                return
+              }
+              setShowMistakeReviewModal(true)
+            }}
+            className="mt-3 w-full bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 px-6 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.98]"
+          >
+            <RotateCcw size={16} className="text-amber-600" />
+            <span>Ôn Lại Câu Sai</span>
+            <span className={`px-2 py-0.5 rounded-full text-xs font-extrabold ${
+              wrongQuestionsList.length > 0 ? 'bg-amber-500 text-white' : 'bg-amber-200 text-amber-800'
+            }`}>
+              {wrongQuestionsList.length} câu
+            </span>
           </button>
         </div>
         
@@ -987,11 +1397,14 @@ export default function TestInterface({ test }: { test: any }) {
             </div>
           </div>
         )}
+        {renderMistakeModals()}
       </div>
     )
   }
 
   // ─── Active test-taking view ──────────────────────────────────────────────────
+  const activeQuestions = isWrongReviewMode ? reviewQuestions : test.questions
+
   return (
     <div className={`flex flex-col min-h-screen font-sans relative overflow-y-auto ${activeBgEnabled ? 'dzota-active-bg' : 'bg-[#F8F9FA]'}`}>
       {/* Subtle ambient overlay only when background is enabled */}
@@ -1013,7 +1426,7 @@ export default function TestInterface({ test }: { test: any }) {
             <div className="font-black text-white text-xs sm:text-sm leading-tight truncate drop-shadow-xs">{test.title}</div>
             <div className="text-[9px] sm:text-[10px] font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
-              <span>{test.mode === 'exam' ? 'Bài thi trắc nghiệm' : 'Chế độ luyện tập'}</span>
+              <span>{isWrongReviewMode ? 'Ôn lại các câu từng làm sai' : (test.mode === 'exam' ? 'Bài thi trắc nghiệm' : 'Chế độ luyện tập')}</span>
             </div>
           </div>
         </div>
@@ -1023,7 +1436,7 @@ export default function TestInterface({ test }: { test: any }) {
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-black shadow-[0_4px_14px_rgba(13,148,136,0.35)] border border-white/20 whitespace-nowrap">
               <CheckCircle size={14} className="text-cyan-200 hidden xs:inline" />
-              <span>Đã làm <strong className="text-yellow-300 font-extrabold">{Object.keys(answers).length}</strong>/{test.questions.length}</span>
+              <span>Đã làm <strong className="text-yellow-300 font-extrabold">{Object.keys(answers).length}</strong>/{activeQuestions.length}</span>
             </div>
             <div className={`font-mono text-xs sm:text-sm font-bold flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full ${timeLeft < 60 ? 'bg-[#fce8e6] text-[#c5221f] animate-pulse' : 'bg-white/90 border border-slate-200/80 text-slate-800'}`}>
               <Clock size={15}/> {formatTime(timeLeft)}
@@ -1036,7 +1449,7 @@ export default function TestInterface({ test }: { test: any }) {
             <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white text-xs font-black shadow-[0_4px_14px_rgba(79,70,229,0.35)] border border-white/25 whitespace-nowrap">
               <span className="text-cyan-200 hidden sm:inline">Đã làm</span>
               <span className="text-yellow-300 font-extrabold">{Object.keys(answers).length}</span>
-              <span className="text-white font-extrabold">/{test.questions.length}</span>
+              <span className="text-white font-extrabold">/{activeQuestions.length}</span>
               <span className="text-cyan-200 text-[10px] hidden xs:inline">câu</span>
             </div>
             <button
@@ -1060,7 +1473,7 @@ export default function TestInterface({ test }: { test: any }) {
       </header>
 
       <div className="flex-1 overflow-auto p-4 pt-20 max-w-3xl mx-auto w-full pb-20 space-y-6 relative z-10">
-        {test.questions.map((tq: any, i: number) => {
+        {activeQuestions.map((tq: any, i: number) => {
           const q = tq.question
           const isSelected = answers[q.id]
           const status = showExplanation[q.id]
@@ -1275,6 +1688,7 @@ export default function TestInterface({ test }: { test: any }) {
           </div>
         </div>
       )}
+      {renderMistakeModals()}
     </div>
   )
 }

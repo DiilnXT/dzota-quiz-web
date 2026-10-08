@@ -601,6 +601,158 @@
           addToast('⚡ Đã mở đề thi offline thành công!', 'success');
         };
 
+        // ─── ÔN LUYỆN CÂU SAI & PHÂN TÍCH LỖI SAI AI STATES ───
+        const [wrongQuestionsList, setWrongQuestionsList] = useState([]);
+        const [firstAttempts, setFirstAttempts] = useState({});
+        const [isWrongReviewMode, setIsWrongReviewMode] = useState(false);
+        const [showMistakeReviewModal, setShowMistakeReviewModal] = useState(false);
+        const [showMistakeAnalysisModal, setShowMistakeAnalysisModal] = useState(false);
+        const [isAnalyzingMistakes, setIsAnalyzingMistakes] = useState(false);
+        const [mistakeAnalysisText, setMistakeAnalysisText] = useState('');
+        const [mistakeAnalysisSaved, setMistakeAnalysisSaved] = useState(false);
+
+        const loadWrongQuestionsForQuiz = (quizId) => {
+          const targetId = quizId || quizIdTracker || 'default';
+          try {
+            const raw = localStorage.getItem('dzota_wrong_questions_' + targetId);
+            if (raw) {
+              const list = JSON.parse(raw);
+              if (Array.isArray(list)) {
+                setWrongQuestionsList(list);
+                return list;
+              }
+            }
+          } catch(e) {}
+          setWrongQuestionsList([]);
+          return [];
+        };
+
+        useEffect(() => {
+          if (quizIdTracker) {
+            loadWrongQuestionsForQuiz(quizIdTracker);
+          }
+        }, [quizIdTracker]);
+
+        const handleStartWrongQuestionsPractice = () => {
+          if (wrongQuestionsList.length === 0) {
+            addToast("Bạn chưa có dữ liệu câu sai nào trong bài này!", "info");
+            return;
+          }
+          setShowMistakeReviewModal(false);
+          setShowMistakeAnalysisModal(false);
+          setIsWrongReviewMode(true);
+          setFirstAttempts({});
+
+          const formatted = wrongQuestionsList.map((q, idx) => ({
+            ...q,
+            id: q.id || `wrong_${idx}`,
+            options: { ...q.options }
+          }));
+
+          setCurrentQuestions(formatted);
+          setAppMode('taking');
+          setTimeLeft((quizConfig.timeLimit || 15) * 60);
+          setSubmitted(false);
+          setScore(0);
+          setUserAnswers({});
+          setShowExplanation({});
+          setCurrentQIndex(0);
+          addToast(`🎯 Bắt đầu ôn luyện ${formatted.length} câu từng làm sai!`, "success");
+        };
+
+        const handleRequestMistakeAnalysis = async () => {
+          if (wrongQuestionsList.length === 0) return;
+          setShowMistakeAnalysisModal(true);
+          setMistakeAnalysisSaved(false);
+
+          if (mistakeAnalysisText) return;
+
+          setIsAnalyzingMistakes(true);
+          try {
+            const res = await fetch('/api/analyze-mistakes', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                quizTitle: quizConfig.title || 'Bài thi',
+                subjectName: quizConfig.category || 'Chung',
+                mistakes: wrongQuestionsList.map(q => ({
+                  questionText: q.question || q.questionText || q.text || '',
+                  options: q.options || {},
+                  correctOption: q.correct || q.correctOption || ''
+                }))
+              })
+            });
+            const data = await res.json();
+            if (res.ok && data.analysis) {
+              setMistakeAnalysisText(data.analysis);
+            } else {
+              setMistakeAnalysisText(`❌ Không thể phân tích: ${data.error || 'Lỗi kết nối máy chủ'}`);
+            }
+          } catch(err) {
+            setMistakeAnalysisText('❌ Lỗi kết nối đến máy chủ giảng viên AI. Vui lòng thử lại sau.');
+          } finally {
+            setIsAnalyzingMistakes(false);
+          }
+        };
+
+        const handleSaveMistakeAnalysisToAccount = async () => {
+          if (!mistakeAnalysisText) return;
+          try {
+            const targetId = quizIdTracker || 'default';
+            const localSaved = JSON.parse(localStorage.getItem('dzota_saved_mistake_analyses') || '[]');
+            const newItem = {
+              id: 'analysis_' + Date.now(),
+              quizId: targetId,
+              quizTitle: quizConfig.title || 'Bài thi',
+              subject: quizConfig.category || 'Chung',
+              mistakeCount: wrongQuestionsList.length,
+              analysisText: mistakeAnalysisText,
+              createdAt: new Date().toISOString()
+            };
+            const updatedLocal = [newItem, ...localSaved.filter(item => item.quizId !== targetId)];
+            localStorage.setItem('dzota_saved_mistake_analyses', JSON.stringify(updatedLocal));
+
+            if (currentUser) {
+              await fetch('/api/student/mistakes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  quizId: targetId,
+                  quizTitle: quizConfig.title || 'Bài thi',
+                  subject: quizConfig.category || 'Chung',
+                  mistakeCount: wrongQuestionsList.length,
+                  analysisText: mistakeAnalysisText
+                })
+              }).catch(() => {});
+            }
+
+            setMistakeAnalysisSaved(true);
+            addToast("💾 Đã lưu bài phân tích vào Sổ tay lỗi sai trong tài khoản thành công!", "success");
+          } catch(e) {
+            addToast("Lưu bài phân tích thất bại: " + e.message, "error");
+          }
+        };
+
+        const handleCopyMistakeAnalysis = () => {
+          if (!mistakeAnalysisText) return;
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(mistakeAnalysisText);
+              addToast("📋 Đã sao chép nội dung phân tích vào clipboard!", "success");
+            } else {
+              const el = document.createElement('textarea');
+              el.value = mistakeAnalysisText;
+              document.body.appendChild(el);
+              el.select();
+              document.execCommand('copy');
+              document.body.removeChild(el);
+              addToast("📋 Đã sao chép nội dung phân tích vào clipboard!", "success");
+            }
+          } catch(err) {
+            addToast("Không thể sao chép tự động: " + err.message, "error");
+          }
+        };
+
         // AI Giảng Viên Giải Thích States
         const [activeExplainQ, setActiveExplainQ] = useState(null);
         const [explainLoading, setExplainLoading] = useState(false);
@@ -1635,6 +1787,8 @@
              });
           }
           
+          setIsWrongReviewMode(false);
+          setFirstAttempts({});
           setCurrentQuestions(finalQuestions); setAppMode('taking'); setTimeLeft(quizConfig.timeLimit * 60);
           setSubmitted(false); setScore(0); setUserAnswers({}); setShowExplanation({}); setCurrentQIndex(0);
 
@@ -1716,6 +1870,14 @@
 
         const handleSelectAnswer = (qId, option) => {
           if (submitted && quizConfig.mode === 'exam') return;
+          if (!isWrongReviewMode) {
+            setFirstAttempts(prev => {
+              if (prev[qId] === undefined) {
+                return { ...prev, [qId]: option };
+              }
+              return prev;
+            });
+          }
           const nextAnswers = { ...userAnswers, [qId]: option };
           setUserAnswers(nextAnswers);
           let nextExp = showExplanation;
@@ -1825,6 +1987,59 @@
             const finalScore = parseFloat(((count / uniqueQuestions.length) * 10).toFixed(1));
             setCorrectCount(count); setScore(finalScore);
             setSubmitted(true); setAppMode('result'); addToast("Đã ghi nhận kết quả!", 'success');
+
+            // Cập nhật ngân hàng câu sai chỉ khi làm ở lượt thi chính thức (!isWrongReviewMode)
+            const targetQuizId = quizIdTracker || 'default';
+            if (!isWrongReviewMode) {
+                try {
+                    let currentWrong = [];
+                    try {
+                        const raw = localStorage.getItem('dzota_wrong_questions_' + targetQuizId);
+                        if (raw) currentWrong = JSON.parse(raw) || [];
+                    } catch(e) {}
+
+                    uniqueQuestions.forEach(origQ => {
+                        const oid = origQ.originalSlotId || origQ.originalId || origQ.id;
+                        const instances = currentQuestions.filter(q => (q.originalSlotId || q.originalId || q.id) === oid);
+                        const firstInstance = instances[0] || origQ;
+                        const firstAns = firstAttempts[firstInstance.id] !== undefined ? firstAttempts[firstInstance.id] : userAnswers[firstInstance.id];
+                        const isFirstTryCorrect = firstAns !== undefined && firstAns !== null && firstAns === firstInstance.correct;
+                        const qKey = (firstInstance.text || '').trim();
+
+                        if (isFirstTryCorrect) {
+                            // Trả lời đúng ngay lần đầu làm bài chính thức -> Xóa khỏi danh sách câu sai
+                            currentWrong = currentWrong.filter(wq => {
+                                const wKey = (wq.text || '').trim();
+                                const wId = wq.originalSlotId || wq.originalId || wq.id;
+                                return wKey !== qKey && wId !== oid;
+                            });
+                        } else {
+                            // Làm sai hoặc bỏ trống lần đầu -> Giữ/thêm vào danh sách câu sai
+                            const alreadyInWrong = currentWrong.some(wq => {
+                                const wKey = (wq.text || '').trim();
+                                const wId = wq.originalSlotId || wq.originalId || wq.id;
+                                return wKey === qKey || wId === oid;
+                            });
+                            if (!alreadyInWrong) {
+                                currentWrong.push({
+                                    id: firstInstance.id,
+                                    originalId: oid,
+                                    text: firstInstance.text,
+                                    options: { ...firstInstance.options },
+                                    correct: firstInstance.correct,
+                                    explanation: firstInstance.explanation || ''
+                                });
+                            }
+                        }
+                    });
+
+                    localStorage.setItem('dzota_wrong_questions_' + targetQuizId, JSON.stringify(currentWrong));
+                    setWrongQuestionsList(currentWrong);
+                } catch(err) {
+                    console.error("Lỗi cập nhật danh sách câu sai:", err);
+                }
+            }
+
             try {
               localStorage.removeItem('dzota_quiz_session_' + (quizIdTracker || 'default'));
             } catch(e) {}
@@ -2742,6 +2957,30 @@
                     <Icons.ArrowRight size={19} className="transition-transform group-hover:translate-x-1.5" />
                   </button>
 
+                  {/* Subtle Review Wrong Questions Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!wrongQuestionsList || wrongQuestionsList.length === 0) {
+                        addToast('Bạn chưa có dữ liệu câu sai nào cho đề thi này!', 'info');
+                        return;
+                      }
+                      setShowMistakeReviewModal(true);
+                    }}
+                    className="w-full mt-2 py-2.5 px-4 rounded-xl sm:rounded-2xl border border-amber-200/90 bg-amber-50/70 hover:bg-amber-100/80 text-amber-900 text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.99]"
+                    title="Ôn tập lại các câu hỏi từng làm sai"
+                  >
+                    <Icons.RotateCcw size={15} className="text-amber-600 flex-shrink-0" />
+                    <span>Ôn lại câu sai</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                      wrongQuestionsList && wrongQuestionsList.length > 0 
+                        ? 'bg-amber-500 text-white shadow-xs' 
+                        : 'bg-amber-200/70 text-amber-800'
+                    }`}>
+                      {wrongQuestionsList ? wrongQuestionsList.length : 0} câu
+                    </span>
+                  </button>
+
                   {/* Copyright Badge */}
                   {renderCopyrightBadge('mt-4')}
 
@@ -3031,6 +3270,27 @@
                       <div className="bg-red-50 text-ios-red px-4 py-2 rounded-2xl font-bold text-[15px]">Sai {uniqueQuestions.length - correctCount}</div>
                    </div>
                    <Button onClick={startQuiz} className="w-full py-4 rounded-2xl text-[17px] ios-override" icon={<Icons.RefreshCw size={20}/>}>Làm Lại Lần Nữa</Button>
+                   <button
+                     type="button"
+                     onClick={() => {
+                       if (!wrongQuestionsList || wrongQuestionsList.length === 0) {
+                         addToast('Chúc mừng! Bạn không có câu sai nào cần ôn tập.', 'success');
+                         return;
+                       }
+                       setShowMistakeReviewModal(true);
+                     }}
+                     className="w-full mt-3 py-3.5 px-5 rounded-2xl font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.98]"
+                   >
+                     <Icons.RotateCcw size={18} className="text-amber-600" />
+                     <span>Ôn Lại Câu Sai</span>
+                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
+                       wrongQuestionsList && wrongQuestionsList.length > 0
+                         ? 'bg-amber-500 text-white shadow-xs'
+                         : 'bg-amber-200/80 text-amber-800'
+                     }`}>
+                       {wrongQuestionsList ? wrongQuestionsList.length : 0} câu
+                     </span>
+                   </button>
                 </div>
 
                 <div className="max-w-2xl w-full animate-slide-up">
@@ -3498,6 +3758,187 @@
                         </button>
                       )}
                     </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Modal 1: Hộp thoại Ôn Lại Câu Sai */}
+            {showMistakeReviewModal && (
+              <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-fade-in">
+                <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden animate-slide-up">
+                  {/* Header */}
+                  <div className="px-5 sm:px-6 py-4 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100 flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+                        <Icons.RotateCcw size={20} />
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-slate-800 text-base sm:text-lg flex items-center gap-2">
+                          <span>Ôn Lại Câu Sai</span>
+                          <span className="text-xs bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full font-bold">
+                            {wrongQuestionsList.length} câu
+                          </span>
+                        </h3>
+                        <p className="text-xs text-slate-500 truncate max-w-[260px] sm:max-w-xs">{quizConfig.title || 'Bài thi'}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowMistakeReviewModal(false)}
+                      className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                    >
+                      <Icons.X size={18} />
+                    </button>
+                  </div>
+
+                  {/* Body */}
+                  <div className="p-5 overflow-y-auto space-y-4 text-xs sm:text-sm text-slate-600">
+                    <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80 text-amber-900 space-y-1.5 leading-relaxed">
+                      <div className="font-bold flex items-center gap-1.5 text-amber-800">
+                        <Icons.HelpCircle size={15} />
+                        <span>Quy tắc ôn luyện thông minh:</span>
+                      </div>
+                      <p className="text-[12px] text-amber-800/90 leading-relaxed">
+                        Các câu hỏi trong danh sách này <strong>chỉ biến mất</strong> khi bạn làm lượt thi chính thức ở phần <strong>"Bắt Đầu Làm Bài"</strong> và trả lời đúng ngay lần đầu tiên.
+                      </p>
+                    </div>
+
+                    <div className="border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100">
+                      <div className="px-4 py-2.5 bg-slate-50 font-bold text-slate-700 text-xs flex justify-between items-center">
+                        <span>Danh sách câu hỏi cần củng cố</span>
+                        <span className="text-slate-400 font-normal">{wrongQuestionsList.length} câu</span>
+                      </div>
+                      <div className="max-h-56 overflow-y-auto divide-y divide-slate-100 p-1">
+                        {wrongQuestionsList.map((q, idx) => (
+                          <div key={idx} className="p-2.5 text-xs text-slate-700 hover:bg-slate-50 rounded-xl transition flex gap-2 items-start">
+                            <span className="w-5 h-5 rounded-full bg-rose-100 text-rose-700 font-bold flex items-center justify-center shrink-0 text-[11px] mt-0.5">
+                              {idx + 1}
+                            </span>
+                            <span className="line-clamp-2 leading-relaxed">
+                              {q.text || q.question || 'Câu hỏi'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row gap-2.5 items-center justify-between shrink-0">
+                    <button
+                      type="button"
+                      onClick={handleRequestMistakeAnalysis}
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                    >
+                      <Icons.Wand2 size={16} />
+                      <span>✨ Phân tích lỗi sai với AI</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleStartWrongQuestionsPractice}
+                      className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                    >
+                      <Icons.Play size={15} fill="currentColor" />
+                      <span>Bắt đầu ôn luyện ngay</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Modal 2: Phân Tích Lỗi Sai Với AI */}
+            {showMistakeAnalysisModal && (
+              <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-fade-in">
+                <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden animate-slide-up">
+                  {/* Header */}
+                  <div className="px-5 sm:px-6 py-4 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 border-b border-indigo-100 flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+                        <Icons.Wand2 size={20} />
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-slate-800 text-base sm:text-lg flex items-center gap-2">
+                          <span>Giảng Viên AI - Phân Tích Lỗi Sai</span>
+                        </h3>
+                        <p className="text-xs text-indigo-700 font-medium">Tổng hợp kiến thức trọng tâm cho {wrongQuestionsList.length} câu hỏi sai</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowMistakeAnalysisModal(false)}
+                      className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                    >
+                      <Icons.X size={18} />
+                    </button>
+                  </div>
+
+                  {/* Body */}
+                  <div className="p-5 sm:p-6 flex-1 overflow-y-auto space-y-4">
+                    {isAnalyzingMistakes ? (
+                      <div className="py-12 flex flex-col items-center justify-center text-center space-y-3">
+                        <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center justify-center animate-spin">
+                          <Icons.RotateCcw size={24} className="text-indigo-600" />
+                        </div>
+                        <h4 className="font-bold text-slate-800 text-sm sm:text-base">Đang tổng hợp kiến thức từ Giảng viên AI...</h4>
+                        <p className="text-xs text-slate-500 max-w-sm">
+                          Hệ thống đang phân tích các câu hỏi bạn làm sai, cô đọng kiến thức then chốt để giúp bạn làm đúng 100% trong lần ôn tập này.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 text-indigo-900 text-xs flex items-center justify-between">
+                          <span>💡 Hãy đọc kỹ phần tóm tắt cốt lõi bên dưới trước khi bắt đầu ôn luyện.</span>
+                          <span className="font-bold shrink-0 ml-2">{wrongQuestionsList.length} câu hỏi</span>
+                        </div>
+                        <div className="bg-slate-50/80 p-4 sm:p-5 rounded-2xl border border-slate-200 text-xs sm:text-sm leading-relaxed max-h-[50vh] overflow-y-auto">
+                          {renderFormattedMarkdown(mistakeAnalysisText)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="px-5 sm:px-6 py-4 bg-slate-50 border-t border-slate-100 flex flex-wrap gap-2.5 items-center justify-between shrink-0">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleCopyMistakeAnalysis}
+                        disabled={isAnalyzingMistakes || !mistakeAnalysisText}
+                        className="px-3.5 py-2 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
+                        title="Sao chép nội dung phân tích"
+                      >
+                        <Icons.Copy size={14} />
+                        <span>Sao chép</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleSaveMistakeAnalysisToAccount}
+                        disabled={isAnalyzingMistakes || !mistakeAnalysisText || mistakeAnalysisSaved}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                          mistakeAnalysisSaved
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200'
+                        } disabled:opacity-50`}
+                        title="Lưu bài phân tích này vào tab Sổ tay lỗi sai"
+                      >
+                        <Icons.Bookmark size={14} />
+                        <span>{mistakeAnalysisSaved ? '✓ Đã lưu vào sổ tay' : 'Lưu vào sổ tay'}</span>
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMistakeAnalysisModal(false);
+                        handleStartWrongQuestionsPractice();
+                      }}
+                      disabled={isAnalyzingMistakes}
+                      className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-500/20 transition-all flex items-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
+                    >
+                      <span>Đóng & Vào làm bài</span>
+                      <Icons.ArrowRight size={15} />
+                    </button>
                   </div>
                 </div>
               </div>

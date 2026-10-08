@@ -20,7 +20,8 @@ import {
   User as UserIcon,
   BarChart2,
   CheckCircle2,
-  MessageCircle
+  MessageCircle,
+  GraduationCap
 } from 'lucide-react'
 import { useTheme } from '../ThemeContext'
 
@@ -65,7 +66,7 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
     : 'Học sinh'
 
   // Tab điều hướng chính
-  const [activeTab, setActiveTab] = useState<string>(isStudent ? 'history' : 'dashboard')
+  const [activeTab, setActiveTab] = useState<string>(isStudent ? 'study' : 'dashboard')
 
   useEffect(() => {
     const handleTabChange = (e: any) => {
@@ -98,7 +99,10 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
   }
 
   // Active status checks
-  const isDashboardItemActive = isDashboardActive && (activeTab === 'dashboard' || activeTab === 'overview' || (isStudent && activeTab === 'history'))
+  const isStudyActive = isDashboardActive && activeTab === 'study'
+  const isMistakesActive = isDashboardActive && activeTab === 'mistakes'
+  const isHistoryActive = isDashboardActive && activeTab === 'history'
+  const isDashboardItemActive = isDashboardActive && (activeTab === 'dashboard' || activeTab === 'overview')
   const isQuizzesActive = isDashboardActive && activeTab === 'quizzes'
   const isClassesActive = isDashboardActive && activeTab === 'classes'
   const isTeachersActive = isDashboardActive && activeTab === 'teachers'
@@ -204,23 +208,77 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
 
         {/* Sidebar Navigation */}
         <div className="flex-1 overflow-y-auto py-6 px-4 space-y-6">
-          {/* Section 1: TỔNG QUAN */}
+          {/* Section 1: TỔNG QUAN / HỌC TẬP */}
           <div>
             <h3 className="px-3 text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
-              Tổng quan
+              {isStudent ? 'Góc học tập' : 'Tổng quan'}
             </h3>
             <div className="space-y-1">
-              <button
-                onClick={() => handleNavigateTab(isStudent ? 'history' : 'dashboard')}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
-                  isDashboardItemActive
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
-                }`}
-              >
-                <LayoutDashboard size={18} />
-                <span>Dashboard {isStudent ? '(Lịch sử làm bài)' : ''}</span>
-              </button>
+              {isStudent ? (
+                <>
+                  <button
+                    onClick={() => handleNavigateTab('study')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
+                      isStudyActive
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <GraduationCap size={18} />
+                    <span>Học tập & Đề thi</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleNavigateTab('mistakes')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
+                      isMistakesActive
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <Sparkles size={18} />
+                    <span>Sổ tay lỗi sai</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleNavigateTab('history')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
+                      isHistoryActive
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <LayoutDashboard size={18} />
+                    <span>Lịch sử làm bài</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => handleNavigateTab('dashboard')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
+                      isDashboardItemActive
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <LayoutDashboard size={18} />
+                    <span>Bảng điều khiển</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleNavigateTab('mistakes')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
+                      isMistakesActive
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <Sparkles size={18} />
+                    <span>Sổ tay lỗi sai AI</span>
+                  </button>
+                </>
+              )}
             </div>
           </div>
 

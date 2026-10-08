@@ -58,6 +58,8 @@ import {
   Upload
 } from 'lucide-react'
 import TeacherChatTab from './TeacherChatTab'
+import StudentStudyTab from './StudentStudyTab'
+import MistakeNotebookTab from './MistakeNotebookTab'
 
 interface TeacherQuiz {
   id: string
@@ -1510,6 +1512,20 @@ export default function DashboardClient({
           )}
         </div>
       </div>
+
+      {/* ─────────────────────────────────────────────────────────────
+          TAB: STUDENT STUDY PORTAL (HỌC TẬP & ĐỀ THI ĐƯỢC CẤP PHÉP)
+      ───────────────────────────────────────────────────────────── */}
+      {isStudent && activeTab === 'study' && (
+        <StudentStudyTab currentUser={currentUser} showToast={showToast} />
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          TAB: MISTAKE NOTEBOOK (SỔ TAY LỖI SAI CHO MỌI CẤP ĐỘ ACC)
+      ───────────────────────────────────────────────────────────── */}
+      {activeTab === 'mistakes' && (
+        <MistakeNotebookTab currentUser={currentUser} showToast={showToast} />
+      )}
 
       {/* ─────────────────────────────────────────────────────────────
           TAB: STUDENT PORTAL (LỊCH SỬ LÀM BÀI HÔM NAY)

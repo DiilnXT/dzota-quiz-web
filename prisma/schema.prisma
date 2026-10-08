@@ -96,6 +96,7 @@ model User {
   receivedFriendships Friendship[]       @relation("ReceivedFriendships")
   sentMessages        ChatMessage[]      @relation("SentMessages")
   receivedMessages    ChatMessage[]      @relation("ReceivedMessages")
+  mistakeAnalyses     MistakeAnalysis[]
 }
 
 model Friendship {
@@ -177,6 +178,18 @@ model SystemSetting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+model MistakeAnalysis {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizId       String
+  quizTitle    String
+  subject      String?
+  mistakeCount Int      @default(0)
+  analysisText String   // Markdown content of the AI analysis
+  createdAt    DateTime @default(now())
 }
 
 
