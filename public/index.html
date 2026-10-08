@@ -1075,31 +1075,57 @@
           const lines = text.split('\n');
 
           const parseInline = (content, keyPrefix) => {
-            let sanitized = content
-              .replace(/\*\*:\s*/g, ':** ')
-              .replace(/\s+\*\*/g, '**')
-              .replace(/\*\*\s+/g, '** ');
+            // 1. Chuẩn hóa: Nếu dấu hai chấm dính liền với ** mở thì thêm dấu cách
+            const sanitized = content.replace(/:(\*\*)/g, ': $1');
 
-            const parts = sanitized.split(/(\*\*[\s\S]*?\*\*|\*[^*]+?\*)/g);
-            return parts.map((part, pIdx) => {
+            // 2. Tách chuỗi theo cú pháp **in đậm** và *in nghiêng*
+            const tokens = sanitized.split(/(\*\*[\s\S]*?\*\*|\*[^*]+?\*)/g);
+
+            return tokens.map((token, pIdx) => {
               const k = `${keyPrefix}_p_${pIdx}`;
-              if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
-                const inner = part.slice(2, -2).trim();
+              if (!token) return null;
+
+              if (token.startsWith('**') && token.endsWith('**') && token.length >= 4) {
+                const inner = token.slice(2, -2).trim();
+
+                const prev = tokens[pIdx - 1];
+                const needsSpaceBefore = prev && /[a-zA-Z0-9_\u00C0-\u1EF9]$/.test(prev);
+
+                const next = tokens[pIdx + 1];
+                const needsSpaceAfter = next && /^[a-zA-Z0-9_\u00C0-\u1EF9]/.test(next);
+
                 return (
-                  <strong key={k} className="font-extrabold text-slate-900">
-                    <MathText text={inner} />
-                  </strong>
+                  <span key={k}>
+                    {needsSpaceBefore ? ' ' : ''}
+                    <strong className="font-extrabold text-slate-900">
+                      <MathText text={inner} />
+                    </strong>
+                    {needsSpaceAfter ? ' ' : ''}
+                  </span>
                 );
               }
-              if (part.startsWith('*') && part.endsWith('*') && part.length >= 2 && !part.startsWith('**')) {
-                const inner = part.slice(1, -1).trim();
+
+              if (token.startsWith('*') && token.endsWith('*') && token.length >= 2 && !token.startsWith('**')) {
+                const inner = token.slice(1, -1).trim();
+
+                const prev = tokens[pIdx - 1];
+                const needsSpaceBefore = prev && /[a-zA-Z0-9_\u00C0-\u1EF9]$/.test(prev);
+
+                const next = tokens[pIdx + 1];
+                const needsSpaceAfter = next && /^[a-zA-Z0-9_\u00C0-\u1EF9]/.test(next);
+
                 return (
-                  <em key={k} className="italic text-indigo-900">
-                    <MathText text={inner} />
-                  </em>
+                  <span key={k}>
+                    {needsSpaceBefore ? ' ' : ''}
+                    <em className="italic text-indigo-900">
+                      <MathText text={inner} />
+                    </em>
+                    {needsSpaceAfter ? ' ' : ''}
+                  </span>
                 );
               }
-              const cleaned = part.replace(/^\*{1,2}/, '').replace(/\*{1,2}$/, '');
+
+              const cleaned = token.replace(/^\*{1,2}/, '').replace(/\*{1,2}$/, '');
               return <span key={k}><MathText text={cleaned} /></span>;
             });
           };

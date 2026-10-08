@@ -139,11 +139,11 @@ QUY TẮC ĐỊNH DẠNG:
       }, { status: 502 })
     }
 
-    // Làm sạch Markdown để đảm bảo không lỗi cú pháp * *
+    // Làm sạch Markdown để đảm bảo chuẩn cú pháp và không dính chữ
     let cleaned = analysisResult
       .replace(/\*\s+\*/g, '')
       .replace(/\*{3,}/g, '**')
-      .replace(/\*\*:\s*/g, ':** ')
+      .replace(/:(\*\*)/g, ': $1')
       .trim()
 
     return NextResponse.json({

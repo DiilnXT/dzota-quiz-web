@@ -445,33 +445,59 @@ export default function TestInterface({ test }: { test: any }) {
       })
     }
 
-    // Helper xử lý in đậm, in nghiêng và loại bỏ dấu hoa thị thừa
+    // Helper xử lý in đậm, in nghiêng và đảm bảo khoảng cách chữ chuẩn xác
     const parseInline = (content: string, keyPrefix: string) => {
-      let sanitized = content
-        .replace(/\*\*:\s*/g, ':** ')
-        .replace(/\s+\*\*/g, '**')
-        .replace(/\*\*\s+/g, '** ')
+      // 1. Chuẩn hóa: Nếu dấu hai chấm dính liền với ** mở thì thêm dấu cách
+      const sanitized = content.replace(/:(\*\*)/g, ': $1')
 
-      const parts = sanitized.split(/(\*\*[\s\S]*?\*\*|\*[^*]+?\*)/g)
-      return parts.map((part, pIdx) => {
+      // 2. Tách chuỗi theo cú pháp **in đậm** và *in nghiêng*
+      const tokens = sanitized.split(/(\*\*[\s\S]*?\*\*|\*[^*]+?\*)/g)
+
+      return tokens.map((token, pIdx) => {
         const k = `${keyPrefix}_p_${pIdx}`
-        if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
-          const inner = part.slice(2, -2).trim()
+        if (!token) return null
+
+        if (token.startsWith('**') && token.endsWith('**') && token.length >= 4) {
+          const inner = token.slice(2, -2).trim()
+
+          // Kiểm tra xem token trước đó có kết thúc bằng chữ/số không -> nếu có thì thêm dấu cách phía trước
+          const prev = tokens[pIdx - 1]
+          const needsSpaceBefore = prev && /[a-zA-Z0-9_\u00C0-\u1EF9]$/.test(prev)
+
+          // Kiểm tra xem token sau đó có bắt đầu bằng chữ/số không -> nếu có thì thêm dấu cách phía sau
+          const next = tokens[pIdx + 1]
+          const needsSpaceAfter = next && /^[a-zA-Z0-9_\u00C0-\u1EF9]/.test(next)
+
           return (
-            <strong key={k} className="font-extrabold text-slate-900 dark:text-white">
-              {renderMathText(inner, `${k}_b`)}
-            </strong>
+            <span key={k}>
+              {needsSpaceBefore ? ' ' : ''}
+              <strong className="font-extrabold text-slate-900 dark:text-white">
+                {renderMathText(inner, `${k}_b`)}
+              </strong>
+              {needsSpaceAfter ? ' ' : ''}
+            </span>
           )
         }
-        if (part.startsWith('*') && part.endsWith('*') && part.length >= 2 && !part.startsWith('**')) {
-          const inner = part.slice(1, -1).trim()
+
+        if (token.startsWith('*') && token.endsWith('*') && token.length >= 2 && !token.startsWith('**')) {
+          const inner = token.slice(1, -1).trim()
+          const prev = tokens[pIdx - 1]
+          const needsSpaceBefore = prev && /[a-zA-Z0-9_\u00C0-\u1EF9]$/.test(prev)
+          const next = tokens[pIdx + 1]
+          const needsSpaceAfter = next && /^[a-zA-Z0-9_\u00C0-\u1EF9]/.test(next)
+
           return (
-            <em key={k} className="italic text-indigo-900 dark:text-indigo-200">
-              {renderMathText(inner, `${k}_i`)}
-            </em>
+            <span key={k}>
+              {needsSpaceBefore ? ' ' : ''}
+              <em className="italic text-indigo-900 dark:text-indigo-200">
+                {renderMathText(inner, `${k}_i`)}
+              </em>
+              {needsSpaceAfter ? ' ' : ''}
+            </span>
           )
         }
-        const cleaned = part.replace(/^\*{1,2}/, '').replace(/\*{1,2}$/, '')
+
+        const cleaned = token.replace(/^\*{1,2}/, '').replace(/\*{1,2}$/, '')
         return <span key={k}>{renderMathText(cleaned, `${k}_t`)}</span>
       })
     }
