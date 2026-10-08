@@ -71,27 +71,26 @@ export async function POST(request: Request) {
       return `[CÂU HỎI ${index + 1}]:\n${qText}\nCác phương án:\n${optsText}\n-> Đáp án đúng: ${correct}${opts[correct] ? ` (${opts[correct]})` : ''}`
     }).join('\n\n')
 
-    const prompt = `Bạn là Giảng viên Đại học / Chuyên gia Sư phạm hàng đầu môn ${subjectName || 'chuyên ngành tương ứng'}.
+    const prompt = `Bạn là Giáo sư / Giảng viên Đại học môn ${subjectName || 'chuyên ngành tương ứng'}.
 Dưới đây là danh sách ${mistakes.length} câu hỏi trắc nghiệm mà học sinh làm bài thi "${quizTitle || 'Bài kiểm tra'}" vừa làm sai:
 
 ${formattedQuestions}
 
-NHIỆM VỤ CỦA BẠN:
-Phân tích chuyên sâu nhưng CỰC KỲ CÔ ĐỌNG, SÚC TÍCH, DỄ HIỂU để khi học sinh đọc qua hết 1 lần là đảm bảo 100% nắm chắc bản chất kiến thức và làm đúng tất cả các câu hỏi này!
+NHIỆM VỤ & YÊU CẦU SƯ PHẠM (RẤT QUAN TRỌNG):
+1. BẢO ĐẢM ĐỘ SÂU & ĐẦY ĐỦ KIẾN THỨC: KHÔNG tóm tắt qua loa, KHÔNG rút gọn sơ sài. Phải bao quát ĐẦY ĐỦ VÀ TOÀN DIỆN kiến thức của TẤT CẢ các câu hỏi có trong danh sách trên.
+2. MỤC TIÊU 100% ĐIỂM SỐ: Khi học sinh đọc và nắm vững bài phân tích này, đảm bảo 100% LÀM ĐÚNG HẾT tất cả các câu hỏi này và TỰ TIN LÀM ĐƯỢC TẤT CẢ CÁC CÂU HỎI MỞ RỘNG / TƯƠNG TỰ CÙNG CHUYÊN ĐỀ.
+3. CẤU TRÚC PHÂN CHIA HỆ THỐNG:
+Phân chia thành các CHUYÊN ĐỀ / NHÓM BÀI HỌC CỐT LÕI (ví dụ: '### NHÓM 1: TÊN CHUYÊN ĐỀ (Bao gồm các câu: ...)').
+Trong TỪNG CHUYÊN ĐỀ / NHÓM:
+- **Bản chất kiến thức & Cơ chế toàn diện**: Trình bày rõ ràng, sâu sắc bản chất khoa học, định lý, cơ chế dược lý/sinh lý/toán lý hóa, chỉ định, chống chỉ định, nguyên lý hoạt động... Đủ sâu để hiểu tận gốc rễ vấn đề.
+- **Phân tích bẫy đề thi & Tại sao chọn đáp án đúng**: Chỉ rõ vì sao đáp án đúng là chính xác tuyệt đối, bẫy tinh vi của từng phương án sai nằm ở đâu.
+- **Quy tắc vàng / Mẹo phản xạ nhanh**: Khẩu quyết, câu thần chú ghi nhớ, bảng so sánh đối chiếu giúp phản xạ ngay lập tức khi gặp dạng câu này và các câu tương tự.
 
-YÊU CẦU ĐỊNH DẠNG VÀ TRÌNH BÀY (RẤT QUAN TRỌNG):
-1. TUYỆT ĐỐI KHÔNG để lỗi định dạng Markdown (như thừa dấu hoa thị * in đậm *, dấu sao lộn xộn). Sử dụng Markdown chuẩn, thanh lịch, rõ ràng.
-2. Nếu có công thức Toán học / Hóa học / Vật lý, bắt buộc dùng cú pháp LaTeX $...$ hoặc $$...$$.
-3. CẤU TRÚC PHÂN TÍCH:
-- 📌 **Tổng quan bẫy kiến thức thường gặp**: Tóm tắt 2-3 gạch đầu dòng về lỗi sai tư duy lớn nhất của học sinh trong cụm câu này.
-- 💡 **Phân tích từng câu hỏi (hoặc nhóm câu hỏi liên quan)**:
-  Mỗi câu trình bày ngắn gọn gồm:
-  + **Bản chất kiến thức cốt lõi**: Khái niệm/quy tắc then chốt cần ghi nhớ (1-2 câu).
-  + **Tại sao chọn đáp án đúng & Bẫy cần tránh**: Chỉ rõ lý do vì sao đáp án đúng là chính xác và các phương án gây nhiễu dễ đánh lừa ở điểm nào.
-  + **Quy tắc vàng / Mẹo phản xạ nhanh**: Bí quyết nhớ nhanh để không bao giờ sai lại câu tương tự.
-- 🎯 **Công thức & Quy tắc tổng kết (Đọc nhanh trước khi làm bài)**: 3-5 gạch đầu dòng ngắn gọn đúc kết toàn bộ kiến thức để học sinh tự tin đạt điểm tuyệt đối.
-
-Hãy viết bằng giọng văn sư phạm truyền cảm hứng, chuẩn xác, cô đọng, đi thẳng vào trọng tâm!`
+QUY TẮC ĐỊNH DẠNG:
+- Dùng tiêu đề chuẩn: \`### NHÓM 1: ...\` cho chuyên đề.
+- Dùng gạch đầu dòng: \`- **Tên mục**: Nội dung...\`
+- TUYỆT ĐỐI KHÔNG để dấu hoa thị lộn xộn hoặc \`**:\` lơ lửng.
+- Công thức khoa học: dùng LaTeX \`$công thức$\` (ví dụ: $\\alpha$, $H_2SO_4$, $f'(x)$).`
 
     let lastError = ''
     let analysisResult = ''
@@ -106,10 +105,10 @@ Hãy viết bằng giọng văn sư phạm truyền cảm hứng, chuẩn xác, 
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
-              temperature: 0.25,
+              temperature: 0.2,
               topK: 40,
               topP: 0.95,
-              maxOutputTokens: 2500
+              maxOutputTokens: 8192
             }
           })
         })
@@ -144,6 +143,8 @@ Hãy viết bằng giọng văn sư phạm truyền cảm hứng, chuẩn xác, 
     let cleaned = analysisResult
       .replace(/\*\s+\*/g, '')
       .replace(/\*{3,}/g, '**')
+      .replace(/\*\*:\s*/g, ':** ')
+      .trim()
 
     return NextResponse.json({
       success: true,

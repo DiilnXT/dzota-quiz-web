@@ -46,12 +46,21 @@ export default function MistakeNotebookTab({ currentUser, showToast }: MistakeNo
         if (raw) localList = JSON.parse(raw)
       } catch (e) {}
 
-      // Hợp nhất dữ liệu, loại bỏ trùng lặp theo id hoặc quizId
+      // Hợp nhất dữ liệu, đảm bảo mỗi bài phân tích có ID độc lập duy nhất
       const map = new Map<string, any>()
-      serverList.forEach(item => map.set(item.id || item.quizId, item))
-      localList.forEach(item => {
-        const key = item.id || item.quizId
-        if (!map.has(key)) map.set(key, item)
+      serverList.forEach((item: any) => {
+        if (item.id) map.set(item.id, item)
+      })
+      localList.forEach((item: any) => {
+        const key = item.id || `local_${item.createdAt || Math.random()}`
+        // Tránh trùng lặp nếu server đã có bài cùng createdAt hoặc cùng nội dung
+        const alreadyInServer = Array.from(map.values()).some((s: any) =>
+          (s.createdAt && item.createdAt && s.createdAt === item.createdAt) ||
+          (s.analysisText && item.analysisText && s.analysisText === item.analysisText)
+        )
+        if (!alreadyInServer && !map.has(key)) {
+          map.set(key, { ...item, id: key })
+        }
       })
 
       const merged = Array.from(map.values()).sort(
@@ -73,24 +82,34 @@ export default function MistakeNotebookTab({ currentUser, showToast }: MistakeNo
     if (!confirm(`Bạn có chắc muốn xóa bài phân tích lỗi sai của bài "${item.quizTitle}"?`)) return
 
     try {
+      const targetId = item.id
+
       // Xóa local
       const raw = localStorage.getItem('dzota_saved_mistake_analyses')
       if (raw) {
         const localList = JSON.parse(raw)
-        const updated = localList.filter((x: any) => x.id !== item.id && x.quizId !== item.quizId)
+        const updated = localList.filter((x: any) => {
+          if (targetId && x.id) return x.id !== targetId
+          if (x.createdAt && item.createdAt) return x.createdAt !== item.createdAt
+          return x !== item
+        })
         localStorage.setItem('dzota_saved_mistake_analyses', JSON.stringify(updated))
       }
 
-      // Xóa server nếu có id
-      if (item.id && currentUser) {
+      // Xóa server nếu có id của DB
+      if (targetId && currentUser && !String(targetId).startsWith('analysis_') && !String(targetId).startsWith('local_')) {
         await fetch('/api/student/mistakes', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: item.id })
+          body: JSON.stringify({ id: targetId })
         }).catch(() => {})
       }
 
-      setAnalyses(prev => prev.filter(x => x.id !== item.id && x.quizId !== item.quizId))
+      setAnalyses(prev => prev.filter(x => {
+        if (targetId && x.id) return x.id !== targetId
+        if (x.createdAt && item.createdAt) return x.createdAt !== item.createdAt
+        return x !== item
+      }))
       if (selectedAnalysis?.id === item.id) setSelectedAnalysis(null)
       showToast('Đã xóa bài phân tích thành công!', 'success')
     } catch (e) {
@@ -106,10 +125,76 @@ export default function MistakeNotebookTab({ currentUser, showToast }: MistakeNo
     setTimeout(() => setCopiedId(null), 3000)
   }
 
-  // Component render nội dung phân tích Markdown chuẩn sạch
+  // Component render nội dung phân tích Markdown + KaTeX chuẩn chuyên nghiệp
   const renderFormattedAnalysis = (text: string) => {
     if (!text) return null
     const lines = text.split('\n')
+
+    // Helper render công thức KaTeX ($...$ hoặc $$...$$) với fallback ký tự Hy Lạp
+    const renderMathText = (str: string, keyPrefix: string) => {
+      const parts = str.split(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$)/g)
+      return parts.map((part, pIdx) => {
+        const k = `${keyPrefix}_m_${pIdx}`
+        if (part.startsWith('$$') && part.endsWith('$$') && part.length > 4) {
+          const math = part.slice(2, -2).trim()
+          if (typeof window !== 'undefined' && (window as any).katex) {
+            try {
+              const html = (window as any).katex.renderToString(math, { displayMode: true, throwOnError: false })
+              return <span key={k} dangerouslySetInnerHTML={{ __html: html }} className="block my-2 overflow-x-auto text-center" />
+            } catch (e) {}
+          }
+          return <code key={k} className="block my-1.5 p-1 font-mono text-xs bg-slate-100 dark:bg-slate-800 rounded">{math}</code>
+        }
+        if (part.startsWith('$') && part.endsWith('$') && part.length > 2) {
+          const math = part.slice(1, -1).trim()
+          if (typeof window !== 'undefined' && (window as any).katex) {
+            try {
+              const html = (window as any).katex.renderToString(math, { displayMode: false, throwOnError: false })
+              return <span key={k} dangerouslySetInnerHTML={{ __html: html }} className="inline-block px-0.5" />
+            } catch (e) {}
+          }
+          const greek = math
+            .replace(/\\alpha/g, 'α').replace(/\\beta/g, 'β').replace(/\\gamma/g, 'γ')
+            .replace(/\\delta/g, 'δ').replace(/\\Delta/g, 'Δ').replace(/\\theta/g, 'θ')
+            .replace(/\\lambda/g, 'λ').replace(/\\mu/g, 'μ').replace(/\\pi/g, 'π')
+            .replace(/\\sigma/g, 'σ').replace(/\\omega/g, 'ω').replace(/\\to/g, '→')
+            .replace(/\\le/g, '≤').replace(/\\ge/g, '≥').replace(/\\neq/g, '≠')
+          return <span key={k} className="font-semibold text-indigo-700 dark:text-indigo-300">{greek}</span>
+        }
+        return <span key={k}>{part}</span>
+      })
+    }
+
+    // Helper xử lý in đậm, in nghiêng và loại bỏ dấu hoa thị thừa
+    const parseInline = (content: string, keyPrefix: string) => {
+      let sanitized = content
+        .replace(/\*\*:\s*/g, ':** ')
+        .replace(/\s+\*\*/g, '**')
+        .replace(/\*\*\s+/g, '** ')
+
+      const parts = sanitized.split(/(\*\*[\s\S]*?\*\*|\*[^*]+?\*)/g)
+      return parts.map((part, pIdx) => {
+        const k = `${keyPrefix}_p_${pIdx}`
+        if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
+          const inner = part.slice(2, -2).trim()
+          return (
+            <strong key={k} className="font-extrabold text-slate-900 dark:text-white">
+              {renderMathText(inner, `${k}_b`)}
+            </strong>
+          )
+        }
+        if (part.startsWith('*') && part.endsWith('*') && part.length >= 2 && !part.startsWith('**')) {
+          const inner = part.slice(1, -1).trim()
+          return (
+            <em key={k} className="italic text-indigo-900 dark:text-indigo-200">
+              {renderMathText(inner, `${k}_i`)}
+            </em>
+          )
+        }
+        const cleaned = part.replace(/^\*{1,2}/, '').replace(/\*{1,2}$/, '')
+        return <span key={k}>{renderMathText(cleaned, `${k}_t`)}</span>
+      })
+    }
 
     return (
       <div className="space-y-3 text-slate-800 dark:text-slate-200 text-sm leading-relaxed text-left">
@@ -117,43 +202,88 @@ export default function MistakeNotebookTab({ currentUser, showToast }: MistakeNo
           const trimmed = line.trim()
           if (!trimmed) return <div key={idx} className="h-1.5" />
 
-          // Headers
-          if (trimmed.startsWith('### ')) {
-            return (
-              <h4 key={idx} className="text-base font-extrabold text-indigo-600 dark:text-indigo-400 mt-4 mb-1">
-                {trimmed.replace('### ', '')}
-              </h4>
-            )
-          }
-          if (trimmed.startsWith('## ')) {
-            return (
-              <h3 key={idx} className="text-lg font-black text-slate-900 dark:text-slate-100 mt-5 mb-2 pb-1 border-b border-indigo-100 dark:border-indigo-950">
-                {trimmed.replace('## ', '')}
-              </h3>
-            )
-          }
-          if (trimmed.startsWith('# ')) {
-            return (
-              <h2 key={idx} className="text-xl font-black text-slate-900 dark:text-slate-100 mt-6 mb-3 pb-1 border-b-2 border-indigo-500">
-                {trimmed.replace('# ', '')}
-              </h2>
-            )
-          }
+          // Xóa các ký hiệu markdown để nhận diện mục chính
+          const cleanLine = trimmed
+            .replace(/^[\s#*>\-•+]+/, '')
+            .replace(/\*\*:\s*$/, '')
+            .replace(/\*\*\s*$/, '')
+            .trim()
 
-          // Bullet points
-          if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-            const rawContent = trimmed.slice(2)
+          // 1. Nhóm / Chuyên đề lớn (### NHÓM...)
+          if (trimmed.startsWith('### ') || trimmed.startsWith('## ') || trimmed.startsWith('# ')) {
+            const hText = trimmed.replace(/^#+\s*/, '').replace(/\*\*/g, '').trim()
             return (
-              <div key={idx} className="flex items-start gap-2.5 ml-2 my-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2 shrink-0" />
-                <span className="flex-1 font-medium">{rawContent}</span>
+              <div key={idx} className="mt-6 mb-3 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-indigo-50/90 via-purple-50/70 to-pink-50/60 dark:from-indigo-950/70 dark:via-purple-950/40 dark:to-slate-800 border border-indigo-200/80 dark:border-indigo-800 shadow-xs flex items-center gap-3">
+                <span className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-xs">🎯</span>
+                <h4 className="text-base sm:text-lg font-black text-indigo-950 dark:text-indigo-100">{hText}</h4>
               </div>
             )
           }
 
+          // 2. Các chuyên mục sư phạm then chốt
+          const isCoreKnowledge = cleanLine.includes('Bản chất kiến thức') || cleanLine.startsWith('Kiến thức liên quan') || cleanLine.startsWith('1. Kiến thức')
+          const isTrapAnalysis = cleanLine.includes('Tại sao chọn') || cleanLine.includes('Bẫy cần tránh') || cleanLine.includes('Phân tích bẫy') || cleanLine.startsWith('2. Tại sao chọn')
+          const isGoldenRule = cleanLine.includes('Quy tắc vàng') || cleanLine.includes('Mẹo phản xạ') || cleanLine.includes('Các phương án còn lại') || cleanLine.startsWith('3. Các phương án')
+
+          if (isCoreKnowledge && (trimmed.startsWith('*') || trimmed.startsWith('-') || trimmed.startsWith('•') || trimmed.length < 80)) {
+            return (
+              <div key={idx} className="mt-4 pt-1 mb-2">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-100/90 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800 text-blue-950 dark:text-blue-200 font-extrabold text-xs sm:text-sm tracking-wide shadow-xs">
+                  <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                  🧠 {cleanLine.replace(/:$/, '')}
+                </span>
+              </div>
+            )
+          }
+
+          if (isTrapAnalysis && (trimmed.startsWith('*') || trimmed.startsWith('-') || trimmed.startsWith('•') || trimmed.length < 80)) {
+            return (
+              <div key={idx} className="mt-4 pt-1 mb-2">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-100/90 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200 font-extrabold text-xs sm:text-sm tracking-wide shadow-xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  🎯 {cleanLine.replace(/:$/, '')}
+                </span>
+              </div>
+            )
+          }
+
+          if (isGoldenRule && (trimmed.startsWith('*') || trimmed.startsWith('-') || trimmed.startsWith('•') || trimmed.length < 80)) {
+            return (
+              <div key={idx} className="mt-4 pt-1 mb-2">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-100/90 dark:bg-amber-950/70 border border-amber-200 dark:border-amber-800 text-amber-950 dark:text-amber-200 font-extrabold text-xs sm:text-sm tracking-wide shadow-xs">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  ⚡ {cleanLine.replace(/:$/, '')}
+                </span>
+              </div>
+            )
+          }
+
+          // 3. Sub-bullets (+ hoặc thụt dòng)
+          if (trimmed.startsWith('+ ') || trimmed.startsWith('  + ') || trimmed.startsWith('    - ')) {
+            const content = trimmed.replace(/^[\s+]+/, '')
+            return (
+              <div key={idx} className="flex items-start gap-2.5 ml-4 sm:ml-5 my-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 dark:bg-indigo-400 mt-2 shrink-0" />
+                <div className="flex-1 leading-relaxed">{parseInline(content, `sb_${idx}`)}</div>
+              </div>
+            )
+          }
+
+          // 4. Bullets thông thường (- hoặc * hoặc •)
+          if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('• ')) {
+            const content = trimmed.slice(2)
+            return (
+              <div key={idx} className="flex items-start gap-2.5 ml-2 my-1.5">
+                <span className="w-2 h-2 rounded-md bg-indigo-400 dark:bg-indigo-500 mt-1.5 shrink-0 opacity-70" />
+                <div className="flex-1 leading-relaxed font-medium">{parseInline(content, `b_${idx}`)}</div>
+              </div>
+            )
+          }
+
+          // 5. Đoạn văn thường
           return (
-            <p key={idx} className="my-1 leading-relaxed">
-              {trimmed}
+            <p key={idx} className="my-1.5 leading-relaxed">
+              {parseInline(trimmed, `p_${idx}`)}
             </p>
           )
         })}
