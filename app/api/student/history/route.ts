@@ -2,19 +2,17 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { cookies } from 'next/headers'
 
-// Helper: Tự động dọn dẹp lịch sử của các ngày trước (chỉ giữ lại ngày hôm nay)
-async function cleanOldHistory(userId: string) {
+// Helper: Tự động dọn dẹp lịch sử quá 3 ngày cho tất cả các tài khoản để tiết kiệm dung lượng lưu trữ
+async function cleanOldHistory() {
   try {
-    const startOfToday = new Date()
-    startOfToday.setHours(0, 0, 0, 0)
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
     await prisma.quizHistory.deleteMany({
       where: {
-        userId,
-        createdAt: { lt: startOfToday }
+        createdAt: { lt: threeDaysAgo }
       }
     })
   } catch (e) {
-    console.error('Error cleaning old quiz history:', e)
+    console.error('Error cleaning old quiz history (>3 days):', e)
   }
 }
 
@@ -29,8 +27,8 @@ export async function GET() {
     const session = JSON.parse(sessionStr)
     if (!session?.id) return NextResponse.json({ history: [] })
 
-    // Dọn dẹp dữ liệu cũ sang ngày mới để tiết kiệm bộ nhớ
-    await cleanOldHistory(session.id)
+    // Dọn dẹp dữ liệu cũ quá 3 ngày cho toàn bộ các tài khoản để tiết kiệm dung lượng
+    await cleanOldHistory()
 
     const history = await prisma.quizHistory.findMany({
       where: { userId: session.id },
@@ -63,8 +61,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Thiếu mã đề thi (quizId)' }, { status: 400 })
     }
 
-    // Tự động dọn dẹp dữ liệu của ngày cũ
-    await cleanOldHistory(session.id)
+    // Tự động dọn dẹp dữ liệu quá 3 ngày cho toàn bộ tài khoản
+    await cleanOldHistory()
 
     const record = await prisma.quizHistory.create({
       data: {

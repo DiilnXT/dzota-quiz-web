@@ -348,7 +348,8 @@ export default function StudentStudyTab({ currentUser, showToast }: StudentStudy
       <div className="bg-white dark:bg-[#1E293B] rounded-3xl p-5 sm:p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
         <h3 className="font-extrabold text-slate-800 dark:text-slate-100 text-base mb-3 flex items-center gap-2">
           <Clock size={18} className="text-purple-600 dark:text-purple-400" />
-          Lịch Sử Làm Bài Gần Đây ({studyData.history.length})
+          <span>Lịch Sử Làm Bài Gần Đây ({studyData.history.length})</span>
+          <span className="text-[11px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">Lưu trữ 3 ngày</span>
         </h3>
 
         {studyData.history.length === 0 ? (

@@ -85,13 +85,11 @@ export default async function AdminDashboard() {
   if (isStudent) {
     let studentHistory: any[] = []
     if (userId) {
-      const startOfToday = new Date()
-      startOfToday.setHours(0, 0, 0, 0)
+      const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
       try {
         await prisma.quizHistory.deleteMany({
           where: {
-            userId,
-            createdAt: { lt: startOfToday }
+            createdAt: { lt: threeDaysAgo }
           }
         })
       } catch (e) {}

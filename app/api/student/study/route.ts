@@ -82,7 +82,14 @@ export async function GET() {
       orderBy: { createdAt: 'desc' }
     })
 
-    // 3. Lấy lịch sử làm bài của học sinh
+    // 3. Tự động dọn dẹp lịch sử quá 3 ngày và lấy lịch sử làm bài của học sinh
+    try {
+      const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
+      await prisma.quizHistory.deleteMany({
+        where: { createdAt: { lt: threeDaysAgo } }
+      })
+    } catch (e) {}
+
     const histories = userId
       ? await prisma.quizHistory.findMany({
           where: { userId },

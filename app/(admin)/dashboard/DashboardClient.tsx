@@ -215,6 +215,7 @@ export default function DashboardClient({
   currentUserInfo = null,
   session
 }: DashboardClientProps) {
+  const currentUser = currentUserInfo || session
   const isAdmin = !isTeacher && !isStudent
 
   // Navigation Tabs State
@@ -1532,17 +1533,17 @@ export default function DashboardClient({
       ───────────────────────────────────────────────────────────── */}
       {isStudent && (activeTab === 'history' || activeTab === 'dashboard') && (
         <div className="space-y-6">
-          {/* Banner thông báo dọn dẹp hàng ngày */}
+          {/* Banner thông báo dọn dẹp sau 3 ngày */}
           <div className="bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 dark:from-blue-950/40 dark:via-indigo-950/40 dark:to-purple-950/40 border border-indigo-200/80 dark:border-indigo-900/50 rounded-3xl p-5 flex items-start gap-3.5">
             <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-indigo-300 dark:shadow-indigo-950">
               <Sparkles size={20} />
             </div>
             <div>
               <h3 className="font-extrabold text-slate-800 dark:text-slate-100 text-sm sm:text-base">
-                Lịch sử làm bài thi cá nhân hôm nay
+                Lịch sử làm bài thi gần đây (Lưu trong 3 ngày)
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
-                Mọi bài thi bạn làm khi đăng nhập tài khoản Google sẽ được lưu lại tự động tại đây. Để tối ưu tốc độ và dung lượng máy chủ, lịch sử làm bài sẽ được <strong>làm mới tự động mỗi ngày</strong>.
+                Mọi bài thi bạn làm khi đăng nhập tài khoản sẽ được lưu lại tự động tại đây. Để tối ưu dung lượng lưu trữ máy chủ, lịch sử làm bài sẽ được <strong>tự động xóa sau 3 ngày</strong> cho toàn bộ các tài khoản.
               </p>
             </div>
           </div>
@@ -1554,7 +1555,7 @@ export default function DashboardClient({
                 <FileText size={22} />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Đề thi đã làm hôm nay</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Đề thi đã làm gần đây</p>
                 <p className="text-2xl font-black text-slate-800 dark:text-slate-100 mt-0.5">{totalTestsTakenToday} bài</p>
               </div>
             </div>
@@ -1564,7 +1565,7 @@ export default function DashboardClient({
                 <Award size={22} />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Điểm cao nhất hôm nay</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Điểm cao nhất (3 ngày)</p>
                 <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">{highestScoreToday} / 10</p>
               </div>
             </div>
@@ -1574,7 +1575,7 @@ export default function DashboardClient({
                 <BarChart3 size={22} />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Điểm trung bình hôm nay</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Điểm trung bình (3 ngày)</p>
                 <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-0.5">{avgScoreToday} / 10</p>
               </div>
             </div>
@@ -1584,7 +1585,7 @@ export default function DashboardClient({
           <div className="bg-white dark:bg-[#1E293B] rounded-3xl p-5 sm:p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
             <h3 className="font-extrabold text-slate-800 dark:text-slate-100 text-base mb-4 flex items-center gap-2">
               <Clock size={18} className="text-indigo-600 dark:text-indigo-400" />
-              Chi Tiết Các Lần Làm Bài Hôm Nay
+              Chi Tiết Các Lần Làm Bài Gần Đây (Lưu trong 3 ngày)
             </h3>
 
             {history.length === 0 ? (
