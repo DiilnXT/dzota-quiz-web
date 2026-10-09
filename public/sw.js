@@ -12,7 +12,8 @@ const CORE_ASSETS = [
   'https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js',
   'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css',
-  'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js'
+  'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js',
+  '/docx.umd.cjs'
 ];
 
 self.addEventListener('install', (event) => {
