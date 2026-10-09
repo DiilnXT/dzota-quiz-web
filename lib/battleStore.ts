@@ -256,8 +256,9 @@ export const startBattleRoom = async (
 
 export const submitBattleResult = async (
   roomId: string,
-  playerId: string,
-  result: {
+  playerId?: string,
+  playerName?: string,
+  result?: {
     score: number
     correctCount: number
     totalQuestions: number
@@ -265,10 +266,25 @@ export const submitBattleResult = async (
   }
 ): Promise<{ success: boolean; error?: string; room?: BattleRoom }> => {
   const room = await getBattleRoom(roomId)
-  if (!room) return { success: false, error: 'Phòng không tồn tại!' }
+  if (!room) return { success: false, error: 'Phòng không tồn tại hoặc đã hết hạn!' }
+  if (!result) return { success: false, error: 'Thiếu kết quả làm bài!' }
 
-  const player = room.players.find(p => p.id === playerId)
-  if (!player) return { success: false, error: 'Người chơi không có trong phòng này!' }
+  // 1. Try finding by playerId
+  let player = playerId ? room.players.find(p => p.id === playerId) : undefined
+
+  // 2. Fallback: try finding by playerName
+  if (!player && playerName) {
+    player = room.players.find(p => p.name.trim().toLowerCase() === playerName.trim().toLowerCase())
+  }
+
+  // 3. Fallback: try finding first unsubmitted player or single player
+  if (!player) {
+    player = room.players.find(p => !p.submitted) || room.players[0]
+  }
+
+  if (!player) {
+    return { success: false, error: 'Không tìm thấy thông tin thí sinh trong phòng!' }
+  }
 
   player.submitted = true
   player.score = Number(result.score) || 0
@@ -277,32 +293,32 @@ export const submitBattleResult = async (
   player.durationSeconds = Number(result.durationSeconds) || 0
   player.submittedAt = Date.now()
 
-  // Sort players by score (desc), then durationSeconds (asc)
+  // Always mark completedAt & resultExpiresAt so the battle is recorded in history immediately!
+  room.completedAt = room.completedAt || Date.now()
+  room.resultExpiresAt = Date.now() + 2 * 60 * 60 * 1000 // 2 hours
+
+  // Sort players: submitted first, higher score first, lower duration first
   room.players.sort((a, b) => {
     if (!a.submitted && !b.submitted) return 0
     if (!a.submitted) return 1
     if (!b.submitted) return -1
-    // Higher score first
     if ((b.score ?? 0) !== (a.score ?? 0)) {
       return (b.score ?? 0) - (a.score ?? 0)
     }
-    // Faster time first
     return (a.durationSeconds ?? 0) - (b.durationSeconds ?? 0)
   })
 
-  // Check if all players submitted
+  // If all players submitted
   const allDone = room.players.every(p => p.submitted)
   if (allDone) {
     room.status = 'completed'
-    room.completedAt = Date.now()
-    room.resultExpiresAt = Date.now() + 2 * 60 * 60 * 1000 // 2 hours
   }
 
   await saveRoomToStorage(room)
   return { success: true, room }
 }
 
-export const getQuizBattleHistory = async (quizId: string): Promise<BattleRoom[]> => {
+export const getQuizBattleHistory = async (quizId?: string | null): Promise<BattleRoom[]> => {
   const now = Date.now()
   const results: BattleRoom[] = []
 
@@ -318,17 +334,22 @@ export const getQuizBattleHistory = async (quizId: string): Promise<BattleRoom[]
           await deleteRoomFromStorage(room.id)
           continue
         }
-        if (room.status === 'completed' && room.resultExpiresAt && now > room.resultExpiresAt) {
-          await deleteRoomFromStorage(room.id)
-          continue
-        }
-        if (now - room.createdAt > 3 * 3600 * 1000) {
+        const refTime = room.completedAt || room.createdAt
+        if (now - refTime > 2 * 3600 * 1000) {
           await deleteRoomFromStorage(room.id)
           continue
         }
 
-        if (room.quizId === quizId && (room.status === 'completed' || room.players.some(p => p.submitted))) {
-          results.push(room)
+        // Include any room where at least 1 person submitted or completed
+        const hasSubmissions = (room.players || []).some(p => p.submitted)
+        if (hasSubmissions || room.status === 'completed') {
+          if (quizId && quizId !== 'all' && quizId !== 'default') {
+            if (room.quizId === quizId) {
+              results.push(room)
+            }
+          } else {
+            results.push(room)
+          }
         }
       } catch (e) {}
     }
@@ -336,14 +357,25 @@ export const getQuizBattleHistory = async (quizId: string): Promise<BattleRoom[]
     // Memory fallback
     const store = getStore()
     for (const room of store.values()) {
-      if (room.quizId === quizId && (room.status === 'completed' || room.players.some(p => p.submitted))) {
-        const refTime = room.completedAt || room.createdAt
-        if (now - refTime <= 2 * 3600 * 1000) {
-          results.push(room)
+      const refTime = room.completedAt || room.createdAt
+      if (now - refTime <= 2 * 3600 * 1000) {
+        const hasSubmissions = (room.players || []).some(p => p.submitted)
+        if (hasSubmissions || room.status === 'completed') {
+          if (quizId && quizId !== 'all' && quizId !== 'default') {
+            if (room.quizId === quizId) results.push(room)
+          } else {
+            results.push(room)
+          }
         }
       }
     }
   }
 
+  // If user searched for a specific quizId and found nothing, fallback to all recent battles within 2h
+  if (results.length === 0 && quizId && quizId !== 'all' && quizId !== 'default') {
+    return getQuizBattleHistory('all')
+  }
+
   return results.sort((a, b) => (b.completedAt || b.createdAt) - (a.completedAt || a.createdAt))
 }
+
