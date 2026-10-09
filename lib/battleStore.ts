@@ -1,6 +1,9 @@
-// Store for Battle Rooms in memory with automatic expiration
+// Store for Battle Rooms with PostgreSQL (Prisma SystemSetting) persistence and automatic expiration
 // - Room lobby valid for 5 minutes (300 seconds)
 // - Completed battle results retained for 2 hours (7200 seconds)
+// - Dual storage: PostgreSQL DB for cross-serverless synchronization + memory cache fallback
+
+import prisma from '@/lib/prisma'
 
 export interface BattlePlayer {
   id: string
@@ -42,43 +45,109 @@ const getStore = (): Map<string, BattleRoom> => {
   return globalThis.dzotaBattleRooms
 }
 
-// Cleanup expired rooms
-export const cleanExpiredBattles = () => {
-  const store = getStore()
-  const now = Date.now()
+const ROOM_PREFIX = 'battle_room_'
 
+// Helper: Save room to both DB and memory cache
+async function saveRoomToStorage(room: BattleRoom): Promise<void> {
+  const store = getStore()
+  store.set(room.id, room)
+  try {
+    await prisma.systemSetting.upsert({
+      where: { key: ROOM_PREFIX + room.id },
+      update: { value: JSON.stringify(room) },
+      create: { key: ROOM_PREFIX + room.id, value: JSON.stringify(room) }
+    })
+  } catch (err) {
+    console.warn('Battle DB save fallback to memory:', err)
+  }
+}
+
+// Helper: Retrieve room from DB (primary) or memory cache (fallback)
+async function getRoomFromStorage(roomId: string): Promise<BattleRoom | null> {
+  const store = getStore()
+  try {
+    const record = await prisma.systemSetting.findUnique({
+      where: { key: ROOM_PREFIX + roomId }
+    })
+    if (record?.value) {
+      const room = JSON.parse(record.value) as BattleRoom
+      store.set(roomId, room)
+      return room
+    }
+  } catch (err) {
+    console.warn('Battle DB read fallback to memory:', err)
+  }
+  return store.get(roomId) || null
+}
+
+// Helper: Delete room from both DB and memory
+async function deleteRoomFromStorage(roomId: string): Promise<void> {
+  const store = getStore()
+  store.delete(roomId)
+  try {
+    await prisma.systemSetting.delete({
+      where: { key: ROOM_PREFIX + roomId }
+    }).catch(() => {})
+  } catch (err) {
+    // Ignore error if already deleted
+  }
+}
+
+// Cleanup expired rooms
+export const cleanExpiredBattles = async () => {
+  const now = Date.now()
+  const store = getStore()
+
+  // 1. Cleanup in-memory
   for (const [id, room] of store.entries()) {
-    // 1. If still waiting and passed 5 mins -> expire
     if (room.status === 'waiting' && now > room.expiresAt) {
       store.delete(id)
       continue
     }
-    // 2. If completed and passed 2 hours -> delete
     if (room.status === 'completed' && room.resultExpiresAt && now > room.resultExpiresAt) {
       store.delete(id)
       continue
     }
-    // 3. Any room older than 3 hours overall -> clean up
     if (now - room.createdAt > 3 * 3600 * 1000) {
       store.delete(id)
     }
   }
+
+  // 2. Cleanup in DB (best-effort)
+  try {
+    const records = await prisma.systemSetting.findMany({
+      where: { key: { startsWith: ROOM_PREFIX } }
+    })
+    for (const r of records) {
+      try {
+        const room = JSON.parse(r.value) as BattleRoom
+        if (
+          (room.status === 'waiting' && now > room.expiresAt) ||
+          (room.status === 'completed' && room.resultExpiresAt && now > room.resultExpiresAt) ||
+          (now - room.createdAt > 3 * 3600 * 1000)
+        ) {
+          await deleteRoomFromStorage(room.id)
+        }
+      } catch (e) {}
+    }
+  } catch (e) {}
 }
 
-export const createBattleRoom = (
+export const createBattleRoom = async (
   quizId: string,
   quizTitle: string,
   maxPlayers: number,
   hostPlayer: { id: string; name: string; avatar?: string },
   questions?: any[]
-): BattleRoom => {
-  cleanExpiredBattles()
-  const store = getStore()
-
+): Promise<BattleRoom> => {
   // Generate 6-digit numeric room code (e.g. 582914)
   let roomId = Math.floor(100000 + Math.random() * 900000).toString()
-  while (store.has(roomId)) {
+  let attempts = 0
+  while (attempts < 10) {
+    const existing = await getRoomFromStorage(roomId)
+    if (!existing) break
     roomId = Math.floor(100000 + Math.random() * 900000).toString()
+    attempts++
   }
 
   const now = Date.now()
@@ -102,31 +171,34 @@ export const createBattleRoom = (
     ]
   }
 
-  store.set(roomId, newRoom)
+  await saveRoomToStorage(newRoom)
   return newRoom
 }
 
-export const getBattleRoom = (roomId: string): BattleRoom | null => {
-  cleanExpiredBattles()
-  const store = getStore()
-  const room = store.get(roomId)
+export const getBattleRoom = async (roomId: string): Promise<BattleRoom | null> => {
+  const room = await getRoomFromStorage(roomId)
   if (!room) return null
 
   // Check 5 min expiration if still waiting
   if (room.status === 'waiting' && Date.now() > room.expiresAt) {
-    room.status = 'expired'
-    store.delete(roomId)
+    await deleteRoomFromStorage(roomId)
     return null
   }
+
+  // Check 2h expiration if completed
+  if (room.status === 'completed' && room.resultExpiresAt && Date.now() > room.resultExpiresAt) {
+    await deleteRoomFromStorage(roomId)
+    return null
+  }
+
   return room
 }
 
-export const joinBattleRoom = (
+export const joinBattleRoom = async (
   roomId: string,
   player: { id: string; name: string; avatar?: string }
-): { success: boolean; error?: string; room?: BattleRoom } => {
-  cleanExpiredBattles()
-  const room = getBattleRoom(roomId)
+): Promise<{ success: boolean; error?: string; room?: BattleRoom }> => {
+  const room = await getBattleRoom(roomId)
   if (!room) {
     return { success: false, error: 'Phòng thi đấu không tồn tại hoặc đã hết hạn 5 phút!' }
   }
@@ -140,6 +212,7 @@ export const joinBattleRoom = (
   if (existingIndex >= 0) {
     room.players[existingIndex].name = player.name || room.players[existingIndex].name
     room.players[existingIndex].avatar = player.avatar || room.players[existingIndex].avatar
+    await saveRoomToStorage(room)
     return { success: true, room }
   }
 
@@ -155,11 +228,15 @@ export const joinBattleRoom = (
     joinedAt: Date.now()
   })
 
+  await saveRoomToStorage(room)
   return { success: true, room }
 }
 
-export const startBattleRoom = (roomId: string, hostPlayerId: string): { success: boolean; error?: string; room?: BattleRoom } => {
-  const room = getBattleRoom(roomId)
+export const startBattleRoom = async (
+  roomId: string,
+  hostPlayerId: string
+): Promise<{ success: boolean; error?: string; room?: BattleRoom }> => {
+  const room = await getBattleRoom(roomId)
   if (!room) return { success: false, error: 'Phòng không tồn tại!' }
 
   const host = room.players.find(p => p.id === hostPlayerId)
@@ -173,10 +250,11 @@ export const startBattleRoom = (roomId: string, hostPlayerId: string): { success
 
   room.status = 'in_progress'
   room.startedAt = Date.now()
+  await saveRoomToStorage(room)
   return { success: true, room }
 }
 
-export const submitBattleResult = (
+export const submitBattleResult = async (
   roomId: string,
   playerId: string,
   result: {
@@ -185,9 +263,8 @@ export const submitBattleResult = (
     totalQuestions: number
     durationSeconds: number
   }
-): { success: boolean; error?: string; room?: BattleRoom } => {
-  const store = getStore()
-  const room = store.get(roomId)
+): Promise<{ success: boolean; error?: string; room?: BattleRoom }> => {
+  const room = await getBattleRoom(roomId)
   if (!room) return { success: false, error: 'Phòng không tồn tại!' }
 
   const player = room.players.find(p => p.id === playerId)
@@ -221,21 +298,49 @@ export const submitBattleResult = (
     room.resultExpiresAt = Date.now() + 2 * 60 * 60 * 1000 // 2 hours
   }
 
+  await saveRoomToStorage(room)
   return { success: true, room }
 }
 
-export const getQuizBattleHistory = (quizId: string): BattleRoom[] => {
-  cleanExpiredBattles()
-  const store = getStore()
+export const getQuizBattleHistory = async (quizId: string): Promise<BattleRoom[]> => {
   const now = Date.now()
   const results: BattleRoom[] = []
 
-  for (const room of store.values()) {
-    if (room.quizId === quizId && (room.status === 'completed' || room.players.some(p => p.submitted))) {
-      // Must be within 2 hours
-      const refTime = room.completedAt || room.createdAt
-      if (now - refTime <= 2 * 3600 * 1000) {
-        results.push(room)
+  try {
+    const records = await prisma.systemSetting.findMany({
+      where: { key: { startsWith: ROOM_PREFIX } }
+    })
+    for (const r of records) {
+      try {
+        const room = JSON.parse(r.value) as BattleRoom
+        // Cleanup expired
+        if (room.status === 'waiting' && now > room.expiresAt) {
+          await deleteRoomFromStorage(room.id)
+          continue
+        }
+        if (room.status === 'completed' && room.resultExpiresAt && now > room.resultExpiresAt) {
+          await deleteRoomFromStorage(room.id)
+          continue
+        }
+        if (now - room.createdAt > 3 * 3600 * 1000) {
+          await deleteRoomFromStorage(room.id)
+          continue
+        }
+
+        if (room.quizId === quizId && (room.status === 'completed' || room.players.some(p => p.submitted))) {
+          results.push(room)
+        }
+      } catch (e) {}
+    }
+  } catch (err) {
+    // Memory fallback
+    const store = getStore()
+    for (const room of store.values()) {
+      if (room.quizId === quizId && (room.status === 'completed' || room.players.some(p => p.submitted))) {
+        const refTime = room.completedAt || room.createdAt
+        if (now - refTime <= 2 * 3600 * 1000) {
+          results.push(room)
+        }
       }
     }
   }

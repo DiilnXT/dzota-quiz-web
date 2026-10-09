@@ -4086,13 +4086,15 @@
                                             ) : (
                                                 <span className="text-[11px] font-medium text-slate-400 bg-slate-50 px-2 py-1 rounded-md mr-2">Chỉ xem</span>
                                             )}
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); handleExportDocx(quiz); }}
-                                                className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition cursor-pointer"
-                                                title="Tải file Word (.docx) chuẩn"
-                                            >
-                                                <Icons.Download size={17} />
-                                            </button>
+                                            {canEditQuiz(quiz) && (
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleExportDocx(quiz); }}
+                                                    className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition cursor-pointer"
+                                                    title="Tải file Word (.docx) chuẩn"
+                                                >
+                                                    <Icons.Download size={17} />
+                                                </button>
+                                            )}
                                             <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 group-hover:bg-blue-50 group-hover:text-ios-blue transition-colors">
                                                 <Icons.ArrowRight size={18}/>
                                             </div>
@@ -5440,17 +5442,15 @@
                     <button
                       type="button"
                       onClick={handleOpenBattleModal}
-                      className="relative overflow-hidden w-full mt-2.5 py-3.5 px-6 rounded-2xl sm:rounded-full font-black text-white text-[15px] sm:text-[16px] transition-all active:scale-[0.98] hover:-translate-y-0.5 flex items-center justify-center gap-2.5 shadow-[0_10px_25px_-4px_rgba(239,68,68,0.45)] hover:shadow-[0_14px_30px_rgba(239,68,68,0.55)] cursor-pointer group"
+                      className="relative overflow-hidden w-full mt-2.5 py-2.5 px-4 rounded-xl font-bold text-white text-xs sm:text-sm transition-all active:scale-[0.98] hover:-translate-y-0.5 flex items-center justify-center gap-2 shadow-md shadow-rose-600/25 cursor-pointer group"
                       style={{
                         background: 'linear-gradient(90deg, #FF416C 0%, #FF4B2B 50%, #F37335 100%)'
                       }}
                       title="Thi đấu đối kháng trực tiếp, xếp hạng điểm số & thời gian làm bài!"
                     >
-                      <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 animate-pulse">
-                        <span className="text-base">⚔️</span>
-                      </div>
-                      <span className="tracking-wide text-white drop-shadow-xs">Thi Đấu Battle (Tạo / Nhập ID Phòng)</span>
-                      <span className="text-[11px] bg-black/25 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-amber-200">
+                      <span className="text-sm">⚔️</span>
+                      <span className="tracking-wide text-white drop-shadow-xs font-black">Thi Đấu Battle (Tạo / Nhập ID Phòng)</span>
+                      <span className="text-[10px] bg-black/25 px-1.5 py-0.2 rounded-full font-bold uppercase tracking-wider text-amber-200">
                         Live
                       </span>
                     </button>
@@ -5466,10 +5466,10 @@
                       }
                       setShowMistakeReviewModal(true);
                     }}
-                    className="w-full mt-2 py-2.5 px-4 rounded-xl sm:rounded-2xl border border-amber-200/90 bg-amber-50/70 hover:bg-amber-100/80 text-amber-900 text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.99]"
+                    className="w-full mt-2 py-2 px-4 rounded-xl border border-amber-200/90 bg-amber-50/70 hover:bg-amber-100/80 text-amber-900 text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.99]"
                     title="Ôn tập lại các câu hỏi từng làm sai"
                   >
-                    <Icons.RotateCcw size={15} className="text-amber-600 flex-shrink-0" />
+                    <Icons.RotateCcw size={14} className="text-amber-600 flex-shrink-0" />
                     <span>Ôn lại câu sai</span>
                     <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
                       wrongQuestionsList && wrongQuestionsList.length > 0 
@@ -5478,26 +5478,6 @@
                     }`}>
                       {wrongQuestionsList ? wrongQuestionsList.length : 0} câu
                     </span>
-                  </button>
-
-                  {/* Tải Đề Thi Word (.docx) */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const currentItem = {
-                        title: quizConfig.title || 'De_Thi',
-                        subject: quizConfig.subject || quizConfig.category || 'Chung',
-                        duration: quizConfig.timeLimit || quizConfig.duration || 45,
-                        config: quizConfig,
-                        questions: (currentQuestions && currentQuestions.length > 0) ? currentQuestions : parsedQuestions
-                      };
-                      handleExportDocx(currentItem);
-                    }}
-                    className="w-full mt-2 py-2.5 px-4 rounded-xl sm:rounded-2xl border border-blue-200/90 bg-blue-50/70 hover:bg-blue-100/80 text-blue-900 text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.99]"
-                    title="Tải đề thi về máy dưới dạng file Word (.docx) chuẩn BGD"
-                  >
-                    <Icons.Download size={15} className="text-blue-600 flex-shrink-0" />
-                    <span>Tải file Word (.docx) chuẩn</span>
                   </button>
 
                   {/* Copyright Badge */}
@@ -6286,7 +6266,7 @@
                           type="button"
                           onClick={handleCreateBattleRoom}
                           disabled={isCreatingBattle}
-                          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 via-red-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 text-white font-black text-sm shadow-xl shadow-rose-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
+                          className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-rose-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
                         >
                           {isCreatingBattle ? (
                             <>
@@ -6295,8 +6275,8 @@
                             </>
                           ) : (
                             <>
-                              <span>⚔️ Tạo Phòng Thi Đấu Ngay</span>
-                              <Icons.ArrowRight size={18} />
+                              <span>⚔️ Tạo Phòng Thi Đấu</span>
+                              <Icons.ArrowRight size={16} />
                             </>
                           )}
                         </button>
@@ -6330,12 +6310,12 @@
                           value={battleRoomIdInput}
                           onChange={e => setBattleRoomIdInput(e.target.value.trim())}
                           placeholder="Ví dụ: 829104"
-                          className="w-full px-4 py-3 rounded-xl border border-slate-300 font-mono text-center text-xl font-bold tracking-widest uppercase focus:ring-2 focus:ring-rose-500/20 focus:border-rose-600 outline-none transition"
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-300 font-mono text-center text-lg font-bold tracking-widest uppercase focus:ring-2 focus:ring-rose-500/20 focus:border-rose-600 outline-none transition"
                         />
                       </div>
 
-                      <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-600">
-                        💡 <span className="font-medium">Nhập mã phòng 6 chữ số do Chủ phòng chia sẻ để cùng tranh tài trực tiếp. Mã chỉ có hiệu lực trong 5 phút!</span>
+                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600">
+                        💡 <span className="font-medium">Nhập mã phòng 6 chữ số do Chủ phòng chia sẻ để cùng tranh tài trực tiếp. Mã có hiệu lực trong 5 phút!</span>
                       </div>
 
                       <div className="pt-2">
@@ -6343,7 +6323,7 @@
                           type="button"
                           onClick={() => handleJoinBattleRoom(battleRoomIdInput)}
                           disabled={isJoiningBattle || !battleRoomIdInput.trim()}
-                          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-700 hover:to-indigo-700 text-white font-black text-sm shadow-xl shadow-rose-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
+                          className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-rose-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
                         >
                           {isJoiningBattle ? (
                             <>
@@ -6353,7 +6333,7 @@
                           ) : (
                             <>
                               <span>🚀 Vào Phòng Thi Đấu</span>
-                              <Icons.ArrowRight size={18} />
+                              <Icons.ArrowRight size={16} />
                             </>
                           )}
                         </button>
@@ -6463,17 +6443,17 @@
                                 <button
                                   type="button"
                                   onClick={handleStartBattleMatch}
-                                  className="flex-1 w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-sm shadow-xl shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                                  className="flex-1 w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                                 >
-                                  <Icons.Play size={18} />
-                                  <span>BẮT ĐẦU THI ĐẤU NGAY ({currentBattleRoom.players.length} người)</span>
+                                  <Icons.Play size={16} />
+                                  <span>BẮT ĐẦU THI ĐẤU ({currentBattleRoom.players.length} người)</span>
                                 </button>
                               );
                             } else {
                               return (
-                                <div className="flex-1 w-full py-3 px-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold text-center flex items-center justify-center gap-2">
-                                  <div className="spinner border-2 border-amber-600 border-t-transparent w-3.5 h-3.5"></div>
-                                  <span>Đang chờ Chủ phòng bắt đầu trận đấu... Chuẩn bị sẵn sàng!</span>
+                                <div className="flex-1 w-full py-2 px-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold text-center flex items-center justify-center gap-2">
+                                  <div className="spinner border-2 border-amber-600 border-t-transparent w-3 h-3"></div>
+                                  <span>Đang chờ Chủ phòng bắt đầu...</span>
                                 </div>
                               );
                             }
@@ -6753,14 +6733,16 @@
                                         </button>
                                     )}
 
-                                    {selectedItemAction.config.quizType === 'bank' ? (
-                                        <button onClick={() => { handleExportDocx(selectedItemAction); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-blue-800 font-bold bg-blue-50/60 border border-blue-100">
-                                            <div className="text-blue-700 bg-blue-100 p-2 rounded-lg"><Icons.Download size={18}/></div> Tải ngân hàng câu hỏi (.docx Word)
-                                        </button>
-                                    ) : (
-                                        <button onClick={() => { handleExportDocx(selectedItemAction); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-blue-800 font-bold bg-blue-50/60 border border-blue-100">
-                                            <div className="text-blue-700 bg-blue-100 p-2 rounded-lg"><Icons.Download size={18}/></div> Tải file Word (.docx) chuẩn
-                                        </button>
+                                    {isOwnerOrAdmin && (
+                                        selectedItemAction.config.quizType === 'bank' ? (
+                                            <button onClick={() => { handleExportDocx(selectedItemAction); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-blue-800 font-bold bg-blue-50/60 border border-blue-100">
+                                                <div className="text-blue-700 bg-blue-100 p-2 rounded-lg"><Icons.Download size={18}/></div> Tải ngân hàng câu hỏi (.docx Word)
+                                            </button>
+                                        ) : (
+                                            <button onClick={() => { handleExportDocx(selectedItemAction); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-blue-800 font-bold bg-blue-50/60 border border-blue-100">
+                                                <div className="text-blue-700 bg-blue-100 p-2 rounded-lg"><Icons.Download size={18}/></div> Tải file Word (.docx) chuẩn
+                                            </button>
+                                        )
                                     )}
 
                                     <button onClick={() => { handleCopyLink(selectedItemAction.id); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">

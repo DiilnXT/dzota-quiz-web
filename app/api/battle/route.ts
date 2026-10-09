@@ -16,12 +16,12 @@ export async function GET(request: Request) {
     const history = searchParams.get('history')
 
     if (history && quizId) {
-      const historyList = getQuizBattleHistory(quizId)
+      const historyList = await getQuizBattleHistory(quizId)
       return NextResponse.json({ success: true, history: historyList })
     }
 
     if (roomId) {
-      const room = getBattleRoom(roomId)
+      const room = await getBattleRoom(roomId)
       if (!room) {
         return NextResponse.json({ success: false, error: 'Phòng không tồn tại hoặc đã hết hạn 5 phút!' }, { status: 404 })
       }
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       if (!quizId || !hostPlayer) {
         return NextResponse.json({ error: 'Thiếu thông tin tạo phòng' }, { status: 400 })
       }
-      const room = createBattleRoom(quizId, quizTitle, maxPlayers, hostPlayer, questions)
+      const room = await createBattleRoom(quizId, quizTitle, maxPlayers, hostPlayer, questions)
       return NextResponse.json({ success: true, room })
     }
 
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
       if (!roomId || !player) {
         return NextResponse.json({ error: 'Thiếu mã phòng hoặc thông tin người chơi' }, { status: 400 })
       }
-      const result = joinBattleRoom(roomId, player)
+      const result = await joinBattleRoom(roomId, player)
       if (!result.success) {
         return NextResponse.json({ success: false, error: result.error }, { status: 400 })
       }
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       if (!roomId || !hostPlayerId) {
         return NextResponse.json({ error: 'Thiếu thông tin bắt đầu' }, { status: 400 })
       }
-      const result = startBattleRoom(roomId, hostPlayerId)
+      const result = await startBattleRoom(roomId, hostPlayerId)
       if (!result.success) {
         return NextResponse.json({ success: false, error: result.error }, { status: 400 })
       }
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
       if (!roomId || !playerId || !result) {
         return NextResponse.json({ error: 'Thiếu thông tin nộp bài' }, { status: 400 })
       }
-      const submitRes = submitBattleResult(roomId, playerId, result)
+      const submitRes = await submitBattleResult(roomId, playerId, result)
       if (!submitRes.success) {
         return NextResponse.json({ success: false, error: submitRes.error }, { status: 400 })
       }
