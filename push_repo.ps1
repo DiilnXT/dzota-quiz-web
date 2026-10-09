@@ -21,7 +21,7 @@ public class CredManagerPush {
             byte[] bytes = new byte[cred.CredentialBlobSize];
             Marshal.Copy(cred.CredentialBlob, bytes, 0, cred.CredentialBlobSize);
             CredFree(credPtr);
-            return Encoding.Unicode.GetString(bytes);
+            return Encoding.UTF8.GetString(bytes);
         }
         return null;
     }
@@ -32,4 +32,6 @@ if (-not $pass) {
     Write-Error "No credentials found in Credential Manager"
     exit 1
 }
-& "C:\Users\lenha\AppData\Local\GitHubDesktop\app-3.6.6\resources\app\git\cmd\git.exe" push "https://${pass}@github.com/DiilnXT/dzota-quiz-web.git" main
+Write-Host "Credentials found. Pushing to GitHub main branch..."
+$env:GIT_TERMINAL_PROMPT = "0"
+& "C:\Users\lenha\AppData\Local\GitHubDesktop\app-3.6.6\resources\app\git\cmd\git.exe" -c credential.helper= push "https://x-access-token:${pass}@github.com/DiilnXT/dzota-quiz-web.git" main
