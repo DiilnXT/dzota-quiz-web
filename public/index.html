@@ -532,6 +532,10 @@
         const [selectedBankAction, setSelectedBankAction] = useState(null);
         const [bankSearchTerm, setBankSearchTerm] = useState('');
         const [bankSelectedCategory, setBankSelectedCategory] = useState('Tất cả');
+        const [showBatchBankImportModal, setShowBatchBankImportModal] = useState(false);
+        const [batchParsedSlots, setBatchParsedSlots] = useState([]);
+        const [batchImportMode, setBatchImportMode] = useState('replace');
+        const [batchExpandedSlotIdx, setBatchExpandedSlotIdx] = useState(null);
 
         // Quản lý phiên đăng nhập và phân quyền giáo viên / admin
         const [currentUser, setCurrentUser] = useState(window.__DZOTA_SESSION__ || null);
@@ -1046,7 +1050,8 @@
             return;
           }
 
-          const targetEditor = (window.tinymce && window.tinymce.get('slot-quiz-editor-area')) 
+          const targetEditor = (window.tinymce && window.tinymce.get('batch-bank-editor-area'))
+            || (window.tinymce && window.tinymce.get('slot-quiz-editor-area')) 
             || (window.tinymce && window.tinymce.get('quiz-editor-area'));
 
           if (targetEditor) {
@@ -1630,6 +1635,44 @@
           };
         }, [showSlotImportModal]);
 
+        // --- TinyMCE cho Khung nhập câu hỏi Ngân hàng Hàng Loạt (Batch Bank Import: 1.1, 1.2... 2.1, 2.2...) ---
+        useEffect(() => {
+          if (showBatchBankImportModal) {
+             const initBatchEditor = (retries = 8) => {
+                 if (window.tinymce) {
+                     try {
+                         if (window.tinymce.get('batch-bank-editor-area')) {
+                             window.tinymce.remove('#batch-bank-editor-area');
+                         }
+                         window.tinymce.init({
+                             selector: '#batch-bank-editor-area', height: 420, menubar: false,
+                             plugins: 'lists link image table code help wordcount paste',
+                             toolbar: 'undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+                             content_style: 'body { font-family:Inter,Helvetica,Arial,sans-serif; font-size:15px; padding: 20px; line-height: 1.6; color: #334155; } img { max-width: 100%; height: auto; border-radius: 8px; margin-top: 10px; }',
+                             placeholder: 'Paste toàn bộ ngân hàng câu hỏi (Câu 1.1, 1.2... Câu 2.1, 2.2...) hoặc tải file Word vào đây...',
+                             paste_data_images: true, automatic_uploads: true,
+                             images_upload_handler: (blobInfo) => new Promise((resolve) => {
+                                 resolve('data:' + blobInfo.blob().type + ';base64,' + blobInfo.base64());
+                             }),
+                             setup: (editor) => window.tinymceBatchInstance = editor
+                         });
+                     } catch(e) {
+                         console.error("TinyMCE Batch error:", e);
+                     }
+                 } else if (retries > 0) {
+                     setTimeout(() => initBatchEditor(retries - 1), 300);
+                 }
+             };
+             setTimeout(() => initBatchEditor(8), 100);
+          }
+          return () => {
+              if (window.tinymce && window.tinymce.get('batch-bank-editor-area')) {
+                  window.tinymce.remove('#batch-bank-editor-area');
+                  window.tinymceBatchInstance = null;
+              }
+          };
+        }, [showBatchBankImportModal]);
+
         // --- 2. LOGIC DASHBOARD (HOME) & NGÂN HÀNG ĐỀ ---
         const handleCreateNew = (type = 'standard') => {
              if (type === 'bank') {
@@ -1982,6 +2025,205 @@
             setSlotParsedVariants([]);
             const title = targetSlot.title || `Câu ${currentEditingSlotIdx + 1}`;
             addToast(`💾 Đã lưu thành công ${targetSlot.variants.length} câu hỏi vào ${title}!`, "success");
+        };
+
+        const handleBatchFileUpload = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (!file.name.endsWith('.docx')) {
+                addToast("Chỉ hỗ trợ file Word (.docx)", "error");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const arrayBuffer = event.target.result;
+                window.mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
+                    .then(function(result) {
+                        const html = result.value;
+                        if (window.tinymce && window.tinymce.get('batch-bank-editor-area')) {
+                            window.tinymce.get('batch-bank-editor-area').setContent(html);
+                            addToast("Đã nạp nội dung từ file Word vào khung soạn thảo hàng loạt!", "success");
+                        } else {
+                            addToast("Trình soạn thảo chưa sẵn sàng hoặc bị lỗi!", "error");
+                        }
+                    })
+                    .catch(function(err) {
+                        console.error(err);
+                        addToast("Lỗi đọc file Word: " + err.message, "error");
+                    });
+            };
+            reader.readAsArrayBuffer(file);
+        };
+
+        const parseBatchBankQuiz = async () => {
+            if (!window.tinymce || !window.tinymce.get('batch-bank-editor-area')) {
+                addToast("Trình soạn thảo chưa sẵn sàng.", 'error');
+                return;
+            }
+            setIsParsing(true);
+            try { await window.tinymce.get('batch-bank-editor-area').uploadImages(); } catch (e) {}
+            const editorBody = window.tinymce.get('batch-bank-editor-area').getBody();
+
+            try {
+                const lines = parseDomToLines(editorBody);
+                const rawQuestions = [];
+                let currentQ = null;
+                const fullText = lines.map(l => l.text).join('\n');
+                
+                // Trích xuất bảng đáp án: Hỗ trợ cả 1.1A, 1.2B, 1A, 2B...
+                const keyMatch = fullText.match(/(?:^|\n)(?:Đáp án|Bảng đáp án|Answer Key)[:\s]*(.*)$/is);
+                let answerMap = {};
+                if (keyMatch) {
+                    keyMatch[1].split(/\n/).forEach(line => {
+                        for (const match of line.matchAll(/(?:Câu\s*)?(\d+(?:\.\d+)?)[\s.:-]+([A-G])/gi)) {
+                            answerMap[match[1]] = match[2].toUpperCase();
+                        }
+                    });
+                }
+
+                lines.forEach((lineObj) => {
+                    const lineText = lineObj.text.trim();
+                    if (!lineText && lineObj.images.length === 0) return;
+
+                    // Nhận diện câu hỏi có dạng phân cấp:
+                    // 1. Câu 1.1, Câu 1.2, 1.1, 1.2... (decimal pattern: 1.1, 1.2, 2.1...)
+                    // 2. Hoặc Câu 1, Câu 2... (single number fallback)
+                    const decimalMatch = lineText.match(/^(?:Câu|Bài)?\s*(\d+)\.(\d+)[\s.:-]+(.*)/i);
+                    const standardMatch = lineText.match(/^(?:Câu|Bài)\s*(\d+)[\s.:-]+(.*)/i);
+                    const optMatch = lineText.match(/^([A-G])[\s.)]+(.*)/i);
+
+                    if ((decimalMatch || standardMatch) && !optMatch) {
+                        if (currentQ) rawQuestions.push(currentQ);
+
+                        let slotNum = 1;
+                        let varNum = null;
+                        let qText = '';
+                        let rawKey = '';
+
+                        if (decimalMatch) {
+                            slotNum = parseInt(decimalMatch[1], 10);
+                            varNum = parseInt(decimalMatch[2], 10);
+                            qText = decimalMatch[3].trim();
+                            rawKey = `${slotNum}.${varNum}`;
+                        } else if (standardMatch) {
+                            slotNum = parseInt(standardMatch[1], 10);
+                            varNum = 1;
+                            qText = standardMatch[2].trim();
+                            rawKey = `${slotNum}`;
+                        }
+
+                        currentQ = {
+                            slotNum: slotNum,
+                            varNum: varNum,
+                            rawKey: rawKey,
+                            text: qText,
+                            options: { A: "", B: "", C: "", D: "", E: "", F: "", G: "" },
+                            correct: answerMap[rawKey] || answerMap[slotNum] || null,
+                            images: [...lineObj.images]
+                        };
+                    } else if (optMatch && currentQ) {
+                        const label = optMatch[1].toUpperCase();
+                        let content = optMatch[2].trim();
+                        currentQ.options[label] = content;
+                        if (lineObj.images.length > 0) currentQ.images.push(...lineObj.images);
+                        if (!currentQ.correct) {
+                            let foundBold = false;
+                            for (let seg of lineObj.segments) {
+                                if (seg.bold && (seg.text.replace(/^[A-G][\s.)]*/i, '').trim().length > 0 || (content.includes(seg.text.trim()) && seg.text.trim().length > 0))) {
+                                    foundBold = true;
+                                    break;
+                                }
+                            }
+                            if (foundBold) currentQ.correct = label;
+                        }
+                    } else if (currentQ) {
+                        const lastKey = ['G', 'F', 'E', 'D', 'C', 'B', 'A'].find(k => currentQ.options[k] !== "");
+                        if (lastKey) {
+                            if (lineText) currentQ.options[lastKey] += " " + lineText;
+                            for(let seg of lineObj.segments) if (seg.bold && seg.text.trim().length > 0) currentQ.correct = lastKey;
+                        } else if (lineText) {
+                            currentQ.text += "\n" + lineText;
+                        }
+                        if (lineObj.images.length > 0) currentQ.images.push(...lineObj.images);
+                    }
+                });
+
+                if (currentQ) rawQuestions.push(currentQ);
+
+                if (rawQuestions.length === 0) {
+                    addToast("Không tìm thấy câu hỏi nào! Định dạng chuẩn: 'Câu 1.1: ...' hoặc 'Câu 1.2: ...'", 'error');
+                    setIsParsing(false);
+                    return;
+                }
+
+                // Gom nhóm các câu hỏi theo slotNum (Câu 1.1, 1.2 -> Câu 1; Câu 2.1, 2.2 -> Câu 2...)
+                const groupedMap = new Map();
+                rawQuestions.forEach((q) => {
+                    const sNum = q.slotNum || 1;
+                    if (!groupedMap.has(sNum)) {
+                        groupedMap.set(sNum, []);
+                    }
+                    groupedMap.get(sNum).push(q);
+                });
+
+                // Sắp xếp các slot theo số thứ tự 1, 2, 3...
+                const sortedSlotNums = Array.from(groupedMap.keys()).sort((a, b) => a - b);
+                const generatedSlots = sortedSlotNums.map((sNum) => {
+                    const qList = groupedMap.get(sNum);
+                    const variants = qList.map((q, vIdx) => ({
+                        id: `${sNum}.${vIdx + 1}`,
+                        text: q.text,
+                        options: { ...q.options },
+                        correct: q.correct,
+                        images: q.images ? [...q.images] : []
+                    }));
+
+                    return {
+                        id: `slot_${sNum}_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
+                        title: `Câu ${sNum}`,
+                        variants: variants
+                    };
+                });
+
+                setBatchParsedSlots(generatedSlots);
+                const totalVariants = generatedSlots.reduce((acc, s) => acc + s.variants.length, 0);
+                const totalWithAns = rawQuestions.filter(q => q.correct).length;
+                addToast(`🎉 Đã phân tích thành công ${generatedSlots.length} câu lớn với ${totalVariants} câu con (${totalWithAns} câu có đáp án)!`, 'success');
+            } catch (e) {
+                addToast("Lỗi phân tích: " + e.message, 'error');
+            }
+            setIsParsing(false);
+        };
+
+        const handleApplyBatchBankImport = (mode = 'replace') => {
+            if (batchParsedSlots.length === 0) {
+                addToast("Chưa có dữ liệu nào được phân tích!", "warning");
+                return;
+            }
+
+            if (mode === 'replace') {
+                setBankSlots([...batchParsedSlots]);
+            } else {
+                // Merge/append
+                const existing = [...bankSlots];
+                const updated = [...existing];
+                batchParsedSlots.forEach(newSlot => {
+                    const matchIdx = updated.findIndex(s => s.title.toLowerCase() === newSlot.title.toLowerCase());
+                    if (matchIdx !== -1) {
+                        const mergedVariants = [...(updated[matchIdx].variants || []), ...newSlot.variants];
+                        const slotNum = matchIdx + 1;
+                        updated[matchIdx].variants = mergedVariants.map((v, i) => ({ ...v, id: `${slotNum}.${i + 1}` }));
+                    } else {
+                        updated.push(newSlot);
+                    }
+                });
+                setBankSlots(updated);
+            }
+
+            const totalQ = batchParsedSlots.reduce((acc, s) => acc + s.variants.length, 0);
+            addToast(`💾 Đã nạp thành công ${batchParsedSlots.length} câu lớn (${totalQ} câu hỏi con) vào ngân hàng đề!`, "success");
+            setShowBatchBankImportModal(false);
+            setBatchParsedSlots([]);
         };
 
         const handleUpdateSlotVariantDirectly = (slotIdx, vIdx, field, value) => {
@@ -3383,6 +3625,20 @@
                             <div className="flex items-center gap-2 flex-shrink-0">
                                 <button
                                     type="button"
+                                    onClick={() => {
+                                        setBatchParsedSlots([]);
+                                        setShowBatchBankImportModal(true);
+                                    }}
+                                    className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                                    title="Nạp toàn bộ ngân hàng câu hỏi hàng loạt (Câu 1.1, 1.2... Câu 2.1, 2.2...)"
+                                >
+                                    <Icons.Zap size={16} />
+                                    <span className="hidden sm:inline">⚡ Nạp Hàng Loạt (1.1, 1.2...)</span>
+                                    <span className="sm:hidden">⚡ Hàng loạt</span>
+                                </button>
+
+                                <button
+                                    type="button"
                                     onClick={handleAddSlot}
                                     className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                                     title="Thêm nhóm câu mới"
@@ -3465,6 +3721,35 @@
 
                         {/* Slots List (Câu 1, Câu 2... Câu n) */}
                         <div className="space-y-4">
+                            {/* Banner Nạp Hàng Loạt */}
+                            <div className="bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-teal-500/10 border border-amber-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                                        <Icons.Zap size={20} />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-xs sm:text-sm font-black text-slate-800 flex items-center gap-2">
+                                            <span>Nạp Ngân Hàng Câu Hỏi Hàng Loạt (1.1, 1.2... 2.1, 2.2...)</span>
+                                            <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full uppercase">Mới</span>
+                                        </h4>
+                                        <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5">
+                                            Thay vì thêm từng câu, bạn có thể tải 1 file Word hoặc paste toàn bộ câu hỏi dạng <strong>Câu 1.1, 1.2</strong> (vào Câu 1), <strong>Câu 2.1, 2.2</strong> (vào Câu 2)...
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setBatchParsedSlots([]);
+                                        setShowBatchBankImportModal(true);
+                                    }}
+                                    className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 flex-shrink-0 cursor-pointer"
+                                >
+                                    <Icons.UploadCloud size={15} />
+                                    <span>Nạp hàng loạt ngay</span>
+                                </button>
+                            </div>
+
                             <div className="flex items-center justify-between px-1">
                                 <h3 className="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2">
                                     <span>Danh Sách Câu Hỏi Trong Ngân Hàng</span>
@@ -5161,6 +5446,288 @@
                             >
                                 <Icons.Save size={16} />
                                 <span>LƯU CÂU NÀY ({slotParsedVariants.length} CÂU HỎI)</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal: Nạp Toàn Bộ Ngân Hàng Đề Hàng Loạt (Câu 1.1, 1.2... Câu 2.1, 2.2...) */}
+            {showBatchBankImportModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[94vh] flex flex-col overflow-hidden animate-slide-up border border-slate-200">
+                        {/* Header */}
+                        <div className="px-5 sm:px-6 py-4 bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-teal-500/10 border-b border-amber-200/60 flex items-center justify-between flex-shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white font-black text-sm flex items-center justify-center shadow-md shadow-amber-500/20">
+                                    <Icons.Zap size={22} />
+                                </div>
+                                <div>
+                                    <h3 className="font-extrabold text-slate-800 text-base sm:text-lg flex items-center gap-2">
+                                        <span>Nạp Ngân Hàng Câu Hỏi Hàng Loạt</span>
+                                        <span className="text-xs bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full font-bold">
+                                            1.1, 1.2... → Câu 1 | 2.1, 2.2... → Câu 2
+                                        </span>
+                                    </h3>
+                                    <p className="text-xs text-slate-500 font-medium">
+                                        Hệ thống tự động gom nhóm các câu hỏi phân cấp thành từng ngân hàng câu lớn tương ứng
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setShowBatchBankImportModal(false);
+                                    setBatchParsedSlots([]);
+                                }}
+                                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                            >
+                                <Icons.X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1">
+                            {/* 3 cards matching phương thức nạp */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                {/* Card 1: Tải file Word */}
+                                <label className="border-2 border-dashed border-blue-200 bg-blue-50/40 hover:bg-blue-50 hover:border-blue-400 p-4 rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-all group">
+                                    <input
+                                        type="file"
+                                        accept=".docx"
+                                        className="hidden"
+                                        onChange={handleBatchFileUpload}
+                                    />
+                                    <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                                        <Icons.UploadCloud size={20} />
+                                    </div>
+                                    <span className="text-xs sm:text-sm font-extrabold text-blue-900 mb-0.5">
+                                        Tải lên file Word (.docx)
+                                    </span>
+                                    <span className="text-[11px] text-blue-600/80 leading-tight">
+                                        Trích xuất toàn bộ câu 1.1, 1.2... 2.1, 2.2...
+                                    </span>
+                                </label>
+
+                                {/* Card 2: Dán thủ công */}
+                                <div className="border border-slate-200 bg-slate-50/50 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center mb-2">
+                                        <Icons.Clipboard size={20} />
+                                    </div>
+                                    <span className="text-xs sm:text-sm font-extrabold text-slate-800 mb-0.5">
+                                        Dán thủ công
+                                    </span>
+                                    <span className="text-[11px] text-slate-500 leading-tight">
+                                        Ctrl+V trực tiếp vào khung soạn thảo bên dưới
+                                    </span>
+                                </div>
+
+                                {/* Card 3: Chuẩn Hóa Markdown Dzota AI */}
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDzotaModal(true)}
+                                    className="border border-purple-200 bg-purple-50/40 hover:bg-purple-50 hover:border-purple-300 p-4 rounded-2xl flex flex-col items-center justify-center text-center transition-all group cursor-pointer"
+                                >
+                                    <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                                        <Icons.Sparkles size={20} />
+                                    </div>
+                                    <span className="text-xs sm:text-sm font-extrabold text-purple-900 mb-0.5">
+                                        Chuẩn Hóa Markdown Dzota (AI)
+                                    </span>
+                                    <span className="text-[11px] text-purple-600/80 leading-tight">
+                                        AI định dạng tự động thành Câu 1.1, 1.2...
+                                    </span>
+                                </button>
+                            </div>
+
+                            {/* Khung Soạn Thảo Đề Thi */}
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                    <Icons.Edit3 size={14} className="text-amber-600" />
+                                    <span>Khung Soạn Thảo Đề Thi Hàng Loạt:</span>
+                                </label>
+                                <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+                                    <textarea
+                                        id="batch-bank-editor-area"
+                                        className="w-full min-h-[300px]"
+                                        placeholder="Dán toàn bộ câu hỏi (Câu 1.1, Câu 1.2... Câu 2.1, Câu 2.2...) hoặc tải file Word vào đây..."
+                                    ></textarea>
+                                </div>
+                            </div>
+
+                            {/* Hướng dẫn định dạng chi tiết */}
+                            <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-2xl text-amber-950 text-xs space-y-1.5">
+                                <div className="font-bold flex items-center gap-1.5 text-amber-900">
+                                    <Icons.HelpCircle size={16} className="text-amber-600" />
+                                    <span>Quy tắc định dạng ngân hàng đề hàng loạt:</span>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-6 text-[11px] leading-relaxed text-amber-900/90">
+                                    <div>
+                                        <p>• <strong>Câu 1.1, Câu 1.2...</strong>: Hệ thống sẽ tự động gộp vào biến thể của <strong>Câu 1</strong>.</p>
+                                        <p>• <strong>Câu 2.1, Câu 2.2...</strong>: Hệ thống sẽ tự động gộp vào biến thể của <strong>Câu 2</strong>.</p>
+                                        <p>• <strong>Câu X.1, Câu X.2...</strong>: Hệ thống tự động gộp vào <strong>Câu X</strong>.</p>
+                                    </div>
+                                    <div>
+                                        <p>• <strong>Nhận diện đáp án đúng:</strong> In đậm chữ cái đầu (VD: <b>A.</b>) hoặc bảng đáp án ở cuối văn bản:</p>
+                                        <p className="font-mono bg-white/70 px-2 py-0.5 rounded border border-amber-200 mt-1">
+                                            Đáp án: 1.1A 1.2B 2.1C 2.2D...
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Nút Phân tích */}
+                            <div className="flex justify-center pt-2">
+                                <button
+                                    type="button"
+                                    onClick={parseBatchBankQuiz}
+                                    disabled={isParsing}
+                                    className="px-6 py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white font-black text-sm sm:text-base rounded-2xl shadow-lg shadow-amber-500/25 active:scale-95 transition-all flex items-center gap-2.5 cursor-pointer disabled:opacity-50"
+                                >
+                                    <Icons.Zap size={18} fill="currentColor" />
+                                    <span>{isParsing ? 'Đang phân tích...' : '⚡ BƯỚC 2: PHÂN TÍCH & GOM NHÓM HÀNG LOẠT'}</span>
+                                </button>
+                            </div>
+
+                            {/* Kết quả sau khi phân tích hàng loạt */}
+                            {batchParsedSlots.length > 0 && (
+                                <div className="mt-6 pt-6 border-t border-slate-200 space-y-4 animate-slide-down">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
+                                        <div>
+                                            <h4 className="text-sm font-extrabold text-emerald-950 flex items-center gap-2">
+                                                <span>🎉 Kết Quả Phân Tích Thành Công:</span>
+                                                <span className="text-xs bg-emerald-200 text-emerald-900 font-bold px-2.5 py-0.5 rounded-full">
+                                                    {batchParsedSlots.length} câu lớn
+                                                </span>
+                                                <span className="text-xs bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded-full">
+                                                    {batchParsedSlots.reduce((acc, s) => acc + (s.variants || []).length, 0)} câu hỏi con
+                                                </span>
+                                            </h4>
+                                            <p className="text-xs text-emerald-700 mt-0.5">
+                                                Chọn chế độ áp dụng bên dưới trước khi lưu vào ngân hàng đề:
+                                            </p>
+                                        </div>
+
+                                        {/* Toggle replace vs append */}
+                                        <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-emerald-200 flex-shrink-0">
+                                            <button
+                                                type="button"
+                                                onClick={() => setBatchImportMode('replace')}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                                                    batchImportMode === 'replace'
+                                                        ? 'bg-emerald-600 text-white shadow-xs'
+                                                        : 'text-slate-600 hover:text-slate-900'
+                                                }`}
+                                            >
+                                                Ghi đè tất cả ({batchParsedSlots.length} câu)
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setBatchImportMode('append')}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                                                    batchImportMode === 'append'
+                                                        ? 'bg-emerald-600 text-white shadow-xs'
+                                                        : 'text-slate-600 hover:text-slate-900'
+                                                }`}
+                                            >
+                                                Gộp thêm vào ngân hàng
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Danh sách các câu lớn và câu con đã gom nhóm */}
+                                    <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+                                        {batchParsedSlots.map((slot, sIdx) => {
+                                            const sNum = sIdx + 1;
+                                            const vars = slot.variants || [];
+                                            const isExpanded = batchExpandedSlotIdx === sIdx;
+                                            return (
+                                                <div
+                                                    key={slot.id || sIdx}
+                                                    className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden"
+                                                >
+                                                    <div className="p-3.5 bg-slate-50/70 border-b border-slate-100 flex items-center justify-between">
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="w-8 h-8 rounded-xl bg-emerald-600 text-white font-black text-xs flex items-center justify-center">
+                                                                {sNum}
+                                                            </span>
+                                                            <div>
+                                                                <span className="font-extrabold text-sm text-slate-800">
+                                                                    {slot.title || `Câu ${sNum}`}
+                                                                </span>
+                                                                <span className="ml-2 text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+                                                                    {vars.length} câu hỏi con ({sNum}.1 → {sNum}.{vars.length})
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setBatchExpandedSlotIdx(isExpanded ? null : sIdx)}
+                                                            className="text-xs font-bold text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-xl border border-slate-200 bg-white flex items-center gap-1.5 cursor-pointer"
+                                                        >
+                                                            <span>{isExpanded ? 'Thu gọn' : `Xem (${vars.length}) câu con`}</span>
+                                                            <Icons.ChevronDown size={14} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                                        </button>
+                                                    </div>
+
+                                                    {isExpanded && (
+                                                        <div className="p-4 bg-slate-50/40 space-y-3">
+                                                            {vars.map((v, vIdx) => (
+                                                                <div key={v.id || vIdx} className="p-3 bg-white rounded-xl border border-slate-200 text-xs space-y-1.5">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <span className="font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                                                            Câu {sNum}.{vIdx + 1}
+                                                                        </span>
+                                                                        {v.correct ? (
+                                                                            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
+                                                                                Đáp án: {v.correct}
+                                                                            </span>
+                                                                        ) : (
+                                                                            <span className="text-[11px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded">
+                                                                                Chưa có đáp án
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <p className="font-medium text-slate-800 line-clamp-2">{v.text}</p>
+                                                                    <div className="grid grid-cols-2 gap-1.5 pt-1 text-slate-600">
+                                                                        {['A', 'B', 'C', 'D'].map(k => v.options && v.options[k] && (
+                                                                            <div key={k} className={`truncate ${v.correct === k ? 'font-bold text-emerald-700' : ''}`}>
+                                                                                <strong>{k}.</strong> {v.options[k]}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="px-5 sm:px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3 flex-shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowBatchBankImportModal(false);
+                                    setBatchParsedSlots([]);
+                                }}
+                                className="px-4 py-2.5 rounded-xl text-slate-600 hover:bg-slate-200/60 font-bold text-xs sm:text-sm transition cursor-pointer"
+                            >
+                                Đóng
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => handleApplyBatchBankImport(batchImportMode)}
+                                disabled={batchParsedSlots.length === 0}
+                                className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs sm:text-sm rounded-xl shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                            >
+                                <Icons.Check size={16} />
+                                <span>ÁP DỤNG VÀO NGÂN HÀNG ĐỀ ({batchParsedSlots.length} CÂU LỚN)</span>
                             </button>
                         </div>
                     </div>
