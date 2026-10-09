@@ -504,7 +504,34 @@
         const [statusFilter, setStatusFilter] = useState('all'); 
         const [showCreateMenu, setShowCreateMenu] = useState(false);
         const [selectedItemAction, setSelectedItemAction] = useState(null);
-        const [generateBankConfig, setGenerateBankConfig] = useState(null);
+        const [bankGenerateConfig, setBankGenerateConfig] = useState(null);
+
+        // --- CÁC STATE QUẢN LÝ THƯ VIỆN & SOẠN THẢO NGÂN HÀNG ĐỀ ---
+        const [homeViewTab, setHomeViewTab] = useState('quizzes'); // 'quizzes' hoặc 'banks'
+        const [bankIdTracker, setBankIdTracker] = useState(null);
+        const [bankConfig, setBankConfig] = useState({
+            title: 'Ngân Hàng Đề Mới',
+            category: 'Toán',
+            note: '',
+            timeLimit: 15,
+            mode: 'exam',
+            shuffleQuestions: true,
+            shuffleOptions: true
+        });
+        const [bankSlots, setBankSlots] = useState([
+            { id: 'slot_1', title: 'Câu 1', variants: [] }
+        ]);
+        const [showBankSetupModal, setShowBankSetupModal] = useState(false);
+        const [showBankCloneModal, setShowBankCloneModal] = useState(null);
+        const [cloneNewTitle, setCloneNewTitle] = useState('');
+        const [currentEditingSlotIdx, setCurrentEditingSlotIdx] = useState(null);
+        const [showSlotImportModal, setShowSlotImportModal] = useState(false);
+        const [slotParsedVariants, setSlotParsedVariants] = useState([]);
+        const [expandedSlotDetailIdx, setExpandedSlotDetailIdx] = useState(null);
+        const [generatedTestResult, setGeneratedTestResult] = useState(null);
+        const [selectedBankAction, setSelectedBankAction] = useState(null);
+        const [bankSearchTerm, setBankSearchTerm] = useState('');
+        const [bankSelectedCategory, setBankSelectedCategory] = useState('Tất cả');
 
         // Quản lý phiên đăng nhập và phân quyền giáo viên / admin
         const [currentUser, setCurrentUser] = useState(window.__DZOTA_SESSION__ || null);
@@ -1019,10 +1046,13 @@
             return;
           }
 
-          if (window.tinymce && window.tinymce.get('quiz-editor-area')) {
-            window.tinymce.get('quiz-editor-area').setContent(htmlContent);
+          const targetEditor = (window.tinymce && window.tinymce.get('slot-quiz-editor-area')) 
+            || (window.tinymce && window.tinymce.get('quiz-editor-area'));
+
+          if (targetEditor) {
+            targetEditor.setContent(htmlContent);
             setShowDzotaModal(false);
-            addToast('Đã chèn nội dung vào khung soạn thảo! Bạn có thể bấm "Bước 2" để phân tích đề.', 'success');
+            addToast('Đã chèn nội dung vào khung soạn thảo! Bạn có thể bấm "Bước 2" để phân tích.', 'success');
           } else {
             addToast('Khung soạn thảo đề chưa sẵn sàng.', 'error');
           }
@@ -1512,11 +1542,15 @@
             const params = new URLSearchParams(window.location.search);
             const quizId = params.get('id') || params.get('test') || params.get('editId');
             const isEditParam = params.get('edit') === 'true' || params.has('editId');
+            const viewParam = params.get('view') || params.get('tab');
 
             if (quizId) {
                 setQuizIdTracker(quizId);
                 handleLoadQuiz(quizId, isEditParam);
             } else {
+                if (viewParam === 'bank' || viewParam === 'banks') {
+                    setHomeViewTab('banks');
+                }
                 setAppMode('home');
                 setIsLoading(false);
             }
@@ -1524,7 +1558,7 @@
           initApp();
         }, []);
 
-        // --- TinyMCE ---
+        // --- TinyMCE cho Soạn thảo Đề Thi ---
         useEffect(() => {
           if (appMode === 'editor') {
              const initEditor = (retries = 5) => {
@@ -1558,13 +1592,55 @@
           return () => { if (appMode === 'editor' && window.tinymce && window.tinymce.get('quiz-editor-area')) { window.tinymce.remove('#quiz-editor-area'); window.tinymceInstance = null; } };
         }, [appMode]);
 
-        // --- 2. LOGIC DASHBOARD (HOME) ---
+        // --- TinyMCE cho Khung nhập câu hỏi Ngân hàng (Slot Import - Chuẩn Ảnh 1) ---
+        useEffect(() => {
+          if (showSlotImportModal) {
+             const initSlotEditor = (retries = 8) => {
+                 if (window.tinymce) {
+                     try {
+                         if (window.tinymce.get('slot-quiz-editor-area')) {
+                             window.tinymce.remove('#slot-quiz-editor-area');
+                         }
+                         window.tinymce.init({
+                             selector: '#slot-quiz-editor-area', height: 420, menubar: false,
+                             plugins: 'lists link image table code help wordcount paste',
+                             toolbar: 'undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+                             content_style: 'body { font-family:Inter,Helvetica,Arial,sans-serif; font-size:15px; padding: 20px; line-height: 1.6; color: #334155; } img { max-width: 100%; height: auto; border-radius: 8px; margin-top: 10px; }',
+                             placeholder: 'Paste dữ liệu từ Word vào đây (Bao gồm cả Hình Ảnh)...',
+                             paste_data_images: true, automatic_uploads: true,
+                             images_upload_handler: (blobInfo) => new Promise((resolve) => {
+                                 resolve('data:' + blobInfo.blob().type + ';base64,' + blobInfo.base64());
+                             }),
+                             setup: (editor) => window.tinymceSlotInstance = editor
+                         });
+                     } catch(e) {
+                         console.error("TinyMCE Slot error:", e);
+                     }
+                 } else if (retries > 0) {
+                     setTimeout(() => initSlotEditor(retries - 1), 300);
+                 }
+             };
+             setTimeout(() => initSlotEditor(8), 100);
+          }
+          return () => {
+              if (window.tinymce && window.tinymce.get('slot-quiz-editor-area')) {
+                  window.tinymce.remove('#slot-quiz-editor-area');
+                  window.tinymceSlotInstance = null;
+              }
+          };
+        }, [showSlotImportModal]);
+
+        // --- 2. LOGIC DASHBOARD (HOME) & NGÂN HÀNG ĐỀ ---
         const handleCreateNew = (type = 'standard') => {
+             if (type === 'bank') {
+                 handleOpenCreateBankSetup();
+                 return;
+             }
              setQuizIdTracker(null);
              setQuizConfig({
-               title: type === 'bank' ? 'Ngân Hàng Câu Hỏi Mới' : 'Bài Kiểm Tra Mới', 
+               title: 'Bài Kiểm Tra Mới', 
                category: 'Chung', timeLimit: 15, password: '', shuffleQuestions: false, shuffleOptions: false, mode: 'exam', isActive: true, randomPickCount: 0,
-               quizType: type
+               quizType: 'standard'
              });
              setParsedQuestions([]); setGeneratedLink(''); setShowReview(false); setAppMode('editor');
         };
@@ -1574,12 +1650,16 @@
                  addToast("Bạn không có quyền chỉnh sửa đề thi của người khác!", 'error');
                  return;
              }
+             if (quiz.config?.quizType === 'bank') {
+                 handleEditBank(quiz);
+                 return;
+             }
              setQuizIdTracker(quiz.id);
              setQuizConfig({
                  title: quiz.config?.title || 'Bài Kiểm Tra Mới', category: quiz.config?.category || 'Chung', timeLimit: quiz.config?.timeLimit || 15,
                  password: quiz.config?.password || '', shuffleQuestions: !!quiz.config?.shuffleQuestions, shuffleOptions: !!quiz.config?.shuffleOptions,
                  mode: quiz.config?.mode || 'exam', isActive: quiz.config?.isActive !== false, randomPickCount: quiz.config?.randomPickCount || 0,
-                 quizType: quiz.config?.quizType || (quiz.config?.randomPickCount > 0 ? 'bank' : 'standard')
+                 quizType: 'standard'
              });
              let loadedQuestions = quiz.questions || [];
              if (loadedQuestions.length > 0 && !loadedQuestions[0].variants) loadedQuestions = loadedQuestions.map(q => ({ id: 'slot_' + (q.id || Math.random()), variants: [q] }));
@@ -1589,7 +1669,7 @@
         const handleDeleteQuiz = (id) => {
             const targetQuiz = savedQuizzes.find(q => q.id === id);
             if (targetQuiz && !canEditQuiz(targetQuiz)) {
-                addToast("Bạn không có quyền xóa đề thi của người khác!", 'error');
+                addToast("Bạn không có quyền xóa dữ liệu của người khác!", 'error');
                 return;
             }
             showConfirm("Xóa dữ liệu?", "Bạn có chắc muốn xóa không? Hành động này không thể hoàn tác.", async () => {
@@ -1601,7 +1681,7 @@
                     });
                     const data = await res.json().catch(() => ({}));
                     if (!res.ok) {
-                        addToast(data.error || "Không có quyền xóa đề thi này!", 'error');
+                        addToast(data.error || "Không có quyền xóa bài thi này!", 'error');
                         return;
                     }
                     const updated = savedQuizzes.filter(q => q.id !== id);
@@ -1609,7 +1689,7 @@
                     try { localStorage.setItem('myQuizzes', JSON.stringify(updated)); } catch(e){}
                     addToast("Đã xóa thành công", 'success');
                 } catch (err) {
-                    addToast("Lỗi khi kết nối xóa đề thi", 'error');
+                    addToast("Lỗi khi kết nối xóa dữ liệu", 'error');
                 }
             });
         };
@@ -1647,38 +1727,563 @@
             navigator.clipboard.writeText(url); addToast("Đã copy link vào bộ nhớ tạm", 'success');
         };
 
-        const executeGenerateFromBank = (bank, pickCount) => {
-            let allQuestions = bank.questions.map(slot => {
-                const variants = slot.variants || [];
-                const picked = variants[Math.floor(Math.random() * variants.length)] || variants[0];
-                return { ...picked, options: { ...picked.options } };
-            });
-            
-            allQuestions = shuffleArray(allQuestions);
-            const selectedVariants = allQuestions.slice(0, pickCount);
-            const newSlots = selectedVariants.map(v => ({ id: 'slot_' + Date.now() + Math.random(), variants: [v] }));
-            
-            const newConfig = {
-                ...bank.config, quizType: 'standard', title: `Đề thi từ: ${bank.title} (${pickCount} câu)`, randomPickCount: 0, isActive: true
-            };
-            
-            setQuizIdTracker(null); setQuizConfig(newConfig); setParsedQuestions(newSlots); setAppMode('editor'); setShowReview(true);
-            addToast(`Đã sinh đề ${newSlots.length} câu. Vui lòng kiểm tra và lưu lại.`, 'success');
+        // --- CÁC HÀM XỬ LÝ NGÂN HÀNG ĐỀ (QUESTION BANK HANDLERS) ---
+        const handleOpenBankLibrary = () => {
+            setHomeViewTab('banks');
+            setAppMode('home');
         };
 
+        const handleOpenCreateBankSetup = () => {
+            setHomeViewTab('banks');
+            setBankIdTracker(null);
+            setBankConfig({
+                title: '',
+                category: 'Toán',
+                note: '',
+                timeLimit: 15,
+                mode: 'exam',
+                shuffleQuestions: true,
+                shuffleOptions: true
+            });
+            setBankSlots([
+                { id: 'slot_1', title: 'Câu 1', variants: [] }
+            ]);
+            setShowBankSetupModal(true);
+        };
+
+        const handleConfirmBankSetup = () => {
+            if (!bankConfig.title || !bankConfig.title.trim()) {
+                addToast("Vui lòng nhập Tên Ngân Hàng Đề!", "error");
+                return;
+            }
+            setShowBankSetupModal(false);
+            setAppMode('bank_builder');
+        };
+
+        const handleEditBank = (bank) => {
+            if (!canEditQuiz(bank)) {
+                addToast("Bạn không có quyền chỉnh sửa ngân hàng của người khác!", 'error');
+                return;
+            }
+            setBankIdTracker(bank.id);
+            setBankConfig({
+                title: bank.title || bank.config?.title || 'Ngân Hàng Đề',
+                category: bank.config?.category || 'Chung',
+                note: bank.config?.note || '',
+                timeLimit: bank.config?.timeLimit || 15,
+                mode: bank.config?.mode || 'exam',
+                shuffleQuestions: bank.config?.shuffleQuestions !== false,
+                shuffleOptions: bank.config?.shuffleOptions !== false
+            });
+            let loadedSlots = bank.questions || [];
+            if (loadedSlots.length === 0) {
+                loadedSlots = [{ id: 'slot_1', title: 'Câu 1', variants: [] }];
+            } else {
+                loadedSlots = loadedSlots.map((slot, idx) => ({
+                    id: slot.id || `slot_${idx + 1}`,
+                    title: slot.title || `Câu ${idx + 1}`,
+                    variants: slot.variants || (slot.text ? [slot] : [])
+                }));
+            }
+            setBankSlots(loadedSlots);
+            setAppMode('bank_builder');
+            addToast(`✏️ Đang chỉnh sửa ngân hàng: ${bank.title}`, 'info');
+        };
+
+        const handleAddSlot = () => {
+            const nextIdx = bankSlots.length + 1;
+            setBankSlots(prev => [...prev, {
+                id: 'slot_' + Date.now() + Math.random().toString(36).substring(2, 6),
+                title: `Câu ${nextIdx}`,
+                variants: []
+            }]);
+            addToast(`Đã thêm Câu ${nextIdx}. Bấm "Chọn thêm cho câu ${nextIdx}" để nạp câu hỏi.`, 'info');
+        };
+
+        const handleDeleteSlotFromBank = (idx) => {
+            if (bankSlots.length <= 1) {
+                addToast("Ngân hàng đề cần có ít nhất 1 câu hỏi!", "warning");
+                return;
+            }
+            const targetTitle = bankSlots[idx]?.title || `Câu ${idx + 1}`;
+            showConfirm("Xóa câu này?", `Bạn có chắc muốn xóa "${targetTitle}" và toàn bộ câu hỏi bên trong khỏi ngân hàng?`, () => {
+                const updated = bankSlots.filter((_, i) => i !== idx);
+                setBankSlots(updated);
+                addToast("Đã xóa câu khỏi ngân hàng.", "success");
+            });
+        };
+
+        const handleOpenSlotImport = (slotIdx) => {
+            setCurrentEditingSlotIdx(slotIdx);
+            const existingVariants = bankSlots[slotIdx]?.variants || [];
+            setSlotParsedVariants([...existingVariants]);
+            setShowSlotImportModal(true);
+        };
+
+        const handleSlotFileUpload = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (!file.name.endsWith('.docx')) {
+                addToast("Chỉ hỗ trợ file Word (.docx)", "error");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const arrayBuffer = event.target.result;
+                window.mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
+                    .then(function(result) {
+                        const html = result.value;
+                        if (window.tinymce && window.tinymce.get('slot-quiz-editor-area')) {
+                            window.tinymce.get('slot-quiz-editor-area').setContent(html);
+                            addToast("Đã nạp nội dung từ file Word vào khung soạn thảo!", "success");
+                        } else {
+                            addToast("Trình soạn thảo chưa sẵn sàng hoặc bị lỗi!", "error");
+                        }
+                    })
+                    .catch(function(err) {
+                        console.error(err);
+                        addToast("Lỗi đọc file Word: " + err.message, "error");
+                    });
+            };
+            reader.readAsArrayBuffer(file);
+        };
+
+        const parseSlotQuiz = async () => {
+            if (!window.tinymce || !window.tinymce.get('slot-quiz-editor-area')) {
+                addToast("Trình soạn thảo chưa sẵn sàng.", 'error');
+                return;
+            }
+            setIsParsing(true);
+            try { await window.tinymce.get('slot-quiz-editor-area').uploadImages(); } catch (e) {}
+            const editorBody = window.tinymce.get('slot-quiz-editor-area').getBody();
+
+            try {
+                const lines = parseDomToLines(editorBody);
+                const questions = [];
+                let currentQ = null;
+                const fullText = lines.map(l => l.text).join('\n');
+                const keyMatch = fullText.match(/(?:^|\n)(?:Đáp án|Bảng đáp án|Answer Key)[:\s]*(.*)$/is);
+                let answerMap = {};
+                if (keyMatch) {
+                    keyMatch[1].split(/\n/).forEach(line => {
+                        for (const match of line.matchAll(/(?:Câu\s*)?(\d+)[\s.:-]+([A-G])/gi)) answerMap[match[1]] = match[2].toUpperCase();
+                    });
+                }
+
+                lines.forEach((lineObj) => {
+                    const lineText = lineObj.text.trim();
+                    if (!lineText && lineObj.images.length === 0) return;
+                    const qStartMatch = lineText.match(/^(?:Câu|Bài)\s*(\d+)[\s.:]+(.*)/i);
+                    const optMatch = lineText.match(/^([A-G])[\s.)]+(.*)/i);
+
+                    if (qStartMatch && !optMatch) {
+                        if (currentQ) questions.push(currentQ);
+                        const qNum = qStartMatch[1];
+                        currentQ = {
+                            id: `${currentEditingSlotIdx + 1}.${questions.length + 1}`,
+                            number: qNum,
+                            text: qStartMatch[2].trim(),
+                            options: { A: "", B: "", C: "", D: "", E: "", F: "", G: "" },
+                            correct: answerMap[qNum] || null,
+                            images: [...lineObj.images]
+                        };
+                    } else if (optMatch && currentQ) {
+                        const label = optMatch[1].toUpperCase();
+                        let content = optMatch[2].trim();
+                        currentQ.options[label] = content;
+                        if (lineObj.images.length > 0) currentQ.images.push(...lineObj.images);
+                        if (!currentQ.correct) {
+                            let foundBold = false;
+                            for (let seg of lineObj.segments) {
+                                if (seg.bold && (seg.text.replace(/^[A-G][\s.)]*/i, '').trim().length > 0 || (content.includes(seg.text.trim()) && seg.text.trim().length > 0))) {
+                                    foundBold = true;
+                                    break;
+                                }
+                            }
+                            if (foundBold) currentQ.correct = label;
+                        }
+                    } else if (currentQ) {
+                        const lastKey = ['G', 'F', 'E', 'D', 'C', 'B', 'A'].find(k => currentQ.options[k] !== "");
+                        if (lastKey) {
+                            if (lineText) currentQ.options[lastKey] += " " + lineText;
+                            for(let seg of lineObj.segments) if (seg.bold && seg.text.trim().length > 0) currentQ.correct = lastKey;
+                        } else if (lineText) {
+                            currentQ.text += "\n" + lineText;
+                        }
+                        if (lineObj.images.length > 0) currentQ.images.push(...lineObj.images);
+                    }
+                });
+
+                if (currentQ) questions.push(currentQ);
+
+                const slotNum = currentEditingSlotIdx + 1;
+                const numberedVariants = questions.map((q, idx) => ({
+                    ...q,
+                    id: `${slotNum}.${idx + 1}`
+                }));
+
+                setSlotParsedVariants(numberedVariants);
+
+                if (numberedVariants.length === 0) {
+                    addToast("Không tìm thấy câu hỏi nào. Định dạng chuẩn: 'Câu 1: ...'", 'error');
+                } else {
+                    const withAns = numberedVariants.filter(v => v.correct).length;
+                    addToast(`Đã nhận diện ${numberedVariants.length} câu hỏi cho Câu ${slotNum} (${slotNum}.1 → ${slotNum}.${numberedVariants.length}). Có ${withAns} câu có đáp án.`, 'success');
+                }
+            } catch (e) {
+                addToast("Lỗi phân tích: " + e.message, 'error');
+            }
+            setIsParsing(false);
+        };
+
+        const handleUpdateSlotVariant = (vIdx, field, value) => {
+            const updated = [...slotParsedVariants];
+            const target = { ...updated[vIdx] };
+            if (field.startsWith('option_')) {
+                const optKey = field.split('_')[1];
+                target.options = { ...target.options, [optKey]: value };
+            } else if (field === 'correct' || field === 'text') {
+                target[field] = value;
+            }
+            updated[vIdx] = target;
+            setSlotParsedVariants(updated);
+        };
+
+        const handleDeleteSlotVariant = (vIdx) => {
+            const updated = slotParsedVariants.filter((_, i) => i !== vIdx);
+            const slotNum = currentEditingSlotIdx + 1;
+            setSlotParsedVariants(updated.map((v, i) => ({ ...v, id: `${slotNum}.${i + 1}` })));
+        };
+
+        const handleAddManualSlotVariant = () => {
+            const slotNum = currentEditingSlotIdx + 1;
+            const newV = {
+                id: `${slotNum}.${slotParsedVariants.length + 1}`,
+                text: '',
+                options: { A: '', B: '', C: '', D: '', E: '', F: '', G: '' },
+                correct: null,
+                images: []
+            };
+            setSlotParsedVariants(prev => [...prev, newV]);
+        };
+
+        const handleSaveSlotToBank = () => {
+            if (currentEditingSlotIdx === null) return;
+            if (slotParsedVariants.length === 0) {
+                addToast("Chưa có câu hỏi nào được phân tích để lưu vào câu này!", "warning");
+                return;
+            }
+            const updatedSlots = [...bankSlots];
+            const targetSlot = { ...updatedSlots[currentEditingSlotIdx] };
+            targetSlot.variants = [...slotParsedVariants];
+            updatedSlots[currentEditingSlotIdx] = targetSlot;
+            setBankSlots(updatedSlots);
+            setShowSlotImportModal(false);
+            setSlotParsedVariants([]);
+            const title = targetSlot.title || `Câu ${currentEditingSlotIdx + 1}`;
+            addToast(`💾 Đã lưu thành công ${targetSlot.variants.length} câu hỏi vào ${title}!`, "success");
+        };
+
+        const handleUpdateSlotVariantDirectly = (slotIdx, vIdx, field, value) => {
+            const updated = [...bankSlots];
+            const slot = { ...updated[slotIdx], variants: [...updated[slotIdx].variants] };
+            const variant = { ...slot.variants[vIdx] };
+            if (field.startsWith('option_')) {
+                const optKey = field.split('_')[1];
+                variant.options = { ...variant.options, [optKey]: value };
+            } else if (field === 'correct' || field === 'text') {
+                variant[field] = value;
+            }
+            slot.variants[vIdx] = variant;
+            updated[slotIdx] = slot;
+            setBankSlots(updated);
+        };
+
+        const handleDeleteSlotVariantDirectly = (slotIdx, vIdx) => {
+            const updated = [...bankSlots];
+            const slot = { ...updated[slotIdx] };
+            slot.variants = slot.variants.filter((_, i) => i !== vIdx);
+            const slotNum = slotIdx + 1;
+            slot.variants = slot.variants.map((v, i) => ({ ...v, id: `${slotNum}.${i + 1}` }));
+            updated[slotIdx] = slot;
+            setBankSlots(updated);
+        };
+
+        const handleAddSlotVariantDirectly = (slotIdx) => {
+            const updated = [...bankSlots];
+            const slot = { ...updated[slotIdx] };
+            const slotNum = slotIdx + 1;
+            const newV = {
+                id: `${slotNum}.${(slot.variants || []).length + 1}`,
+                text: '',
+                options: { A: '', B: '', C: '', D: '', E: '', F: '', G: '' },
+                correct: null,
+                images: []
+            };
+            slot.variants = [...(slot.variants || []), newV];
+            updated[slotIdx] = slot;
+            setBankSlots(updated);
+        };
+
+        const handleSaveBank = async () => {
+            if (!bankConfig.title || !bankConfig.title.trim()) {
+                addToast("Vui lòng nhập Tên Ngân Hàng Đề!", "error");
+                return;
+            }
+            const totalSub = bankSlots.reduce((s, slot) => s + (slot.variants?.length || 0), 0);
+            if (totalSub === 0) {
+                addToast("Ngân hàng đề cần có ít nhất 1 câu hỏi! Hãy nạp câu hỏi cho ít nhất 1 câu.", "warning");
+                return;
+            }
+            setIsSaving(true);
+            const bankId = bankIdTracker || ('bank_' + Date.now());
+            const bankData = {
+                id: bankId,
+                title: bankConfig.title.trim(),
+                config: {
+                    ...bankConfig,
+                    title: bankConfig.title.trim(),
+                    quizType: 'bank',
+                    totalSlots: bankSlots.length,
+                    totalQuestions: totalSub,
+                    isActive: true
+                },
+                questions: bankSlots,
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                const res = await fetch('/api/quick-quiz', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bankData)
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || "Lỗi lưu ngân hàng");
+                }
+                setBankIdTracker(bankId);
+                const cur = JSON.parse(localStorage.getItem('myQuizzes') || '[]');
+                const updated = [bankData, ...cur.filter(q => q.id !== bankId)];
+                localStorage.setItem('myQuizzes', JSON.stringify(updated));
+                setSavedQuizzes(updated);
+                addToast("💾 Đã lưu Toàn Bộ Ngân Hàng Đề thành công!", "success");
+                setHomeViewTab('banks');
+                setAppMode('home');
+            } catch (e) {
+                addToast("Lỗi khi lưu ngân hàng: " + e.message, "error");
+            } finally {
+                setIsSaving(false);
+            }
+        };
+
+        const handleOpenGenerateBankModal = (bank) => {
+            const slots = bank.questions || [];
+            const initialSelected = new Set(slots.map(s => s.id));
+            setBankGenerateConfig({
+                bank: bank,
+                selectedSlotIds: initialSelected,
+                expandedDetailSlotId: null,
+                quizTitle: `Đề thi từ ${bank.title}`,
+                category: bank.config?.category || 'Chung',
+                timeLimit: bank.config?.timeLimit || 15,
+                password: '',
+                mode: bank.config?.mode || 'exam',
+                shuffleQuestions: true,
+                shuffleOptions: true
+            });
+        };
+
+        const handleExecuteGenerateTest = async () => {
+            if (!bankGenerateConfig || !bankGenerateConfig.bank) return;
+            const { bank, selectedSlotIds, quizTitle, category, timeLimit, password, mode, shuffleQuestions, shuffleOptions } = bankGenerateConfig;
+
+            if (selectedSlotIds.size === 0) {
+                addToast("Vui lòng chọn ít nhất 1 câu hỏi để tạo đề thi!", "warning");
+                return;
+            }
+
+            const allSlots = bank.questions || [];
+            const selectedSlots = allSlots.filter(s => selectedSlotIds.has(s.id));
+
+            const validSlots = selectedSlots.filter(s => s.variants && s.variants.length > 0);
+            if (validSlots.length === 0) {
+                addToast("Các câu được chọn hiện chưa có câu hỏi con nào trong ngân hàng!", "error");
+                return;
+            }
+
+            // Với mỗi câu lớn, RANDOM CỰC KỲ NGẪU NHIÊN chọn đúng 1 câu nhỏ (biến thể)
+            let generatedQuestions = validSlots.map(slot => {
+                const variants = slot.variants;
+                const randomIdx = Math.floor(Math.random() * variants.length);
+                const picked = variants[randomIdx];
+
+                const qClone = {
+                    id: Date.now() + Math.random(),
+                    number: slot.title,
+                    text: picked.text,
+                    options: { ...picked.options },
+                    correct: picked.correct,
+                    images: picked.images ? [...picked.images] : [],
+                    explanation: picked.explanation || ''
+                };
+
+                if (shuffleOptions) {
+                    const optKeys = ['A', 'B', 'C', 'D', 'E', 'F', 'G'].filter(k => qClone.options[k]);
+                    const correctText = qClone.options[qClone.correct];
+                    const texts = optKeys.map(k => qClone.options[k]);
+                    for (let i = texts.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [texts[i], texts[j]] = [texts[j], texts[i]];
+                    }
+                    const newOpts = {};
+                    let newCorrect = qClone.correct;
+                    optKeys.forEach((k, idx) => {
+                        newOpts[k] = texts[idx];
+                        if (texts[idx] === correctText) newCorrect = k;
+                    });
+                    qClone.options = newOpts;
+                    qClone.correct = newCorrect;
+                }
+
+                return qClone;
+            });
+
+            if (shuffleQuestions) {
+                for (let i = generatedQuestions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [generatedQuestions[i], generatedQuestions[j]] = [generatedQuestions[j], generatedQuestions[i]];
+                }
+            }
+
+            const newQuizId = 'quiz_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+            const finalTitle = (quizTitle && quizTitle.trim()) || `Đề thi từ ${bank.title}`;
+            const newQuizData = {
+                id: newQuizId,
+                title: finalTitle,
+                config: {
+                    title: finalTitle,
+                    category: category || bank.config?.category || 'Chung',
+                    timeLimit: parseInt(timeLimit) || 15,
+                    password: password || '',
+                    mode: mode || 'exam',
+                    quizType: 'standard',
+                    isActive: true,
+                    shuffleQuestions: !!shuffleQuestions,
+                    shuffleOptions: !!shuffleOptions,
+                    sourceBankId: bank.id,
+                    sourceBankTitle: bank.title
+                },
+                questions: generatedQuestions.map(q => ({ id: 'slot_' + (q.id || Math.random()), variants: [q] })),
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                setIsSaving(true);
+                const res = await fetch('/api/quick-quiz', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newQuizData)
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || 'Lỗi khi tạo đề thi');
+                }
+
+                const cur = JSON.parse(localStorage.getItem('myQuizzes') || '[]');
+                const nextSaved = [newQuizData, ...cur.filter(q => q.id !== newQuizId)];
+                localStorage.setItem('myQuizzes', JSON.stringify(nextSaved));
+                setSavedQuizzes(nextSaved);
+
+                const testUrl = `${window.location.origin}/?id=${newQuizId}`;
+                setGeneratedTestResult({
+                    id: newQuizId,
+                    title: finalTitle,
+                    url: testUrl,
+                    questionCount: generatedQuestions.length
+                });
+                setBankGenerateConfig(null);
+                addToast(`🎉 Đã tạo đề thi thành công (${generatedQuestions.length} câu hỏi ngẫu nhiên)!`, "success");
+            } catch (err) {
+                addToast("Lỗi khi tạo đề thi: " + err.message, "error");
+            } finally {
+                setIsSaving(false);
+            }
+        };
+
+        const handleExecuteCloneBank = async () => {
+            if (!showBankCloneModal) return;
+            const bank = showBankCloneModal;
+            const title = (cloneNewTitle && cloneNewTitle.trim()) || `[Bản sao] ${bank.title}`;
+            const clonedId = 'bank_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+            const clonedBank = {
+                ...bank,
+                id: clonedId,
+                title: title,
+                config: {
+                    ...bank.config,
+                    title: title
+                },
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                setIsSaving(true);
+                const res = await fetch('/api/quick-quiz', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(clonedBank)
+                });
+                if (!res.ok) throw new Error("Lỗi lưu bản sao");
+
+                const cur = JSON.parse(localStorage.getItem('myQuizzes') || '[]');
+                const nextSaved = [clonedBank, ...cur];
+                localStorage.setItem('myQuizzes', JSON.stringify(nextSaved));
+                setSavedQuizzes(nextSaved);
+                setShowBankCloneModal(null);
+                setCloneNewTitle('');
+                addToast(`📋 Đã nhân bản ngân hàng đề thành công thành "${title}"!`, "success");
+            } catch (err) {
+                addToast("Lỗi khi nhân bản ngân hàng: " + err.message, "error");
+            } finally {
+                setIsSaving(false);
+            }
+        };
+
+        // Danh sách chuyên mục cho Đề Thi và Ngân Hàng
         const categories = useMemo(() => {
             const cats = new Set(['Tất cả']);
-            savedQuizzes.forEach(q => { if(q.config && q.config.category) cats.add(q.config.category); });
+            savedQuizzes.forEach(q => { 
+                if (q.config && q.config.quizType !== 'bank' && q.config.category) {
+                    cats.add(q.config.category); 
+                }
+            });
             return Array.from(cats).sort();
         }, [savedQuizzes]);
 
+        const bankCategories = useMemo(() => {
+            const cats = new Set(['Tất cả']);
+            savedQuizzes.forEach(q => { 
+                if (q.config && q.config.quizType === 'bank' && q.config.category) {
+                    cats.add(q.config.category); 
+                }
+            });
+            return Array.from(cats).sort();
+        }, [savedQuizzes]);
+
+        const standardQuizzes = useMemo(() => {
+            return savedQuizzes.filter(q => q.config?.quizType !== 'bank');
+        }, [savedQuizzes]);
+
+        const bankQuizzes = useMemo(() => {
+            return savedQuizzes.filter(q => q.config?.quizType === 'bank');
+        }, [savedQuizzes]);
+
         const filteredQuizzes = useMemo(() => {
-            return savedQuizzes.filter(q => {
-                // Phân quyền cho giáo viên thông thường: Chỉ hiển thị đề của chính mình
+            return standardQuizzes.filter(q => {
                 if (currentUser && !isUserAdmin) {
                     if (q.authorId && q.authorId !== currentUser.id) return false;
                 }
-                // Admin: lọc theo phạm vi 'mine' nếu được chọn
                 if (isUserAdmin && adminScope === 'mine') {
                     if (q.authorId && q.authorId !== currentUser.id) return false;
                 }
@@ -1688,7 +2293,23 @@
                 const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' && isActive) || (statusFilter === 'inactive' && !isActive);
                 return matchesSearch && matchesCategory && matchesStatus;
             });
-        }, [savedQuizzes, searchTerm, selectedCategory, statusFilter, currentUser, adminScope, isUserAdmin]);
+        }, [standardQuizzes, searchTerm, selectedCategory, statusFilter, currentUser, adminScope, isUserAdmin]);
+
+        const filteredBanks = useMemo(() => {
+            return bankQuizzes.filter(q => {
+                if (currentUser && !isUserAdmin) {
+                    if (q.authorId && q.authorId !== currentUser.id) return false;
+                }
+                if (isUserAdmin && adminScope === 'mine') {
+                    if (q.authorId && q.authorId !== currentUser.id) return false;
+                }
+                const matchesSearch = (q.title || '').toLowerCase().includes(bankSearchTerm.toLowerCase());
+                const matchesCategory = bankSelectedCategory === 'Tất cả' || (q.config && q.config.category === bankSelectedCategory);
+                const isActive = q.config?.isActive !== false;
+                const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' && isActive) || (statusFilter === 'inactive' && !isActive);
+                return matchesSearch && matchesCategory && matchesStatus;
+            });
+        }, [bankQuizzes, bankSearchTerm, bankSelectedCategory, statusFilter, currentUser, adminScope, isUserAdmin]);
 
         // --- 3. PARSING LOGIC ---
         const parseDomToLines = (rootNode) => {
@@ -2356,95 +2977,317 @@
                       </div>
                     )}
 
-                    <div className="flex flex-col md:flex-row gap-4 mb-6 relative z-20">
-                        <div className="bg-white border border-gray-200 rounded-xl flex items-center px-4 py-3 flex-1 shadow-sm transition-shadow focus-within:ring-2 focus-within:ring-ios-blue/20 focus-within:border-ios-blue">
-                            <Icons.Search className="text-gray-400" size={18}/>
-                            <input type="text" placeholder="Tìm kiếm tên bài thi, ngân hàng..." className="flex-1 bg-transparent border-none outline-none ml-3 text-[15px] text-gray-800 placeholder-gray-400" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                        </div>
-                        <div className="w-full md:w-64 flex-shrink-0">
-                            <CustomSelect options={categories} value={selectedCategory} onChange={setSelectedCategory} icon={<Icons.Folder size={18} className="text-gray-500"/>}/>
-                        </div>
+                    {/* Tab Switcher: Đề Thi Tiêu Chuẩn vs Thư Viện Ngân Hàng Đề */}
+                    <div className="flex border-b border-gray-200 mb-6 gap-2 sm:gap-4 overflow-x-auto">
+                        <button
+                            onClick={() => setHomeViewTab('quizzes')}
+                            className={`pb-3 px-3 sm:px-5 font-extrabold text-sm sm:text-base flex items-center gap-2 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+                                homeViewTab === 'quizzes'
+                                    ? 'border-indigo-600 text-indigo-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-800'
+                            }`}
+                        >
+                            <Icons.FileText size={18} />
+                            <span>Đề Thi Tiêu Chuẩn ({standardQuizzes.length})</span>
+                        </button>
+                        <button
+                            onClick={() => setHomeViewTab('banks')}
+                            className={`pb-3 px-3 sm:px-5 font-extrabold text-sm sm:text-base flex items-center gap-2 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+                                homeViewTab === 'banks'
+                                    ? 'border-emerald-600 text-emerald-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-800'
+                            }`}
+                        >
+                            <Icons.Folder size={18} />
+                            <span>Thư Viện Ngân Hàng Đề ({bankQuizzes.length})</span>
+                        </button>
                     </div>
 
-                    {/* Admin Scope Switcher */}
-                    {isUserAdmin && (
-                        <div className="flex flex-wrap items-center gap-2 mb-4 bg-indigo-50/70 border border-indigo-100 p-2 sm:p-2.5 rounded-2xl">
-                            <span className="text-xs font-bold text-indigo-900 px-1 flex items-center gap-1.5">
-                                <Icons.Shield size={14} className="text-indigo-600" /> Quản trị Admin:
-                            </span>
-                            <div className="flex gap-1.5 bg-white p-1 rounded-xl shadow-xs border border-indigo-100">
-                                <button
-                                    onClick={() => handleAdminScopeChange('all')}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${adminScope === 'all' ? 'bg-indigo-600 text-white shadow-xs' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}
-                                >
-                                    📚 Tất cả đề thi (Toàn trường)
-                                </button>
-                                <button
-                                    onClick={() => handleAdminScopeChange('mine')}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${adminScope === 'mine' ? 'bg-indigo-600 text-white shadow-xs' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}
-                                >
-                                    👤 Chỉ đề của Admin
-                                </button>
+                    {/* VIEW 1: ĐỀ THI TIÊU CHUẨN */}
+                    {homeViewTab === 'quizzes' && (
+                      <>
+                        <div className="flex flex-col md:flex-row gap-4 mb-6 relative z-20">
+                            <div className="bg-white border border-gray-200 rounded-xl flex items-center px-4 py-3 flex-1 shadow-sm transition-shadow focus-within:ring-2 focus-within:ring-ios-blue/20 focus-within:border-ios-blue">
+                                <Icons.Search className="text-gray-400" size={18}/>
+                                <input type="text" placeholder="Tìm kiếm tên bài thi..." className="flex-1 bg-transparent border-none outline-none ml-3 text-[15px] text-gray-800 placeholder-gray-400" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                            </div>
+                            <div className="w-full md:w-64 flex-shrink-0">
+                                <CustomSelect options={categories} value={selectedCategory} onChange={setSelectedCategory} icon={<Icons.Folder size={18} className="text-gray-500"/>}/>
                             </div>
                         </div>
+
+                        {/* Admin Scope Switcher */}
+                        {isUserAdmin && (
+                            <div className="flex flex-wrap items-center gap-2 mb-4 bg-indigo-50/70 border border-indigo-100 p-2 sm:p-2.5 rounded-2xl">
+                                <span className="text-xs font-bold text-indigo-900 px-1 flex items-center gap-1.5">
+                                    <Icons.Shield size={14} className="text-indigo-600" /> Quản trị Admin:
+                                </span>
+                                <div className="flex gap-1.5 bg-white p-1 rounded-xl shadow-xs border border-indigo-100">
+                                    <button
+                                        onClick={() => handleAdminScopeChange('all')}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${adminScope === 'all' ? 'bg-indigo-600 text-white shadow-xs' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}
+                                    >
+                                        📚 Tất cả đề thi (Toàn trường)
+                                    </button>
+                                    <button
+                                        onClick={() => handleAdminScopeChange('mine')}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${adminScope === 'mine' ? 'bg-indigo-600 text-white shadow-xs' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}
+                                    >
+                                        👤 Chỉ đề của Admin
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex gap-2 mb-6 bg-gray-200/50 p-1.5 rounded-xl w-fit">
+                            <button onClick={() => setStatusFilter('all')} className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${statusFilter === 'all' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Tất cả</button>
+                            <button onClick={() => setStatusFilter('active')} className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${statusFilter === 'active' ? 'bg-white text-ios-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Đang mở</button>
+                            <button onClick={() => setStatusFilter('inactive')} className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${statusFilter === 'inactive' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Đã khóa</button>
+                        </div>
+
+                        <div className="space-y-4">
+                            {filteredQuizzes.length === 0 ? (
+                                <div className="text-center py-24 bg-white rounded-3xl shadow-sm border border-gray-100">
+                                    <div className="text-gray-300 mb-4 inline-block"><Icons.FileText size={56}/></div>
+                                    <h3 className="text-lg font-bold text-gray-900">Không có dữ liệu</h3>
+                                    <p className="text-gray-500 text-sm mt-2">Chưa có bài thi nào khớp điều kiện tìm kiếm.</p>
+                                </div>
+                            ) : (
+                                filteredQuizzes.map(quiz => (
+                                    <div key={quiz.id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 relative overflow-hidden flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center cursor-pointer group hover:shadow-md hover:border-gray-200 transition-all" onClick={() => setSelectedItemAction(quiz)}>
+                                        <div className="flex-1 min-w-0 w-full">
+                                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md flex items-center gap-1 text-indigo-700 bg-indigo-50">
+                                                    <Icons.FileText size={10}/> Đề thi
+                                                </span>
+                                                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-600 bg-gray-100 px-2 py-1 rounded-md">{quiz.config.category || 'Chung'}</span>
+                                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md flex items-center gap-1 ${quiz.config.isActive !== false ? 'text-ios-green bg-green-50' : 'text-ios-red bg-red-50'}`}>
+                                                    {quiz.config.isActive !== false ? <Icons.Check size={10}/> : <Icons.Lock size={10}/>}
+                                                    {quiz.config.isActive !== false ? 'Đang mở' : 'Đã khóa'}
+                                                </span>
+                                                {quiz.author?.username && (
+                                                    <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-1 rounded-md flex items-center gap-1">
+                                                        <Icons.User size={10}/> {quiz.author.username === currentUser?.username ? 'Của bạn' : `Tác giả: ${quiz.author.username}`}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <h3 className="text-[18px] font-bold text-gray-900 leading-tight mb-1.5 truncate group-hover:text-ios-blue transition-colors">{quiz.title}</h3>
+                                            <p className="text-[13px] text-gray-500 flex items-center gap-4 font-medium">
+                                                <span className="flex items-center gap-1.5"><Icons.Clock size={14} className="text-gray-400"/> {quiz.config.timeLimit} phút</span>
+                                                <span className="flex items-center gap-1.5"><Icons.FileText size={14} className="text-gray-400"/> {quiz.questions ? quiz.questions.length : 0} câu hỏi</span>
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-2 w-full sm:w-auto justify-end border-t border-gray-100 sm:border-0 pt-3 sm:pt-0 mt-2 sm:mt-0">
+                                            {canEditQuiz(quiz) ? (
+                                                <div className="flex items-center mr-2" onClick={(e) => e.stopPropagation()}>
+                                                    <input type="checkbox" id={`toggle-${quiz.id}`} className="toggle-checkbox-ios hidden" checked={quiz.config.isActive !== false} onChange={(e) => handleToggleStatus(quiz.id, quiz.config.isActive !== false, e)} />
+                                                    <label htmlFor={`toggle-${quiz.id}`} className="toggle-label-ios"></label>
+                                                </div>
+                                            ) : (
+                                                <span className="text-[11px] font-medium text-slate-400 bg-slate-50 px-2 py-1 rounded-md mr-2">Chỉ xem</span>
+                                            )}
+                                            <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 group-hover:bg-blue-50 group-hover:text-ios-blue transition-colors">
+                                                <Icons.ArrowRight size={18}/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                      </>
                     )}
 
-                    <div className="flex gap-2 mb-6 bg-gray-200/50 p-1.5 rounded-xl w-fit">
-                        <button onClick={() => setStatusFilter('all')} className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${statusFilter === 'all' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Tất cả</button>
-                        <button onClick={() => setStatusFilter('active')} className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${statusFilter === 'active' ? 'bg-white text-ios-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Đang mở</button>
-                        <button onClick={() => setStatusFilter('inactive')} className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${statusFilter === 'inactive' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Đã khóa</button>
-                    </div>
-
-                    <div className="space-y-4">
-                        {filteredQuizzes.length === 0 ? (
-                            <div className="text-center py-24 bg-white rounded-3xl shadow-sm border border-gray-100">
-                                <div className="text-gray-300 mb-4 inline-block"><Icons.FileText size={56}/></div>
-                                <h3 className="text-lg font-bold text-gray-900">Không có dữ liệu</h3>
-                                <p className="text-gray-500 text-sm mt-2">Chưa có bài thi hoặc ngân hàng nào khớp điều kiện.</p>
+                    {/* VIEW 2: THƯ VIỆN NGÂN HÀNG ĐỀ */}
+                    {homeViewTab === 'banks' && (
+                      <>
+                        <div className="flex flex-col md:flex-row gap-3 mb-6 relative z-20">
+                            <div className="bg-white border border-gray-200 rounded-xl flex items-center px-4 py-3 flex-1 shadow-sm transition-shadow focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500">
+                                <Icons.Search className="text-gray-400" size={18}/>
+                                <input type="text" placeholder="Tìm kiếm tên ngân hàng đề..." className="flex-1 bg-transparent border-none outline-none ml-3 text-[15px] text-gray-800 placeholder-gray-400" value={bankSearchTerm} onChange={(e) => setBankSearchTerm(e.target.value)} />
                             </div>
-                        ) : (
-                            filteredQuizzes.map(quiz => (
-                                <div key={quiz.id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 relative overflow-hidden flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center cursor-pointer group hover:shadow-md hover:border-gray-200 transition-all" onClick={() => setSelectedItemAction(quiz)}>
-                                    <div className="flex-1 min-w-0 w-full">
-                                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md flex items-center gap-1 ${quiz.config.quizType === 'bank' ? 'text-emerald-700 bg-emerald-50' : 'text-indigo-700 bg-indigo-50'}`}>
-                                                {quiz.config.quizType === 'bank' ? <Icons.Folder size={10}/> : <Icons.FileText size={10}/>}
-                                                {quiz.config.quizType === 'bank' ? 'Ngân hàng' : 'Đề thi'}
-                                            </span>
-                                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-600 bg-gray-100 px-2 py-1 rounded-md">{quiz.config.category || 'Chung'}</span>
-                                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md flex items-center gap-1 ${quiz.config.isActive !== false ? 'text-ios-green bg-green-50' : 'text-ios-red bg-red-50'}`}>
-                                                {quiz.config.isActive !== false ? <Icons.Check size={10}/> : <Icons.Lock size={10}/>}
-                                                {quiz.config.isActive !== false ? 'Đang mở' : 'Đã khóa'}
-                                            </span>
-                                            {quiz.author?.username && (
-                                                <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-1 rounded-md flex items-center gap-1">
-                                                    <Icons.User size={10}/> {quiz.author.username === currentUser?.username ? 'Của bạn' : `Tác giả: ${quiz.author.username}`}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <h3 className="text-[18px] font-bold text-gray-900 leading-tight mb-1.5 truncate group-hover:text-ios-blue transition-colors">{quiz.title}</h3>
-                                        <p className="text-[13px] text-gray-500 flex items-center gap-4 font-medium">
-                                            <span className="flex items-center gap-1.5"><Icons.Clock size={14} className="text-gray-400"/> {quiz.config.timeLimit} phút</span>
-                                            <span className="flex items-center gap-1.5"><Icons.FileText size={14} className="text-gray-400"/> {quiz.questions ? quiz.questions.length : 0} {quiz.config.quizType === 'bank' ? 'nhóm câu' : 'câu hỏi'}</span>
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end border-t border-gray-100 sm:border-0 pt-3 sm:pt-0 mt-2 sm:mt-0">
-                                        {canEditQuiz(quiz) ? (
-                                            <div className="flex items-center mr-2" onClick={(e) => e.stopPropagation()}>
-                                                <input type="checkbox" id={`toggle-${quiz.id}`} className="toggle-checkbox-ios hidden" checked={quiz.config.isActive !== false} onChange={(e) => handleToggleStatus(quiz.id, quiz.config.isActive !== false, e)} />
-                                                <label htmlFor={`toggle-${quiz.id}`} className="toggle-label-ios"></label>
-                                            </div>
-                                        ) : (
-                                            <span className="text-[11px] font-medium text-slate-400 bg-slate-50 px-2 py-1 rounded-md mr-2">Chỉ xem</span>
-                                        )}
-                                        <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 group-hover:bg-blue-50 group-hover:text-ios-blue transition-colors">
-                                            <Icons.ArrowRight size={18}/>
-                                        </div>
-                                    </div>
+                            <div className="w-full md:w-56 flex-shrink-0">
+                                <CustomSelect options={bankCategories} value={bankSelectedCategory} onChange={setBankSelectedCategory} icon={<Icons.Folder size={18} className="text-emerald-600"/>}/>
+                            </div>
+                            <button
+                                onClick={handleOpenCreateBankSetup}
+                                className="px-5 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-sm rounded-xl shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer flex-shrink-0"
+                            >
+                                <Icons.Plus size={18} />
+                                <span>Thêm ngân hàng mới</span>
+                            </button>
+                        </div>
+
+                        {/* Admin Scope Switcher for Banks */}
+                        {isUserAdmin && (
+                            <div className="flex flex-wrap items-center gap-2 mb-4 bg-emerald-50/70 border border-emerald-100 p-2 sm:p-2.5 rounded-2xl">
+                                <span className="text-xs font-bold text-emerald-900 px-1 flex items-center gap-1.5">
+                                    <Icons.Shield size={14} className="text-emerald-600" /> Quản trị Admin:
+                                </span>
+                                <div className="flex gap-1.5 bg-white p-1 rounded-xl shadow-xs border border-emerald-100">
+                                    <button
+                                        onClick={() => handleAdminScopeChange('all')}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${adminScope === 'all' ? 'bg-emerald-600 text-white shadow-xs' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}
+                                    >
+                                        📚 Tất cả ngân hàng (Toàn trường)
+                                    </button>
+                                    <button
+                                        onClick={() => handleAdminScopeChange('mine')}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${adminScope === 'mine' ? 'bg-emerald-600 text-white shadow-xs' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}
+                                    >
+                                        👤 Chỉ ngân hàng của Admin
+                                    </button>
                                 </div>
-                            ))
+                            </div>
                         )}
-                    </div>
+
+                        <div className="flex gap-2 mb-6 bg-gray-200/50 p-1.5 rounded-xl w-fit">
+                            <button onClick={() => setStatusFilter('all')} className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${statusFilter === 'all' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Tất cả</button>
+                            <button onClick={() => setStatusFilter('active')} className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${statusFilter === 'active' ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Đang mở</button>
+                            <button onClick={() => setStatusFilter('inactive')} className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${statusFilter === 'inactive' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Đã khóa</button>
+                        </div>
+
+                        <div className="space-y-4">
+                            {filteredBanks.length === 0 ? (
+                                <div className="text-center py-20 bg-white rounded-3xl shadow-sm border border-gray-100">
+                                    <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center mb-4">
+                                        <Icons.Folder size={32}/>
+                                    </div>
+                                    <h3 className="text-lg font-bold text-gray-900">Chưa có ngân hàng đề nào</h3>
+                                    <p className="text-gray-500 text-sm mt-1 max-w-md mx-auto">
+                                        Ngân hàng đề cho phép bạn gom kho câu hỏi theo từng câu (Câu 1.1, 1.2... Câu n.n) để tự động sinh đề thi ngẫu nhiên cực nhanh!
+                                    </p>
+                                    <button
+                                        onClick={handleOpenCreateBankSetup}
+                                        className="mt-5 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl transition shadow-md shadow-emerald-600/20 inline-flex items-center gap-2 cursor-pointer"
+                                    >
+                                        <Icons.Plus size={16} />
+                                        <span>Tạo ngân hàng đề đầu tiên</span>
+                                    </button>
+                                </div>
+                            ) : (
+                                filteredBanks.map(bank => {
+                                    const slots = bank.questions || [];
+                                    const totalSlots = slots.length;
+                                    const totalSub = slots.reduce((s, slot) => s + (slot.variants?.length || (slot.text ? 1 : 0)), 0);
+                                    const isOwnerOrAdmin = canEditQuiz(bank);
+
+                                    return (
+                                        <div
+                                            key={bank.id}
+                                            className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 relative overflow-hidden flex flex-col gap-4 justify-between cursor-pointer group hover:shadow-md hover:border-emerald-300 transition-all"
+                                            onClick={() => setSelectedItemAction(bank)}
+                                        >
+                                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md flex items-center gap-1 text-emerald-800 bg-emerald-100">
+                                                            <Icons.Folder size={11}/> Ngân hàng đề
+                                                        </span>
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-700 bg-gray-100 px-2 py-1 rounded-md">
+                                                            {bank.config?.category || 'Chung'}
+                                                        </span>
+                                                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md flex items-center gap-1 ${bank.config?.isActive !== false ? 'text-emerald-700 bg-emerald-50' : 'text-rose-700 bg-rose-50'}`}>
+                                                            {bank.config?.isActive !== false ? <Icons.Check size={10}/> : <Icons.Lock size={10}/>}
+                                                            {bank.config?.isActive !== false ? 'Đang mở' : 'Đã khóa'}
+                                                        </span>
+                                                        {bank.author?.username && (
+                                                            <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-1 rounded-md flex items-center gap-1">
+                                                                <Icons.User size={10}/> {bank.author.username === currentUser?.username ? 'Của bạn' : `Tác giả: ${bank.author.username}`}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <h3 className="text-[19px] font-extrabold text-gray-900 leading-tight mb-1 truncate group-hover:text-emerald-700 transition-colors">
+                                                        {bank.title}
+                                                    </h3>
+
+                                                    {bank.config?.note && (
+                                                        <p className="text-xs text-slate-500 italic mb-2 line-clamp-1">
+                                                            📝 {bank.config.note}
+                                                        </p>
+                                                    )}
+
+                                                    <div className="text-[13px] text-gray-500 flex flex-wrap items-center gap-4 font-semibold mt-2">
+                                                        <span className="flex items-center gap-1.5 text-slate-700">
+                                                            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                                                            <strong>{totalSlots}</strong> câu lớn (nhóm câu)
+                                                        </span>
+                                                        <span className="flex items-center gap-1.5 text-emerald-700">
+                                                            <Icons.Layers size={14}/>
+                                                            <strong>{totalSub}</strong> câu hỏi con trong kho
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-2 self-end sm:self-start flex-shrink-0" onClick={e => e.stopPropagation()}>
+                                                    {isOwnerOrAdmin && (
+                                                        <div className="flex items-center mr-1">
+                                                            <input
+                                                                type="checkbox"
+                                                                id={`toggle-bank-${bank.id}`}
+                                                                className="toggle-checkbox-ios hidden"
+                                                                checked={bank.config?.isActive !== false}
+                                                                onChange={(e) => handleToggleStatus(bank.id, bank.config?.isActive !== false, e)}
+                                                            />
+                                                            <label htmlFor={`toggle-bank-${bank.id}`} className="toggle-label-ios"></label>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Action bar for bank */}
+                                            <div className="pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2" onClick={e => e.stopPropagation()}>
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <button
+                                                        onClick={() => handleOpenGenerateBankModal(bank)}
+                                                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+                                                        title="Bốc ngẫu nhiên sinh đề thi ngay"
+                                                    >
+                                                        <Icons.Zap size={13} />
+                                                        <span>Tạo đề từ ngân hàng</span>
+                                                    </button>
+
+                                                    {isOwnerOrAdmin && (
+                                                        <button
+                                                            onClick={() => handleEditBank(bank)}
+                                                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition flex items-center gap-1 cursor-pointer"
+                                                            title="Chỉnh sửa ngân hàng đề"
+                                                        >
+                                                            <Icons.Edit3 size={13} />
+                                                            <span>Chỉnh sửa</span>
+                                                        </button>
+                                                    )}
+
+                                                    <button
+                                                        onClick={() => {
+                                                            setShowBankCloneModal(bank);
+                                                            setCloneNewTitle(`[Bản sao] ${bank.title}`);
+                                                        }}
+                                                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition flex items-center gap-1 cursor-pointer"
+                                                        title="Nhân bản ngân hàng đề"
+                                                    >
+                                                        <Icons.Copy size={13} />
+                                                        <span>Nhân bản</span>
+                                                    </button>
+                                                </div>
+
+                                                {isOwnerOrAdmin && (
+                                                    <button
+                                                        onClick={() => handleDeleteQuiz(bank.id)}
+                                                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                                                        title="Xóa ngân hàng này"
+                                                    >
+                                                        <Icons.Trash size={15} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                      </>
+                    )}
                 </main>
             </div>
         );
@@ -2501,6 +3344,369 @@
                 </div>
             </div>
         );
+
+        const renderBankBuilder = () => {
+            const totalSubQuestions = bankSlots.reduce((acc, slot) => acc + (slot.variants?.length || 0), 0);
+
+            return (
+                <div className="min-h-screen bg-slate-50 pb-20 font-sans">
+                    {/* Top sticky header */}
+                    <header className="bg-white/95 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+                        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setHomeViewTab('banks');
+                                        setAppMode('home');
+                                    }}
+                                    className="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer flex-shrink-0"
+                                    title="Quay lại Thư viện ngân hàng"
+                                >
+                                    <Icons.ArrowLeft size={20} />
+                                </button>
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] uppercase font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md">
+                                            Ngân Hàng Đề
+                                        </span>
+                                        <span className="text-[10px] uppercase font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
+                                            {bankConfig.category || 'Chung'}
+                                        </span>
+                                    </div>
+                                    <h2 className="text-sm sm:text-base font-extrabold text-slate-900 truncate">
+                                        {bankConfig.title || 'Ngân Hàng Đề Mới'}
+                                    </h2>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={handleAddSlot}
+                                    className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                                    title="Thêm nhóm câu mới"
+                                >
+                                    <Icons.Plus size={16} />
+                                    <span className="hidden sm:inline">Thêm câu mới</span>
+                                    <span className="sm:hidden">+ Câu</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={handleSaveBank}
+                                    disabled={isSaving}
+                                    className="px-4 sm:px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs sm:text-sm font-extrabold rounded-xl shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                >
+                                    <Icons.Save size={16} />
+                                    <span>{isSaving ? 'Đang lưu...' : 'Lưu Ngân Hàng'}</span>
+                                </button>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
+                        {/* Bank Meta Info Box */}
+                        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="md:col-span-2 space-y-1.5">
+                                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                        Tên Ngân Hàng Đề:
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={bankConfig.title}
+                                        onChange={(e) => setBankConfig(prev => ({ ...prev, title: e.target.value }))}
+                                        placeholder="Nhập tên ngân hàng đề..."
+                                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-800 text-base focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                        Môn Học:
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={bankConfig.category}
+                                        onChange={(e) => setBankConfig(prev => ({ ...prev, category: e.target.value }))}
+                                        placeholder="VD: Dược lý, Giải phẫu..."
+                                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-800 text-base focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                    Ghi chú nếu có:
+                                </label>
+                                <textarea
+                                    rows="2"
+                                    value={bankConfig.note || ''}
+                                    onChange={(e) => setBankConfig(prev => ({ ...prev, note: e.target.value }))}
+                                    placeholder="Ghi chú về phạm vi kiến thức, mục tiêu, nguồn tài liệu..."
+                                    className="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition resize-none"
+                                />
+                            </div>
+
+                            <div className="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+                                <div className="flex items-center gap-2 text-emerald-900 font-medium">
+                                    <Icons.Info size={16} className="text-emerald-600 flex-shrink-0" />
+                                    <span>
+                                        <strong>Quy tắc sinh đề:</strong> Khi tạo đề từ ngân hàng, hệ thống sẽ <strong>bốc ngẫu nhiên 1 câu hỏi con</strong> cho mỗi câu lớn được chọn.
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-3 font-bold text-slate-700">
+                                    <span>📌 {bankSlots.length} câu lớn</span>
+                                    <span>•</span>
+                                    <span className="text-emerald-700">🔢 {totalSubQuestions} câu hỏi con</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Slots List (Câu 1, Câu 2... Câu n) */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between px-1">
+                                <h3 className="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2">
+                                    <span>Danh Sách Câu Hỏi Trong Ngân Hàng</span>
+                                    <span className="text-xs bg-slate-200 text-slate-700 font-bold px-2 py-0.5 rounded-full">
+                                        {bankSlots.length} câu
+                                    </span>
+                                </h3>
+                                <button
+                                    type="button"
+                                    onClick={handleAddSlot}
+                                    className="text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-200 transition flex items-center gap-1 cursor-pointer"
+                                >
+                                    <Icons.Plus size={14} />
+                                    <span>+ Thêm câu mới (Câu {bankSlots.length + 1})</span>
+                                </button>
+                            </div>
+
+                            {bankSlots.map((slot, slotIdx) => {
+                                const slotNum = slotIdx + 1;
+                                const variants = slot.variants || [];
+                                const isExpanded = expandedSlotDetailIdx === slotIdx;
+
+                                return (
+                                    <div
+                                        key={slot.id || slotIdx}
+                                        className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden transition-all hover:border-slate-300"
+                                    >
+                                        {/* Slot Card Header */}
+                                        <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-50 via-white to-slate-50/50 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                <div className="w-9 h-9 rounded-2xl bg-emerald-600 text-white font-black text-sm flex items-center justify-center flex-shrink-0 shadow-xs">
+                                                    {slotNum}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="text"
+                                                            value={slot.title}
+                                                            onChange={(e) => {
+                                                                const updated = [...bankSlots];
+                                                                updated[slotIdx] = { ...updated[slotIdx], title: e.target.value };
+                                                                setBankSlots(updated);
+                                                            }}
+                                                            placeholder={`Câu ${slotNum} (hoặc đổi thành tên chương/chuyên đề...)`}
+                                                            className="font-extrabold text-sm sm:text-base text-slate-900 bg-transparent hover:bg-slate-100 focus:bg-slate-50 px-2.5 py-1 rounded-xl outline-none border border-transparent focus:border-slate-300 transition w-full max-w-md"
+                                                            title="Click để đổi tên câu hoặc đổi thành tên chương"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-2 flex-wrap self-end sm:self-center flex-shrink-0">
+                                                {variants.length > 0 ? (
+                                                    <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full flex items-center gap-1.5">
+                                                        <span>✓ {variants.length} câu con</span>
+                                                        <span className="text-[10px] text-emerald-700/80 font-semibold">({slotNum}.1 → {slotNum}.{variants.length})</span>
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs font-bold text-amber-800 bg-amber-100 px-3 py-1 rounded-full flex items-center gap-1">
+                                                        <Icons.AlertTriangle size={12} />
+                                                        <span>Chưa có câu hỏi</span>
+                                                    </span>
+                                                )}
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleDeleteSlotFromBank(slotIdx)}
+                                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
+                                                    title="Xóa câu này khỏi ngân hàng"
+                                                >
+                                                    <Icons.Trash size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Slot Card Body Actions */}
+                                        <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white">
+                                            <div className="flex flex-col gap-0.5">
+                                                <p className="text-xs text-slate-500 font-medium">
+                                                    {variants.length > 0
+                                                        ? `Đã nạp ${variants.length} biến thể (${slotNum}.1 → ${slotNum}.${variants.length}). Hệ thống sẽ random ngẫu nhiên khi sinh đề.`
+                                                        : `Chưa có câu hỏi cho câu này. Hãy bấm "Chọn thêm cho câu ${slotNum}" để nạp từ Word, Paste hoặc AI.`}
+                                                </p>
+                                            </div>
+
+                                            <div className="flex items-center gap-2.5 flex-shrink-0">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleOpenSlotImport(slotIdx)}
+                                                    className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-xs transition flex items-center gap-2 cursor-pointer active:scale-95"
+                                                >
+                                                    <Icons.PlusCircle size={16} />
+                                                    <span>Chọn thêm cho {slot.title || `Câu ${slotNum}`}</span>
+                                                </button>
+
+                                                {variants.length > 0 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setExpandedSlotDetailIdx(isExpanded ? null : slotIdx)}
+                                                        className={`px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm border transition flex items-center gap-1.5 cursor-pointer ${
+                                                            isExpanded
+                                                                ? 'bg-slate-200 text-slate-800 border-slate-300'
+                                                                : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                                                        }`}
+                                                    >
+                                                        <Icons.Eye size={15} />
+                                                        <span>{isExpanded ? 'Ẩn chi tiết' : `Xem chi tiết (${variants.length})`}</span>
+                                                        <Icons.ChevronDown size={14} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Accordion: Chi tiết các câu hỏi con */}
+                                        {isExpanded && variants.length > 0 && (
+                                            <div className="p-4 sm:p-6 bg-slate-50/80 border-t border-slate-100 space-y-4 animate-slide-down">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                                                        <span>Kho biến thể của {slot.title || `Câu ${slotNum}`}</span>
+                                                        <span className="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-md">
+                                                            {variants.length} câu
+                                                        </span>
+                                                    </h4>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleAddSlotVariantDirectly(slotIdx)}
+                                                        className="text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-white px-3 py-1.5 rounded-xl border border-slate-200 hover:border-emerald-300 shadow-xs transition flex items-center gap-1 cursor-pointer"
+                                                    >
+                                                        <Icons.Plus size={13} />
+                                                        <span>+ Thêm câu hỏi con thủ công</span>
+                                                    </button>
+                                                </div>
+
+                                                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                                                    {variants.map((v, vIdx) => {
+                                                        const vId = `${slotNum}.${vIdx + 1}`;
+                                                        return (
+                                                            <div
+                                                                key={v.id || vIdx}
+                                                                className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-3"
+                                                            >
+                                                                <div className="flex items-center justify-between">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 font-black text-xs flex items-center justify-center border border-emerald-200">
+                                                                            {vId}
+                                                                        </span>
+                                                                        <span className="text-xs font-bold text-slate-700">
+                                                                            Biến thể {vIdx + 1}
+                                                                        </span>
+                                                                    </div>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleDeleteSlotVariantDirectly(slotIdx, vIdx)}
+                                                                        className="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                                                                        title="Xóa biến thể này"
+                                                                    >
+                                                                        <Icons.Trash size={14} />
+                                                                    </button>
+                                                                </div>
+
+                                                                <div>
+                                                                    <textarea
+                                                                        rows="2"
+                                                                        value={v.text}
+                                                                        onChange={(e) => handleUpdateSlotVariantDirectly(slotIdx, vIdx, 'text', e.target.value)}
+                                                                        placeholder="Nội dung câu hỏi..."
+                                                                        className="w-full p-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition"
+                                                                    />
+                                                                </div>
+
+                                                                {/* Options */}
+                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                                    {['A', 'B', 'C', 'D'].map(optKey => {
+                                                                        const isCorrect = v.correct === optKey;
+                                                                        return (
+                                                                            <div
+                                                                                key={optKey}
+                                                                                className={`flex items-center gap-2 p-2 rounded-xl border transition ${
+                                                                                    isCorrect
+                                                                                        ? 'bg-emerald-50/60 border-emerald-300 ring-1 ring-emerald-400'
+                                                                                        : 'bg-slate-50/50 border-slate-200'
+                                                                                }`}
+                                                                            >
+                                                                                <label className="flex items-center gap-1.5 cursor-pointer flex-shrink-0">
+                                                                                    <input
+                                                                                        type="radio"
+                                                                                        name={`correct_${slotIdx}_${vIdx}`}
+                                                                                        checked={isCorrect}
+                                                                                        onChange={() => handleUpdateSlotVariantDirectly(slotIdx, vIdx, 'correct', optKey)}
+                                                                                        className="accent-emerald-600 w-3.5 h-3.5"
+                                                                                    />
+                                                                                    <span className={`text-xs font-black ${isCorrect ? 'text-emerald-700' : 'text-slate-600'}`}>
+                                                                                        {optKey}.
+                                                                                    </span>
+                                                                                </label>
+                                                                                <input
+                                                                                    type="text"
+                                                                                    value={v.options ? (v.options[optKey] || '') : ''}
+                                                                                    onChange={(e) => handleUpdateSlotVariantDirectly(slotIdx, vIdx, `option_${optKey}`, e.target.value)}
+                                                                                    placeholder={`Nội dung phương án ${optKey}...`}
+                                                                                    className="flex-1 bg-transparent text-xs text-slate-800 outline-none"
+                                                                                />
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Bottom Action Footer */}
+                        <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <button
+                                type="button"
+                                onClick={handleAddSlot}
+                                className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-sm transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                            >
+                                <Icons.Plus size={18} />
+                                <span>Thêm câu mới (Câu {bankSlots.length + 1})</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={handleSaveBank}
+                                disabled={isSaving}
+                                className="w-full sm:w-auto px-7 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-sm sm:text-base shadow-lg shadow-emerald-600/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                            >
+                                <Icons.Save size={18} />
+                                <span>{isSaving ? 'Đang lưu...' : 'LƯU TOÀN BỘ NGÂN HÀNG ĐỀ'}</span>
+                            </button>
+                        </div>
+                    </main>
+                </div>
+            );
+        };
 
         const renderEditor = () => (
           <div className="min-h-screen bg-slate-50 p-6 flex justify-center animate-fade-in font-sans">
@@ -3575,21 +4781,33 @@
                                         </div>
                                     )}
 
-                                    {isOwnerOrAdmin && (
+                                    {isOwnerOrAdmin && selectedItemAction.config.quizType !== 'bank' && (
                                         <button onClick={() => { handleEditQuiz(selectedItemAction); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
                                             <div className="text-ios-blue bg-blue-50 p-2 rounded-lg"><Icons.Edit3 size={18}/></div> Chỉnh sửa nội dung
                                         </button>
                                     )}
                                     
-                                    {selectedItemAction.config.quizType === 'bank' && isOwnerOrAdmin && (
-                                        <button onClick={() => { setGenerateBankConfig({ bank: selectedItemAction }); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
-                                            <div className="text-emerald-600 bg-emerald-50 p-2 rounded-lg"><Icons.RefreshCw size={18}/></div> Tạo đề thi từ ngân hàng này
-                                        </button>
+                                    {selectedItemAction.config.quizType === 'bank' && (
+                                        <>
+                                            <button onClick={() => { handleOpenGenerateBankModal(selectedItemAction); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-emerald-800 font-bold bg-emerald-50/60">
+                                                <div className="text-emerald-700 bg-emerald-100 p-2 rounded-lg"><Icons.Zap size={18}/></div> ⚡ Tạo đề thi từ ngân hàng này
+                                            </button>
+                                            {isOwnerOrAdmin && (
+                                                <button onClick={() => { handleEditBank(selectedItemAction); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
+                                                    <div className="text-emerald-600 bg-emerald-50 p-2 rounded-lg"><Icons.Edit3 size={18}/></div> Chỉnh sửa ngân hàng đề
+                                                </button>
+                                            )}
+                                            <button onClick={() => { setShowBankCloneModal(selectedItemAction); setCloneNewTitle(`[Bản sao] ${selectedItemAction.title}`); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
+                                                <div className="text-indigo-600 bg-indigo-50 p-2 rounded-lg"><Icons.Copy size={18}/></div> Nhân bản ngân hàng với tên mới
+                                            </button>
+                                        </>
                                     )}
                                     
-                                    <button onClick={() => { window.open(`/?id=${selectedItemAction.id}`, '_blank'); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
-                                        <div className="text-emerald-600 bg-emerald-50 p-2 rounded-lg"><Icons.Eye size={18}/></div> Xem / Làm thử đề thi
-                                    </button>
+                                    {selectedItemAction.config.quizType !== 'bank' && (
+                                        <button onClick={() => { window.open(`/?id=${selectedItemAction.id}`, '_blank'); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
+                                            <div className="text-emerald-600 bg-emerald-50 p-2 rounded-lg"><Icons.Eye size={18}/></div> Xem / Làm thử đề thi
+                                        </button>
+                                    )}
 
                                     <button onClick={() => { handleCopyLink(selectedItemAction.id); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
                                         <div className="text-orange-500 bg-orange-50 p-2 rounded-lg"><Icons.LinkIcon size={18}/></div> Copy link chia sẻ
@@ -3597,7 +4815,7 @@
                                     
                                     {isOwnerOrAdmin && (
                                         <button onClick={() => { handleDeleteQuiz(selectedItemAction.id); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-red-600 font-medium">
-                                            <div className="text-red-600 bg-red-50 p-2 rounded-lg"><Icons.Trash size={18}/></div> Xóa {selectedItemAction.config.quizType === 'bank' ? 'ngân hàng' : 'đề thi'}
+                                            <div className="text-red-600 bg-red-50 p-2 rounded-lg"><Icons.Trash size={18}/></div> Xóa {selectedItemAction.config.quizType === 'bank' ? 'ngân hàng đề' : 'đề thi'}
                                         </button>
                                     )}
                                 </div>
@@ -3611,24 +4829,740 @@
                 </div>
             )}
 
-            {/* Modal Prompt Lấy Câu Hỏi Từ Ngân Hàng */}
-            {generateBankConfig && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-pop-in border border-gray-100">
-                        <div className="p-6">
-                            <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-4"><Icons.RefreshCw size={24}/></div>
-                            <h3 className="text-lg font-bold text-gray-900 mb-2">Sinh đề từ Ngân hàng</h3>
-                            <p className="text-sm text-gray-500 mb-4">Nhập số lượng câu hỏi bạn muốn bốc ngẫu nhiên từ <b>{generateBankConfig.bank.questions.length}</b> câu của ngân hàng này:</p>
-                            
-                            <input type="number" id="pick-count-input" className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-lg font-bold text-center" defaultValue="20" min="1" max={generateBankConfig.bank.questions.length} />
+            {/* Modal 1: Cấu hình tạo Ngân Hàng Đề Mới */}
+            {showBankSetupModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-slide-up border border-slate-100">
+                        <div className="px-6 py-4 bg-gradient-to-r from-emerald-50 via-teal-50 to-white border-b border-emerald-100 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20">
+                                    <Icons.FolderPlus size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="font-extrabold text-slate-800 text-base sm:text-lg">Tạo Ngân Hàng Đề Mới</h3>
+                                    <p className="text-xs text-emerald-700 font-medium">Thiết lập thông tin chung trước khi nạp câu hỏi</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowBankSetupModal(false)}
+                                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                            >
+                                <Icons.X size={18} />
+                            </button>
                         </div>
-                        <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-100">
-                            <Button variant="secondary" onClick={() => setGenerateBankConfig(null)}>Hủy</Button>
-                            <Button variant="success" onClick={() => {
-                                const count = parseInt(document.getElementById('pick-count-input').value) || 20;
-                                executeGenerateFromBank(generateBankConfig.bank, count);
-                                setGenerateBankConfig(null);
-                            }}>Tạo Đề Mới</Button>
+
+                        <div className="p-6 space-y-4">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
+                                    <span>Tên Ngân Hàng Đề</span>
+                                    <span className="text-rose-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={bankConfig.title}
+                                    onChange={(e) => setBankConfig(prev => ({ ...prev, title: e.target.value }))}
+                                    placeholder="VD: Ngân hàng Dược lý 1, Ngân hàng Giải phẫu học..."
+                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 font-bold text-slate-800 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition"
+                                    autoFocus
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
+                                    <span>Môn Học</span>
+                                    <span className="text-rose-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={bankConfig.category}
+                                    onChange={(e) => setBankConfig(prev => ({ ...prev, category: e.target.value }))}
+                                    placeholder="VD: Dược lý, Giải phẫu, Y học cơ sở, Toán, Ngoại ngữ..."
+                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 font-medium text-slate-800 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition"
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                    Ghi chú nếu có:
+                                </label>
+                                <textarea
+                                    rows="3"
+                                    value={bankConfig.note}
+                                    onChange={(e) => setBankConfig(prev => ({ ...prev, note: e.target.value }))}
+                                    placeholder="Ghi chú về phạm vi kiểm tra, đối tượng học sinh, giáo trình tham khảo..."
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition resize-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setShowBankSetupModal(false)}
+                                className="px-4 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-bold text-xs sm:text-sm transition cursor-pointer"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmBankSetup}
+                                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                            >
+                                <span>Tiếp tục tạo câu hỏi</span>
+                                <Icons.ArrowRight size={16} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal 2: Giao diện thêm câu hỏi vào ngân hàng cho từng Câu X (Chuẩn Ảnh 1) */}
+            {showSlotImportModal && currentEditingSlotIdx !== null && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[94vh] flex flex-col overflow-hidden animate-slide-up border border-slate-200">
+                        {/* Header */}
+                        <div className="px-5 sm:px-6 py-4 bg-gradient-to-r from-emerald-50 via-teal-50 to-white border-b border-emerald-100 flex items-center justify-between flex-shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white font-black text-sm flex items-center justify-center shadow-md shadow-emerald-600/20">
+                                    {currentEditingSlotIdx + 1}
+                                </div>
+                                <div>
+                                    <h3 className="font-extrabold text-slate-800 text-base sm:text-lg flex items-center gap-2">
+                                        <span>Bước 1: Nạp Đề Thi Gốc Vào Soạn Thảo</span>
+                                        <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-bold">
+                                            {bankSlots[currentEditingSlotIdx]?.title || `Câu ${currentEditingSlotIdx + 1}`}
+                                        </span>
+                                    </h3>
+                                    <p className="text-xs text-slate-500 font-medium">
+                                        Toàn bộ câu hỏi phân tích được lúc này sẽ được lưu vào ngân hàng cho {bankSlots[currentEditingSlotIdx]?.title || `Câu ${currentEditingSlotIdx + 1}`} ({currentEditingSlotIdx + 1}.1, {currentEditingSlotIdx + 1}.2, ... {currentEditingSlotIdx + 1}.n)
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setShowSlotImportModal(false);
+                                    setSlotParsedVariants([]);
+                                }}
+                                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                            >
+                                <Icons.X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1">
+                            {/* 3 cards matching Ảnh 1 */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                {/* Card 1: Tải file Word */}
+                                <label className="border-2 border-dashed border-blue-200 bg-blue-50/40 hover:bg-blue-50 hover:border-blue-400 p-4 rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-all group">
+                                    <input
+                                        type="file"
+                                        accept=".docx"
+                                        className="hidden"
+                                        onChange={handleSlotFileUpload}
+                                    />
+                                    <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                                        <Icons.UploadCloud size={20} />
+                                    </div>
+                                    <span className="text-xs sm:text-sm font-extrabold text-blue-900 mb-0.5">
+                                        Tải lên file Word (.docx)
+                                    </span>
+                                    <span className="text-[11px] text-blue-600/80 leading-tight">
+                                        Tự động trích xuất nội dung & hình ảnh
+                                    </span>
+                                </label>
+
+                                {/* Card 2: Dán thủ công */}
+                                <div className="border border-slate-200 bg-slate-50/50 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center mb-2">
+                                        <Icons.Clipboard size={20} />
+                                    </div>
+                                    <span className="text-xs sm:text-sm font-extrabold text-slate-800 mb-0.5">
+                                        Dán thủ công
+                                    </span>
+                                    <span className="text-[11px] text-slate-500 leading-tight">
+                                        Ctrl+V trực tiếp vào khung soạn thảo bên dưới
+                                    </span>
+                                </div>
+
+                                {/* Card 3: Chuẩn hóa Markdown Dzota AI */}
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDzotaModal(true)}
+                                    className="border border-purple-200 bg-purple-50/40 hover:bg-purple-50 hover:border-purple-300 p-4 rounded-2xl flex flex-col items-center justify-center text-center transition-all group cursor-pointer"
+                                >
+                                    <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                                        <Icons.Sparkles size={20} />
+                                    </div>
+                                    <span className="text-xs sm:text-sm font-extrabold text-purple-900 mb-0.5">
+                                        Chuẩn Hóa Markdown Dzota (AI)
+                                    </span>
+                                    <span className="text-[11px] text-purple-600/80 leading-tight">
+                                        AI định dạng chuẩn đẹp tự động
+                                    </span>
+                                </button>
+                            </div>
+
+                            {/* TinyMCE Editor area */}
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                    <Icons.Edit3 size={14} className="text-emerald-600" />
+                                    <span>Khung Soạn Thảo Đề Thi:</span>
+                                </label>
+                                <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+                                    <textarea
+                                        id="slot-quiz-editor-area"
+                                        className="w-full min-h-[300px]"
+                                        placeholder="Dán câu hỏi hoặc tải file Word vào đây..."
+                                    ></textarea>
+                                </div>
+                            </div>
+
+                            {/* Tip box */}
+                            <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-amber-900 text-xs flex items-start gap-2 leading-relaxed">
+                                <Icons.HelpCircle size={16} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                                <span>
+                                    <strong>Mẹo nạp chuẩn:</strong> Tiêu đề câu bắt đầu bằng "Câu 1:", "Bài 1:"... Đáp án in đậm chữ cái đầu (VD: <b>A.</b>) hoặc thêm "Bảng đáp án: 1A 2B 3C..." ở cuối file.
+                                </span>
+                            </div>
+
+                            {/* Step 2: Button Phân tích câu hỏi */}
+                            <div className="flex justify-center pt-2">
+                                <button
+                                    type="button"
+                                    onClick={parseSlotQuiz}
+                                    disabled={isParsing}
+                                    className="px-6 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-sm sm:text-base rounded-2xl shadow-lg shadow-emerald-600/25 active:scale-95 transition-all flex items-center gap-2.5 cursor-pointer disabled:opacity-50"
+                                >
+                                    <Icons.Play size={18} fill="currentColor" />
+                                    <span>{isParsing ? 'Đang phân tích...' : `BƯỚC 2: PHÂN TÍCH CÂU HỎI VÀ LƯU VÀO CÂU ${currentEditingSlotIdx + 1}`}</span>
+                                </button>
+                            </div>
+
+                            {/* Section Review Variations parsed */}
+                            {slotParsedVariants.length > 0 && (
+                                <div className="mt-6 pt-6 border-t border-slate-200 space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                                            <span>Danh Sách Câu Hỏi Đã Phân Tích ({slotParsedVariants.length} câu)</span>
+                                            <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                                                {currentEditingSlotIdx + 1}.1 → {currentEditingSlotIdx + 1}.{slotParsedVariants.length}
+                                            </span>
+                                        </h4>
+                                        <button
+                                            type="button"
+                                            onClick={handleAddManualSlotVariant}
+                                            className="text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 transition flex items-center gap-1 cursor-pointer"
+                                        >
+                                            <Icons.Plus size={13} />
+                                            <span>+ Thêm câu hỏi thủ công</span>
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1">
+                                        {slotParsedVariants.map((v, vIdx) => {
+                                            const vNum = `${currentEditingSlotIdx + 1}.${vIdx + 1}`;
+                                            return (
+                                                <div
+                                                    key={v.id || vIdx}
+                                                    className="p-4 bg-slate-50/70 rounded-2xl border border-slate-200 shadow-xs space-y-3"
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="w-8 h-8 rounded-xl bg-emerald-600 text-white font-black text-xs flex items-center justify-center">
+                                                                {vNum}
+                                                            </span>
+                                                            <span className="text-xs font-bold text-slate-700">
+                                                                Câu hỏi biến thể #{vIdx + 1}
+                                                            </span>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteSlotVariant(vIdx)}
+                                                            className="p-1.5 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                                                            title="Xóa câu hỏi này"
+                                                        >
+                                                            <Icons.Trash size={15} />
+                                                        </button>
+                                                    </div>
+
+                                                    <div>
+                                                        <textarea
+                                                            rows="2"
+                                                            value={v.text}
+                                                            onChange={(e) => handleUpdateSlotVariant(vIdx, 'text', e.target.value)}
+                                                            placeholder="Nội dung câu hỏi..."
+                                                            className="w-full p-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition bg-white"
+                                                        />
+                                                    </div>
+
+                                                    {/* Options */}
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                        {['A', 'B', 'C', 'D'].map(optKey => {
+                                                            const isCorrect = v.correct === optKey;
+                                                            return (
+                                                                <div
+                                                                    key={optKey}
+                                                                    className={`flex items-center gap-2 p-2 rounded-xl border transition ${
+                                                                        isCorrect
+                                                                            ? 'bg-emerald-50/60 border-emerald-300 ring-1 ring-emerald-400'
+                                                                            : 'bg-white border-slate-200'
+                                                                    }`}
+                                                                >
+                                                                    <label className="flex items-center gap-1.5 cursor-pointer flex-shrink-0">
+                                                                        <input
+                                                                            type="radio"
+                                                                            name={`slot_parsed_correct_${vIdx}`}
+                                                                            checked={isCorrect}
+                                                                            onChange={() => handleUpdateSlotVariant(vIdx, 'correct', optKey)}
+                                                                            className="accent-emerald-600 w-3.5 h-3.5"
+                                                                        />
+                                                                        <span className={`text-xs font-black ${isCorrect ? 'text-emerald-700' : 'text-slate-600'}`}>
+                                                                            {optKey}.
+                                                                        </span>
+                                                                    </label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={v.options ? (v.options[optKey] || '') : ''}
+                                                                        onChange={(e) => handleUpdateSlotVariant(vIdx, `option_${optKey}`, e.target.value)}
+                                                                        placeholder={`Phương án ${optKey}...`}
+                                                                        className="flex-1 bg-transparent text-xs text-slate-800 outline-none"
+                                                                    />
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="px-5 sm:px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3 flex-shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowSlotImportModal(false);
+                                    setSlotParsedVariants([]);
+                                }}
+                                className="px-4 py-2.5 rounded-xl text-slate-600 hover:bg-slate-200/60 font-bold text-xs sm:text-sm transition cursor-pointer"
+                            >
+                                Đóng
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={handleSaveSlotToBank}
+                                disabled={slotParsedVariants.length === 0}
+                                className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs sm:text-sm rounded-xl shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                            >
+                                <Icons.Save size={16} />
+                                <span>LƯU CÂU NÀY ({slotParsedVariants.length} CÂU HỎI)</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal 3: Sinh Đề Thi Từ Ngân Hàng (Lựa chọn câu lớn + xem chi tiết + cấu hình) */}
+            {bankGenerateConfig && bankGenerateConfig.bank && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-slide-up border border-slate-200">
+                        {/* Header */}
+                        <div className="px-5 sm:px-6 py-4 bg-gradient-to-r from-emerald-50 via-teal-50 to-white border-b border-emerald-100 flex items-center justify-between flex-shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20">
+                                    <Icons.Zap size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="font-extrabold text-slate-800 text-base sm:text-lg flex items-center gap-2">
+                                        <span>Tạo Đề Thi Từ Ngân Hàng</span>
+                                        <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-bold truncate max-w-[200px]">
+                                            {bankGenerateConfig.bank.title}
+                                        </span>
+                                    </h3>
+                                    <p className="text-xs text-slate-500 font-medium">
+                                        Chọn các câu hỏi lớn muốn lấy và thiết lập thông số bài thi. Mỗi câu lớn sẽ được bốc 1 câu hỏi con ngẫu nhiên.
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setBankGenerateConfig(null)}
+                                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                            >
+                                <Icons.X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1">
+                            {/* 1. LỰA CHỌN CÂU HỎI */}
+                            <div className="space-y-3">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 font-black text-xs flex items-center justify-center">1</span>
+                                        <h4 className="text-xs sm:text-sm font-extrabold text-slate-800 uppercase tracking-wide">
+                                            Lựa chọn câu hỏi đưa vào bài thi ({bankGenerateConfig.selectedSlotIds.size}/{(bankGenerateConfig.bank.questions || []).length} câu lớn)
+                                        </h4>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const allIds = new Set((bankGenerateConfig.bank.questions || []).map(s => s.id));
+                                                setBankGenerateConfig(prev => ({ ...prev, selectedSlotIds: allIds }));
+                                            }}
+                                            className="px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg transition cursor-pointer"
+                                        >
+                                            ✓ Chọn tất cả ({(bankGenerateConfig.bank.questions || []).length})
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setBankGenerateConfig(prev => ({ ...prev, selectedSlotIds: new Set() }));
+                                            }}
+                                            className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition cursor-pointer"
+                                        >
+                                            ✗ Bỏ chọn tất cả
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Danh sách các câu lớn */}
+                                <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                                    {(bankGenerateConfig.bank.questions || []).map((slot, sIdx) => {
+                                        const isSelected = bankGenerateConfig.selectedSlotIds.has(slot.id);
+                                        const variants = slot.variants || [];
+                                        const isExpanded = bankGenerateConfig.expandedDetailSlotId === slot.id;
+
+                                        return (
+                                            <div
+                                                key={slot.id || sIdx}
+                                                className={`rounded-2xl border transition-all ${
+                                                    isSelected
+                                                        ? 'bg-emerald-50/40 border-emerald-300'
+                                                        : 'bg-white border-slate-200 opacity-60'
+                                                }`}
+                                            >
+                                                <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3">
+                                                    <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={isSelected}
+                                                            onChange={(e) => {
+                                                                const updatedSet = new Set(bankGenerateConfig.selectedSlotIds);
+                                                                if (e.target.checked) updatedSet.add(slot.id);
+                                                                else updatedSet.delete(slot.id);
+                                                                setBankGenerateConfig(prev => ({ ...prev, selectedSlotIds: updatedSet }));
+                                                            }}
+                                                            className="w-4 h-4 accent-emerald-600 rounded cursor-pointer"
+                                                        />
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-extrabold text-xs sm:text-sm text-slate-900 truncate">
+                                                                    {slot.title || `Câu ${sIdx + 1}`}
+                                                                </span>
+                                                                <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.2 rounded-md whitespace-nowrap">
+                                                                    {variants.length} câu con
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </label>
+
+                                                    {variants.length > 0 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setBankGenerateConfig(prev => ({
+                                                                    ...prev,
+                                                                    expandedDetailSlotId: isExpanded ? null : slot.id
+                                                                }));
+                                                            }}
+                                                            className="text-xs font-bold text-slate-500 hover:text-slate-800 px-2.5 py-1 rounded-lg hover:bg-slate-100 transition flex items-center gap-1 cursor-pointer flex-shrink-0"
+                                                        >
+                                                            <span>{isExpanded ? 'Ẩn' : 'Xem chi tiết'}</span>
+                                                            <Icons.ChevronDown size={13} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {/* Sub-questions detail preview */}
+                                                {isExpanded && variants.length > 0 && (
+                                                    <div className="p-3 bg-white/90 border-t border-slate-200/80 rounded-b-2xl space-y-2 text-xs">
+                                                        <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                                                            Các câu hỏi con trong kho ({variants.length} câu - Sẽ random lấy 1 câu):
+                                                        </div>
+                                                        <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                                                            {variants.map((v, vIdx) => (
+                                                                <div key={v.id || vIdx} className="p-2 bg-slate-50 rounded-xl flex items-start gap-2">
+                                                                    <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-md flex-shrink-0">
+                                                                        {sIdx + 1}.{vIdx + 1}
+                                                                    </span>
+                                                                    <span className="line-clamp-2 text-slate-700 font-medium">
+                                                                        {v.text || 'Nội dung câu hỏi'}
+                                                                    </span>
+                                                                    {v.correct && (
+                                                                        <span className="ml-auto text-[10px] font-bold text-emerald-700 bg-emerald-100/60 px-1.5 py-0.5 rounded flex-shrink-0">
+                                                                            Đáp án: {v.correct}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* 2. CẤU HÌNH THÔNG SỐ ĐỀ THI */}
+                            <div className="space-y-4 pt-2">
+                                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                                    <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 font-black text-xs flex items-center justify-center">2</span>
+                                    <h4 className="text-xs sm:text-sm font-extrabold text-slate-800 uppercase tracking-wide">
+                                        Thiết lập thông số đề thi
+                                    </h4>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-700">Tên Bài Thi:</label>
+                                        <input
+                                            type="text"
+                                            value={bankGenerateConfig.quizTitle}
+                                            onChange={(e) => setBankGenerateConfig(prev => ({ ...prev, quizTitle: e.target.value }))}
+                                            placeholder="Nhập tên bài thi..."
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-700">Môn Học (Tự động lấy theo ngân hàng):</label>
+                                        <input
+                                            type="text"
+                                            value={bankGenerateConfig.category}
+                                            onChange={(e) => setBankGenerateConfig(prev => ({ ...prev, category: e.target.value }))}
+                                            placeholder="Môn học..."
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-700">Thời Gian Làm Bài (phút):</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="300"
+                                            value={bankGenerateConfig.timeLimit}
+                                            onChange={(e) => setBankGenerateConfig(prev => ({ ...prev, timeLimit: e.target.value }))}
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-700">Mật Khẩu Bài Thi (Nếu có):</label>
+                                        <input
+                                            type="text"
+                                            value={bankGenerateConfig.password}
+                                            onChange={(e) => setBankGenerateConfig(prev => ({ ...prev, password: e.target.value }))}
+                                            placeholder="Bỏ trống nếu không đặt mật khẩu"
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-700">Thể Loại Làm Bài Thi:</label>
+                                        <select
+                                            value={bankGenerateConfig.mode}
+                                            onChange={(e) => setBankGenerateConfig(prev => ({ ...prev, mode: e.target.value }))}
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none cursor-pointer bg-white"
+                                        >
+                                            <option value="exam">Thi Thử Bấm Giờ (Xem kết quả khi nộp bài)</option>
+                                            <option value="practice">Luyện Tập Tự Do (Xem giải thích ngay sau mỗi câu)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex flex-wrap gap-4 text-xs">
+                                    <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-700">
+                                        <input
+                                            type="checkbox"
+                                            checked={bankGenerateConfig.shuffleQuestions}
+                                            onChange={(e) => setBankGenerateConfig(prev => ({ ...prev, shuffleQuestions: e.target.checked }))}
+                                            className="w-4 h-4 accent-emerald-600 rounded cursor-pointer"
+                                        />
+                                        <span>🔀 Xáo trộn thứ tự các câu hỏi</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-700">
+                                        <input
+                                            type="checkbox"
+                                            checked={bankGenerateConfig.shuffleOptions}
+                                            onChange={(e) => setBankGenerateConfig(prev => ({ ...prev, shuffleOptions: e.target.checked }))}
+                                            className="w-4 h-4 accent-emerald-600 rounded cursor-pointer"
+                                        />
+                                        <span>🔀 Xáo trộn phương án đáp án (A, B, C, D)</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-5 sm:px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3 flex-shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => setBankGenerateConfig(null)}
+                                className="px-4 py-2.5 rounded-xl text-slate-600 hover:bg-slate-200/60 font-bold text-xs sm:text-sm transition cursor-pointer"
+                            >
+                                Hủy
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={handleExecuteGenerateTest}
+                                disabled={isSaving || bankGenerateConfig.selectedSlotIds.size === 0}
+                                className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs sm:text-sm rounded-xl shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                            >
+                                <Icons.Zap size={16} />
+                                <span>{isSaving ? 'Đang tạo đề thi...' : `TẠO ĐỀ THI NGAY (${bankGenerateConfig.selectedSlotIds.size} CÂU)`}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal 4: Nhân Bản Ngân Hàng Đề */}
+            {showBankCloneModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up border border-slate-100">
+                        <div className="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                                    <Icons.Copy size={18} />
+                                </div>
+                                <div>
+                                    <h3 className="font-extrabold text-slate-800 text-base">Nhân Bản Ngân Hàng Đề</h3>
+                                    <p className="text-xs text-slate-500">Tạo bản sao lưu độc lập với tên mới</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowBankCloneModal(null)}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                            >
+                                <Icons.X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-3">
+                            <div className="text-xs text-slate-500">
+                                Ngân hàng gốc: <strong className="text-slate-800">{showBankCloneModal.title}</strong>
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-slate-700">Tên Mới Cho Bản Sao:</label>
+                                <input
+                                    type="text"
+                                    value={cloneNewTitle}
+                                    onChange={(e) => setCloneNewTitle(e.target.value)}
+                                    placeholder="Nhập tên mới..."
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                                    autoFocus
+                                />
+                            </div>
+                        </div>
+
+                        <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                            <button
+                                type="button"
+                                onClick={() => setShowBankCloneModal(null)}
+                                className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-200 font-bold text-xs transition cursor-pointer"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleExecuteCloneBank}
+                                disabled={isSaving}
+                                className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            >
+                                <Icons.Copy size={14} />
+                                <span>{isSaving ? 'Đang nhân bản...' : 'Xác nhận nhân bản'}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal 5: Kết Quả Sinh Đề Thi Thành Công */}
+            {generatedTestResult && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-slide-up border border-slate-100">
+                        <div className="p-6 text-center space-y-4">
+                            <div className="w-16 h-16 rounded-3xl bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center shadow-lg shadow-emerald-500/20 animate-bounce">
+                                <Icons.CheckCircle size={32} />
+                            </div>
+
+                            <div>
+                                <h3 className="font-extrabold text-slate-900 text-lg sm:text-xl">
+                                    Tạo Đề Thi Thành Công!
+                                </h3>
+                                <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                                    Đã bốc ngẫu nhiên <strong>{generatedTestResult.questionCount} câu hỏi</strong> từ ngân hàng đề.
+                                </p>
+                            </div>
+
+                            <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-left">
+                                <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                                    Liên kết bài thi trực tiếp:
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={generatedTestResult.url}
+                                        className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono text-slate-700 outline-none select-all"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(generatedTestResult.url);
+                                            addToast("📋 Đã sao chép liên kết đề thi vào bộ nhớ tạm!", "success");
+                                        }}
+                                        className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition flex items-center gap-1 cursor-pointer flex-shrink-0"
+                                        title="Sao chép liên kết"
+                                    >
+                                        <Icons.Copy size={14} />
+                                        <span>Sao chép</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setGeneratedTestResult(null)}
+                                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-bold text-xs sm:text-sm transition cursor-pointer"
+                                >
+                                    Đóng
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        window.open(generatedTestResult.url, '_blank');
+                                        setGeneratedTestResult(null);
+                                    }}
+                                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                                >
+                                    <span>🚀 Vào làm bài thi ngay</span>
+                                    <Icons.ArrowRight size={15} />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -4098,6 +6032,7 @@
             )}
 
             {appMode === 'home' && renderHome()}
+            {appMode === 'bank_builder' && renderBankBuilder()}
             {appMode === 'editor' && renderEditor()}
             {appMode === 'blocked' && renderBlocked()}
             {appMode === 'access_denied' && renderAccessDenied()}

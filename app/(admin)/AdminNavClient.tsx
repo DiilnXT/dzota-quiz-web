@@ -388,13 +388,14 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                   </span>
                 </Link>
 
-                <button
-                  onClick={() => { setActiveModal('bank'); setMobileMenuOpen(false); }}
+                <Link
+                  href="/creator?view=bank"
+                  onClick={() => setMobileMenuOpen(false)}
                   className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all text-left cursor-pointer"
                 >
                   <BookOpen size={18} className="text-slate-400 dark:text-slate-500" />
                   <span>Ngân hàng câu hỏi</span>
-                </button>
+                </Link>
               </div>
             </div>
           )}
@@ -495,11 +496,11 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                 Ngân hàng câu hỏi cho phép bạn import hàng trăm câu hỏi và tự động bốc ngẫu nhiên (random pick) theo từng lần thi!
               </div>
               <Link
-                href="/creator"
+                href="/creator?view=bank"
                 onClick={() => setActiveModal(null)}
                 className="block text-center py-2.5 bg-blue-600 text-white font-bold text-xs rounded-xl hover:bg-blue-700 transition-colors"
               >
-                Mở Trình Soạn Thảo & Tạo Ngân Hàng Đề Mới →
+                Mở Thư Viện Ngân Hàng Đề Thi →
               </Link>
             </div>
 
