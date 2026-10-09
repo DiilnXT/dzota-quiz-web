@@ -644,6 +644,38 @@
         const [mistakeAnalysisText, setMistakeAnalysisText] = useState('');
         const [mistakeAnalysisSaved, setMistakeAnalysisSaved] = useState(false);
 
+        // ─── MA TRẬN NGÂN HÀNG ĐỀ STATES ───
+        const [showMatrixEditModal, setShowMatrixEditModal] = useState(false);
+        const [matrixEditQuiz, setMatrixEditQuiz] = useState(null);
+        const [matrixEditForm, setMatrixEditForm] = useState({
+          title: '', category: 'Chung', timeLimit: 15, password: '',
+          mode: 'exam', shuffleQuestions: false, shuffleOptions: false,
+          accessType: 'all', allowedGmails: ''
+        });
+
+        // ─── THI ĐẤU BATTLE (5P PHÒNG / 2H KẾT QUẢ) STATES ───
+        const [showBattleModal, setShowBattleModal] = useState(false);
+        const [battleTab, setBattleTab] = useState('create'); // 'create', 'join', 'lobby', 'history', 'view_result'
+        const [battleMaxPlayers, setBattleMaxPlayers] = useState(2);
+        const [battlePlayerName, setBattlePlayerName] = useState('');
+        const [battlePlayerAvatar, setBattlePlayerAvatar] = useState('');
+        const [battleRoomIdInput, setBattleRoomIdInput] = useState('');
+        const [currentBattleRoom, setCurrentBattleRoom] = useState(null);
+        const [isBattleMode, setIsBattleMode] = useState(false);
+        const [battleStartTime, setBattleStartTime] = useState(null);
+        const [battleHistoryList, setBattleHistoryList] = useState([]);
+        const [selectedHistoryRoom, setSelectedHistoryRoom] = useState(null);
+        const [battleCountdown, setBattleCountdown] = useState(300);
+        const [isCreatingBattle, setIsCreatingBattle] = useState(false);
+        const [isJoiningBattle, setIsJoiningBattle] = useState(false);
+
+        const formatBattleTime = (sec) => {
+          const s = Math.max(0, parseInt(sec) || 0);
+          const m = Math.floor(s / 60);
+          const rem = s % 60;
+          return `${m < 10 ? '0' : ''}${m}:${rem < 10 ? '0' : ''}${rem}`;
+        };
+
         const loadWrongQuestionsForQuiz = (quizId) => {
           const targetId = quizId || quizIdTracker || 'default';
           try {
@@ -1554,6 +1586,12 @@
             if (quizId) {
                 setQuizIdTracker(quizId);
                 handleLoadQuiz(quizId, isEditParam);
+                const battleParam = params.get('battle');
+                if (battleParam) {
+                    setBattleRoomIdInput(battleParam);
+                    setBattleTab('join');
+                    setShowBattleModal(true);
+                }
             } else {
                 if (viewParam === 'bank' || viewParam === 'banks') {
                     setHomeViewTab('banks');
@@ -1675,6 +1713,241 @@
           };
         }, [showBatchBankImportModal]);
 
+        // ─── THI ĐẤU BATTLE CONTROLLER (Phòng 5p / Kết quả 2h) ───
+        useEffect(() => {
+          if (currentUser?.name || currentUser?.username) {
+            setBattlePlayerName(currentUser.name || currentUser.username);
+            setBattlePlayerAvatar(currentUser.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(currentUser.username)}`);
+          } else {
+            const savedName = localStorage.getItem('dzota_student_name') || '';
+            const defName = savedName || ('Thí sinh ' + Math.floor(100 + Math.random() * 900));
+            setBattlePlayerName(defName);
+            setBattlePlayerAvatar(`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(defName)}`);
+          }
+        }, [currentUser]);
+
+        // Countdown timer 5 phút cho phòng chờ Battle
+        useEffect(() => {
+          if (!currentBattleRoom || currentBattleRoom.status !== 'waiting') return;
+          const timer = setInterval(() => {
+            const remaining = Math.max(0, Math.round((currentBattleRoom.expiresAt - Date.now()) / 1000));
+            setBattleCountdown(remaining);
+            if (remaining <= 0) {
+              clearInterval(timer);
+              addToast("Phòng thi đấu đã hết hạn 5 phút!", "warning");
+              setCurrentBattleRoom(null);
+              setBattleTab('create');
+            }
+          }, 1000);
+          return () => clearInterval(timer);
+        }, [currentBattleRoom]);
+
+        // Polling realtime phòng thi đấu và bảng vinh danh
+        useEffect(() => {
+          if (!currentBattleRoom) return;
+
+          // 1. Khi đang ở phòng chờ -> poll để nhận diện người vào phòng hoặc chủ phòng bấm Bắt đầu
+          if (currentBattleRoom.status === 'waiting') {
+            const pollInterval = setInterval(async () => {
+              try {
+                const res = await fetch(`/api/battle?roomId=${currentBattleRoom.id}`);
+                if (res.ok) {
+                  const data = await res.json();
+                  if (data.success && data.room) {
+                    setCurrentBattleRoom(data.room);
+                    if (data.room.status === 'in_progress' && appMode !== 'taking') {
+                      startBattleQuiz(data.room);
+                    }
+                  }
+                }
+              } catch(e) {}
+            }, 1800);
+            return () => clearInterval(pollInterval);
+          }
+
+          // 2. Khi đã nộp bài ở màn hình kết quả -> poll để cập nhật bảng vinh danh các đối thủ khác nộp bài
+          if (appMode === 'result' && isBattleMode) {
+            const pollInterval = setInterval(async () => {
+              try {
+                const res = await fetch(`/api/battle?roomId=${currentBattleRoom.id}`);
+                if (res.ok) {
+                  const data = await res.json();
+                  if (data.success && data.room) {
+                    setCurrentBattleRoom(data.room);
+                  }
+                }
+              } catch(e) {}
+            }, 2500);
+            return () => clearInterval(pollInterval);
+          }
+        }, [currentBattleRoom, appMode, isBattleMode]);
+
+        const handleOpenBattleModal = () => {
+          if (quizConfig.mode !== 'exam') {
+            addToast("Chế độ thi đấu Battle chỉ dành cho đề thi thử nộp bài lấy điểm!", "info");
+            return;
+          }
+          setShowBattleModal(true);
+          if (currentBattleRoom && currentBattleRoom.status === 'waiting') {
+            setBattleTab('lobby');
+          } else {
+            setBattleTab('create');
+          }
+          fetchBattleHistory();
+        };
+
+        const fetchBattleHistory = async () => {
+          const targetQuizId = quizIdTracker || 'default';
+          try {
+            const res = await fetch(`/api/battle?quizId=${targetQuizId}&history=true`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data.success && Array.isArray(data.history)) {
+                setBattleHistoryList(data.history);
+                return data.history;
+              }
+            }
+          } catch(e) {}
+          setBattleHistoryList([]);
+          return [];
+        };
+
+        const handleCreateBattleRoom = async () => {
+          const pName = (battlePlayerName && battlePlayerName.trim()) || (currentUser?.name || currentUser?.username || 'Thí sinh 1');
+          localStorage.setItem('dzota_student_name', pName);
+          const pId = currentUser?.id || localStorage.getItem('dzota_battle_pid') || ('p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4));
+          localStorage.setItem('dzota_battle_pid', pId);
+          const pAvatar = currentUser?.avatar || battlePlayerAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(pName)}`;
+
+          // Đồng bộ câu hỏi cho cả phòng để mọi đối thủ giải chung 1 đề
+          let roomQuestions = parsedQuestions;
+          if (parsedQuestions && parsedQuestions.length > 0) {
+            roomQuestions = parsedQuestions.map((slot, sIdx) => {
+              const variants = (slot.variants && slot.variants.length > 0) ? slot.variants : [slot];
+              const picked = variants[Math.floor(Math.random() * variants.length)] || variants[0];
+              return {
+                ...picked,
+                number: slot.title || picked.number || `Câu ${sIdx + 1}`,
+                originalSlotId: slot.id,
+                options: { ...picked.options },
+                images: picked.images ? [...picked.images] : []
+              };
+            });
+          }
+
+          try {
+            setIsCreatingBattle(true);
+            const res = await fetch('/api/battle', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'create',
+                quizId: quizIdTracker || 'default',
+                quizTitle: quizConfig.title || 'Bài Thi',
+                maxPlayers: parseInt(battleMaxPlayers) || 2,
+                hostPlayer: { id: pId, name: pName, avatar: pAvatar },
+                questions: roomQuestions
+              })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+              throw new Error(data.error || "Không thể tạo phòng");
+            }
+
+            setCurrentBattleRoom(data.room);
+            setBattleCountdown(300);
+            setBattleTab('lobby');
+            addToast(`⚔️ Đã tạo phòng thi đấu #${data.room.id}! Mã có hiệu lực trong 5 phút.`, 'success');
+          } catch(err) {
+            addToast("Lỗi tạo phòng: " + err.message, 'error');
+          } finally {
+            setIsCreatingBattle(false);
+          }
+        };
+
+        const handleJoinBattleRoom = async (codeToJoin) => {
+          const code = (codeToJoin || battleRoomIdInput || '').trim();
+          if (!code) {
+            addToast("Vui lòng nhập mã ID phòng thi đấu!", 'warning');
+            return;
+          }
+          const pName = (battlePlayerName && battlePlayerName.trim()) || (currentUser?.name || currentUser?.username || 'Thí sinh 2');
+          localStorage.setItem('dzota_student_name', pName);
+          const pId = currentUser?.id || localStorage.getItem('dzota_battle_pid') || ('p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4));
+          localStorage.setItem('dzota_battle_pid', pId);
+          const pAvatar = currentUser?.avatar || battlePlayerAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(pName)}`;
+
+          try {
+            setIsJoiningBattle(true);
+            const res = await fetch('/api/battle', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'join',
+                roomId: code,
+                player: { id: pId, name: pName, avatar: pAvatar }
+              })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+              throw new Error(data.error || "Không thể vào phòng");
+            }
+
+            setCurrentBattleRoom(data.room);
+            setBattleCountdown(Math.max(0, Math.round((data.room.expiresAt - Date.now()) / 1000)));
+            setBattleTab('lobby');
+            addToast(`✅ Đã tham gia phòng thi đấu #${data.room.id}!`, 'success');
+          } catch(err) {
+            addToast(err.message, 'error');
+          } finally {
+            setIsJoiningBattle(false);
+          }
+        };
+
+        const handleStartBattleMatch = async () => {
+          if (!currentBattleRoom) return;
+          const pId = currentUser?.id || localStorage.getItem('dzota_battle_pid') || '';
+          try {
+            const res = await fetch('/api/battle', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'start',
+                roomId: currentBattleRoom.id,
+                hostPlayerId: pId
+              })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+              throw new Error(data.error || "Không thể bắt đầu");
+            }
+            startBattleQuiz(data.room);
+          } catch(e) {
+            addToast(e.message, 'error');
+          }
+        };
+
+        const startBattleQuiz = (room) => {
+          setIsBattleMode(true);
+          setCurrentBattleRoom(room);
+          setBattleStartTime(Date.now());
+          setShowBattleModal(false);
+
+          let finalQuestions = (room.questions && room.questions.length > 0) ? room.questions : parsedQuestions.map(s => (s.variants && s.variants[0]) ? s.variants[0] : s);
+          
+          setIsWrongReviewMode(false);
+          setFirstAttempts({});
+          setCurrentQuestions(finalQuestions);
+          setAppMode('taking');
+          setTimeLeft(quizConfig.timeLimit * 60);
+          setSubmitted(false);
+          setScore(0);
+          setUserAnswers({});
+          setShowExplanation({});
+          setCurrentQIndex(0);
+          addToast(`⚔️ Đấu trường Battle (Phòng #${room.id}) bắt đầu! Chúc bạn thi tốt!`, 'success');
+        };
+
         // --- 2. LOGIC DASHBOARD (HOME) & NGÂN HÀNG ĐỀ ---
         const handleCreateNew = (type = 'standard') => {
              if (type === 'bank') {
@@ -1690,6 +1963,67 @@
              setParsedQuestions([]); setGeneratedLink(''); setShowReview(false); setAppMode('editor');
         };
 
+        const handleOpenMatrixEditModal = (quiz) => {
+             setMatrixEditQuiz(quiz);
+             const cfg = quiz.config || {};
+             setMatrixEditForm({
+               title: quiz.title || cfg.title || '',
+               category: cfg.category || 'Chung',
+               timeLimit: cfg.timeLimit || 15,
+               password: cfg.password || '',
+               mode: cfg.mode || 'exam',
+               shuffleQuestions: !!cfg.shuffleQuestions,
+               shuffleOptions: !!cfg.shuffleOptions,
+               accessType: cfg.accessType || 'all',
+               allowedGmails: Array.isArray(cfg.allowedGmails) ? cfg.allowedGmails.join(', ') : (cfg.allowedGmails || '')
+             });
+             setShowMatrixEditModal(true);
+        };
+
+        const handleSaveMatrixSettings = async () => {
+             if (!matrixEditQuiz) return;
+             if (!matrixEditForm.title || !matrixEditForm.title.trim()) {
+               addToast("Vui lòng nhập tên đề thi!", 'error');
+               return;
+             }
+             const updatedConfig = {
+               ...matrixEditQuiz.config,
+               title: matrixEditForm.title.trim(),
+               category: matrixEditForm.category,
+               timeLimit: parseInt(matrixEditForm.timeLimit) || 15,
+               password: matrixEditForm.password || '',
+               mode: matrixEditForm.mode,
+               shuffleQuestions: !!matrixEditForm.shuffleQuestions,
+               shuffleOptions: !!matrixEditForm.shuffleOptions,
+               accessType: matrixEditForm.accessType,
+               allowedGmails: matrixEditForm.accessType === 'restricted'
+                 ? matrixEditForm.allowedGmails.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+                 : []
+             };
+             const updatedQuiz = {
+               ...matrixEditQuiz,
+               title: matrixEditForm.title.trim(),
+               config: updatedConfig
+             };
+
+             try {
+               const res = await fetch('/api/quick-quiz', {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify(updatedQuiz)
+               });
+               if (!res.ok) throw new Error("Lỗi khi lưu cài đặt");
+
+               const next = savedQuizzes.map(q => q.id === updatedQuiz.id ? updatedQuiz : q);
+               setSavedQuizzes(next);
+               try { localStorage.setItem('myQuizzes', JSON.stringify(next)); } catch(e) {}
+               setShowMatrixEditModal(false);
+               addToast("✅ Đã cập nhật cài đặt đề thi ma trận thành công!", "success");
+             } catch(e) {
+               addToast("Lỗi cập nhật: " + e.message, "error");
+             }
+        };
+
         const handleEditQuiz = (quiz) => {
              if (!canEditQuiz(quiz)) {
                  addToast("Bạn không có quyền chỉnh sửa đề thi của người khác!", 'error');
@@ -1697,6 +2031,10 @@
              }
              if (quiz.config?.quizType === 'bank') {
                  handleEditBank(quiz);
+                 return;
+             }
+             if (quiz.config?.isMatrixBank || quiz.config?.quizType === 'matrix_bank') {
+                 handleOpenMatrixEditModal(quiz);
                  return;
              }
              setQuizIdTracker(quiz.id);
@@ -2411,52 +2749,11 @@
                 return;
             }
 
-            // Với mỗi câu lớn, RANDOM CỰC KỲ NGẪU NHIÊN chọn đúng 1 câu nhỏ (biến thể)
-            let generatedQuestions = validSlots.map(slot => {
-                const variants = slot.variants;
-                const randomIdx = Math.floor(Math.random() * variants.length);
-                const picked = variants[randomIdx];
-
-                const qClone = {
-                    id: Date.now() + Math.random(),
-                    number: slot.title,
-                    text: picked.text,
-                    options: { ...picked.options },
-                    correct: picked.correct,
-                    images: picked.images ? [...picked.images] : [],
-                    explanation: picked.explanation || ''
-                };
-
-                if (shuffleOptions) {
-                    const optKeys = ['A', 'B', 'C', 'D', 'E', 'F', 'G'].filter(k => qClone.options[k]);
-                    const correctText = qClone.options[qClone.correct];
-                    const texts = optKeys.map(k => qClone.options[k]);
-                    for (let i = texts.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [texts[i], texts[j]] = [texts[j], texts[i]];
-                    }
-                    const newOpts = {};
-                    let newCorrect = qClone.correct;
-                    optKeys.forEach((k, idx) => {
-                        newOpts[k] = texts[idx];
-                        if (texts[idx] === correctText) newCorrect = k;
-                    });
-                    qClone.options = newOpts;
-                    qClone.correct = newCorrect;
-                }
-
-                return qClone;
-            });
-
-            if (shuffleQuestions) {
-                for (let i = generatedQuestions.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [generatedQuestions[i], generatedQuestions[j]] = [generatedQuestions[j], generatedQuestions[i]];
-                }
-            }
-
+            // Đề được tạo từ ma trận ngân hàng đề:
+            // Lưu toàn bộ các câu lớn cùng danh sách câu con trong ngân hàng của câu lớn tương ứng
+            // để MỖI LƯỢT CLICK LÀM BÀI của học sinh sẽ tự động bốc ngẫu nhiên 1 câu biến thể, không ai trùng đề ai!
             const newQuizId = 'quiz_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
-            const finalTitle = (quizTitle && quizTitle.trim()) || `Đề thi từ ${bank.title}`;
+            const finalTitle = (quizTitle && quizTitle.trim()) || `Đề ma trận từ ${bank.title}`;
             const newQuizData = {
                 id: newQuizId,
                 title: finalTitle,
@@ -2466,14 +2763,26 @@
                     timeLimit: parseInt(timeLimit) || 15,
                     password: password || '',
                     mode: mode || 'exam',
-                    quizType: 'standard',
+                    quizType: 'matrix_bank',
+                    isMatrixBank: true,
                     isActive: true,
                     shuffleQuestions: !!shuffleQuestions,
                     shuffleOptions: !!shuffleOptions,
                     sourceBankId: bank.id,
-                    sourceBankTitle: bank.title
+                    sourceBankTitle: bank.title,
+                    totalSlots: validSlots.length
                 },
-                questions: generatedQuestions.map(q => ({ id: 'slot_' + (q.id || Math.random()), variants: [q] })),
+                questions: validSlots.map((slot, index) => ({
+                    id: slot.id || ('slot_' + (index + 1)),
+                    title: slot.title || `Câu ${index + 1}`,
+                    variants: (slot.variants && slot.variants.length > 0) ? slot.variants : [{
+                        text: slot.text || '',
+                        options: slot.options || {},
+                        correct: slot.correct || 'A',
+                        images: slot.images || [],
+                        explanation: slot.explanation || ''
+                    }]
+                })),
                 createdAt: new Date().toISOString()
             };
 
@@ -2499,10 +2808,11 @@
                     id: newQuizId,
                     title: finalTitle,
                     url: testUrl,
-                    questionCount: generatedQuestions.length
+                    questionCount: validSlots.length,
+                    isMatrix: true
                 });
                 setBankGenerateConfig(null);
-                addToast(`🎉 Đã tạo đề thi thành công (${generatedQuestions.length} câu hỏi ngẫu nhiên)!`, "success");
+                addToast(`🎉 Đã tạo đề thi Ma Trận thành công (${validSlots.length} câu lớn, ngẫu nhiên độc lập mỗi lượt làm)!`, "success");
             } catch (err) {
                 addToast("Lỗi khi tạo đề thi: " + err.message, "error");
             } finally {
@@ -3414,6 +3724,31 @@
             setCorrectCount(count); setScore(finalScore);
             setSubmitted(true); setAppMode('result'); addToast("Đã ghi nhận kết quả!", 'success');
 
+            // Cập nhật kết quả lên server Battle nếu đang thi đấu đối kháng
+            if (isBattleMode && currentBattleRoom) {
+                const durationSec = Math.max(1, Math.round((Date.now() - (battleStartTime || Date.now())) / 1000));
+                const pId = currentUser?.id || localStorage.getItem('dzota_battle_pid') || ('p_' + Date.now());
+                fetch('/api/battle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'submit',
+                        roomId: currentBattleRoom.id,
+                        playerId: pId,
+                        result: {
+                            score: finalScore,
+                            correctCount: count,
+                            totalQuestions: uniqueQuestions.length,
+                            durationSeconds: durationSec
+                        }
+                    })
+                }).then(r => r.json()).then(res => {
+                    if (res.success && res.room) {
+                        setCurrentBattleRoom(res.room);
+                    }
+                }).catch(console.error);
+            }
+
             // Cập nhật ngân hàng câu sai chỉ khi làm ở lượt thi chính thức (!isWrongReviewMode)
             const targetQuizId = quizIdTracker || 'default';
             if (!isWrongReviewMode) {
@@ -3709,9 +4044,15 @@
                                     <div key={quiz.id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 relative overflow-hidden flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center cursor-pointer group hover:shadow-md hover:border-gray-200 transition-all" onClick={() => setSelectedItemAction(quiz)}>
                                         <div className="flex-1 min-w-0 w-full">
                                             <div className="flex items-center gap-2 mb-2 flex-wrap">
-                                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md flex items-center gap-1 text-indigo-700 bg-indigo-50">
-                                                    <Icons.FileText size={10}/> Đề thi
-                                                </span>
+                                                {quiz.config?.isMatrixBank || quiz.config?.quizType === 'matrix_bank' ? (
+                                                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-md flex items-center gap-1 text-purple-800 bg-purple-100 border border-purple-200 shadow-xs">
+                                                        <Icons.Zap size={11} className="text-purple-600"/> Ma Trận Ngân Hàng
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md flex items-center gap-1 text-indigo-700 bg-indigo-50">
+                                                        <Icons.FileText size={10}/> Đề thi
+                                                    </span>
+                                                )}
                                                 <span className="text-[10px] font-bold uppercase tracking-wider text-gray-600 bg-gray-100 px-2 py-1 rounded-md">{quiz.config.category || 'Chung'}</span>
                                                 <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md flex items-center gap-1 ${quiz.config.isActive !== false ? 'text-ios-green bg-green-50' : 'text-ios-red bg-red-50'}`}>
                                                     {quiz.config.isActive !== false ? <Icons.Check size={10}/> : <Icons.Lock size={10}/>}
@@ -3724,9 +4065,16 @@
                                                 )}
                                             </div>
                                             <h3 className="text-[18px] font-bold text-gray-900 leading-tight mb-1.5 truncate group-hover:text-ios-blue transition-colors">{quiz.title}</h3>
-                                            <p className="text-[13px] text-gray-500 flex items-center gap-4 font-medium">
+                                            <p className="text-[13px] text-gray-500 flex items-center gap-4 font-medium flex-wrap">
                                                 <span className="flex items-center gap-1.5"><Icons.Clock size={14} className="text-gray-400"/> {quiz.config.timeLimit} phút</span>
-                                                <span className="flex items-center gap-1.5"><Icons.FileText size={14} className="text-gray-400"/> {quiz.questions ? quiz.questions.length : 0} câu hỏi</span>
+                                                {quiz.config?.isMatrixBank || quiz.config?.quizType === 'matrix_bank' ? (
+                                                    <span className="flex items-center gap-1.5 text-purple-700 font-bold"><Icons.Layers size={14} className="text-purple-500"/> {quiz.questions ? quiz.questions.length : 0} câu lớn (random per click)</span>
+                                                ) : (
+                                                    <span className="flex items-center gap-1.5"><Icons.FileText size={14} className="text-gray-400"/> {quiz.questions ? quiz.questions.length : 0} câu hỏi</span>
+                                                )}
+                                                {quiz.config?.sourceBankTitle && (
+                                                    <span className="text-[11px] text-slate-400 italic">Kho: {quiz.config.sourceBankTitle}</span>
+                                                )}
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-2 w-full sm:w-auto justify-end border-t border-gray-100 sm:border-0 pt-3 sm:pt-0 mt-2 sm:mt-0">
@@ -4841,6 +5189,24 @@
                     {quizConfig.mode === 'practice' ? 'BÀI KIỂM TRA ÔN LUYỆN TRỰC TUYẾN' : 'BÀI THI TRẮC NGHIỆM TRỰC TUYẾN'}
                   </p>
 
+                  {/* Matrix Bank Badge in Entry */}
+                  {(quizConfig.isMatrixBank || quizConfig.quizType === 'matrix_bank') && (
+                    <div className="mb-4 p-3 bg-purple-50/90 border border-purple-200/80 rounded-2xl flex items-start gap-2.5 text-left text-xs text-purple-950 shadow-2xs">
+                      <div className="p-1.5 rounded-xl bg-purple-200/70 text-purple-800 flex-shrink-0 mt-0.5">
+                        <Icons.Zap size={14} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-purple-900 uppercase tracking-wide text-[11px]">Đề Ma Trận Ngân Hàng</span>
+                          <span className="text-[10px] font-bold px-1.5 py-0.2 bg-purple-200/60 text-purple-800 rounded-md">Ngẫu nhiên per click</span>
+                        </div>
+                        <p className="text-[11px] text-purple-700/90 mt-0.5 leading-relaxed">
+                          Mỗi lượt click làm bài sẽ tự động bốc ngẫu nhiên 1 câu biến thể từ từng câu lớn. Đảm bảo mỗi học sinh đều có đề thi độc lập không ai trùng ai!
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* 3 Info Cards Grid */}
                   <div className="grid grid-cols-3 gap-2 sm:gap-3.5 mb-5 sm:mb-6 text-center">
                     {/* Card 1: Thời gian */}
@@ -5068,6 +5434,27 @@
                     <span className="tracking-wide text-white drop-shadow-xs">Bắt Đầu Làm Bài</span>
                     <Icons.ArrowRight size={19} className="transition-transform group-hover:translate-x-1.5" />
                   </button>
+
+                  {/* Button Thi Đấu Battle (Dành cho bài thi thử nộp bài) */}
+                  {quizConfig.mode === 'exam' && (
+                    <button
+                      type="button"
+                      onClick={handleOpenBattleModal}
+                      className="relative overflow-hidden w-full mt-2.5 py-3.5 px-6 rounded-2xl sm:rounded-full font-black text-white text-[15px] sm:text-[16px] transition-all active:scale-[0.98] hover:-translate-y-0.5 flex items-center justify-center gap-2.5 shadow-[0_10px_25px_-4px_rgba(239,68,68,0.45)] hover:shadow-[0_14px_30px_rgba(239,68,68,0.55)] cursor-pointer group"
+                      style={{
+                        background: 'linear-gradient(90deg, #FF416C 0%, #FF4B2B 50%, #F37335 100%)'
+                      }}
+                      title="Thi đấu đối kháng trực tiếp, xếp hạng điểm số & thời gian làm bài!"
+                    >
+                      <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 animate-pulse">
+                        <span className="text-base">⚔️</span>
+                      </div>
+                      <span className="tracking-wide text-white drop-shadow-xs">Thi Đấu Battle (Tạo / Nhập ID Phòng)</span>
+                      <span className="text-[11px] bg-black/25 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-amber-200">
+                        Live
+                      </span>
+                    </button>
+                  )}
 
                   {/* Subtle Review Wrong Questions Button */}
                   <button
@@ -5394,6 +5781,122 @@
 
            return (
              <div className="flex flex-col min-h-screen bg-ios-bg p-4 sm:p-6 items-center font-sans pb-10">
+                {/* Khối Bảng Vinh Danh Battle nếu đang trong chế độ thi đấu */}
+                {isBattleMode && currentBattleRoom && (
+                  <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-[32px] p-5 sm:p-7 text-white shadow-2xl max-w-2xl w-full mb-6 border border-indigo-500/30 animate-pop-in">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-4 mb-5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-500 flex items-center justify-center text-2xl shadow-lg shadow-rose-500/30 flex-shrink-0">
+                          ⚔️
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-black text-lg sm:text-xl text-white">Bảng Vinh Danh Thi Đấu Battle</h3>
+                            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-rose-500/30 text-rose-300 border border-rose-500/40">
+                              #{currentBattleRoom.id}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-300 mt-0.5">
+                            Thứ hạng xét theo Điểm số (số câu đúng). Nếu đồng điểm, ưu tiên thời gian làm nhanh hơn!
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 self-end sm:self-center">
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-white/10 text-slate-200">
+                          {currentBattleRoom.players.filter(p => p.submitted).length} / {currentBattleRoom.players.length} đã nộp bài
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Danh sách người chơi xếp hạng */}
+                    <div className="space-y-2.5">
+                      {currentBattleRoom.players.map((player, pIdx) => {
+                        const isWinner = pIdx === 0 && player.submitted;
+                        const isSecond = pIdx === 1 && player.submitted;
+                        const isThird = pIdx === 2 && player.submitted;
+
+                        return (
+                          <div
+                            key={player.id}
+                            className={`flex items-center justify-between p-3.5 sm:p-4 rounded-2xl transition-all ${
+                              isWinner
+                                ? 'bg-gradient-to-r from-amber-500/25 via-yellow-500/15 to-amber-500/10 border-2 border-amber-400/60 shadow-lg shadow-amber-500/20'
+                                : player.submitted
+                                ? 'bg-white/5 border border-white/10'
+                                : 'bg-white/[0.02] border border-dashed border-white/10 opacity-70'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              {/* Rank Medal */}
+                              <div className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-base flex-shrink-0">
+                                {isWinner ? '🥇' : isSecond ? '🥈' : isThird ? '🥉' : `#${pIdx + 1}`}
+                              </div>
+
+                              {/* Avatar */}
+                              <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-700 flex items-center justify-center flex-shrink-0 border-2 border-white/20">
+                                {player.avatar ? (
+                                  <img src={player.avatar} alt={player.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="font-bold text-white text-sm">{(player.name || 'P')[0].toUpperCase()}</span>
+                                )}
+                              </div>
+
+                              {/* Info */}
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-bold text-sm text-white truncate">{player.name}</span>
+                                  {player.isHost && (
+                                    <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-indigo-500/40 text-indigo-200 font-bold">
+                                      Chủ phòng
+                                    </span>
+                                  )}
+                                  {isWinner && (
+                                    <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-amber-400 text-slate-900 font-black">
+                                      👑 Quán Quân
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
+                                  {player.submitted ? (
+                                    <>
+                                      <span>Đúng: <strong className="text-emerald-400">{player.correctCount}</strong>/{player.totalQuestions || '?'} câu</span>
+                                      <span>•</span>
+                                      <span>Thời gian: <strong className="text-sky-300">{formatBattleTime(player.durationSeconds || 0)}</strong></span>
+                                    </>
+                                  ) : (
+                                    <span className="text-amber-300 animate-pulse flex items-center gap-1 font-medium">
+                                      <span>⏳</span> Đang làm bài...
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Score */}
+                            <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                              {player.submitted ? (
+                                <div className="text-right">
+                                  <div className="text-lg sm:text-2xl font-black text-amber-300 leading-none">
+                                    {player.score} <span className="text-xs text-slate-400 font-normal">đ</span>
+                                  </div>
+                                  <div className="text-[10px] text-emerald-400 font-bold uppercase mt-1">Đã nộp bài</div>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-slate-400 italic">Chưa nộp</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-white/10 text-center text-xs text-slate-400 flex items-center justify-center gap-1.5">
+                      <Icons.Clock size={13} className="text-slate-400 flex-shrink-0" />
+                      <span>Kết quả thi đấu này được lưu trữ trong <strong>2 tiếng</strong> và tự động xóa sau 2 tiếng.</span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="bg-white p-8 rounded-[32px] shadow-ios max-w-2xl w-full text-center animate-slide-up mt-4 mb-6">
                    <h2 className="text-[20px] font-bold text-gray-400 uppercase tracking-widest mb-4">Hoàn Thành</h2>
                    <div className="text-[80px] font-extrabold text-black leading-none mb-2 tracking-tight">{score}<span className="text-[32px] text-gray-300">/10</span></div>
@@ -5475,6 +5978,661 @@
            );
         };
 
+        const renderMatrixEditModal = () => {
+          if (!matrixEditQuiz) return null;
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowMatrixEditModal(false)}>
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden animate-slide-up border border-slate-200" onClick={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className="px-6 py-4 bg-gradient-to-r from-purple-600 via-indigo-600 to-indigo-700 text-white flex items-center justify-between flex-shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner">
+                      <Icons.Zap size={22} />
+                    </div>
+                    <div>
+                      <h3 className="font-extrabold text-base sm:text-lg text-white flex items-center gap-2">
+                        Cài Đặt Đề Ma Trận Ngân Hàng
+                      </h3>
+                      <p className="text-xs text-purple-200">
+                        Cấu hình bài thi • Không làm thay đổi nội dung câu hỏi gốc trong ngân hàng
+                      </p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowMatrixEditModal(false)} className="p-2 text-white/70 hover:text-white rounded-xl hover:bg-white/10 transition cursor-pointer">
+                    <Icons.X size={20} />
+                  </button>
+                </div>
+
+                {/* Banner Info */}
+                <div className="px-6 py-3 bg-purple-50 border-b border-purple-100 flex items-start gap-2.5 text-xs text-purple-900">
+                  <Icons.Sparkles size={16} className="text-purple-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold">Đề thi sinh từ Ma Trận:</span> Mỗi lượt click làm bài từ học sinh sẽ tự động bốc ngẫu nhiên 1 biến thể trong từng nhóm câu ngân hàng, đảm bảo không ai trùng đề ai. Các câu hỏi được quản lý tại Ngân hàng đề nguồn.
+                  </div>
+                </div>
+
+                {/* Body Form */}
+                <div className="p-6 overflow-y-auto space-y-4 flex-1 text-slate-800 text-sm">
+                  {/* Tên đề */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                      Tên Đề Thi <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={matrixEditForm.title}
+                      onChange={e => setMatrixEditForm(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="Ví dụ: Đề Kiểm Tra Giữa Kỳ..."
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 font-semibold focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 outline-none transition"
+                    />
+                  </div>
+
+                  {/* Thể loại & Môn */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Danh Mục / Môn Học
+                      </label>
+                      <input
+                        type="text"
+                        value={matrixEditForm.category}
+                        onChange={e => setMatrixEditForm(prev => ({ ...prev, category: e.target.value }))}
+                        placeholder="Ví dụ: Sinh Lý Học, Nội Khoa..."
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 outline-none transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Thời Gian Làm Bài (Phút)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="300"
+                        value={matrixEditForm.timeLimit}
+                        onChange={e => setMatrixEditForm(prev => ({ ...prev, timeLimit: e.target.value }))}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 outline-none transition"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Chế độ làm bài & Mật khẩu */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Thể Loại Làm Bài
+                      </label>
+                      <select
+                        value={matrixEditForm.mode}
+                        onChange={e => setMatrixEditForm(prev => ({ ...prev, mode: e.target.value }))}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white font-medium focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 outline-none transition"
+                      >
+                        <option value="exam">Thi Thử (Nộp bài tính điểm)</option>
+                        <option value="practice">Luyện Tập (Xem đáp án ngay)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Mật Khẩu Vào Đề (Nếu có)
+                      </label>
+                      <input
+                        type="text"
+                        value={matrixEditForm.password}
+                        onChange={e => setMatrixEditForm(prev => ({ ...prev, password: e.target.value }))}
+                        placeholder="Để trống nếu tự do"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 outline-none transition"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Hoán đổi / Tráo */}
+                  <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5">
+                    <span className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Hoán Đổi & Tráo Đề
+                    </span>
+                    <label className="flex items-center gap-3 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={matrixEditForm.shuffleQuestions}
+                        onChange={e => setMatrixEditForm(prev => ({ ...prev, shuffleQuestions: e.target.checked }))}
+                        className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500"
+                      />
+                      <span className="text-xs text-slate-700 font-medium">Hoán đổi ngẫu nhiên thứ tự các câu hỏi</span>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={matrixEditForm.shuffleOptions}
+                        onChange={e => setMatrixEditForm(prev => ({ ...prev, shuffleOptions: e.target.checked }))}
+                        className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500"
+                      />
+                      <span className="text-xs text-slate-700 font-medium">Hoán đổi ngẫu nhiên thứ tự các đáp án A/B/C/D</span>
+                    </label>
+                  </div>
+
+                  {/* Giới hạn người làm */}
+                  <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5">
+                    <span className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Giới Hạn Người Làm (Quyền Truy Cập)
+                    </span>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="radio"
+                          name="matrixAccess"
+                          checked={matrixEditForm.accessType === 'all'}
+                          onChange={() => setMatrixEditForm(prev => ({ ...prev, accessType: 'all' }))}
+                          className="text-purple-600"
+                        />
+                        <span className="text-xs font-medium text-slate-700">Công khai cho tất cả</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="radio"
+                          name="matrixAccess"
+                          checked={matrixEditForm.accessType === 'restricted'}
+                          onChange={() => setMatrixEditForm(prev => ({ ...prev, accessType: 'restricted' }))}
+                          className="text-purple-600"
+                        />
+                        <span className="text-xs font-medium text-slate-700">Giới hạn theo Gmail</span>
+                      </label>
+                    </div>
+                    {matrixEditForm.accessType === 'restricted' && (
+                      <textarea
+                        rows="2"
+                        value={matrixEditForm.allowedGmails}
+                        onChange={e => setMatrixEditForm(prev => ({ ...prev, allowedGmails: e.target.value }))}
+                        placeholder="Nhập danh sách Gmail được phép làm, ngăn cách bằng dấu phẩy (,)..."
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 outline-none transition"
+                      />
+                    )}
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowMatrixEditModal(false)}
+                    className="px-4 py-2.5 rounded-xl text-slate-600 hover:bg-slate-200 font-bold text-xs sm:text-sm transition cursor-pointer"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveMatrixSettings}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-purple-600/20 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                  >
+                    <Icons.Check size={16} />
+                    <span>Lưu Cài Đặt Đề Ma Trận</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        const renderBattleModal = () => {
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/70 backdrop-blur-md animate-fade-in" onClick={() => setShowBattleModal(false)}>
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden animate-slide-up border border-slate-200" onClick={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-rose-950 to-indigo-950 text-white flex items-center justify-between flex-shrink-0 border-b border-white/10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-600 flex items-center justify-center text-2xl shadow-lg shadow-rose-600/30 flex-shrink-0">
+                      ⚔️
+                    </div>
+                    <div>
+                      <h3 className="font-black text-base sm:text-lg text-white flex items-center gap-2">
+                        Đấu Trường Thi Đấu (Battle Mode)
+                      </h3>
+                      <p className="text-xs text-rose-200">
+                        Thi đấu trực tiếp 1v1 hoặc nhiều người • Xếp hạng theo điểm & tốc độ
+                      </p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowBattleModal(false)} className="p-2 text-white/70 hover:text-white rounded-xl hover:bg-white/10 transition cursor-pointer">
+                    <Icons.X size={20} />
+                  </button>
+                </div>
+
+                {/* Tabs Navigation */}
+                <div className="px-6 pt-3 pb-2 bg-slate-50 border-b border-slate-200 flex gap-2 flex-wrap flex-shrink-0">
+                  <button
+                    onClick={() => setBattleTab('create')}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${battleTab === 'create' ? 'bg-rose-600 text-white shadow-md shadow-rose-600/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'}`}
+                  >
+                    ➕ Tạo Phòng Đấu
+                  </button>
+                  <button
+                    onClick={() => setBattleTab('join')}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${battleTab === 'join' ? 'bg-rose-600 text-white shadow-md shadow-rose-600/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'}`}
+                  >
+                    🔑 Nhập ID Phòng
+                  </button>
+                  {currentBattleRoom && (
+                    <button
+                      onClick={() => setBattleTab('lobby')}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${battleTab === 'lobby' ? 'bg-amber-600 text-white shadow-md shadow-amber-600/20' : 'bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100'}`}
+                    >
+                      👥 Phòng #{currentBattleRoom.id}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { setBattleTab('history'); setSelectedHistoryRoom(null); fetchBattleHistory(); }}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ml-auto ${battleTab === 'history' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'}`}
+                  >
+                    📜 Lịch Sử Đấu (2h)
+                  </button>
+                </div>
+
+                {/* Tab Content */}
+                <div className="p-6 overflow-y-auto space-y-4 flex-1 text-slate-800 text-sm">
+                  {/* TAB CREATE */}
+                  {battleTab === 'create' && (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                          Tên Thí Sinh Của Bạn
+                        </label>
+                        <input
+                          type="text"
+                          value={battlePlayerName}
+                          onChange={e => setBattlePlayerName(e.target.value)}
+                          placeholder={currentUser?.name || currentUser?.username || 'Nhập họ tên của bạn...'}
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-300 font-semibold focus:ring-2 focus:ring-rose-500/20 focus:border-rose-600 outline-none transition"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                          Số Lượng Thí Sinh Tối Đa Trong Phòng
+                        </label>
+                        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                          {[2, 3, 4, 5, 8, 10].map(num => (
+                            <button
+                              key={num}
+                              type="button"
+                              onClick={() => setBattleMaxPlayers(num)}
+                              className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${battleMaxPlayers === num ? 'bg-rose-600 text-white border-rose-600 shadow-md shadow-rose-600/20' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'}`}
+                            >
+                              {num === 2 ? '2 (1v1 Solo)' : `${num} người`}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Quy định Battle */}
+                      <div className="p-4 bg-gradient-to-br from-amber-50 to-rose-50 rounded-2xl border border-amber-200/80 text-xs text-slate-700 space-y-2">
+                        <div className="font-bold text-amber-900 flex items-center gap-1.5 text-sm">
+                          <span>⚡ Quy định phòng thi đấu:</span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="text-rose-600 font-bold">•</span>
+                          <span><strong className="text-slate-900">Thời hạn mã phòng:</strong> Mã phòng có hiệu lực trong vòng <strong className="text-rose-600">5 phút</strong> kể từ khi tạo. Hết 5 phút phòng sẽ tự động hủy.</span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="text-rose-600 font-bold">•</span>
+                          <span><strong className="text-slate-900">Xét thứ hạng:</strong> Tính theo số câu trả lời đúng. Nếu đồng điểm, thí sinh nộp bài sớm hơn (thời gian làm ít hơn) sẽ xếp hạng cao hơn.</span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="text-rose-600 font-bold">•</span>
+                          <span><strong className="text-slate-900">Vinh danh & Lưu trữ:</strong> Ai nộp bài trước sẽ hiện kết quả trước. Bảng vinh danh tồn tại trong <strong className="text-indigo-600">2 tiếng</strong> rồi tự động xóa sạch.</span>
+                        </div>
+                      </div>
+
+                      <div className="pt-2">
+                        <button
+                          type="button"
+                          onClick={handleCreateBattleRoom}
+                          disabled={isCreatingBattle}
+                          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 via-red-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 text-white font-black text-sm shadow-xl shadow-rose-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
+                        >
+                          {isCreatingBattle ? (
+                            <>
+                              <div className="spinner border-2 border-white border-t-transparent w-4 h-4"></div>
+                              <span>Đang tạo phòng đấu...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>⚔️ Tạo Phòng Thi Đấu Ngay</span>
+                              <Icons.ArrowRight size={18} />
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TAB JOIN */}
+                  {battleTab === 'join' && (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                          Tên Thí Sinh Của Bạn
+                        </label>
+                        <input
+                          type="text"
+                          value={battlePlayerName}
+                          onChange={e => setBattlePlayerName(e.target.value)}
+                          placeholder={currentUser?.name || currentUser?.username || 'Nhập họ tên của bạn...'}
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-300 font-semibold focus:ring-2 focus:ring-rose-500/20 focus:border-rose-600 outline-none transition"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                          Mã ID Phòng Thi Đấu (6 Số)
+                        </label>
+                        <input
+                          type="text"
+                          maxLength="8"
+                          value={battleRoomIdInput}
+                          onChange={e => setBattleRoomIdInput(e.target.value.trim())}
+                          placeholder="Ví dụ: 829104"
+                          className="w-full px-4 py-3 rounded-xl border border-slate-300 font-mono text-center text-xl font-bold tracking-widest uppercase focus:ring-2 focus:ring-rose-500/20 focus:border-rose-600 outline-none transition"
+                        />
+                      </div>
+
+                      <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-600">
+                        💡 <span className="font-medium">Nhập mã phòng 6 chữ số do Chủ phòng chia sẻ để cùng tranh tài trực tiếp. Mã chỉ có hiệu lực trong 5 phút!</span>
+                      </div>
+
+                      <div className="pt-2">
+                        <button
+                          type="button"
+                          onClick={() => handleJoinBattleRoom(battleRoomIdInput)}
+                          disabled={isJoiningBattle || !battleRoomIdInput.trim()}
+                          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-700 hover:to-indigo-700 text-white font-black text-sm shadow-xl shadow-rose-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
+                        >
+                          {isJoiningBattle ? (
+                            <>
+                              <div className="spinner border-2 border-white border-t-transparent w-4 h-4"></div>
+                              <span>Đang vào phòng...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>🚀 Vào Phòng Thi Đấu</span>
+                              <Icons.ArrowRight size={18} />
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TAB LOBBY */}
+                  {battleTab === 'lobby' && (
+                    currentBattleRoom ? (
+                      <div className="space-y-4">
+                        {/* Room Code Card */}
+                        <div className="bg-gradient-to-br from-slate-900 to-indigo-950 p-5 rounded-2xl text-white text-center shadow-lg relative overflow-hidden">
+                          <div className="absolute top-2 right-3 text-[11px] font-mono px-2 py-0.5 rounded-md bg-white/10 text-amber-300 flex items-center gap-1">
+                            <Icons.Clock size={12}/>
+                            <span>Hết hạn: {formatBattleTime(battleCountdown)}</span>
+                          </div>
+
+                          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Mã Phòng Thi Đấu</p>
+                          <div className="text-3xl sm:text-4xl font-mono font-black text-amber-400 tracking-wider">
+                            #{currentBattleRoom.id}
+                          </div>
+
+                          <div className="flex items-center justify-center gap-2 mt-3">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(currentBattleRoom.id);
+                                addToast("Đã sao chép mã phòng #" + currentBattleRoom.id, "success");
+                              }}
+                              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Icons.Copy size={13} />
+                              <span>Sao chép mã</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const shareUrl = `${window.location.origin}${window.location.pathname}?id=${quizIdTracker || ''}&battle=${currentBattleRoom.id}`;
+                                navigator.clipboard.writeText(shareUrl);
+                                addToast("Đã sao chép link tham gia thi đấu!", "success");
+                              }}
+                              className="px-3 py-1.5 rounded-xl bg-rose-500/30 hover:bg-rose-500/50 text-xs font-bold text-rose-200 transition flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Icons.Share2 size={13} />
+                              <span>Sao chép link mời</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Player List */}
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                              Danh Sách Thí Sinh ({currentBattleRoom.players.length}/{currentBattleRoom.maxPlayers})
+                            </span>
+                            <span className="text-xs text-slate-500 font-medium">Tự động đồng bộ mỗi 2 giây</span>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            {currentBattleRoom.players.map((p, idx) => (
+                              <div key={p.id || idx} className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center gap-3">
+                                <img
+                                  src={p.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(p.name)}`}
+                                  alt={p.name}
+                                  className="w-10 h-10 rounded-xl bg-white border border-slate-200 object-cover flex-shrink-0"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-bold text-slate-900 text-sm truncate flex items-center gap-1.5">
+                                    <span>{p.name}</span>
+                                    {p.isHost && (
+                                      <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.2 rounded-md flex-shrink-0">
+                                        👑 Chủ phòng
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <span>Đã sẵn sàng</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCurrentBattleRoom(null);
+                              setIsBattleMode(false);
+                              setBattleTab('create');
+                              addToast("Đã rời phòng thi đấu", "info");
+                            }}
+                            className="w-full sm:w-auto px-4 py-3 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 font-bold text-xs transition cursor-pointer"
+                          >
+                            Rời phòng
+                          </button>
+
+                          {(() => {
+                            const pId = currentUser?.id || localStorage.getItem('dzota_battle_pid') || '';
+                            const isHost = currentBattleRoom.players.some(p => p.id === pId && p.isHost);
+                            if (isHost) {
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={handleStartBattleMatch}
+                                  className="flex-1 w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-sm shadow-xl shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                                >
+                                  <Icons.Play size={18} />
+                                  <span>BẮT ĐẦU THI ĐẤU NGAY ({currentBattleRoom.players.length} người)</span>
+                                </button>
+                              );
+                            } else {
+                              return (
+                                <div className="flex-1 w-full py-3 px-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold text-center flex items-center justify-center gap-2">
+                                  <div className="spinner border-2 border-amber-600 border-t-transparent w-3.5 h-3.5"></div>
+                                  <span>Đang chờ Chủ phòng bắt đầu trận đấu... Chuẩn bị sẵn sàng!</span>
+                                </div>
+                              );
+                            }
+                          })()}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-10 text-slate-400">
+                        <div className="text-4xl mb-2">⚔️</div>
+                        <p className="font-bold text-slate-700">Chưa tham gia phòng nào</p>
+                        <p className="text-xs text-slate-500 mt-1">Hãy tạo phòng mới hoặc nhập mã ID phòng để vào đấu trường.</p>
+                      </div>
+                    )
+                  )}
+
+                  {/* TAB HISTORY */}
+                  {battleTab === 'history' && (
+                    selectedHistoryRoom ? (
+                      <div className="space-y-4">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedHistoryRoom(null)}
+                          className="text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Icons.ArrowLeft size={14} />
+                          <span>Quay lại danh sách trận đấu</span>
+                        </button>
+
+                        <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-5 rounded-2xl text-white shadow-xl">
+                          <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+                            <div>
+                              <h4 className="font-black text-lg text-amber-300">Kết Quả Trận Đấu #{selectedHistoryRoom.id}</h4>
+                              <p className="text-xs text-slate-300">{selectedHistoryRoom.quizTitle} • {new Date(selectedHistoryRoom.completedAt || selectedHistoryRoom.createdAt).toLocaleTimeString('vi-VN')}</p>
+                            </div>
+                            <span className="text-[11px] font-medium bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2.5 py-1 rounded-full">
+                              Tồn tại trong 2 tiếng
+                            </span>
+                          </div>
+
+                          {/* Podium Top 3 */}
+                          {(() => {
+                            const ranked = [...(selectedHistoryRoom.players || [])]
+                              .filter(p => p.submitted)
+                              .sort((a, b) => {
+                                if ((b.score ?? 0) !== (a.score ?? 0)) return (b.score ?? 0) - (a.score ?? 0);
+                                return (a.durationSeconds ?? 999999) - (b.durationSeconds ?? 999999);
+                              });
+
+                            return (
+                              <div className="space-y-2">
+                                {ranked.map((p, idx) => {
+                                  const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
+                                  return (
+                                    <div key={p.id || idx} className={`p-3 rounded-xl border flex items-center justify-between gap-3 ${idx === 0 ? 'bg-amber-500/20 border-amber-500/40 text-amber-200' : 'bg-white/5 border-white/10 text-white'}`}>
+                                      <div className="flex items-center gap-3">
+                                        <span className="font-black text-lg w-7 text-center">{medal}</span>
+                                        <img
+                                          src={p.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(p.name)}`}
+                                          alt={p.name}
+                                          className="w-9 h-9 rounded-xl bg-slate-800 border border-white/10"
+                                        />
+                                        <div>
+                                          <div className="font-bold text-sm text-white">{p.name}</div>
+                                          <div className="text-[11px] text-slate-400">
+                                            Thời gian: {p.durationSeconds ? `${Math.floor(p.durationSeconds / 60)}p ${p.durationSeconds % 60}s` : 'Chưa ghi nhận'}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div className="text-right">
+                                        <div className="text-base font-black text-amber-400">{p.score !== undefined ? `${p.score}đ` : '--'}</div>
+                                        <div className="text-[11px] text-slate-300">{p.correctCount || 0}/{p.totalQuestions || 0} đúng</div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                            Trận Đấu Đã Kết Thúc (Lưu Trong 2 Giờ)
+                          </span>
+                          <button
+                            type="button"
+                            onClick={fetchBattleHistory}
+                            className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer"
+                          >
+                            Tải lại
+                          </button>
+                        </div>
+
+                        {battleHistoryList.length === 0 ? (
+                          <div className="text-center py-12 px-4 rounded-2xl bg-slate-50 border border-slate-200">
+                            <div className="text-4xl mb-2 text-slate-300">📭</div>
+                            <p className="font-bold text-slate-700 text-sm">Chưa có trận đấu nào (nodata)</p>
+                            <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                              Các kết quả thi đấu battle sẽ tự động lưu giữ trong 2 tiếng và tự động xóa sau đó để bảo đảm tính mới mẻ cho đấu trường.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2.5">
+                            {battleHistoryList.map(item => (
+                              <div
+                                key={item.id}
+                                onClick={() => setSelectedHistoryRoom(item)}
+                                className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-all cursor-pointer flex items-center justify-between gap-3 group"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-rose-600 flex items-center justify-center text-white font-black text-sm shadow-md">
+                                    ⚔️
+                                  </div>
+                                  <div>
+                                    <div className="font-bold text-slate-900 text-sm group-hover:text-rose-600 transition">
+                                      Phòng #{item.id} • {item.quizTitle}
+                                    </div>
+                                    <div className="text-xs text-slate-500">
+                                      {item.players?.length || 0} người tham gia • {new Date(item.completedAt || item.createdAt).toLocaleTimeString('vi-VN')}
+                                    </div>
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  className="px-3 py-1.5 rounded-xl bg-white group-hover:bg-rose-600 group-hover:text-white text-slate-700 border border-slate-200 group-hover:border-rose-600 font-bold text-xs transition"
+                                >
+                                  Xem Bảng Vàng 🏆
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  )}
+                </div>
+
+                {/* Modal Footer */}
+                <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 flex-shrink-0">
+                  <div className="flex items-center gap-1.5 text-slate-400">
+                    <span>⚔️ Dzota Battle System</span>
+                    <span>•</span>
+                    <span>Hiệu lực 5 phút / Lưu kết quả 2 tiếng</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowBattleModal(false)}
+                    className="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold transition cursor-pointer"
+                  >
+                    Đóng
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
         if (isLoading) return <div className="flex h-screen items-center justify-center bg-ios-bg"><div className="spinner border-ios-blue border-t-transparent w-8 h-8"></div></div>;
 
         return (
@@ -5534,13 +6692,22 @@
                         <div className="p-6 border-b border-gray-100">
                             <div className="flex items-center gap-3 mb-2">
                                 <span className="text-[11px] font-bold uppercase tracking-wide text-ios-blue bg-blue-50 px-2 py-0.5 rounded-md">{selectedItemAction.config.category || 'Chung'}</span>
-                                <span className={`text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md flex items-center gap-1 ${selectedItemAction.config.quizType === 'bank' ? 'text-emerald-700 bg-emerald-50' : 'text-indigo-700 bg-indigo-50'}`}>
-                                    {selectedItemAction.config.quizType === 'bank' ? <Icons.Folder size={10}/> : <Icons.FileText size={10}/>}
-                                    {selectedItemAction.config.quizType === 'bank' ? 'Ngân hàng' : 'Đề thi'}
-                                </span>
+                                {selectedItemAction.config.quizType === 'bank' ? (
+                                    <span className="text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md flex items-center gap-1 text-emerald-700 bg-emerald-50">
+                                        <Icons.Folder size={10}/> Ngân hàng
+                                    </span>
+                                ) : (selectedItemAction.config.isMatrixBank || selectedItemAction.config.quizType === 'matrix_bank') ? (
+                                    <span className="text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md flex items-center gap-1 text-purple-700 bg-purple-100 border border-purple-200">
+                                        <Icons.Zap size={10}/> Ma Trận Ngân Hàng
+                                    </span>
+                                ) : (
+                                    <span className="text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md flex items-center gap-1 text-indigo-700 bg-indigo-50">
+                                        <Icons.FileText size={10}/> Đề thi
+                                    </span>
+                                )}
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 leading-tight">{selectedItemAction.title}</h3>
-                            <p className="text-sm text-gray-500 mt-1">{selectedItemAction.questions?.length || 0} {selectedItemAction.config.quizType === 'bank' ? 'nhóm câu hỏi' : 'câu hỏi'}</p>
+                            <p className="text-sm text-gray-500 mt-1">{selectedItemAction.questions?.length || 0} {selectedItemAction.config.quizType === 'bank' ? 'nhóm câu hỏi' : (selectedItemAction.config.isMatrixBank || selectedItemAction.config.quizType === 'matrix_bank') ? 'câu lớn (random per click)' : 'câu hỏi'}</p>
                         </div>
                         
                         {(() => {
@@ -5556,7 +6723,11 @@
 
                                     {isOwnerOrAdmin && selectedItemAction.config.quizType !== 'bank' && (
                                         <button onClick={() => { handleEditQuiz(selectedItemAction); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
-                                            <div className="text-ios-blue bg-blue-50 p-2 rounded-lg"><Icons.Edit3 size={18}/></div> Chỉnh sửa nội dung
+                                            <div className="text-ios-blue bg-blue-50 p-2 rounded-lg"><Icons.Edit3 size={18}/></div>
+                                            {selectedItemAction.config.isMatrixBank || selectedItemAction.config.quizType === 'matrix_bank'
+                                                ? 'Cài đặt đề ma trận (thời gian, tên, mật khẩu...)'
+                                                : 'Chỉnh sửa nội dung'
+                                            }
                                         </button>
                                     )}
                                     
@@ -7139,6 +8310,9 @@
                 </div>
               </div>
             )}
+
+            {showMatrixEditModal && renderMatrixEditModal()}
+            {showBattleModal && renderBattleModal()}
 
             {appMode === 'home' && renderHome()}
             {appMode === 'bank_builder' && renderBankBuilder()}
