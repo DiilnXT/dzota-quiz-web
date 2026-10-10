@@ -5792,6 +5792,14 @@
                      @media (min-width: 1024px) {
                        ${activeBgDesktop ? `.dzota-active-bg { background-image: url('${activeBgDesktop}') !important; }` : ''}
                      }
+                     .dzota-exam-main {
+                       padding-top: calc(env(safe-area-inset-top, 0px) + 72px) !important;
+                     }
+                     @media (min-width: 640px) {
+                       .dzota-exam-main {
+                         padding-top: calc(env(safe-area-inset-top, 0px) + 84px) !important;
+                       }
+                     }
                    `}</style>
                    {/* Subtle ambient overlay */}
                    {activeBgEnabled && <div className="absolute inset-0 bg-slate-900/[0.03] pointer-events-none" />}
@@ -5832,7 +5840,7 @@
                          <button onClick={handleSubmitExam} className="bg-[#1a73e8] hover:bg-[#1557b0] text-white px-3 sm:px-4 py-1.5 rounded-full font-bold text-xs shadow-xs active:scale-95 transition-all cursor-pointer whitespace-nowrap">Nộp Bài</button>
                       </div>
                    </header>
-                   <main className="flex-1 w-full max-w-3xl mx-auto p-3 sm:p-6 pt-18 sm:pt-22 relative z-10">
+                   <main className="dzota-exam-main flex-1 w-full max-w-3xl mx-auto p-3 sm:p-6 pt-20 sm:pt-24 relative z-10">
                      {/* Card Tên Bài Thi: Hiển thị đầy đủ, trang nhã, không đè vướng header */}
                      <div className="mb-3.5 sm:mb-5 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-[0_4px_20px_rgba(15,35,75,0.06)] animate-fade-in">
                        <div className="flex items-start gap-3 sm:gap-3.5">
