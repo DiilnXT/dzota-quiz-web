@@ -256,17 +256,36 @@ export const startBattleRoom = async (
 
 export const submitBattleResult = async (
   roomId: string,
-  playerId?: string,
-  playerName?: string,
-  result?: {
+  arg2?: any,
+  arg3?: any,
+  arg4?: any
+): Promise<{ success: boolean; error?: string; room?: BattleRoom }> => {
+  const room = await getBattleRoom(roomId)
+  if (!room) return { success: false, error: 'Phòng không tồn tại hoặc đã hết hạn!' }
+
+  let playerId: string | undefined
+  let playerName: string | undefined
+  let result: {
     score: number
     correctCount: number
     totalQuestions: number
     durationSeconds: number
+  } | undefined
+
+  if (typeof arg2 === 'object' && arg2 !== null && arg2.result) {
+    playerId = arg2.playerId
+    playerName = arg2.playerName
+    result = arg2.result
+  } else if (typeof arg3 === 'object' && arg3 !== null && (arg3.score !== undefined || arg3.correctCount !== undefined)) {
+    playerId = typeof arg2 === 'string' ? arg2 : undefined
+    playerName = undefined
+    result = arg3
+  } else {
+    playerId = typeof arg2 === 'string' ? arg2 : undefined
+    playerName = typeof arg3 === 'string' ? arg3 : undefined
+    result = arg4 || arg3
   }
-): Promise<{ success: boolean; error?: string; room?: BattleRoom }> => {
-  const room = await getBattleRoom(roomId)
-  if (!room) return { success: false, error: 'Phòng không tồn tại hoặc đã hết hạn!' }
+
   if (!result) return { success: false, error: 'Thiếu kết quả làm bài!' }
 
   // 1. Try finding by playerId

@@ -73,11 +73,11 @@ export async function POST(request: Request) {
     }
 
     if (action === 'submit') {
-      const { roomId, playerId, result } = body
-      if (!roomId || !playerId || !result) {
+      const { roomId, playerId, playerName, result } = body
+      if (!roomId || !result) {
         return NextResponse.json({ error: 'Thiếu thông tin nộp bài' }, { status: 400 })
       }
-      const submitRes = await submitBattleResult(roomId, playerId, result)
+      const submitRes = await submitBattleResult(roomId, playerId, playerName, result)
       if (!submitRes.success) {
         return NextResponse.json({ success: false, error: submitRes.error }, { status: 400 })
       }

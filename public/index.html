@@ -92,11 +92,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
       :root { -webkit-tap-highlight-color: transparent; }
+      * { touch-action: manipulation; }
       body { 
         font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
         background-color: #F2F2F7;
         color: #1e293b;
         overscroll-behavior-y: none;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
+      button, a, input, [role="button"], label {
+        touch-action: manipulation;
+        -webkit-touch-callout: none;
+      }
+      .overflow-y-auto, .overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
       }
       .mode-simple { background-color: #FFFFFF !important; }
       
@@ -1773,8 +1784,31 @@
                 if (res.ok) {
                   const data = await res.json();
                   if (data.success && data.room) {
-                    setCurrentBattleRoom(data.room);
-                    saveLocalBattleHistory(data.room);
+                    setCurrentBattleRoom(prevRoom => {
+                      if (!prevRoom) return data.room;
+                      // Giữ lại kết quả đã nộp nếu local đã có kết quả
+                      const mergedPlayers = (data.room.players || []).map(srvP => {
+                        const localP = (prevRoom.players || []).find(p => p.id === srvP.id || (p.name && srvP.name && p.name.trim().toLowerCase() === srvP.name.trim().toLowerCase()));
+                        if (localP && localP.submitted && !srvP.submitted) {
+                          return { ...srvP, ...localP };
+                        }
+                        return srvP;
+                      });
+                      mergedPlayers.sort((a, b) => {
+                        if (!a.submitted && !b.submitted) return 0;
+                        if (!a.submitted) return 1;
+                        if (!b.submitted) return -1;
+                        if ((b.score ?? 0) !== (a.score ?? 0)) return (b.score ?? 0) - (a.score ?? 0);
+                        return (a.durationSeconds ?? 0) - (b.durationSeconds ?? 0);
+                      });
+                      const mergedRoom = {
+                        ...data.room,
+                        players: mergedPlayers,
+                        completedAt: data.room.completedAt || prevRoom.completedAt || Date.now()
+                      };
+                      saveLocalBattleHistory(mergedRoom);
+                      return mergedRoom;
+                    });
                   }
                 }
               } catch(e) {}
@@ -3794,30 +3828,40 @@
                 const pId = currentUser?.id || localStorage.getItem('dzota_battle_pid') || ('p_' + Date.now());
 
                 // Cập nhật ngay trong local currentBattleRoom để UI phản hồi tức thì
-                const updatedRoomLocal = { ...currentBattleRoom };
-                if (Array.isArray(updatedRoomLocal.players)) {
-                    let plIndex = updatedRoomLocal.players.findIndex(p => p.id === pId || (p.name && p.name.trim().toLowerCase() === pName.trim().toLowerCase()));
+                if (currentBattleRoom && Array.isArray(currentBattleRoom.players)) {
+                    const clonedPlayers = currentBattleRoom.players.map(p => ({ ...p }));
+                    let plIndex = clonedPlayers.findIndex(p => p.id === pId);
+                    if (plIndex === -1 && pName) {
+                        plIndex = clonedPlayers.findIndex(p => p.name && p.name.trim().toLowerCase() === pName.trim().toLowerCase());
+                    }
                     if (plIndex === -1) {
-                        plIndex = updatedRoomLocal.players.findIndex(p => !p.submitted);
+                        const curName = (currentUser?.name || currentUser?.username || '').trim().toLowerCase();
+                        if (curName) {
+                            plIndex = clonedPlayers.findIndex(p => p.name && p.name.trim().toLowerCase() === curName);
+                        }
                     }
-                    if (plIndex === -1 && updatedRoomLocal.players.length > 0) plIndex = 0;
+                    if (plIndex === -1) {
+                        const isHostPlayer = clonedPlayers.find(p => p.isHost && (p.id === pId || (p.name && p.name.trim().toLowerCase() === pName.trim().toLowerCase())));
+                        if (isHostPlayer) {
+                            plIndex = clonedPlayers.indexOf(isHostPlayer);
+                        }
+                    }
+                    if (plIndex === -1) {
+                        plIndex = clonedPlayers.findIndex(p => !p.submitted);
+                    }
+                    if (plIndex === -1 && clonedPlayers.length > 0) plIndex = 0;
 
-                    if (plIndex >= 0 && updatedRoomLocal.players[plIndex]) {
-                        updatedRoomLocal.players[plIndex] = {
-                            ...updatedRoomLocal.players[plIndex],
-                            submitted: true,
-                            score: finalScore,
-                            correctCount: count,
-                            totalQuestions: uniqueQuestions.length,
-                            durationSeconds: durationSec,
-                            submittedAt: Date.now()
-                        };
+                    if (plIndex >= 0 && clonedPlayers[plIndex]) {
+                        clonedPlayers[plIndex].submitted = true;
+                        clonedPlayers[plIndex].score = finalScore;
+                        clonedPlayers[plIndex].correctCount = count;
+                        clonedPlayers[plIndex].totalQuestions = uniqueQuestions.length;
+                        clonedPlayers[plIndex].durationSeconds = durationSec;
+                        clonedPlayers[plIndex].submittedAt = Date.now();
                     }
-                    updatedRoomLocal.completedAt = updatedRoomLocal.completedAt || Date.now();
-                    updatedRoomLocal.resultExpiresAt = Date.now() + 2 * 60 * 60 * 1000;
 
                     // Sắp xếp thứ hạng ngay lập tức
-                    updatedRoomLocal.players.sort((a, b) => {
+                    clonedPlayers.sort((a, b) => {
                         if (!a.submitted && !b.submitted) return 0;
                         if (!a.submitted) return 1;
                         if (!b.submitted) return -1;
@@ -3825,9 +3869,14 @@
                         return (a.durationSeconds ?? 0) - (b.durationSeconds ?? 0);
                     });
 
-                    if (updatedRoomLocal.players.every(p => p.submitted)) {
-                        updatedRoomLocal.status = 'completed';
-                    }
+                    const updatedRoomLocal = {
+                        ...currentBattleRoom,
+                        players: clonedPlayers,
+                        completedAt: currentBattleRoom.completedAt || Date.now(),
+                        resultExpiresAt: Date.now() + 2 * 60 * 60 * 1000,
+                        status: clonedPlayers.every(p => p.submitted) ? 'completed' : currentBattleRoom.status
+                    };
+
                     setCurrentBattleRoom(updatedRoomLocal);
                     saveLocalBattleHistory(updatedRoomLocal);
                 }
@@ -3849,8 +3898,24 @@
                     })
                 }).then(r => r.json()).then(res => {
                     if (res.success && res.room) {
-                        setCurrentBattleRoom(res.room);
-                        saveLocalBattleHistory(res.room);
+                        setCurrentBattleRoom(prev => {
+                            const mergedPlayers = (res.room.players || []).map(p => {
+                                if (p.submitted) return p;
+                                const localP = prev?.players?.find(lp => lp.id === p.id || lp.name === p.name);
+                                if (localP && localP.submitted) return { ...p, ...localP };
+                                return p;
+                            });
+                            mergedPlayers.sort((a, b) => {
+                                if (!a.submitted && !b.submitted) return 0;
+                                if (!a.submitted) return 1;
+                                if (!b.submitted) return -1;
+                                if ((b.score ?? 0) !== (a.score ?? 0)) return (b.score ?? 0) - (a.score ?? 0);
+                                return (a.durationSeconds ?? 0) - (b.durationSeconds ?? 0);
+                            });
+                            const finalRoom = { ...res.room, players: mergedPlayers };
+                            saveLocalBattleHistory(finalRoom);
+                            return finalRoom;
+                        });
                     }
                 }).catch(console.error);
             }
