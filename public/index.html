@@ -362,7 +362,9 @@
         ChevronLeft: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>,
         Cloud: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>,
         Download: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
-        Trash2: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        Trash2: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>,
+        Bookmark: ({size=20, className, fill="none"}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>,
+        LayoutGrid: ({size=20, className}) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
       };
 
       // Wrap Icons with Proxy so undefined icon names gracefully render instead of crashing React
@@ -583,6 +585,8 @@
         const [score, setScore] = useState(0);
         const [correctCount, setCorrectCount] = useState(0);
         const [showExplanation, setShowExplanation] = useState({}); 
+        const [flaggedQuestions, setFlaggedQuestions] = useState({});
+        const [showQuestionPalette, setShowQuestionPalette] = useState(false);
         const [accessPassword, setAccessPassword] = useState('');
         const [resultFilter, setResultFilter] = useState('all');
         const [currentQIndex, setCurrentQIndex] = useState(0);
@@ -1538,6 +1542,7 @@
                         setCurrentQuestions(savedSession.currentQuestions);
                         setUserAnswers(savedSession.userAnswers || {});
                         setShowExplanation(savedSession.showExplanation || {});
+                        setFlaggedQuestions(savedSession.flaggedQuestions || {});
                         const targetQIdx = Math.min(savedSession.currentQIndex || 0, savedSession.currentQuestions.length - 1);
                         setCurrentQIndex(targetQIdx);
                         setTimeLeft(isExam ? remaining : (savedSession.timeLeft || (data.config?.timeLimit || 15) * 60));
@@ -3583,6 +3588,7 @@
             currentQIndex: overrides.currentQIndex !== undefined ? overrides.currentQIndex : currentQIndex,
             userAnswers: overrides.userAnswers || userAnswers,
             showExplanation: overrides.showExplanation || showExplanation,
+            flaggedQuestions: overrides.flaggedQuestions !== undefined ? overrides.flaggedQuestions : flaggedQuestions,
             timeLeft: curTimeLeft,
             endTime: endTime,
             savedAt: now,
@@ -3623,7 +3629,7 @@
           setIsWrongReviewMode(false);
           setFirstAttempts({});
           setCurrentQuestions(finalQuestions); setAppMode('taking'); setTimeLeft(quizConfig.timeLimit * 60);
-          setSubmitted(false); setScore(0); setUserAnswers({}); setShowExplanation({}); setCurrentQIndex(0);
+          setSubmitted(false); setScore(0); setUserAnswers({}); setShowExplanation({}); setFlaggedQuestions({}); setCurrentQIndex(0);
 
           const now = Date.now();
           const sessionData = {
@@ -3633,6 +3639,7 @@
             currentQIndex: 0,
             userAnswers: {},
             showExplanation: {},
+            flaggedQuestions: {},
             timeLeft: quizConfig.timeLimit * 60,
             endTime: quizConfig.mode === 'exam' ? (now + quizConfig.timeLimit * 60 * 1000) : null,
             savedAt: now,
@@ -5495,6 +5502,7 @@
                             setCurrentQuestions(existingSession.currentQuestions);
                             setUserAnswers(existingSession.userAnswers || {});
                             setShowExplanation(existingSession.showExplanation || {});
+                            setFlaggedQuestions(existingSession.flaggedQuestions || {});
                             const targetQIdx = Math.min(existingSession.currentQIndex || 0, existingSession.currentQuestions.length - 1);
                             setCurrentQIndex(targetQIdx);
                             setTimeLeft(existingSession.timeLeft || 0);
@@ -5688,30 +5696,85 @@
           );
         };
 
+        const handleToggleFlag = (qId) => {
+          setFlaggedQuestions(prev => {
+            const next = { ...prev };
+            if (next[qId]) {
+              delete next[qId];
+            } else {
+              next[qId] = true;
+            }
+            saveSessionProgress({ flaggedQuestions: next });
+            return next;
+          });
+        };
+
+        const handleJumpToQuestion = (idx) => {
+          setShowQuestionPalette(false);
+          setTimeout(() => {
+            const el = document.getElementById(`exam-question-${idx}`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              el.classList.add('ring-4', 'ring-blue-400', 'ring-offset-2');
+              setTimeout(() => {
+                el.classList.remove('ring-4', 'ring-blue-400', 'ring-offset-2');
+              }, 1800);
+            }
+          }, 80);
+        };
+
         const renderQuestionCard = (q, idx, isPractice) => {
              const qId = q.id;
              const isSelected = userAnswers[qId];
              const status = showExplanation[qId]; 
+             const isFlagged = !isPractice && !!flaggedQuestions[qId];
              return (
-               <div key={qId} className="bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl shadow-[0_6px_24px_rgba(15,35,75,0.08)] border border-white/80 p-3 sm:p-5 mb-2 sm:mb-3 transition-all animate-slide-up">
+               <div
+                 key={qId}
+                 id={`exam-question-${idx}`}
+                 className={`bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl shadow-[0_6px_24px_rgba(15,35,75,0.08)] border transition-all animate-slide-up scroll-mt-20 sm:scroll-mt-24 p-3 sm:p-5 mb-2 sm:mb-3 ${
+                   isFlagged ? 'border-amber-400 ring-2 ring-amber-300/70 bg-amber-50/20' : 'border-white/80'
+                 }`}
+               >
                   {/* Question Header */}
-                  <div className="flex items-start gap-3 sm:gap-4 mb-4">
-                     <span className="flex-shrink-0 bg-[#1a73e8] text-white font-bold w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs sm:text-sm shadow-xs mt-0.5">{idx + 1}</span>
-                     <div className="text-[#202124] font-medium text-[15px] sm:text-[16px] leading-snug w-full">
-                         {q.isReview && (
-                            <div className="mb-2">
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#fef7e0] text-[#b06000] border border-[#fce8b2]">
-                                   <Icons.Repeat size={13} className="text-[#b06000]" /> Câu hỏi ôn tập (Đã đảo phương án)
-                                </span>
-                            </div>
-                         )}
-                         <MathText text={q.text} />
-                         {q.images && q.images.length > 0 && (
-                            <div className="question-image-container flex flex-col gap-2 mt-3">
-                                {q.images.map((src, i) => <img key={i} src={getDirectImageUrl(src)} alt="Minh họa" className="rounded-2xl border border-[#dadce0] shadow-xs max-h-72 sm:max-h-96 object-contain w-full bg-slate-50"/>)}
-                            </div>
-                         )}
+                  <div className="flex items-start justify-between gap-2.5 mb-4">
+                     <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
+                       <span className={`flex-shrink-0 ${isFlagged ? 'bg-amber-500 text-white shadow-xs' : 'bg-[#1a73e8] text-white'} font-bold w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs sm:text-sm shadow-xs mt-0.5`}>
+                         {idx + 1}
+                       </span>
+                       <div className="text-[#202124] font-medium text-[15px] sm:text-[16px] leading-snug w-full">
+                           {q.isReview && (
+                              <div className="mb-2">
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#fef7e0] text-[#b06000] border border-[#fce8b2]">
+                                     <Icons.Repeat size={13} className="text-[#b06000]" /> Câu hỏi ôn tập (Đã đảo phương án)
+                                  </span>
+                              </div>
+                           )}
+                           <MathText text={q.text} />
+                           {q.images && q.images.length > 0 && (
+                              <div className="question-image-container flex flex-col gap-2 mt-3">
+                                  {q.images.map((src, i) => <img key={i} src={getDirectImageUrl(src)} alt="Minh họa" className="rounded-2xl border border-[#dadce0] shadow-xs max-h-72 sm:max-h-96 object-contain w-full bg-slate-50"/>)}
+                              </div>
+                           )}
+                       </div>
                      </div>
+
+                     {/* Nút Đánh dấu xem lại ở chế độ Exam */}
+                     {!isPractice && (
+                       <button
+                         type="button"
+                         onClick={() => handleToggleFlag(qId)}
+                         className={`flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer select-none active:scale-95 ${
+                           isFlagged
+                             ? 'bg-amber-400 hover:bg-amber-500 text-amber-950 shadow-xs border border-amber-500 ring-2 ring-amber-300/80 font-black'
+                             : 'bg-slate-100/90 hover:bg-amber-50 text-slate-500 hover:text-amber-700 border border-slate-200'
+                         }`}
+                         title={isFlagged ? 'Bỏ đánh dấu xem lại câu này' : 'Đánh dấu để xem lại câu này'}
+                       >
+                         <Icons.Bookmark size={13} fill={isFlagged ? 'currentColor' : 'none'} className={isFlagged ? 'text-amber-950' : 'text-slate-400'} />
+                         <span className="text-[11px] sm:text-xs">{isFlagged ? 'Đã lưu ý' : 'Xem lại'}</span>
+                       </button>
+                     )}
                   </div>
                   
                   {/* Options List */}
@@ -5829,11 +5892,21 @@
 
                       {/* Các điều khiển: Đã làm, Thời gian, Nút Nộp Bài (Rộng rãi, chuẩn tỉ lệ, không bị chèn ép) */}
                       <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
-                         {/* Khung số câu đã làm trên n câu */}
-                         <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-black shadow-xs border border-white/20 whitespace-nowrap">
-                           <Icons.FileCheck size={14} className="text-cyan-200 hidden xs:inline" />
+                         {/* Khung số câu đã làm trên n câu - Bấm để mở Bảng câu hỏi */}
+                         <button
+                           type="button"
+                           onClick={() => setShowQuestionPalette(true)}
+                           className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-black shadow-xs border border-white/20 whitespace-nowrap active:scale-95 transition-all cursor-pointer"
+                           title="Nhấn để xem bảng câu hỏi và trạng thái đã làm / chưa làm / xem lại"
+                         >
+                           <Icons.LayoutGrid size={13} className="text-cyan-200" />
                            <span>Đã làm <strong className="text-yellow-300 font-extrabold">{Object.keys(userAnswers).length}</strong>/{currentQuestions.length}</span>
-                         </div>
+                           {Object.keys(flaggedQuestions).length > 0 && (
+                             <span className="bg-amber-400 text-amber-950 px-1.5 py-0.2 rounded-full text-[10px] font-black ml-0.5 animate-pulse">
+                               ★{Object.keys(flaggedQuestions).length}
+                             </span>
+                           )}
+                         </button>
                          <div className={`font-mono text-xs sm:text-sm font-bold flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full ${timeLeft < 60 ? 'bg-[#fce8e6] text-[#c5221f] animate-pulse' : 'bg-white/90 border border-slate-200/80 text-[#3c4043]'}`}>
                            <Icons.Clock size={15}/> {formatTime(timeLeft)}
                          </div>
@@ -5877,6 +5950,141 @@
                      {currentQuestions.map((q, idx) => renderQuestionCard(q, idx, false))}
                      {renderCopyrightBadge('my-4')}
                    </main>
+
+                   {/* Floating Button Bảng câu hỏi & Xem lại */}
+                   <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-30">
+                     <button
+                       type="button"
+                       onClick={() => setShowQuestionPalette(true)}
+                       className="flex items-center gap-2 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-full bg-slate-900/95 hover:bg-black text-white font-bold text-xs sm:text-sm shadow-xl backdrop-blur-md border border-slate-700/60 active:scale-95 transition-all cursor-pointer group"
+                       title="Mở bảng danh sách câu hỏi"
+                     >
+                       <div className="w-5 h-5 rounded-md bg-blue-600 text-white flex items-center justify-center">
+                         <Icons.LayoutGrid size={13} />
+                       </div>
+                       <span>Bảng câu hỏi ({Object.keys(userAnswers).length}/{currentQuestions.length})</span>
+                       {Object.keys(flaggedQuestions).length > 0 && (
+                         <span className="bg-amber-400 text-amber-950 px-1.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black shadow-xs">
+                           ★ {Object.keys(flaggedQuestions).length} xem lại
+                         </span>
+                       )}
+                     </button>
+                   </div>
+
+                   {/* Modal / Bottom Sheet: Bảng Danh Sách Câu Hỏi */}
+                   {showQuestionPalette && (
+                     <div
+                       className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in"
+                       onClick={() => setShowQuestionPalette(false)}
+                     >
+                       <div
+                         className="w-full max-h-[85vh] sm:max-h-[80vh] sm:max-w-xl bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-slide-up"
+                         onClick={e => e.stopPropagation()}
+                       >
+                         {/* Thanh gạt trên điện thoại */}
+                         <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto mt-2.5 sm:hidden"></div>
+
+                         {/* Tiêu đề Modal */}
+                         <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-100 flex items-center justify-between">
+                           <div className="flex items-center gap-2.5">
+                             <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                               <Icons.LayoutGrid size={18} />
+                             </div>
+                             <div>
+                               <h3 className="font-extrabold text-slate-900 text-sm sm:text-base leading-tight">Danh sách câu hỏi</h3>
+                               <p className="text-[11px] text-slate-500">Chạm câu hỏi để tự động lướt đến câu đó</p>
+                             </div>
+                           </div>
+                           <button
+                             type="button"
+                             onClick={() => setShowQuestionPalette(false)}
+                             className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center cursor-pointer transition-colors"
+                             title="Đóng bảng câu hỏi"
+                           >
+                             <Icons.X size={16} />
+                           </button>
+                         </div>
+
+                         {/* Chú thích màu sắc (Legend) theo yêu cầu: Xanh = Đã làm, Đỏ = Chưa làm, Vàng = Xem lại lưu ý */}
+                         <div className="grid grid-cols-3 gap-2 px-3 sm:px-6 py-2.5 bg-slate-50 border-b border-slate-100 text-xs">
+                           <div className="flex items-center gap-1.5 font-bold text-emerald-800 bg-emerald-50 px-2 py-1.5 rounded-xl border border-emerald-200 min-w-0">
+                             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-xs flex-shrink-0"></span>
+                             <span className="truncate">Đã làm: <strong>{currentQuestions.filter(q => !!userAnswers[q.id] && !flaggedQuestions[q.id]).length}</strong></span>
+                           </div>
+                           <div className="flex items-center gap-1.5 font-bold text-rose-800 bg-rose-50 px-2 py-1.5 rounded-xl border border-rose-200 min-w-0">
+                             <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-xs flex-shrink-0"></span>
+                             <span className="truncate">Chưa làm: <strong>{currentQuestions.filter(q => !userAnswers[q.id] && !flaggedQuestions[q.id]).length}</strong></span>
+                           </div>
+                           <div className="flex items-center gap-1.5 font-bold text-amber-900 bg-amber-50 px-2 py-1.5 rounded-xl border border-amber-300 min-w-0">
+                             <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-xs flex-shrink-0"></span>
+                             <span className="truncate">Xem lại: <strong>{Object.keys(flaggedQuestions).length}</strong></span>
+                           </div>
+                         </div>
+
+                         {/* Grid danh sách câu hỏi */}
+                         <div className="p-3 sm:p-5 overflow-y-auto flex-1 max-h-[55vh] overscroll-contain">
+                           <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                             {currentQuestions.map((q, idx) => {
+                               const isAns = !!userAnswers[q.id];
+                               const isFlg = !!flaggedQuestions[q.id];
+                               
+                               let colorClasses = '';
+                               if (isFlg) {
+                                 colorClasses = 'bg-amber-400 hover:bg-amber-500 text-amber-950 border-2 border-amber-500 ring-2 ring-amber-300/70 font-black shadow-xs';
+                               } else if (isAns) {
+                                 colorClasses = 'bg-emerald-500 hover:bg-emerald-600 text-white border-2 border-emerald-600 font-extrabold shadow-xs';
+                               } else {
+                                 colorClasses = 'bg-rose-500 hover:bg-rose-600 text-white border-2 border-rose-600 font-extrabold shadow-xs';
+                               }
+
+                               return (
+                                 <button
+                                   key={q.id}
+                                   type="button"
+                                   onClick={() => handleJumpToQuestion(idx)}
+                                   className={`relative h-10 sm:h-11 rounded-xl flex items-center justify-center text-xs sm:text-sm font-bold transition-all duration-150 active:scale-95 cursor-pointer ${colorClasses}`}
+                                   title={`Câu ${idx + 1}: ${isFlg ? 'Cần xem lại' : isAns ? 'Đã làm' : 'Chưa làm'}`}
+                                 >
+                                   <span>{idx + 1}</span>
+                                   {isFlg && (
+                                     <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-600 text-white text-[9px] rounded-full flex items-center justify-center shadow-xs">
+                                       ★
+                                     </span>
+                                   )}
+                                   {isFlg && isAns && (
+                                     <span className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-emerald-600 rounded-full border border-white"></span>
+                                   )}
+                                 </button>
+                               );
+                             })}
+                           </div>
+                         </div>
+
+                         {/* Footer Modal */}
+                         <div className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3">
+                           <span className="text-[11px] sm:text-xs text-slate-500 font-medium">
+                             Tổng số: <strong className="text-slate-800">{currentQuestions.length} câu</strong>
+                           </span>
+                           <div className="flex items-center gap-2">
+                             <button
+                               type="button"
+                               onClick={() => setShowQuestionPalette(false)}
+                               className="px-3.5 py-1.5 rounded-full bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200 cursor-pointer active:scale-95 transition-all"
+                             >
+                               Đóng
+                             </button>
+                             <button
+                               type="button"
+                               onClick={() => { setShowQuestionPalette(false); handleSubmitExam(); }}
+                               className="px-3.5 py-1.5 rounded-full bg-[#1a73e8] hover:bg-[#1557b0] text-white font-bold text-xs shadow-xs cursor-pointer active:scale-95 transition-all"
+                             >
+                               Nộp bài
+                             </button>
+                           </div>
+                         </div>
+                       </div>
+                     </div>
+                   )}
                 </div>
                );
              } else {
