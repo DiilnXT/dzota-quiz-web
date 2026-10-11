@@ -21,7 +21,8 @@ import {
   BarChart2,
   CheckCircle2,
   MessageCircle,
-  GraduationCap
+  GraduationCap,
+  Network
 } from 'lucide-react'
 import { useTheme } from '../ThemeContext'
 
@@ -102,6 +103,7 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
   const isStudyActive = isDashboardActive && activeTab === 'study'
   const isMistakesActive = isDashboardActive && activeTab === 'mistakes'
   const isHistoryActive = isDashboardActive && activeTab === 'history'
+  const isMindMapActive = isDashboardActive && activeTab === 'mindmap'
   const isDashboardItemActive = isDashboardActive && (activeTab === 'dashboard' || activeTab === 'overview')
   const isQuizzesActive = isDashboardActive && activeTab === 'quizzes'
   const isClassesActive = isDashboardActive && activeTab === 'classes'
@@ -251,6 +253,25 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                     <LayoutDashboard size={18} />
                     <span>Lịch sử làm bài</span>
                   </button>
+
+                  <button
+                    onClick={() => handleNavigateTab('mindmap')}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
+                      isMindMapActive
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-indigo-500/25'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Network size={18} className={isMindMapActive ? 'text-white' : 'text-indigo-500'} />
+                      <span>Sơ đồ tư duy AI</span>
+                    </div>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider ${
+                      isMindMapActive ? 'bg-white/20 text-white' : 'bg-indigo-100 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-300'
+                    }`}>
+                      Mới
+                    </span>
+                  </button>
                 </>
               ) : (
                 <>
@@ -264,6 +285,25 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                   >
                     <LayoutDashboard size={18} />
                     <span>Bảng điều khiển</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleNavigateTab('mindmap')}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
+                      isMindMapActive
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-indigo-500/25'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Network size={18} className={isMindMapActive ? 'text-white' : 'text-indigo-500'} />
+                      <span>Sơ đồ tư duy AI</span>
+                    </div>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider ${
+                      isMindMapActive ? 'bg-white/20 text-white' : 'bg-indigo-100 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-300'
+                    }`}>
+                      Mới
+                    </span>
                   </button>
 
                   <button

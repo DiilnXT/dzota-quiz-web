@@ -60,6 +60,7 @@ import {
 import TeacherChatTab from './TeacherChatTab'
 import StudentStudyTab from './StudentStudyTab'
 import MistakeNotebookTab from './MistakeNotebookTab'
+import MindMapTab from './MindMapTab'
 
 interface TeacherQuiz {
   id: string
@@ -101,6 +102,7 @@ interface QuizItem {
   password?: string
   accessType?: string
   allowedGmails?: string[]
+  questions?: any[]
   author?: {
     id?: string
     username: string
@@ -220,9 +222,10 @@ export default function DashboardClient({
 
   // Navigation Tabs State
   const defaultTab = isStudent ? 'history' : 'dashboard'
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'quizzes' | 'classes' | 'teachers' | 'friends' | 'settings' | 'profile' | 'history'>(defaultTab)
+  type DashboardTab = 'dashboard' | 'quizzes' | 'classes' | 'teachers' | 'friends' | 'settings' | 'profile' | 'history' | 'study' | 'mistakes' | 'mindmap'
+  const [activeTab, setActiveTab] = useState<DashboardTab>(defaultTab)
 
-  const switchTab = (tab: 'dashboard' | 'quizzes' | 'classes' | 'teachers' | 'friends' | 'settings' | 'profile' | 'history') => {
+  const switchTab = (tab: DashboardTab) => {
     setActiveTab(tab)
     if (typeof window !== 'undefined') {
       window.history.pushState({}, '', `/dashboard?tab=${tab}`)
@@ -251,7 +254,7 @@ export default function DashboardClient({
   const [selectedCategory, setSelectedCategory] = useState('Tất cả')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [isLoading, setIsLoading] = useState(false)
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null)
 
   // Notifications Drawer & Alert
   const [isNotifOpen, setIsNotifOpen] = useState(false)
@@ -498,9 +501,17 @@ export default function DashboardClient({
   const [confirmAccPassword, setConfirmAccPassword] = useState('')
   const [isSavingAccPass, setIsSavingAccPass] = useState(false)
 
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+  const showToast = (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'success') => {
     setToast({ message, type })
     setTimeout(() => setToast(null), 4000)
+  }
+
+  const copyShareLink = (id: string) => {
+    if (typeof window !== 'undefined') {
+      const url = `${window.location.origin}/?id=${id}`
+      navigator.clipboard.writeText(url)
+      showToast('Đã copy link bài thi!', 'success')
+    }
   }
 
   const handleMarkAllNotificationsAsRead = async () => {
@@ -594,10 +605,13 @@ export default function DashboardClient({
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       const tab = params.get('tab')
-      if (tab && ['dashboard', 'overview', 'quizzes', 'classes', 'teachers', 'friends', 'settings', 'profile', 'history'].includes(tab)) {
-        if (isStudent && (tab === 'history' || tab === 'profile')) {
-          setActiveTab(tab as any)
-        } else if (!isStudent) {
+      const allowedTabs = ['dashboard', 'overview', 'quizzes', 'classes', 'teachers', 'friends', 'settings', 'profile', 'history', 'study', 'mistakes', 'mindmap']
+      if (tab && allowedTabs.includes(tab)) {
+        if (isStudent) {
+          if (['history', 'profile', 'study', 'mistakes', 'mindmap'].includes(tab)) {
+            setActiveTab(tab as any)
+          }
+        } else {
           setActiveTab(tab as any)
         }
       }
@@ -1362,9 +1376,9 @@ export default function DashboardClient({
       {/* Toast Alert */}
       {toast && (
         <div className={`fixed bottom-6 right-6 z-50 px-5 py-3.5 rounded-2xl shadow-xl text-white font-bold flex items-center gap-3 transition-all animate-bounce-short ${
-          toast.type === 'success' ? 'bg-emerald-600' : toast.type === 'info' ? 'bg-indigo-600' : 'bg-rose-600'
+          toast.type === 'success' ? 'bg-emerald-600' : toast.type === 'warning' ? 'bg-amber-600' : toast.type === 'info' ? 'bg-indigo-600' : 'bg-rose-600'
         }`}>
-          {toast.type === 'success' ? <Check size={18} /> : toast.type === 'info' ? <Bell size={18} /> : <X size={18} />}
+          {toast.type === 'success' ? <Check size={18} /> : toast.type === 'warning' ? <AlertTriangle size={18} /> : toast.type === 'info' ? <Bell size={18} /> : <X size={18} />}
           <span className="text-sm">{toast.message}</span>
         </div>
       )}
@@ -1526,6 +1540,13 @@ export default function DashboardClient({
       ───────────────────────────────────────────────────────────── */}
       {activeTab === 'mistakes' && (
         <MistakeNotebookTab currentUser={currentUser} showToast={showToast} />
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          TAB: SƠ ĐỒ TƯ DUY AI (MINDMAP GENERATOR & TRÌNH BIÊN TẬP CHUYÊN NGHIỆP)
+      ───────────────────────────────────────────────────────────── */}
+      {activeTab === 'mindmap' && (
+        <MindMapTab currentUser={currentUser} showToast={showToast} />
       )}
 
       {/* ─────────────────────────────────────────────────────────────
