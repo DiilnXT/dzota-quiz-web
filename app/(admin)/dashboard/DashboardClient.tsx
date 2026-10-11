@@ -1106,6 +1106,12 @@ export default function DashboardClient({
       if (res.ok) {
         setQuizzes(prev => prev.filter(q => q.id !== quiz.id))
         setSelectedQuizIds(prev => prev.filter(id => id !== quiz.id))
+        try {
+          const localQuizzes = JSON.parse(localStorage.getItem('myQuizzes') || '[]')
+          const updatedLocal = localQuizzes.filter((q: any) => q && q.id !== quiz.id)
+          localStorage.setItem('myQuizzes', JSON.stringify(updatedLocal))
+          localStorage.removeItem('dzota_offline_quiz_' + quiz.id)
+        } catch (storageErr) {}
         showToast(`Đã xóa đề thi "${quiz.title}"!`)
       }
     } catch (e) {

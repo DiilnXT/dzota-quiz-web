@@ -711,9 +711,10 @@
         }, []);
 
         const canEditQuiz = (quiz) => {
-            if (!currentUser) return true;
+            if (!currentUser) return false;
+            if (currentUser.role === 'STUDENT') return false;
             if (isUserAdmin) return true;
-            if (!quiz || !quiz.authorId) return true;
+            if (!quiz || !quiz.authorId) return currentUser.role === 'TEACHER';
             return quiz.authorId === currentUser.id;
         };
 
@@ -1732,12 +1733,28 @@
                         let vaultBanks = [];
                         try { vaultBanks = JSON.parse(localStorage.getItem('dzota_bank_vault') || '[]'); } catch (e) {}
 
+                        const serverIdSet = new Set(serverQuizzes.map(sq => sq.id));
                         const map = new Map();
-                        // 1. Giữ toàn bộ local quizzes (bao gồm các ngân hàng vừa tạo trên máy)
-                        localQuizzes.forEach(q => { if (q && q.id) map.set(q.id, q); });
-                        // 2. Giữ toàn bộ ngân hàng từ Vault độc lập
-                        vaultBanks.forEach(b => { if (b && b.id) map.set(b.id, b); });
-                        // 3. Cập nhật dữ liệu từ server
+                        // 1. Chỉ giữ local quizzes nếu là bản nháp chưa lưu (draft) HOẶC còn tồn tại trên server
+                        // Loại bỏ hoàn toàn các đề thi đã bị xóa trên server để đồng bộ chuẩn xác với Dashboard
+                        localQuizzes.forEach(q => {
+                            if (!q || !q.id) return;
+                            const isDraft = q.id.startsWith('draft_') || q.isLocalDraft === true;
+                            if (isDraft || serverIdSet.has(q.id)) {
+                                map.set(q.id, q);
+                            } else {
+                                try { localStorage.removeItem('dzota_offline_quiz_' + q.id); } catch (e) {}
+                            }
+                        });
+                        // 2. Giữ ngân hàng từ Vault độc lập (nếu là bản nháp hoặc còn tồn tại trên server)
+                        vaultBanks.forEach(b => {
+                            if (!b || !b.id) return;
+                            const isDraft = b.id.startsWith('draft_') || b.id.startsWith('bank_draft_') || b.isLocalDraft === true;
+                            if (isDraft || serverIdSet.has(b.id)) {
+                                map.set(b.id, b);
+                            }
+                        });
+                        // 3. Cập nhật dữ liệu từ server (nguồn dữ liệu chính xác)
                         serverQuizzes.forEach(sq => {
                             if (sq && sq.id) {
                                 const localItem = map.get(sq.id);
@@ -1863,6 +1880,12 @@
                                 return;
                             }
                         }
+                        if (res.status === 404) {
+                            try { localStorage.removeItem('dzota_offline_quiz_' + id); } catch (e) {}
+                            setAppMode('not_found');
+                            setIsLoading(false);
+                            return;
+                        }
                         throw new Error("Not found");
                     }
                     const data = await res.json();
@@ -1897,6 +1920,12 @@
                     setParsedQuestions(loadedQuestions);
 
                     if (isEditMode) {
+                        if (!canEditQuiz({ authorId: data.authorId })) {
+                            addToast("Bạn không có quyền chỉnh sửa bài thi này!", 'error');
+                            setAppMode('entry');
+                            setIsLoading(false);
+                            return;
+                        }
                         setAppMode('editor');
                         setShowReview(true);
                         setIsLoading(false);
@@ -1942,7 +1971,7 @@
                     } catch (offErr) {}
 
                     addToast("Không thể kết nối đến máy chủ hoặc bài thi không tồn tại.", 'error');
-                    setAppMode('home');
+                    setAppMode('not_found');
                     setIsLoading(false);
                 }
             };
@@ -2436,6 +2465,10 @@
 
         // --- 2. LOGIC DASHBOARD (HOME) & NGÂN HÀNG ĐỀ ---
         const handleCreateNew = (type = 'standard') => {
+             if (!currentUser || currentUser.role === 'STUDENT') {
+                 addToast("Bạn cần đăng nhập tài khoản Giáo viên hoặc Quản trị viên để tạo đề thi mới!", 'error');
+                 return;
+             }
              if (type === 'bank') {
                  handleOpenCreateBankSetup();
                  return;
@@ -5885,6 +5918,96 @@
                         >
                             <Icons.Home size={14} /> Quay lại trang chủ
                         </a>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const renderNotFound = () => (
+            <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 lg:p-8 relative select-none dzota-test-bg font-sans overflow-hidden">
+                {/* Hiệu ứng hào quang phát sáng Ambient */}
+                <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-rose-500/15 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
+                <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-amber-500/15 rounded-full blur-3xl pointer-events-none animate-pulse" style={{ animationDelay: '1s' }}></div>
+
+                <div
+                    className="relative z-10 w-full max-w-[480px] rounded-[36px] p-6 sm:p-8 pt-0 transition-all duration-300 animate-pop-in text-center"
+                    style={{
+                        background: 'rgba(255, 255, 255, 0.94)',
+                        backdropFilter: 'blur(28px) saturate(180%)',
+                        WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+                        border: '1.5px solid rgba(255, 255, 255, 0.95)',
+                        boxShadow: '0 25px 60px rgba(15, 35, 75, 0.18)'
+                    }}
+                >
+                    {/* Floating Alert Icon Badge */}
+                    <div className="rounded-3xl bg-gradient-to-tr from-rose-500 to-amber-500 p-2 mx-auto shadow-xl shadow-rose-500/25 border-4 border-white flex items-center justify-center -mt-10 sm:-mt-12 mb-4 w-20 h-20 text-white animate-bounce-short">
+                        <Icons.AlertCircle size={44} />
+                    </div>
+
+                    {/* Badge Trạng thái */}
+                    <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-black bg-rose-50 text-rose-700 border border-rose-200 mb-2.5">
+                        <Icons.AlertTriangle size={13} />
+                        <span>ĐỀ THI KHÔNG TỒN TẠI HOẶC ĐÃ BỊ XÓA</span>
+                    </div>
+
+                    <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mb-2 uppercase leading-snug">
+                        Liên Kết Không Còn Khả Dụng
+                    </h1>
+
+                    <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 mb-5 text-left text-xs sm:text-sm space-y-2">
+                        <div className="flex items-start gap-2.5">
+                            <Icons.Info className="text-rose-500 flex-shrink-0 mt-0.5" size={18} />
+                            <div>
+                                <p className="font-bold text-slate-800">Đề thi đã bị gỡ bỏ hoặc link không chính xác</p>
+                                <p className="text-slate-500 text-xs mt-1 leading-relaxed">
+                                    Bài thi này có thể đã được giáo viên xóa khỏi hệ thống, hoặc đường link truy cập có ký tự chưa đúng. Vui lòng liên hệ người ra đề để nhận mã đề thi mới.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="space-y-2.5">
+                        {currentUser ? (
+                            <>
+                                <a
+                                    href="/dashboard"
+                                    className="w-full py-3 rounded-xl font-bold text-sm bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center gap-2 transition-all no-underline shadow-sm cursor-pointer"
+                                >
+                                    <Icons.LayoutDashboard size={16} /> Về Trang Dashboard Quản Lý
+                                </a>
+                                {(isUserAdmin || currentUser.role === 'TEACHER') && (
+                                    <button
+                                        onClick={() => {
+                                            const url = new URL(window.location.href);
+                                            url.searchParams.delete('id');
+                                            url.searchParams.delete('test');
+                                            url.searchParams.delete('editId');
+                                            window.history.replaceState({}, '', url.pathname);
+                                            setAppMode('home');
+                                        }}
+                                        className="w-full py-2.5 rounded-xl font-semibold text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-slate-200"
+                                    >
+                                        <Icons.Home size={14} /> Về Thư Viện Đề Thi Của Tôi
+                                    </button>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <a
+                                    href="/login"
+                                    className="w-full py-3 rounded-xl font-bold text-sm bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center gap-2 transition-all no-underline shadow-sm cursor-pointer"
+                                >
+                                    <Icons.LogIn size={16} /> Đăng Nhập Vào Hệ Thống
+                                </a>
+                                <a
+                                    href="/login"
+                                    className="w-full py-2.5 rounded-xl font-semibold text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 flex items-center justify-center gap-1.5 transition-all no-underline cursor-pointer"
+                                >
+                                    <Icons.Home size={14} /> Về Trang Chủ
+                                </a>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
@@ -9444,11 +9567,12 @@
             {appMode === 'editor' && renderEditor()}
             {appMode === 'blocked' && renderBlocked()}
             {appMode === 'access_denied' && renderAccessDenied()}
+            {appMode === 'not_found' && renderNotFound()}
             {appMode === 'entry' && renderEntry()}
             {appMode === 'taking' && renderTaking()}
             {appMode === 'result' && renderResult()}
 
-            {appMode !== 'taking' && appMode !== 'entry' && (
+            {appMode !== 'taking' && appMode !== 'entry' && appMode !== 'not_found' && (
               <div className="w-full text-center py-8">
                 <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-[0.3em] select-none">
                   Bản quyền thuộc về <span className="font-bold text-gray-800">Nhật Duy Y Khoa K26</span>

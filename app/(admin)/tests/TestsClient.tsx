@@ -273,6 +273,12 @@ export default function TestsClient({ initialQuizzes, session }: TestsClientProp
       if (res.ok) {
         setQuizzes(prev => prev.filter(item => item.id !== q.id))
         setSelectedIds(prev => prev.filter(id => id !== q.id))
+        try {
+          const localQuizzes = JSON.parse(localStorage.getItem('myQuizzes') || '[]')
+          const updatedLocal = localQuizzes.filter((item: any) => item && item.id !== q.id)
+          localStorage.setItem('myQuizzes', JSON.stringify(updatedLocal))
+          localStorage.removeItem('dzota_offline_quiz_' + q.id)
+        } catch (storageErr) {}
         showToast(`Đã xóa đề thi "${q.title}" thành công!`)
       } else {
         showToast('Xóa đề thi thất bại', 'error')
@@ -298,6 +304,12 @@ export default function TestsClient({ initialQuizzes, session }: TestsClientProp
           })
         }
         setQuizzes(prev => prev.filter(q => !selectedIds.includes(q.id)))
+        try {
+          const localQuizzes = JSON.parse(localStorage.getItem('myQuizzes') || '[]')
+          const updatedLocal = localQuizzes.filter((item: any) => item && !selectedIds.includes(item.id))
+          localStorage.setItem('myQuizzes', JSON.stringify(updatedLocal))
+          selectedIds.forEach(id => localStorage.removeItem('dzota_offline_quiz_' + id))
+        } catch (storageErr) {}
         setSelectedIds([])
         showToast(`Đã xóa ${selectedIds.length} bài test thành công!`)
       } catch (e) {
