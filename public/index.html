@@ -49,6 +49,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
+        darkMode: 'class',
         theme: {
           extend: {
             colors: {
@@ -160,131 +161,39 @@
       }
       
       
-            /* ========================================================
-         APPLE IPHONE 18 LIQUID GLASS (ULTRA FROSTED GLASS)
-         Signature High-Refraction Optical Translucency & Specular Highlights
-         ======================================================== */
+            /* High-performance, butter-smooth quiz card styles */
       .apple-liquid-glass {
         position: relative;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.14) 50%, rgba(255, 255, 255, 0.08) 100%);
-        -webkit-backdrop-filter: blur(28px) saturate(180%) contrast(102%);
-        backdrop-filter: blur(28px) saturate(180%) contrast(102%);
-        border: 1px solid rgba(255, 255, 255, 0.65);
-        box-shadow: 
-          0 10px 30px -8px rgba(0, 0, 0, 0.1),
-          0 2px 8px -2px rgba(0, 0, 0, 0.04),
-          inset 0 1px 1px 0 rgba(255, 255, 255, 0.85);
-        border-radius: 20px;
-        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        background: rgba(255, 255, 255, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.75);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+        border-radius: 18px;
       }
-      
       @media (min-width: 640px) {
         .apple-liquid-glass {
-          border-radius: 24px;
+          border-radius: 22px;
         }
       }
-      
-      .apple-liquid-glass:hover {
-        border-color: rgba(255, 255, 255, 0.85);
-        box-shadow: 
-          0 14px 36px -8px rgba(0, 0, 0, 0.14),
-          inset 0 1px 1px 0 rgba(255, 255, 255, 0.95);
-      }
-      
-      /* Flagged question: Apple Solar Amber Liquid Glass Aura */
       .apple-liquid-glass-flagged {
-        position: relative;
-        background: linear-gradient(135deg, rgba(251, 191, 36, 0.26) 0%, rgba(254, 240, 138, 0.14) 45%, rgba(249, 115, 22, 0.20) 100%) !important;
-        -webkit-backdrop-filter: blur(28px) saturate(220%) contrast(104%) !important;
-        backdrop-filter: blur(28px) saturate(220%) contrast(104%) !important;
-        border: 2px solid rgba(251, 191, 36, 0.9) !important;
-        box-shadow: 
-          0 0 0 3px rgba(251, 191, 36, 0.32),
-          0 16px 40px -8px rgba(245, 158, 11, 0.38),
-          inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.95),
-          inset 0 -1.5px 2px 0 rgba(217, 119, 6, 0.2) !important;
+        background: rgba(254, 243, 199, 0.9) !important;
+        border: 2px solid #f59e0b !important;
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25), 0 4px 16px rgba(245, 158, 11, 0.15) !important;
       }
-      
-      /* Apple Liquid Option Capsules - Compact & Clean */
-      .apple-liquid-option {
-        position: relative;
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.92) 100%);
-        -webkit-backdrop-filter: blur(16px) saturate(160%);
-        backdrop-filter: blur(16px) saturate(160%);
-        border: 1px solid rgba(226, 232, 240, 0.9);
-        box-shadow: 
-          0 2px 8px rgba(0, 0, 0, 0.03),
-          inset 0 1px 0.5px 0 rgba(255, 255, 255, 0.95);
+      .quiz-option-item {
+        background: #ffffff;
+        border: 1.5px solid #e2e8f0;
         border-radius: 12px;
-        transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+        color: #0f172a;
+        transition: all 0.12s ease-out;
       }
-      
       @media (min-width: 640px) {
-        .apple-liquid-option {
+        .quiz-option-item {
           border-radius: 14px;
         }
       }
-      
-      .apple-liquid-option:hover {
-        background: #ffffff;
-        border-color: rgba(59, 130, 246, 0.7);
-        box-shadow: 
-          0 4px 14px rgba(37, 99, 235, 0.12),
-          inset 0 1px 1px 0 rgba(255, 255, 255, 1);
-        transform: translateY(-0.5px);
-      }
-      
-      .apple-liquid-option-selected {
-        background: linear-gradient(180deg, rgba(239, 246, 255, 0.98) 0%, rgba(219, 234, 254, 0.94) 100%) !important;
-        border: 2px solid #007AFF !important;
-        box-shadow: 
-          0 0 0 2.5px rgba(0, 122, 255, 0.25),
-          0 4px 14px rgba(0, 122, 255, 0.18),
-          inset 0 1px 1px 0 rgba(255, 255, 255, 0.95) !important;
-        color: #1e3a8a !important;
-      }
-      
-      .apple-liquid-option-flagged-selected {
-        background: linear-gradient(180deg, rgba(254, 243, 199, 0.98) 0%, rgba(253, 230, 138, 0.94) 100%) !important;
-        border: 2px solid #f59e0b !important;
-        box-shadow: 
-          0 0 0 2.5px rgba(245, 158, 11, 0.3),
-          0 4px 14px rgba(245, 158, 11, 0.2),
-          inset 0 1px 1px 0 rgba(255, 255, 255, 0.95) !important;
-        color: #78350f !important;
-      }
-      
-      .apple-liquid-option-correct {
-        background: linear-gradient(180deg, rgba(236, 253, 245, 0.98) 0%, rgba(209, 250, 229, 0.94) 100%) !important;
-        border: 2px solid #34C759 !important;
-        box-shadow: 
-          0 0 0 2.5px rgba(52, 199, 89, 0.28),
-          0 4px 14px rgba(52, 199, 89, 0.18),
-          inset 0 1px 1px 0 rgba(255, 255, 255, 0.95) !important;
-        color: #064e3b !important;
-      }
-      
-      .apple-liquid-option-incorrect {
-        background: linear-gradient(180deg, rgba(254, 242, 242, 0.98) 0%, rgba(254, 226, 226, 0.94) 100%) !important;
-        border: 2px solid #FF3B30 !important;
-        box-shadow: 
-          0 0 0 2.5px rgba(255, 59, 48, 0.28),
-          0 4px 14px rgba(255, 59, 48, 0.18),
-          inset 0 1px 1px 0 rgba(255, 255, 255, 0.95) !important;
-        color: #7f1d1d !important;
-      }
-      
-      .dark .apple-liquid-glass {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.06) 50%, rgba(255, 255, 255, 0.02) 100%);
-        border-color: rgba(255, 255, 255, 0.18);
-        box-shadow: 
-          0 12px 30px -8px rgba(0, 0, 0, 0.4),
-          inset 0 1px 1px 0 rgba(255, 255, 255, 0.3);
-      }
-      .dark .apple-liquid-option {
-        background: linear-gradient(180deg, rgba(30, 41, 59, 0.92) 0%, rgba(15, 23, 42, 0.88) 100%);
-        border-color: rgba(255, 255, 255, 0.12);
-        color: #f8fafc;
+      .quiz-option-item:hover {
+        background: #f8fafc;
+        border-color: #3b82f6;
       }
       
       .glass-panel {
@@ -6318,29 +6227,26 @@
                      : 'apple-liquid-glass'
                  }`}
                >
-                  {/* Glass specular refraction light streak at top */}
-                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent pointer-events-none rounded-t-[20px] sm:rounded-t-[24px]" />
-
-                  {/* Dải Banner Hoàng Kim chuyên biệt khi Đánh Dấu Xem Lại */}
+                  {/* Dải Banner Hoàng Kim khi Đánh Dấu Xem Lại */}
                   {isFlagged && (
-                    <div className="mb-2 sm:mb-2.5 inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] sm:text-xs font-black bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 shadow-xs border border-white/70 animate-pulse">
+                    <div className="mb-2 sm:mb-2.5 inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] sm:text-xs font-black bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 shadow-xs border border-white/70">
                       <Icons.Bookmark size={11} fill="currentColor" />
                       <span>⭐ CÂU HỎI ĐANG ĐƯỢC LƯU Ý XEM LẠI</span>
                     </div>
                   )}
 
-                  {/* Khung nội dung câu hỏi với nền trắng sạch, tương phản cao, siêu dễ đọc trên mọi hình nền */}
-                  <div className="bg-white/95 dark:bg-slate-900/95 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 mb-2 sm:mb-2.5 border border-white/90 dark:border-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.03)] backdrop-blur-md">
+                  {/* Khung nội dung câu hỏi: Nền trắng sạch sẽ, chữ đen đậm, siêu dễ đọc 100% */}
+                  <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-3.5 mb-2 sm:mb-2.5 border border-slate-200/90 shadow-xs">
                     <div className="flex items-start justify-between gap-2.5">
                       <div className="flex items-start gap-2.5 sm:gap-3 flex-1 min-w-0">
                         <span className={`flex-shrink-0 font-black w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-xl text-xs sm:text-sm shadow-xs mt-0.5 transition-all ${
                           isFlagged 
-                            ? 'bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-600 text-slate-950 shadow-orange-500/50 ring-2 ring-yellow-300 scale-105' 
-                            : 'bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 text-white shadow-blue-500/35 ring-1 ring-white/60'
+                            ? 'bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-600 text-slate-950 shadow-xs ring-2 ring-yellow-300 scale-105' 
+                            : 'bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-xs'
                         }`}>
                           {idx + 1}
                         </span>
-                        <div className="text-slate-900 dark:text-white font-bold text-[14.5px] sm:text-[16px] leading-snug w-full">
+                        <div className="text-slate-900 font-bold text-[14.5px] sm:text-[16px] leading-snug w-full">
                             {q.isReview && (
                                <div className="mb-1.5">
                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#fef7e0] text-[#b06000] border border-[#fce8b2]">
@@ -6352,14 +6258,14 @@
                         </div>
                       </div>
 
-                      {/* Nút Đánh dấu xem lại Apple Pill */}
+                      {/* Nút Đánh dấu xem lại */}
                       <button
                         type="button"
                         onClick={() => handleToggleFlag(qId)}
                         className={`flex-shrink-0 flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer select-none active:scale-95 ${
                           isFlagged
-                            ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 shadow-xs border border-white/80 ring-2 ring-yellow-300 font-black scale-105'
-                            : 'bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-amber-700 border border-slate-200 shadow-2xs hover:scale-102'
+                            ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 shadow-xs border border-amber-300 ring-2 ring-yellow-300 font-black scale-105'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-amber-700 border border-slate-200 shadow-2xs'
                         }`}
                         title={isFlagged ? 'Bỏ đánh dấu xem lại câu này' : 'Đánh dấu để xem lại câu này'}
                       >
@@ -6369,34 +6275,38 @@
                     </div>
 
                     {q.images && q.images.length > 0 && (
-                      <div className="question-image-container flex flex-col gap-2 mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <div className="question-image-container flex flex-col gap-2 mt-2.5 pt-2 border-t border-slate-100">
                         {q.images.map((src, i) => <img key={i} src={getDirectImageUrl(src)} alt="Minh họa" className="rounded-xl border border-slate-200 shadow-xs max-h-64 sm:max-h-80 object-contain w-full bg-slate-50"/>)}
                       </div>
                     )}
                   </div>
                   
-                  {/* Options List with Apple Liquid Glass Capsules - Compact & Neat */}
+                  {/* Danh sách phương án: Nền trắng, chữ đen đậm tương phản 100%, lướt cực mượt không lag */}
                   <div className="space-y-1.5 sm:space-y-2 pt-0.5">
                     {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(optKey => (
                       q.options[optKey] && (
                         <div key={optKey} onClick={() => handleSelectAnswer(qId, optKey)} 
                           className={`
-                            py-2 px-3 sm:py-2.5 sm:px-3.5 cursor-pointer transition-all duration-180 flex items-center group min-h-[38px] sm:min-h-[40px] apple-liquid-option
+                            py-2 px-3 sm:py-2.5 sm:px-3.5 cursor-pointer transition-all duration-150 flex items-center group min-h-[38px] sm:min-h-[40px] rounded-xl sm:rounded-2xl border
                             ${isSelected === optKey 
-                               ? (isFlagged ? 'apple-liquid-option-flagged-selected' : 'apple-liquid-option-selected') 
-                               : (isFlagged ? 'border-amber-200/90 hover:border-amber-400' : '')}
-                            ${isPractice && status === 'correct' && (isSelected === optKey || q.correct === optKey) ? 'apple-liquid-option-correct' : ''}
-                            ${isPractice && status === 'incorrect' && isSelected === optKey ? 'apple-liquid-option-incorrect' : ''}
+                               ? (isFlagged 
+                                   ? 'border-amber-500 bg-amber-50 text-amber-950 font-semibold ring-2 ring-amber-300/50 shadow-xs' 
+                                   : 'border-[#007AFF] bg-blue-50 text-blue-900 font-semibold ring-2 ring-blue-300/40 shadow-xs') 
+                               : (isFlagged 
+                                   ? 'border-amber-200/90 hover:border-amber-400 bg-white text-slate-900 shadow-2xs' 
+                                   : 'border-slate-200 hover:border-blue-400 bg-white text-slate-900 hover:bg-slate-50 shadow-2xs')}
+                            ${isPractice && status === 'correct' && (isSelected === optKey || q.correct === optKey) ? '!border-[#34C759] !bg-emerald-50 !text-emerald-950 !ring-2 !ring-emerald-300/50' : ''}
+                            ${isPractice && status === 'incorrect' && isSelected === optKey ? '!border-[#FF3B30] !bg-rose-50 !text-rose-900 !ring-2 !ring-rose-300/50' : ''}
                           `}>
                           <span className={`w-6 h-6 sm:w-6.5 sm:h-6.5 flex-shrink-0 rounded-lg sm:rounded-xl border flex items-center justify-center mr-2.5 text-[11px] sm:text-xs font-black transition-all ${
                              isSelected === optKey 
-                               ? (isFlagged ? 'bg-gradient-to-tr from-amber-500 to-yellow-400 border-amber-400 text-slate-950 shadow-xs' : 'bg-gradient-to-tr from-[#007AFF] to-blue-500 border-transparent text-white shadow-xs') 
-                               : 'border-slate-300/80 dark:border-slate-600/80 text-slate-600 dark:text-slate-300 group-hover:border-[#007AFF] group-hover:text-[#007AFF] bg-white/90 dark:bg-slate-800'
+                               ? (isFlagged ? 'bg-gradient-to-tr from-amber-500 to-yellow-400 border-amber-400 text-slate-950 shadow-xs' : 'bg-[#007AFF] border-[#007AFF] text-white shadow-xs') 
+                               : 'border-slate-300 text-slate-700 group-hover:border-[#007AFF] group-hover:text-[#007AFF] bg-slate-50'
                           }
                              ${isPractice && status === 'correct' && (isSelected === optKey || q.correct === optKey) ? '!bg-[#34C759] !border-[#34C759] !text-white shadow-xs' : ''}
                              ${isPractice && status === 'incorrect' && isSelected === optKey ? '!bg-[#FF3B30] !border-[#FF3B30] !text-white shadow-xs' : ''}
                           `}>{optKey}</span>
-                          <span className="text-[13.5px] sm:text-[15px] text-[#0f172a] dark:text-slate-100 leading-snug font-medium group-hover:text-black dark:group-hover:text-white flex-1"><MathText text={q.options[optKey]} /></span>
+                          <span className="text-[13.5px] sm:text-[15px] text-slate-900 leading-snug font-medium flex-1"><MathText text={q.options[optKey]} /></span>
                           {isPractice && status === 'correct' && (isSelected === optKey || q.correct === optKey) && <div className="ml-auto text-[#34C759] flex-shrink-0 pl-1.5"><Icons.CheckCircle size={18}/></div>}
                           {isPractice && status === 'incorrect' && isSelected === optKey && <div className="ml-auto text-[#FF3B30] flex-shrink-0 pl-1.5"><Icons.XCircle size={18}/></div>}
                         </div>
@@ -6406,14 +6316,14 @@
 
                   {/* Practice Feedback Bar & Nút Hỏi Giảng Viên AI (?) */}
                   {isPractice && isSelected && (
-                    <div className="mt-2.5 pt-2 border-t border-white/60 dark:border-white/10 flex flex-wrap items-center justify-between gap-2 animate-fade-in">
+                    <div className="mt-2.5 pt-2 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-2 animate-fade-in">
                       <div className="text-xs font-semibold flex items-center gap-1.5">
                         {status === 'correct' ? (
-                          <span className="text-[#137333] font-bold flex items-center gap-1 bg-emerald-50/90 px-2.5 py-0.5 rounded-full border border-emerald-200/80 text-[11px] sm:text-xs">
+                          <span className="text-[#137333] font-bold flex items-center gap-1 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 text-[11px] sm:text-xs">
                             <Icons.Check size={13} /> Chính xác!
                           </span>
                         ) : (
-                          <span className="text-[#c5221f] font-bold flex items-center gap-1 bg-rose-50/90 px-2.5 py-0.5 rounded-full border border-rose-200/80 text-[11px] sm:text-xs">
+                          <span className="text-[#c5221f] font-bold flex items-center gap-1 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200 text-[11px] sm:text-xs">
                             <Icons.X size={13} /> Chưa đúng. Đáp án chuẩn: {q.correct}
                           </span>
                         )}
@@ -6432,7 +6342,7 @@
 
                   {/* Practice Requeue Bar */}
                   {isPractice && status === 'incorrect' && (
-                      <div className="mt-2.5 p-2.5 sm:p-3 rounded-xl bg-amber-50/90 backdrop-blur-md border border-amber-200 shadow-xs animate-fade-in">
+                      <div className="mt-2.5 p-2.5 sm:p-3 rounded-xl bg-amber-50 border border-amber-200 shadow-xs animate-fade-in">
                           <div className="text-[#804200] text-[11px] sm:text-xs font-bold flex items-center gap-1 mb-2 uppercase tracking-wider">
                              <Icons.Repeat size={13} className="text-[#b06000]"/> Ôn tập lại câu này sau:
                           </div>
@@ -6469,12 +6379,7 @@
                    `}</style>
                    {/* Subtle ambient overlay */}
                    {activeBgEnabled && <div className="absolute inset-0 bg-slate-900/[0.03] pointer-events-none" />}
-                   {/* Apple Liquid Glass Ambient Fluid Light Blooms */}
-                   <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-                     <div className="absolute -top-[10%] -left-[10%] w-[55vw] h-[55vw] max-w-[550px] max-h-[550px] rounded-full bg-gradient-to-br from-blue-400/20 via-sky-300/15 to-transparent blur-[90px] animate-pulse" style={{ animationDuration: '8s' }} />
-                     <div className="absolute top-[30%] -right-[12%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full bg-gradient-to-bl from-purple-400/15 via-indigo-300/12 to-transparent blur-[100px] animate-pulse" style={{ animationDuration: '10s' }} />
-                     <div className="absolute bottom-[8%] left-[8%] w-[45vw] h-[45vw] max-w-[450px] max-h-[450px] rounded-full bg-gradient-to-tr from-cyan-400/15 via-teal-200/10 to-transparent blur-[80px]" />
-                   </div>
+                   
 
                    {/* Top Progress in Google Blue */}
                    <div className="w-full bg-[#dadce0] h-1.5 fixed top-0 left-0 z-30">
@@ -6710,12 +6615,7 @@
                     `}</style>
                     {/* Subtle ambient overlay */}
                     {activeBgEnabled && <div className="absolute inset-0 bg-slate-900/[0.03] pointer-events-none" />}
-                   {/* Apple Liquid Glass Ambient Fluid Light Blooms */}
-                   <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-                     <div className="absolute -top-[10%] -left-[10%] w-[55vw] h-[55vw] max-w-[550px] max-h-[550px] rounded-full bg-gradient-to-br from-blue-400/20 via-sky-300/15 to-transparent blur-[90px] animate-pulse" style={{ animationDuration: '8s' }} />
-                     <div className="absolute top-[30%] -right-[12%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full bg-gradient-to-bl from-purple-400/15 via-indigo-300/12 to-transparent blur-[100px] animate-pulse" style={{ animationDuration: '10s' }} />
-                     <div className="absolute bottom-[8%] left-[8%] w-[45vw] h-[45vw] max-w-[450px] max-h-[450px] rounded-full bg-gradient-to-tr from-cyan-400/15 via-teal-200/10 to-transparent blur-[80px]" />
-                   </div>
+                   
 
                     {/* Top Progress bar in Google Blue */}
                     <div className="w-full bg-[#dadce0] h-1.5 flex-shrink-0 z-30">

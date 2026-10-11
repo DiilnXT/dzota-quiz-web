@@ -1628,12 +1628,7 @@ export default function TestInterface({ test }: { test: any }) {
     <div className={`flex flex-col min-h-screen font-sans relative overflow-y-auto ${activeBgEnabled ? 'dzota-active-bg' : 'bg-[#F8F9FA]'}`}>
       {/* Subtle ambient overlay only when background is enabled */}
       {activeBgEnabled && <div className="absolute inset-0 bg-slate-900/[0.03] pointer-events-none" />}
-      {/* Apple Liquid Glass Ambient Fluid Light Blooms */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute -top-[10%] -left-[10%] w-[55vw] h-[55vw] max-w-[550px] max-h-[550px] rounded-full bg-gradient-to-br from-blue-400/20 via-sky-300/15 to-transparent blur-[90px] animate-pulse" style={{ animationDuration: '8s' }} />
-        <div className="absolute top-[30%] -right-[12%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full bg-gradient-to-bl from-purple-400/15 via-indigo-300/12 to-transparent blur-[100px] animate-pulse" style={{ animationDuration: '10s' }} />
-        <div className="absolute bottom-[8%] left-[8%] w-[45vw] h-[45vw] max-w-[450px] max-h-[450px] rounded-full bg-gradient-to-tr from-cyan-400/15 via-teal-200/10 to-transparent blur-[80px]" />
-      </div>
+      
 
       {restoredToast && (
         <div className="fixed top-16 left-1/2 -translate-x-1/2 z-30 bg-blue-600 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg flex items-center gap-2 animate-bounce">
@@ -1706,30 +1701,31 @@ export default function TestInterface({ test }: { test: any }) {
           const isFlagged = !!flaggedQuestions[q.id]
           
           return (
-            <div key={q.id} className={`p-2.5 sm:p-3.5 mb-2.5 sm:mb-3 relative select-none ${isFlagged ? 'apple-liquid-glass apple-liquid-glass-flagged' : 'apple-liquid-glass'}`}>
-              {/* Glass specular refraction light streak at top */}
-              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent pointer-events-none rounded-t-[20px] sm:rounded-t-[24px]" />
-
-              {/* Dải Banner Hoàng Kim chuyên biệt khi Đánh Dấu Xem Lại */}
+            <div key={q.id} className={`p-2.5 sm:p-3.5 mb-2.5 sm:mb-3 relative select-none rounded-2xl sm:rounded-3xl border transition-all ${
+              isFlagged 
+                ? 'border-2 border-amber-400/90 bg-amber-50/80 shadow-[0_4px_20px_rgba(251,191,36,0.25)] ring-2 ring-amber-300/40' 
+                : 'border-white/70 bg-white/80 shadow-[0_4px_16px_rgba(0,0,0,0.06)]'
+            }`}>
+              {/* Dải Banner Hoàng Kim khi Đánh Dấu Xem Lại */}
               {isFlagged && (
-                <div className="mb-2 sm:mb-2.5 inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] sm:text-xs font-black bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 shadow-xs border border-white/70 animate-pulse">
+                <div className="mb-2 sm:mb-2.5 inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] sm:text-xs font-black bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 shadow-xs border border-white/70">
                   <Bookmark size={11} fill="currentColor" />
                   <span>⭐ CÂU HỎI ĐANG ĐƯỢC LƯU Ý XEM LẠI</span>
                 </div>
               )}
 
-              {/* Khung nội dung câu hỏi với nền trắng sạch, tương phản cao, siêu dễ đọc */}
-              <div className="bg-white/95 dark:bg-slate-900/95 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 mb-2 sm:mb-2.5 border border-white/90 dark:border-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.03)] backdrop-blur-md">
+              {/* Khung nội dung câu hỏi: Nền trắng sạch, chữ đen đậm, siêu dễ đọc 100% */}
+              <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-3.5 mb-2 sm:mb-2.5 border border-slate-200/90 shadow-xs">
                 <div className="flex items-start justify-between gap-2.5">
                   <div className="flex items-start gap-2.5 sm:gap-3 flex-1 min-w-0">
                     <span className={`flex-shrink-0 font-extrabold w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-xl text-xs sm:text-sm shadow-xs mt-0.5 transition-all ${
                       isFlagged 
-                        ? 'bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-600 text-slate-950 shadow-orange-500/50 ring-2 ring-yellow-300 scale-105' 
-                        : 'bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 text-white shadow-blue-500/35 ring-1 ring-white/60'
+                        ? 'bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-600 text-slate-950 shadow-xs ring-2 ring-yellow-300 scale-105' 
+                        : 'bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-xs'
                     }`}>
                       {i + 1}
                     </span>
-                    <div className="prose prose-sm max-w-none text-slate-900 dark:text-white pt-0.5 flex-1 font-bold text-[14.5px] sm:text-[16px] leading-snug" dangerouslySetInnerHTML={{ __html: q.content }} />
+                    <div className="prose prose-sm max-w-none text-slate-900 pt-0.5 flex-1 font-bold text-[14.5px] sm:text-[16px] leading-snug" dangerouslySetInnerHTML={{ __html: q.content }} />
                   </div>
 
                   <button
@@ -1737,8 +1733,8 @@ export default function TestInterface({ test }: { test: any }) {
                     onClick={() => handleToggleFlag(q.id)}
                     className={`flex-shrink-0 flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer select-none active:scale-95 ${
                       isFlagged
-                        ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 shadow-xs border border-white/80 ring-2 ring-yellow-300 font-black scale-105'
-                        : 'bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-amber-700 border border-slate-200 shadow-2xs hover:scale-102'
+                        ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 shadow-xs border border-amber-300 ring-2 ring-yellow-300 font-black scale-105'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-amber-700 border border-slate-200 shadow-2xs'
                     }`}
                     title={isFlagged ? 'Bỏ đánh dấu xem lại câu này' : 'Đánh dấu để xem lại câu này'}
                   >
@@ -1748,7 +1744,7 @@ export default function TestInterface({ test }: { test: any }) {
                 </div>
               </div>
               
-              {/* Options List with Apple Liquid Glass Capsules - Compact & Neat */}
+              {/* Options List: Nền trắng, chữ đen đậm, mượt 100% không giật lag */}
               <div className="space-y-1.5 sm:space-y-2 pt-0.5">
                 {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(k => {
                   if (!opts[k]) return null
@@ -1756,17 +1752,21 @@ export default function TestInterface({ test }: { test: any }) {
                   return (
                     <div key={k} onClick={() => handleSelectAnswer(q.id, k)} 
                       className={`
-                        py-2 px-3 sm:py-2.5 sm:px-3.5 cursor-pointer transition-all duration-180 flex items-center group min-h-[38px] sm:min-h-[40px] apple-liquid-option
+                        py-2 px-3 sm:py-2.5 sm:px-3.5 cursor-pointer transition-all duration-150 flex items-center group min-h-[38px] sm:min-h-[40px] rounded-xl sm:rounded-2xl border
                         ${isSelected === k 
-                           ? (isFlagged ? 'apple-liquid-option-flagged-selected' : 'apple-liquid-option-selected') 
-                           : (isFlagged ? 'border-amber-200/90 hover:border-amber-400' : '')}
-                        ${test.mode === 'practice' && status === 'correct' && (isSelected === k || q.correctOption === k) ? 'apple-liquid-option-correct' : ''}
-                        ${test.mode === 'practice' && status === 'incorrect' && isSelected === k ? 'apple-liquid-option-incorrect' : ''}
+                           ? (isFlagged 
+                               ? 'border-amber-500 bg-amber-50 text-amber-950 font-semibold ring-2 ring-amber-300/50 shadow-xs' 
+                               : 'border-[#007AFF] bg-blue-50 text-blue-900 font-semibold ring-2 ring-blue-300/40 shadow-xs') 
+                           : (isFlagged 
+                               ? 'border-amber-200/90 hover:border-amber-400 bg-white text-slate-900 shadow-2xs' 
+                               : 'border-slate-200 hover:border-blue-400 bg-white text-slate-900 hover:bg-slate-50 shadow-2xs')}
+                        ${test.mode === 'practice' && status === 'correct' && (isSelected === k || q.correctOption === k) ? '!border-[#34C759] !bg-emerald-50 !text-emerald-950 !ring-2 !ring-emerald-300/50' : ''}
+                        ${test.mode === 'practice' && status === 'incorrect' && isSelected === k ? '!border-[#FF3B30] !bg-rose-50 !text-rose-900 !ring-2 !ring-rose-300/50' : ''}
                       `}>
                       <span className={`w-6 h-6 sm:w-6.5 sm:h-6.5 flex-shrink-0 rounded-lg sm:rounded-xl border flex items-center justify-center mr-2.5 text-[11px] sm:text-xs font-black transition-all ${
                          isSelected === k 
-                           ? (isFlagged ? 'bg-gradient-to-tr from-amber-500 to-yellow-400 border-amber-400 text-slate-950 shadow-xs' : 'bg-gradient-to-tr from-[#007AFF] to-blue-500 border-transparent text-white shadow-xs') 
-                           : 'border-slate-300/80 text-slate-600 group-hover:border-[#007AFF] group-hover:text-[#007AFF] bg-white'
+                           ? (isFlagged ? 'bg-gradient-to-tr from-amber-500 to-yellow-400 border-amber-400 text-slate-950 shadow-xs' : 'bg-[#007AFF] border-[#007AFF] text-white shadow-xs') 
+                           : 'border-slate-300 text-slate-700 group-hover:border-[#007AFF] group-hover:text-[#007AFF] bg-slate-50'
                       }
                          ${test.mode === 'practice' && status === 'correct' && (isSelected === k || q.correctOption === k) ? '!bg-[#34C759] !border-[#34C759] !text-white shadow-xs' : ''}
                          ${test.mode === 'practice' && status === 'incorrect' && isSelected === k ? '!bg-[#FF3B30] !border-[#FF3B30] !text-white shadow-xs' : ''}
