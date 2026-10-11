@@ -496,13 +496,14 @@
 
       // --- MAIN COMPONENT ---
       function App() {
-        const isInitialCreator = typeof window !== 'undefined' && (
-          window.location.pathname.startsWith('/creator') || 
+        const isEditorDirectMode = typeof window !== 'undefined' && (
           (new URLSearchParams(window.location.search).get('import') === 'notebook_nd') ||
-          (new URLSearchParams(window.location.search).get('mode') === 'editor')
+          (new URLSearchParams(window.location.search).get('mode') === 'editor') ||
+          (new URLSearchParams(window.location.search).get('action') === 'create') ||
+          !!localStorage.getItem('dzota_pending_import_quiz')
         );
-        const [appMode, setAppMode] = useState(() => isInitialCreator ? 'editor' : 'loading'); 
-        const [isLoading, setIsLoading] = useState(() => !isInitialCreator);
+        const [appMode, setAppMode] = useState(() => isEditorDirectMode ? 'editor' : 'home'); 
+        const [isLoading, setIsLoading] = useState(false);
         const [isParsing, setIsParsing] = useState(false);
         const [quizIdTracker, setQuizIdTracker] = useState(null);
         
@@ -1611,10 +1612,11 @@
             const viewParam = params.get('view') || params.get('tab');
             const isBankView = viewParam === 'bank' || viewParam === 'banks' || params.get('tab') === 'banks';
             const hasPendingImport = typeof window !== 'undefined' && !!localStorage.getItem('dzota_pending_import_quiz');
-            const isCreatorPath = typeof window !== 'undefined' && (
-              window.location.pathname.startsWith('/creator') || 
+            const isEditorMode = typeof window !== 'undefined' && (
               params.get('import') === 'notebook_nd' || 
-              params.get('mode') === 'editor'
+              params.get('mode') === 'editor' ||
+              params.get('action') === 'create' ||
+              hasPendingImport
             );
 
             // Nạp cấu hình pending import nếu có từ NoteBook ND
@@ -1632,9 +1634,17 @@
               } catch(e) {}
             }
 
-            // Nếu vào /creator hoặc import từ NoteBook ND mà không có quizId -> Vào ngay Editor tức thì!
-            if ((hasPendingImport || isCreatorPath) && !isBankView && !quizId) {
+            // Nếu có cờ vào chế độ editor trực tiếp (import đề từ NoteBook ND hoặc tham số mode=editor) mà không có quizId
+            if (isEditorMode && !isBankView && !quizId) {
               setAppMode('editor');
+              setIsLoading(false);
+            } else if (!quizId) {
+              // Mặc định luôn mở Thư viện đề thi (Home view - Chuẩn theo yêu cầu người dùng)
+              if (isBankView) {
+                setHomeViewTab('banks');
+                try { localStorage.setItem('dzota_home_tab', 'banks'); } catch (e) {}
+              }
+              setAppMode('home');
               setIsLoading(false);
             }
 
@@ -1833,7 +1843,7 @@
                     setHomeViewTab('banks');
                     try { localStorage.setItem('dzota_home_tab', 'banks'); } catch (e) {}
                     setAppMode('home');
-                } else if (!isCreatorPath && !hasPendingImport) {
+                } else if (!isEditorMode) {
                     setAppMode('home');
                 }
                 setIsLoading(false);
