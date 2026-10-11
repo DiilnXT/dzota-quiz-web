@@ -863,6 +863,13 @@ export default function TestInterface({ test }: { test: any }) {
     })
     setScore(parseFloat(((correctCount / questionsToGrade.length) * 10).toFixed(1)))
     setSubmitted(true)
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      if (typeof document !== 'undefined') {
+        document.documentElement.scrollTop = 0
+        document.body.scrollTop = 0
+      }
+    }
 
     // Cập nhật ngân hàng câu sai chỉ khi làm ở lượt thi chính thức (!isWrongReviewMode)
     if (!isWrongReviewMode && test?.id) {
@@ -1684,7 +1691,7 @@ export default function TestInterface({ test }: { test: any }) {
           const opts = JSON.parse(q.options)
           
           return (
-            <div key={q.id} className="bg-white/95 backdrop-blur-md p-6 rounded-3xl shadow-[0_8px_30px_rgba(15,35,75,0.12)] border border-white/80">
+            <div key={q.id} className="backdrop-blur-xl bg-white/65 dark:bg-slate-900/65 p-6 rounded-3xl shadow-[0_8px_30px_rgba(15,35,75,0.08)] border border-white/70 dark:border-white/10 hover:border-blue-300/60 transition-all">
               <div className="flex gap-3 mb-6">
                  <span className="flex-shrink-0 bg-[#007AFF] text-white font-bold w-8 h-8 flex items-center justify-center rounded-full text-sm shadow-xs">{i + 1}</span>
                  <div className="prose prose-sm max-w-none text-slate-800 pt-1" dangerouslySetInnerHTML={{ __html: q.content }} />
@@ -1697,8 +1704,8 @@ export default function TestInterface({ test }: { test: any }) {
                   return (
                     <div key={k} onClick={() => handleSelectAnswer(q.id, k)} 
                       className={`
-                        p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-center
-                        ${isSelected === k ? 'border-[#007AFF] bg-blue-50/70 shadow-xs' : 'border-slate-200/80 hover:border-blue-300 hover:bg-blue-50/30 bg-white/80 active:bg-slate-50'}
+                        p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-center backdrop-blur-sm
+                        ${isSelected === k ? 'border-[#007AFF] bg-blue-50/85 shadow-xs' : 'border-slate-200/80 hover:border-blue-300 hover:bg-blue-50/40 bg-white/85 active:bg-slate-50'}
                         ${test.mode === 'practice' && status === 'correct' && (isSelected === k || q.correctOption === k) ? '!border-[#34C759] !bg-green-50 shadow-xs' : ''}
                         ${test.mode === 'practice' && status === 'incorrect' && isSelected === k ? '!border-[#FF3B30] !bg-red-50 shadow-xs' : ''}
                       `}>

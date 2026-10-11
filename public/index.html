@@ -1404,7 +1404,16 @@
         );
 
         // --- 1. INITIALIZATION ---
-        useEffect(() => { document.body.classList.toggle('mode-simple', appMode === 'result'); }, [appMode]);
+        useEffect(() => { 
+            document.body.classList.toggle('mode-simple', appMode === 'result'); 
+            if (appMode === 'result') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                if (typeof document !== 'undefined') {
+                    document.documentElement.scrollTop = 0;
+                    document.body.scrollTop = 0;
+                }
+            }
+        }, [appMode]);
 
         // Tự động lưu bản nháp ngân hàng đề mỗi khi thao tác trong Bank Builder (Auto-draft)
         useEffect(() => {
@@ -3885,9 +3894,17 @@
             if (quizConfig.password && accessPassword !== quizConfig.password) { addToast("Sai mật khẩu!", 'error'); return; }
           }
           
-          let finalQuestions = parsedQuestions.map(slot => {
-              const variants = slot.variants || []; const picked = variants[Math.floor(Math.random() * variants.length)] || variants[0];
-              return { ...picked, originalSlotId: slot.id, options: { ...picked.options } };
+          let finalQuestions = parsedQuestions.map((slot, sIdx) => {
+              const variants = slot.variants || []; 
+              const picked = variants[Math.floor(Math.random() * variants.length)] || variants[0] || slot;
+              const baseRawId = picked.id || slot.id || ('q_' + (sIdx + 1));
+              return { 
+                ...picked, 
+                rawId: baseRawId,
+                originalId: baseRawId,
+                originalSlotId: slot.id || ('slot_' + (sIdx + 1)), 
+                options: { ...picked.options } 
+              };
           });
           
           if (quizConfig.randomPickCount > 0 && quizConfig.randomPickCount < finalQuestions.length) {
@@ -3895,6 +3912,17 @@
               if (!quizConfig.shuffleQuestions) idxs.sort((a, b) => a - b);
               finalQuestions = idxs.map(i => finalQuestions[i]);
           } else if (quizConfig.shuffleQuestions) finalQuestions = shuffleArray(finalQuestions);
+
+          // Cấp ID phiên thi duy nhất 100% cho từng câu hỏi sau khi bốc ngẫu nhiên / xáo trộn (Chống nhảy đáp án & tự chọn nhầm)
+          finalQuestions = finalQuestions.map((q, qOrder) => {
+              const baseRawId = q.rawId || q.originalId || q.id || ('q_' + (qOrder + 1));
+              return {
+                  ...q,
+                  id: 'q_run_' + (qOrder + 1) + '_' + baseRawId,
+                  rawId: baseRawId,
+                  originalId: baseRawId
+              };
+          });
 
           if (quizConfig.shuffleOptions) {
              finalQuestions = finalQuestions.map(q => {
@@ -4108,6 +4136,11 @@
             const finalScore = parseFloat(((count / uniqueQuestions.length) * 10).toFixed(1));
             setCorrectCount(count); setScore(finalScore);
             setSubmitted(true); setAppMode('result'); addToast("Đã ghi nhận kết quả!", 'success');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (typeof document !== 'undefined') {
+                document.documentElement.scrollTop = 0;
+                document.body.scrollTop = 0;
+            }
 
             // Cập nhật kết quả lên server Battle nếu đang thi đấu đối kháng
             if (isBattleMode && currentBattleRoom) {
@@ -6146,19 +6179,23 @@
              const qId = q.id;
              const isSelected = userAnswers[qId];
              const status = showExplanation[qId]; 
-             const isFlagged = !isPractice && !!flaggedQuestions[qId];
+             const isFlagged = !!flaggedQuestions[qId];
              return (
                <div
                  key={qId}
                  id={`exam-question-${idx}`}
-                 className={`bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl shadow-[0_6px_24px_rgba(15,35,75,0.08)] border transition-all animate-slide-up scroll-mt-20 sm:scroll-mt-24 p-3 sm:p-5 mb-2 sm:mb-3 ${
-                   isFlagged ? 'border-amber-400 ring-2 ring-amber-300/70 bg-amber-50/20' : 'border-white/80'
+                 className={`backdrop-blur-xl rounded-2xl sm:rounded-3xl transition-all duration-200 animate-slide-up scroll-mt-20 sm:scroll-mt-24 p-3.5 sm:p-5.5 mb-3 sm:mb-4 border ${
+                   isFlagged 
+                     ? 'border-2 border-amber-400 ring-4 ring-amber-400/30 bg-amber-50/35 shadow-[0_0_25px_rgba(251,191,36,0.25)]' 
+                     : 'border-white/70 dark:border-white/10 bg-white/65 dark:bg-slate-900/65 shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:border-blue-300/60'
                  }`}
                >
                   {/* Question Header */}
                   <div className="flex items-start justify-between gap-2.5 mb-4">
                      <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
-                       <span className={`flex-shrink-0 ${isFlagged ? 'bg-amber-500 text-white shadow-xs' : 'bg-[#1a73e8] text-white'} font-bold w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs sm:text-sm shadow-xs mt-0.5`}>
+                       <span className={`flex-shrink-0 font-bold w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs sm:text-sm shadow-md mt-0.5 ${
+                         isFlagged ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-amber-500/30 ring-2 ring-amber-300/60' : 'bg-[#1a73e8] text-white shadow-blue-500/25'
+                       }`}>
                          {idx + 1}
                        </span>
                        <div className="text-[#202124] font-medium text-[15px] sm:text-[16px] leading-snug w-full">
@@ -6178,22 +6215,20 @@
                        </div>
                      </div>
 
-                     {/* Nút Đánh dấu xem lại ở chế độ Exam */}
-                     {!isPractice && (
-                       <button
-                         type="button"
-                         onClick={() => handleToggleFlag(qId)}
-                         className={`flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer select-none active:scale-95 ${
-                           isFlagged
-                             ? 'bg-amber-400 hover:bg-amber-500 text-amber-950 shadow-xs border border-amber-500 ring-2 ring-amber-300/80 font-black'
-                             : 'bg-slate-100/90 hover:bg-amber-50 text-slate-500 hover:text-amber-700 border border-slate-200'
-                         }`}
-                         title={isFlagged ? 'Bỏ đánh dấu xem lại câu này' : 'Đánh dấu để xem lại câu này'}
-                       >
-                         <Icons.Bookmark size={13} fill={isFlagged ? 'currentColor' : 'none'} className={isFlagged ? 'text-amber-950' : 'text-slate-400'} />
-                         <span className="text-[11px] sm:text-xs">{isFlagged ? 'Đã lưu ý' : 'Xem lại'}</span>
-                       </button>
-                     )}
+                     {/* Nút Đánh dấu xem lại ở cả 2 chế độ */}
+                     <button
+                       type="button"
+                       onClick={() => handleToggleFlag(qId)}
+                       className={`flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer select-none active:scale-95 ${
+                         isFlagged
+                           ? 'bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-amber-950 shadow-md border border-amber-500 ring-2 ring-amber-300/80 font-black'
+                           : 'bg-white/80 hover:bg-amber-50 text-slate-500 hover:text-amber-700 border border-slate-200/90 shadow-2xs backdrop-blur-sm'
+                       }`}
+                       title={isFlagged ? 'Bỏ đánh dấu xem lại câu này' : 'Đánh dấu để xem lại câu này'}
+                     >
+                       <Icons.Bookmark size={13} fill={isFlagged ? 'currentColor' : 'none'} className={isFlagged ? 'text-amber-950' : 'text-slate-400'} />
+                       <span className="text-[11px] sm:text-xs">{isFlagged ? 'Đã lưu ý' : 'Xem lại'}</span>
+                     </button>
                   </div>
                   
                   {/* Options List */}
@@ -6202,10 +6237,10 @@
                       q.options[optKey] && (
                         <div key={optKey} onClick={() => handleSelectAnswer(qId, optKey)} 
                           className={`
-                            p-2 sm:p-2.5 sm:px-3.5 rounded-xl sm:rounded-2xl border-2 cursor-pointer transition-all duration-150 flex items-center group min-h-[42px]
-                            ${isSelected === optKey ? 'border-[#1a73e8] bg-[#e8f0fe]/70 shadow-xs' : 'border-[#dadce0]/80 hover:border-[#1a73e8]/60 hover:bg-[#f8fafd] bg-white/80 active:bg-slate-50'}
-                            ${isPractice && status === 'correct' && (isSelected === optKey || q.correct === optKey) ? '!border-[#137333] !bg-[#e6f4ea] text-[#137333] shadow-xs' : ''}
-                            ${isPractice && status === 'incorrect' && isSelected === optKey ? '!border-[#c5221f] !bg-[#fce8e6] text-[#c5221f] shadow-xs' : ''}
+                            p-2.5 sm:p-3 sm:px-4 rounded-xl sm:rounded-2xl border-2 cursor-pointer transition-all duration-150 flex items-center group min-h-[44px] backdrop-blur-sm
+                            ${isSelected === optKey ? 'border-[#1a73e8] bg-[#e8f0fe]/85 shadow-xs' : 'border-slate-200/80 hover:border-[#1a73e8]/60 hover:bg-[#f8fafd]/90 bg-white/85 active:bg-slate-50'}
+                            ${isPractice && status === 'correct' && (isSelected === optKey || q.correct === optKey) ? '!border-[#137333] !bg-[#e6f4ea]/95 text-[#137333] shadow-xs' : ''}
+                            ${isPractice && status === 'incorrect' && isSelected === optKey ? '!border-[#c5221f] !bg-[#fce8e6]/95 text-[#c5221f] shadow-xs' : ''}
                           `}>
                           <span className={`w-7 h-7 flex-shrink-0 rounded-full border-2 flex items-center justify-center mr-3 text-xs font-bold transition-all
                              ${isSelected === optKey ? 'bg-[#1a73e8] border-[#1a73e8] text-white shadow-xs' : 'border-[#5f6368] text-[#5f6368] group-hover:border-[#1a73e8] group-hover:text-[#1a73e8]'}
@@ -6636,7 +6671,9 @@
         const renderResult = () => {
            const uniqueQuestions = currentQuestions.filter((q, index, self) => index === self.findIndex((t) => (t.originalId || t.id) === (q.originalId || q.id)));
            const filtered = uniqueQuestions.filter(q => {
-             const baseId = q.originalId || q.id, isCorrect = userAnswers[baseId] === q.correct;
+             const baseId = q.originalId || q.id;
+             const userAns = userAnswers[q.id] !== undefined ? userAnswers[q.id] : userAnswers[baseId];
+             const isCorrect = userAns === q.correct;
              if (resultFilter === 'correct') return isCorrect; if (resultFilter === 'incorrect') return !isCorrect; return true;
            });
 
@@ -6854,7 +6891,10 @@
                     </div>
                     <div className="space-y-4">
                       {filtered.map((q, i) => {
-                        const baseId = q.originalId || q.id, userAnswer = userAnswers[baseId], isCorrect = userAnswer === q.correct, examIndex = uniqueQuestions.findIndex(item => (item.originalId || item.id) === baseId) + 1; 
+                        const baseId = q.originalId || q.id;
+                        const userAnswer = userAnswers[q.id] !== undefined ? userAnswers[q.id] : userAnswers[baseId];
+                        const isCorrect = userAnswer === q.correct;
+                        const examIndex = uniqueQuestions.findIndex(item => item.id === q.id || (item.originalId && item.originalId === baseId)) + 1; 
                         return (
                           <div key={baseId} className="bg-white p-5 rounded-[24px] shadow-ios-sm relative overflow-hidden">
                              <div className={`absolute top-0 left-0 w-1.5 h-full ${isCorrect ? 'bg-ios-green' : 'bg-ios-red'}`}></div>

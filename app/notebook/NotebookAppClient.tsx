@@ -76,6 +76,7 @@ export interface NotebookItem {
   id: string
   title: string
   subject: string
+  ownerId?: string
   createdAt: number
   updatedAt: number
   sourceType: 'single_topic' | 'multi_topic'
@@ -340,6 +341,13 @@ function renderInlineMarkdown(text: string): React.ReactNode {
 
 // ─── MAIN NOTEBOOK APP CLIENT COMPONENT ───────────────────────────
 export default function NotebookAppClient({ currentUser }: { currentUser?: any }) {
+  // Định danh người dùng hiện tại để cách ly dữ liệu sổ ghi chú tuyệt đối giữa các tài khoản
+  const userKey = useMemo(() => {
+    const raw = currentUser?.id || currentUser?.username || currentUser?.email || 'guest'
+    return String(raw).trim()
+  }, [currentUser])
+  const storageKey = useMemo(() => `dzota_notebook_nd_store_${userKey}`, [userKey])
+
   // Sổ ghi chú store
   const [notebooks, setNotebooks] = useState<NotebookItem[]>([])
   const [activeNotebookId, setActiveNotebookId] = useState<string | null>(null)
@@ -407,32 +415,55 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
     loadScript('https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js', 'docx-lib')
   }, [])
 
-  // Khởi tạo và đọc dữ liệu sổ từ LocalStorage
+  // Khởi tạo và đọc dữ liệu sổ từ LocalStorage theo từng tài khoản (cách ly độc lập tuyệt đối)
   useEffect(() => {
     try {
-      const raw = localStorage.getItem('dzota_notebook_nd_store')
+      const raw = localStorage.getItem(storageKey)
       if (raw) {
         const parsed = JSON.parse(raw)
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setNotebooks(parsed)
+        if (Array.isArray(parsed)) {
+          const userOnly = parsed.filter(n => !n.ownerId || n.ownerId === userKey)
+          setNotebooks(userOnly)
           // Kiểm tra URL query xem có id sổ nào cần mở không
           const urlParams = new URLSearchParams(window.location.search)
           const targetId = urlParams.get('id')
-          if (targetId && parsed.some(n => n.id === targetId)) {
+          if (targetId && userOnly.some(n => n.id === targetId)) {
             setActiveNotebookId(targetId)
+          } else if (userOnly.length > 0) {
+            setActiveNotebookId(userOnly[0].id)
+          } else {
+            setActiveNotebookId(null)
           }
           return
         }
+      }
+
+      // Nếu tài khoản này chưa có dữ liệu trong storageKey, kiểm tra xem có dữ liệu cũ cần di chuyển không
+      const legacyRaw = localStorage.getItem('dzota_notebook_nd_store')
+      if (legacyRaw && userKey !== 'guest') {
+        try {
+          const legacyParsed = JSON.parse(legacyRaw)
+          if (Array.isArray(legacyParsed) && legacyParsed.length > 0) {
+            const migrated = legacyParsed.map(n => ({ ...n, ownerId: userKey }))
+            setNotebooks(migrated)
+            localStorage.setItem(storageKey, JSON.stringify(migrated))
+            // Dọn dẹp key dùng chung cũ để các tài khoản khác sau này không bị đọc nhầm
+            localStorage.removeItem('dzota_notebook_nd_store')
+            setActiveNotebookId(migrated[0].id)
+            return
+          }
+        } catch (e) {}
       }
     } catch (e) {
       console.warn('Lỗi đọc store sổ ghi chú:', e)
     }
 
-    // Nếu chưa có sổ nào, tạo 1 sổ mẫu chuẩn Vi Sinh
+    // Nếu là tài khoản mới tinh chưa có sổ nào, tạo 1 sổ mẫu chuẩn Vi Sinh gắn với tài khoản này
     const sampleNotebook: NotebookItem = {
-      id: 'nb_sample_visinh',
+      id: `nb_sample_${userKey}_visinh`,
       title: 'Ôn Tập Vi Sinh Chuyên Sâu',
       subject: 'Vi Sinh Y Khoa',
+      ownerId: userKey,
       createdAt: Date.now() - 3600000 * 24 * 2,
       updatedAt: Date.now(),
       sourceType: 'multi_topic',
@@ -463,16 +494,18 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
     }
 
     setNotebooks([sampleNotebook])
+    setActiveNotebookId(sampleNotebook.id)
     try {
-      localStorage.setItem('dzota_notebook_nd_store', JSON.stringify([sampleNotebook]))
+      localStorage.setItem(storageKey, JSON.stringify([sampleNotebook]))
     } catch (e) {}
-  }, [])
+  }, [storageKey, userKey])
 
   // Lưu trữ sổ ghi chú tự động mỗi khi có thay đổi
   const saveNotebooksToStorage = (updated: NotebookItem[]) => {
-    setNotebooks(updated)
+    const withOwner = updated.map(n => ({ ...n, ownerId: n.ownerId || userKey }))
+    setNotebooks(withOwner)
     try {
-      localStorage.setItem('dzota_notebook_nd_store', JSON.stringify(updated))
+      localStorage.setItem(storageKey, JSON.stringify(withOwner))
     } catch (e) {
       console.warn('Lỗi ghi LocalStorage:', e)
     }
@@ -1020,6 +1053,7 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
       id: `nb_${Date.now()}`,
       title: newNotebookTitle.trim(),
       subject: newNotebookSubject.trim() || 'Tổng hợp',
+      ownerId: userKey,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       sourceType: newNotebookSourceType,
