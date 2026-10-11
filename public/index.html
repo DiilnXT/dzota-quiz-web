@@ -496,8 +496,13 @@
 
       // --- MAIN COMPONENT ---
       function App() {
-        const [appMode, setAppMode] = useState('loading'); 
-        const [isLoading, setIsLoading] = useState(true);
+        const isInitialCreator = typeof window !== 'undefined' && (
+          window.location.pathname.startsWith('/creator') || 
+          (new URLSearchParams(window.location.search).get('import') === 'notebook_nd') ||
+          (new URLSearchParams(window.location.search).get('mode') === 'editor')
+        );
+        const [appMode, setAppMode] = useState(() => isInitialCreator ? 'editor' : 'loading'); 
+        const [isLoading, setIsLoading] = useState(() => !isInitialCreator);
         const [isParsing, setIsParsing] = useState(false);
         const [quizIdTracker, setQuizIdTracker] = useState(null);
         
@@ -1600,6 +1605,39 @@
 
         useEffect(() => {
           const initApp = async () => {
+            const params = new URLSearchParams(window.location.search);
+            const quizId = params.get('id') || params.get('test') || params.get('editId');
+            const isEditParam = params.get('edit') === 'true' || params.has('editId');
+            const viewParam = params.get('view') || params.get('tab');
+            const isBankView = viewParam === 'bank' || viewParam === 'banks' || params.get('tab') === 'banks';
+            const hasPendingImport = typeof window !== 'undefined' && !!localStorage.getItem('dzota_pending_import_quiz');
+            const isCreatorPath = typeof window !== 'undefined' && (
+              window.location.pathname.startsWith('/creator') || 
+              params.get('import') === 'notebook_nd' || 
+              params.get('mode') === 'editor'
+            );
+
+            // Nạp cấu hình pending import nếu có từ NoteBook ND
+            if (hasPendingImport) {
+              try {
+                const pendingTitle = localStorage.getItem('dzota_pending_import_title');
+                const pendingCategory = localStorage.getItem('dzota_pending_import_category');
+                if (pendingTitle) {
+                  setQuizConfig(prev => ({
+                    ...prev,
+                    title: pendingTitle,
+                    category: pendingCategory || prev.category
+                  }));
+                }
+              } catch(e) {}
+            }
+
+            // Nếu vào /creator hoặc import từ NoteBook ND mà không có quizId -> Vào ngay Editor tức thì!
+            if ((hasPendingImport || isCreatorPath) && !isBankView && !quizId) {
+              setAppMode('editor');
+              setIsLoading(false);
+            }
+
             let localQuizzes = [];
             try { localQuizzes = JSON.parse(localStorage.getItem('myQuizzes') || '[]'); } catch (e) {}
             let vaultBanks = [];
@@ -1610,38 +1648,36 @@
             vaultBanks.forEach(b => { if (b && b.id) initialMap.set(b.id, b); });
             setSavedQuizzes(Array.from(initialMap.values()));
 
-            // Tự động quét và khôi phục ngân hàng đề nếu có dữ liệu lưu trữ
+            // Tự động quét và khôi phục ngân hàng đề chạy ngầm
             scanAndRecoverBanks(false);
 
-            // Fetch admin settings for active background state and custom images
-            try {
-              const settingsRes = await fetch('/api/admin/settings');
-              if (settingsRes.ok) {
-                const sData = await settingsRes.json();
-                if (sData && sData.activeBgEnabled !== undefined) {
-                  setActiveBgEnabled(Boolean(sData.activeBgEnabled));
+            // Fetch admin settings chạy ngầm không block UI
+            fetch('/api/admin/settings')
+              .then(res => res.ok ? res.json() : null)
+              .then(sData => {
+                if (sData) {
+                  if (sData.activeBgEnabled !== undefined) setActiveBgEnabled(Boolean(sData.activeBgEnabled));
+                  if (sData.activeBgDesktop) setActiveBgDesktop(sData.activeBgDesktop);
+                  if (sData.activeBgMobile) setActiveBgMobile(sData.activeBgMobile);
                 }
-                if (sData?.activeBgDesktop) setActiveBgDesktop(sData.activeBgDesktop);
-                if (sData?.activeBgMobile) setActiveBgMobile(sData.activeBgMobile);
-              }
-            } catch (err) {}
+              })
+              .catch(() => {});
 
-            // Đồng bộ dữ liệu đề thi theo quyền giáo viên / admin
-            await fetchQuizzes(adminScope);
+            // Đồng bộ dữ liệu đề thi chạy ngầm không block UI
+            fetchQuizzes(adminScope).catch(() => {});
 
-            // Tải thông báo người dùng
-            try {
-              const notifRes = await fetch('/api/notifications');
-              if (notifRes.ok) {
-                const nData = await notifRes.json();
-                if (nData.notifications && Array.isArray(nData.notifications)) {
+            // Tải thông báo người dùng chạy ngầm
+            fetch('/api/notifications')
+              .then(res => res.ok ? res.json() : null)
+              .then(nData => {
+                if (nData && nData.notifications && Array.isArray(nData.notifications)) {
                   setUserNotifications(nData.notifications);
                   if (nData.unreadCount > 0) {
                     addToast(`🔔 Bạn có ${nData.unreadCount} thông báo mới! Bấm chuông trên menu để xem.`, 'info');
                   }
                 }
-              }
-            } catch (err) {}
+              })
+              .catch(() => {});
 
             const handleLoadQuiz = async (id, isEditMode = false) => {
                 setIsLoading(true);
@@ -1783,11 +1819,6 @@
                 }
             };
 
-            const params = new URLSearchParams(window.location.search);
-            const quizId = params.get('id') || params.get('test') || params.get('editId');
-            const isEditParam = params.get('edit') === 'true' || params.has('editId');
-            const viewParam = params.get('view') || params.get('tab');
-
             if (quizId) {
                 setQuizIdTracker(quizId);
                 handleLoadQuiz(quizId, isEditParam);
@@ -1797,31 +1828,13 @@
                     setBattleTab('join');
                     setShowBattleModal(true);
                 }
-                const isBankView = viewParam === 'bank' || viewParam === 'banks' || params.get('tab') === 'banks';
+            } else {
                 if (isBankView) {
                     setHomeViewTab('banks');
                     try { localStorage.setItem('dzota_home_tab', 'banks'); } catch (e) {}
-                }
-                const hasPendingImport = typeof window !== 'undefined' && !!localStorage.getItem('dzota_pending_import_quiz');
-                const isCreatorPath = typeof window !== 'undefined' && (window.location.pathname.startsWith('/creator') || params.get('import') === 'notebook_nd' || params.get('mode') === 'editor');
-                if ((hasPendingImport || isCreatorPath) && !isBankView) {
-                    try {
-                        const pendingTitle = localStorage.getItem('dzota_pending_import_title');
-                        const pendingCategory = localStorage.getItem('dzota_pending_import_category');
-                        if (pendingTitle) {
-                            setQuizConfig(prev => ({
-                                ...prev,
-                                title: pendingTitle,
-                                category: pendingCategory || prev.category
-                            }));
-                        }
-                    } catch(e) {}
-                    setAppMode('editor');
-                } else {
                     setAppMode('home');
-                    if (isBankView) {
-                        setHomeViewTab('banks');
-                    }
+                } else if (!isCreatorPath && !hasPendingImport) {
+                    setAppMode('home');
                 }
                 setIsLoading(false);
             }
