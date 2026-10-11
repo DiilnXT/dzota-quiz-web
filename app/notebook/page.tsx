@@ -58,7 +58,7 @@ export default async function NotebookPage() {
   }
 
   return (
-    <main className="w-screen min-h-screen bg-slate-50 dark:bg-[#0B0F19] text-slate-800 dark:text-slate-100 overflow-x-hidden">
+    <main className="w-screen h-screen max-h-screen overflow-hidden bg-slate-50 dark:bg-[#0B0F19] text-slate-800 dark:text-slate-100 flex flex-col">
       <NotebookAppClient currentUser={currentUser || session} />
     </main>
   )

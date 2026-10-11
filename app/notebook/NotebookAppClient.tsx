@@ -97,13 +97,45 @@ export interface NotebookItem {
 }
 
 // ─── RICH MARKDOWN RENDERER COMPONENT ─────────────────────────────
-// Loại bỏ sạch sẽ lỗi in đậm **, // và render Markdown đẹp hoàn hảo
+// Loại bỏ sạch sẽ lỗi in đậm **, //, lỗi công thức $\mathbf{...}$ và render dẫn chứng chuẩn mực
 export function RichMarkdownRenderer({ content }: { content: string }) {
   const renderedElements = useMemo(() => {
     if (!content) return null
 
-    // 1. Tiền xử lý dọn dẹp các ký tự rác
+    // 1. Tiền xử lý dọn dẹp các ký tự rác và chuyển đổi LaTeX math bị lạm dụng
     let cleanText = content
+      // Chuyển đổi triệt để các ký hiệu LaTeX math bị lạm dụng cho thuật ngữ y sinh / hóa học
+      // Ví dụ: $\mathbf{Hb}$ -> **Hb**, $\mathbf{RBC}$ -> **RBC**, $\mathbf{WBC}$ -> **WBC**
+      .replace(/\$\\mathbf\{([^}]+)\}\$/g, '**$1**')
+      .replace(/\$\\mathrm\{([^}]+)\}\$/g, '$1')
+      .replace(/\$\\text\{([^}]+)\}\$/g, '$1')
+      .replace(/\$\\textbf\{([^}]+)\}\$/g, '**$1**')
+      .replace(/\\mathbf\{([^}]+)\}/g, '**$1**')
+      .replace(/\\mathrm\{([^}]+)\}/g, '$1')
+      .replace(/\\text\{([^}]+)\}/g, '$1')
+      .replace(/\\textbf\{([^}]+)\}/g, '**$1**')
+      // Đơn vị y tế & toán học
+      .replace(/\\times/g, '×')
+      .replace(/\\mu\s*L/gi, 'μL')
+      .replace(/\\mu/g, 'μ')
+      .replace(/\\pm/g, '±')
+      .replace(/\\ge(q)?\b/g, '≥')
+      .replace(/\\le(q)?\b/g, '≤')
+      .replace(/\\neq\b/g, '≠')
+      // Chuẩn hóa lũy thừa số mũ thông dụng: 10^6 -> 10⁶, 10^{12} -> 10¹²
+      .replace(/10\^\{?(\d+)\}?/g, (m, exp) => {
+        const supMap: Record<string, string> = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' }
+        return '10' + exp.split('').map((c: string) => supMap[c] || c).join('')
+      })
+      // Dọn dẹp các dấu dollar lẻ bao quanh thuật ngữ, đơn vị hoặc số liệu:
+      // Ví dụ: $PLT$ -> **PLT**, $Neutrophil$ -> **Neutrophil**, $g/dL$ -> g/dL, $× 10⁶/μL$ -> × 10⁶/μL, $150 - 450$ -> 150 - 450
+      .replace(/\$([^$\n]{1,60})\$/g, (match, inner) => {
+        const trimmed = inner.trim()
+        if (/^[A-Za-z]{1,20}$/.test(trimmed)) {
+          return `**${trimmed}**`
+        }
+        return trimmed
+      })
       // Bỏ các dấu gạch chéo // ở đầu dòng hoặc lẻ loi
       .replace(/^[ \t]*\/\/[ \t]*/gm, '')
       .replace(/[ \t]+\/\/[ \t]+/g, ' • ')
@@ -163,6 +195,18 @@ export function RichMarkdownRenderer({ content }: { content: string }) {
         )
       }
 
+      // Heading Số La Mã lớn (I. KHOẢNG THAM CHIẾU..., II. CÁC THÔNG SỐ...)
+      if (/^[IVXLCDM]+\.\s+[A-ZÀ-Ỹ\s\d\(\)\-]{3,}/i.test(trimmedBlock)) {
+        return (
+          <div key={blockIdx} className="my-3 p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/40 border-l-4 border-blue-600 border border-blue-100 dark:border-blue-900/60 shadow-2xs">
+            <h3 className="text-sm sm:text-base font-black text-blue-900 dark:text-blue-200 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-blue-600 inline-block shrink-0" />
+              <span>{renderInlineMarkdown(trimmedBlock)}</span>
+            </h3>
+          </div>
+        )
+      }
+
       // Blockquote (> ...)
       if (/^>\s+/.test(trimmedBlock)) {
         const quoteText = trimmedBlock.replace(/^>\s+/gm, '')
@@ -192,7 +236,6 @@ export function RichMarkdownRenderer({ content }: { content: string }) {
           <ul key={blockIdx} className="space-y-1.5 my-2.5 pl-1">
             {lines.map((line, lIdx) => {
               const cleanItem = line.replace(/^\s*(\*|\-|\+|•|\d+\.)\s+/, '')
-              const isNumbered = /^\s*\d+\.\s+/.test(line)
               return (
                 <li key={lIdx} className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
@@ -221,16 +264,17 @@ export function RichMarkdownRenderer({ content }: { content: string }) {
   return <div className="space-y-1">{renderedElements}</div>
 }
 
-// Xử lý inline: **in đậm**, *in nghiêng*, `code`
+// Xử lý inline: **in đậm**, *in nghiêng*, `code`, và [Dẫn chứng nguồn]
 function renderInlineMarkdown(text: string): React.ReactNode {
   if (!text) return ''
 
-  // Regex nhận diện **bold**, *italic*, `code`
   const parts: React.ReactNode[] = []
-  let remaining = text
-
-  // Tokenize regex
-  const regex = /(\*\*[^*]+?\*\*|\*[^*]+?\*|`[^`]+?`)/g
+  // Regex nhận diện:
+  // 1. Trích dẫn nguồn: (\(\s*\[(?:Slide|Trang|Chương|Nguồn|Bài)[^\]]+\]\s*\)|\[(?:Slide|Trang|Chương|Nguồn|Bài)[^\]]+\])
+  // 2. **bold**
+  // 3. *italic*
+  // 4. `code`
+  const regex = /(\(\s*\[(?:Slide|Trang|Chương|Nguồn|Bài)[^\]]+\]\s*\)|\[(?:Slide|Trang|Chương|Nguồn|Bài)[^\]]+\]|\*\*[^*]+?\*\*|\*[^*]+?\*|`[^`]+?`)/gi
   let match: RegExpExecArray | null
   let lastIndex = 0
 
@@ -260,6 +304,27 @@ function renderInlineMarkdown(text: string): React.ReactNode {
         <code key={match.index} className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-pink-600 dark:text-pink-400 font-mono text-[11px]">
           {token.slice(1, -1)}
         </code>
+      )
+    } else if (
+      /^(?:\(\s*)?\[(?:Slide|Trang|Chương|Nguồn|Bài)/i.test(token)
+    ) {
+      // Dẫn chứng tài liệu nguồn (Citation badge chuẩn Google NotebookLM)
+      const cleanCitation = token
+        .replace(/^\(\s*/, '')
+        .replace(/\s*\)$/, '')
+        .replace(/^\[/, '')
+        .replace(/\]$/, '')
+        .trim()
+
+      parts.push(
+        <span
+          key={match.index}
+          className="inline-flex items-center gap-1 px-2 py-0.5 my-0.5 mx-1 rounded-md bg-blue-50 dark:bg-blue-950/70 border border-blue-200/80 dark:border-blue-800/80 text-blue-700 dark:text-blue-300 font-bold text-[11px] shadow-2xs align-middle"
+          title={`Dẫn chứng chính xác từ tài liệu nguồn: ${cleanCitation}`}
+        >
+          <span>📖</span>
+          <span>{cleanCitation}</span>
+        </span>
       )
     }
 
@@ -986,7 +1051,7 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
   // =================================================================
   if (!activeNotebook) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans flex text-slate-800 dark:text-slate-100">
+      <div className="w-full h-full flex overflow-hidden bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100">
         {/* Toast thông báo */}
         {toastMsg && (
           <div className="fixed top-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl text-xs sm:text-sm font-bold flex items-center gap-2 border border-slate-700 animate-fade-in">
@@ -996,7 +1061,7 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
         )}
 
         {/* Sidebar trái (Notebook OS) chuẩn NotebookLM */}
-        <aside className="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between p-4 flex-shrink-0 hidden md:flex">
+        <aside className="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between p-4 flex-shrink-0 hidden md:flex h-full overflow-y-auto min-h-0">
           <div className="space-y-6">
             {/* Logo */}
             <div className="flex items-center gap-3 px-2">
@@ -1080,9 +1145,9 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
         </aside>
 
         {/* Nội dung chính: Danh sách sổ ghi chú */}
-        <main className="flex-1 flex flex-col min-w-0">
+        <main className="flex-1 min-w-0 min-h-0 flex flex-col h-full overflow-hidden">
           {/* Top Bar thư viện */}
-          <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 flex items-center justify-between gap-4">
+          <header className="h-16 shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 flex items-center justify-between gap-4">
             <div className="flex items-center gap-4 flex-1 max-w-xl">
               <div className="relative w-full">
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -1108,7 +1173,7 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
           </header>
 
           {/* Vùng danh sách Table View phong cách Google NotebookLM */}
-          <div className="flex-1 p-6 overflow-y-auto max-w-6xl mx-auto w-full space-y-6">
+          <div className="flex-1 min-h-0 p-6 overflow-y-auto max-w-6xl mx-auto w-full space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
@@ -1338,7 +1403,7 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
   // GIAO DIỆN 2: WORKSPACE SỔ GHI CHÚ (INSIDE NOTEBOOK - IMAGE 3)
   // =================================================================
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans flex flex-col text-slate-800 dark:text-slate-100">
+    <div className="w-full h-full max-h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 font-sans flex flex-col text-slate-800 dark:text-slate-100">
       {/* Toast thông báo */}
       {toastMsg && (
         <div className="fixed top-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl text-xs sm:text-sm font-bold flex items-center gap-2 border border-slate-700 animate-fade-in">
@@ -1361,7 +1426,7 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
       )}
 
       {/* TOP BAR WORKSPACE CHUẨN NOTEBOOKLM */}
-      <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 sm:px-6 flex items-center justify-between gap-3 sticky top-0 z-30 shadow-2xs">
+      <header className="h-16 shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 sm:px-6 flex items-center justify-between gap-3 sticky top-0 z-30 shadow-2xs">
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => setActiveNotebookId(null)}
@@ -1427,9 +1492,9 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
       </header>
 
       {/* VÙNG NỘI DUNG CHÍNH (3 CỘT NOTEBOOKLM) */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 min-h-0 flex overflow-hidden">
         {/* ─── CỘT TRÁI (320px): NGUỒN TÀI LIỆU (SOURCES) ─── */}
-        <aside className="w-80 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between flex-shrink-0 overflow-y-auto p-4 space-y-4">
+        <aside className="w-80 h-full border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between shrink-0 overflow-y-auto p-4 space-y-4 min-h-0">
           <div className="space-y-4">
             {/* Header Nguồn */}
             <div className="flex items-center justify-between">
@@ -1598,15 +1663,15 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
         </aside>
 
         {/* ─── VÙNG TRUNG TÂM / PHẢI: PHỤ THUỘC VÀO ACTIVE MODE ─── */}
-        <div className="flex-1 flex overflow-hidden bg-slate-100/50 dark:bg-slate-950">
+        <div className="flex-1 min-h-0 flex overflow-hidden bg-slate-100/50 dark:bg-slate-950">
           {/* ========================================================= */}
           {/* CHẾ ĐỘ 1: 💬 HỎI ĐÁP & TRÒ CHUYỆN (CHAT)                  */}
           {/* TẮT HOÀN TOÀN SETUP TẠO TRẮC NGHIỆM ĐỂ CHAT THOÁNG ĐẸP     */}
           {/* ========================================================= */}
           {activeMode === 'chat' && (
-            <div className="flex-1 flex flex-col justify-between h-full bg-white dark:bg-slate-900 overflow-hidden">
+            <div className="flex-1 min-h-0 flex flex-col h-full bg-white dark:bg-slate-900 overflow-hidden">
               {/* Header Chat */}
-              <div className="px-6 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 z-10">
+              <div className="px-6 py-3 shrink-0 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 z-10">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/50 text-blue-600 flex items-center justify-center font-bold">
                     💬
@@ -1630,7 +1695,7 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
               </div>
 
               {/* Danh sách tin nhắn Chat */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 max-w-4xl mx-auto w-full">
+              <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4 max-w-4xl mx-auto w-full">
                 {chatMessages.length === 0 ? (
                   <div className="text-center py-16 px-4 space-y-4">
                     <div className="w-16 h-16 rounded-3xl bg-blue-50 dark:bg-blue-900/40 text-blue-600 mx-auto flex items-center justify-center text-2xl shadow-sm">
@@ -1734,7 +1799,7 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
               </div>
 
               {/* Khung nhập Chat bo tròn Pill chuẩn NotebookLM */}
-              <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+              <div className="p-4 shrink-0 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
                 <div className="max-w-4xl mx-auto flex items-center gap-3 bg-slate-100 dark:bg-slate-800 p-2 rounded-full border border-slate-200 dark:border-slate-700 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition shadow-2xs">
                   <input
                     type="text"
@@ -1769,7 +1834,7 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
           {/* TẮT CHAT, TẬP TRUNG SETUP & XUẤT BẢN BỘ CÂU HỎI            */}
           {/* ========================================================= */}
           {activeMode === 'studio' && (
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 overflow-y-auto">
+            <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 overflow-y-auto">
               {/* ─── CỘT CÀI ĐẶT TẠO ĐỀ (5 Cols) ─── */}
               <div className="lg:col-span-5 space-y-4">
                 <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
