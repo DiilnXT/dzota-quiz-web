@@ -91,3 +91,137 @@ body {
 
 
 
+
+
+/* ========================================================
+   APPLE IPHONE 18 LIQUID GLASS - HIGH-PERFORMANCE EDITION
+   Ultra-Refined Optical Gloss, Specular Highlights, 120FPS Smooth
+   ======================================================== */
+.apple-liquid-glass {
+  position: relative;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 230px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.22) 50%, rgba(255, 255, 255, 0.12) 100%);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 
+    0 12px 32px -8px rgba(0, 0, 0, 0.1),
+    inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.03);
+  border-radius: 20px;
+  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+  transform: translateZ(0);
+}
+
+@media (min-width: 640px) {
+  .apple-liquid-glass {
+    border-radius: 26px;
+  }
+}
+
+/* Hairline glass specular reflection sheen at top rim */
+.apple-liquid-glass::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
+  pointer-events: none;
+}
+
+/* Flagged question: Apple Solar Amber Liquid Glass Aura */
+.apple-liquid-glass-flagged {
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.65) 0%, rgba(253, 230, 138, 0.35) 50%, rgba(249, 115, 22, 0.25) 100%) !important;
+  border: 2px solid rgba(245, 158, 11, 0.9) !important;
+  box-shadow: 
+    0 0 0 3px rgba(245, 158, 11, 0.3),
+    0 16px 36px -8px rgba(245, 158, 11, 0.35),
+    inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 2px 0 rgba(217, 119, 6, 0.2) !important;
+}
+
+/* Inner Question Container: Crisp White Gloss Capsule with Hairline Bevel */
+.apple-question-capsule {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+  border-radius: 14px;
+}
+@media (min-width: 640px) {
+  .apple-question-capsule {
+    border-radius: 18px;
+  }
+}
+
+/* Apple Floating Liquid Option Pills */
+.apple-liquid-option {
+  position: relative;
+  background: linear-gradient(180deg, #ffffff 0%, rgba(248, 250, 252, 0.95) 100%);
+  border: 1.5px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 
+    0 2px 6px rgba(0, 0, 0, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+  border-radius: 12px;
+  color: #0f172a;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 640px) {
+  .apple-liquid-option {
+    border-radius: 15px;
+  }
+}
+
+.apple-liquid-option:hover {
+  background: #ffffff;
+  border-color: rgba(59, 130, 246, 0.65);
+  box-shadow: 
+    0 4px 14px rgba(37, 99, 235, 0.12),
+    inset 0 1px 0 #ffffff;
+  transform: translateY(-0.5px);
+}
+
+.apple-liquid-option-selected {
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%) !important;
+  border: 2px solid #007AFF !important;
+  box-shadow: 
+    0 0 0 2.5px rgba(0, 122, 255, 0.25),
+    0 4px 14px rgba(0, 122, 255, 0.18),
+    inset 0 1px 0 #ffffff !important;
+  color: #1e3a8a !important;
+}
+
+.apple-liquid-option-flagged-selected {
+  background: linear-gradient(180deg, #fef3c7 0%, #fde68a 100%) !important;
+  border: 2px solid #f59e0b !important;
+  box-shadow: 
+    0 0 0 2.5px rgba(245, 158, 11, 0.3),
+    0 4px 14px rgba(245, 158, 11, 0.2),
+    inset 0 1px 0 #ffffff !important;
+  color: #78350f !important;
+}
+
+.apple-liquid-option-correct {
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%) !important;
+  border: 2px solid #34C759 !important;
+  box-shadow: 
+    0 0 0 2.5px rgba(52, 199, 89, 0.25),
+    0 4px 14px rgba(52, 199, 89, 0.18),
+    inset 0 1px 0 #ffffff !important;
+  color: #064e3b !important;
+}
+
+.apple-liquid-option-incorrect {
+  background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%) !important;
+  border: 2px solid #FF3B30 !important;
+  box-shadow: 
+    0 0 0 2.5px rgba(255, 59, 48, 0.25),
+    0 4px 14px rgba(255, 59, 48, 0.18),
+    inset 0 1px 0 #ffffff !important;
+  color: #7f1d1d !important;
+}

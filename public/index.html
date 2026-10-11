@@ -161,39 +161,137 @@
       }
       
       
-            /* High-performance, butter-smooth quiz card styles */
+                  /* ========================================================
+         APPLE IPHONE 18 LIQUID GLASS - HIGH-PERFORMANCE EDITION
+         Ultra-Refined Optical Gloss, Specular Highlights, 120FPS Smooth
+         ======================================================== */
       .apple-liquid-glass {
         position: relative;
-        background: rgba(255, 255, 255, 0.85);
+        content-visibility: auto;
+        contain-intrinsic-size: auto 230px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.22) 50%, rgba(255, 255, 255, 0.12) 100%);
+        -webkit-backdrop-filter: blur(16px);
+        backdrop-filter: blur(16px);
         border: 1px solid rgba(255, 255, 255, 0.75);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-        border-radius: 18px;
+        box-shadow: 
+          0 12px 32px -8px rgba(0, 0, 0, 0.1),
+          inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.9),
+          inset 0 -1px 1px 0 rgba(0, 0, 0, 0.03);
+        border-radius: 20px;
+        transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+        transform: translateZ(0);
       }
+      
       @media (min-width: 640px) {
         .apple-liquid-glass {
-          border-radius: 22px;
+          border-radius: 26px;
         }
       }
-      .apple-liquid-glass-flagged {
-        background: rgba(254, 243, 199, 0.9) !important;
-        border: 2px solid #f59e0b !important;
-        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25), 0 4px 16px rgba(245, 158, 11, 0.15) !important;
+      
+      /* Hairline glass specular reflection sheen at top rim */
+      .apple-liquid-glass::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 10%;
+        right: 10%;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
+        pointer-events: none;
       }
-      .quiz-option-item {
-        background: #ffffff;
-        border: 1.5px solid #e2e8f0;
-        border-radius: 12px;
-        color: #0f172a;
-        transition: all 0.12s ease-out;
+      
+      /* Flagged question: Apple Solar Amber Liquid Glass Aura */
+      .apple-liquid-glass-flagged {
+        background: linear-gradient(135deg, rgba(254, 243, 199, 0.65) 0%, rgba(253, 230, 138, 0.35) 50%, rgba(249, 115, 22, 0.25) 100%) !important;
+        border: 2px solid rgba(245, 158, 11, 0.9) !important;
+        box-shadow: 
+          0 0 0 3px rgba(245, 158, 11, 0.3),
+          0 16px 36px -8px rgba(245, 158, 11, 0.35),
+          inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.95),
+          inset 0 -1px 2px 0 rgba(217, 119, 6, 0.2) !important;
+      }
+      
+      /* Inner Question Container: Crisp White Gloss Capsule with Hairline Bevel */
+      .apple-question-capsule {
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        box-shadow: 
+          0 2px 8px rgba(0, 0, 0, 0.04),
+          inset 0 1px 0 rgba(255, 255, 255, 1);
+        border-radius: 14px;
       }
       @media (min-width: 640px) {
-        .quiz-option-item {
-          border-radius: 14px;
+        .apple-question-capsule {
+          border-radius: 18px;
         }
       }
-      .quiz-option-item:hover {
-        background: #f8fafc;
-        border-color: #3b82f6;
+      
+      /* Apple Floating Liquid Option Pills */
+      .apple-liquid-option {
+        position: relative;
+        background: linear-gradient(180deg, #ffffff 0%, rgba(248, 250, 252, 0.95) 100%);
+        border: 1.5px solid rgba(226, 232, 240, 0.95);
+        box-shadow: 
+          0 2px 6px rgba(0, 0, 0, 0.03),
+          inset 0 1px 0 rgba(255, 255, 255, 1);
+        border-radius: 12px;
+        color: #0f172a;
+        transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      
+      @media (min-width: 640px) {
+        .apple-liquid-option {
+          border-radius: 15px;
+        }
+      }
+      
+      .apple-liquid-option:hover {
+        background: #ffffff;
+        border-color: rgba(59, 130, 246, 0.65);
+        box-shadow: 
+          0 4px 14px rgba(37, 99, 235, 0.12),
+          inset 0 1px 0 #ffffff;
+        transform: translateY(-0.5px);
+      }
+      
+      .apple-liquid-option-selected {
+        background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%) !important;
+        border: 2px solid #007AFF !important;
+        box-shadow: 
+          0 0 0 2.5px rgba(0, 122, 255, 0.25),
+          0 4px 14px rgba(0, 122, 255, 0.18),
+          inset 0 1px 0 #ffffff !important;
+        color: #1e3a8a !important;
+      }
+      
+      .apple-liquid-option-flagged-selected {
+        background: linear-gradient(180deg, #fef3c7 0%, #fde68a 100%) !important;
+        border: 2px solid #f59e0b !important;
+        box-shadow: 
+          0 0 0 2.5px rgba(245, 158, 11, 0.3),
+          0 4px 14px rgba(245, 158, 11, 0.2),
+          inset 0 1px 0 #ffffff !important;
+        color: #78350f !important;
+      }
+      
+      .apple-liquid-option-correct {
+        background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%) !important;
+        border: 2px solid #34C759 !important;
+        box-shadow: 
+          0 0 0 2.5px rgba(52, 199, 89, 0.25),
+          0 4px 14px rgba(52, 199, 89, 0.18),
+          inset 0 1px 0 #ffffff !important;
+        color: #064e3b !important;
+      }
+      
+      .apple-liquid-option-incorrect {
+        background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%) !important;
+        border: 2px solid #FF3B30 !important;
+        box-shadow: 
+          0 0 0 2.5px rgba(255, 59, 48, 0.25),
+          0 4px 14px rgba(255, 59, 48, 0.18),
+          inset 0 1px 0 #ffffff !important;
+        color: #7f1d1d !important;
       }
       
       .glass-panel {
@@ -6221,7 +6319,7 @@
                <div
                  key={qId}
                  id={`exam-question-${idx}`}
-                 className={`animate-slide-up scroll-mt-20 sm:scroll-mt-24 p-2.5 sm:p-3.5 mb-2.5 sm:mb-3 relative select-none ${
+                 className={`animate-slide-up scroll-mt-20 sm:scroll-mt-24 p-2.5 sm:p-3.5 mb-2.5 sm:mb-3.5 relative select-none ${
                    isFlagged 
                      ? 'apple-liquid-glass apple-liquid-glass-flagged' 
                      : 'apple-liquid-glass'
@@ -6235,14 +6333,14 @@
                     </div>
                   )}
 
-                  {/* Khung nội dung câu hỏi: Nền trắng sạch sẽ, chữ đen đậm, siêu dễ đọc 100% */}
-                  <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-3.5 mb-2 sm:mb-2.5 border border-slate-200/90 shadow-xs">
+                  {/* Khung nội dung câu hỏi: Capsule trắng tinh thể sang trọng, chữ đen đậm siêu sắc nét 100% */}
+                  <div className="apple-question-capsule p-3 sm:p-3.5 mb-2 sm:mb-2.5">
                     <div className="flex items-start justify-between gap-2.5">
                       <div className="flex items-start gap-2.5 sm:gap-3 flex-1 min-w-0">
                         <span className={`flex-shrink-0 font-black w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-xl text-xs sm:text-sm shadow-xs mt-0.5 transition-all ${
                           isFlagged 
                             ? 'bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-600 text-slate-950 shadow-xs ring-2 ring-yellow-300 scale-105' 
-                            : 'bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-xs'
+                            : 'bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 text-white shadow-xs'
                         }`}>
                           {idx + 1}
                         </span>
@@ -6258,14 +6356,14 @@
                         </div>
                       </div>
 
-                      {/* Nút Đánh dấu xem lại */}
+                      {/* Nút Đánh dấu xem lại Apple Pill */}
                       <button
                         type="button"
                         onClick={() => handleToggleFlag(qId)}
                         className={`flex-shrink-0 flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer select-none active:scale-95 ${
                           isFlagged
                             ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 shadow-xs border border-amber-300 ring-2 ring-yellow-300 font-black scale-105'
-                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-amber-700 border border-slate-200 shadow-2xs'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-amber-700 border border-slate-200/80 shadow-2xs'
                         }`}
                         title={isFlagged ? 'Bỏ đánh dấu xem lại câu này' : 'Đánh dấu để xem lại câu này'}
                       >
@@ -6281,27 +6379,23 @@
                     )}
                   </div>
                   
-                  {/* Danh sách phương án: Nền trắng, chữ đen đậm tương phản 100%, lướt cực mượt không lag */}
+                  {/* Danh sách phương án: Apple Liquid Option Capsules - Đẹp bóng bẩy, nhẹ mượt 120FPS */}
                   <div className="space-y-1.5 sm:space-y-2 pt-0.5">
                     {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(optKey => (
                       q.options[optKey] && (
                         <div key={optKey} onClick={() => handleSelectAnswer(qId, optKey)} 
                           className={`
-                            py-2 px-3 sm:py-2.5 sm:px-3.5 cursor-pointer transition-all duration-150 flex items-center group min-h-[38px] sm:min-h-[40px] rounded-xl sm:rounded-2xl border
+                            py-2 px-3 sm:py-2.5 sm:px-3.5 cursor-pointer transition-all duration-150 flex items-center group min-h-[38px] sm:min-h-[40px] apple-liquid-option
                             ${isSelected === optKey 
-                               ? (isFlagged 
-                                   ? 'border-amber-500 bg-amber-50 text-amber-950 font-semibold ring-2 ring-amber-300/50 shadow-xs' 
-                                   : 'border-[#007AFF] bg-blue-50 text-blue-900 font-semibold ring-2 ring-blue-300/40 shadow-xs') 
-                               : (isFlagged 
-                                   ? 'border-amber-200/90 hover:border-amber-400 bg-white text-slate-900 shadow-2xs' 
-                                   : 'border-slate-200 hover:border-blue-400 bg-white text-slate-900 hover:bg-slate-50 shadow-2xs')}
-                            ${isPractice && status === 'correct' && (isSelected === optKey || q.correct === optKey) ? '!border-[#34C759] !bg-emerald-50 !text-emerald-950 !ring-2 !ring-emerald-300/50' : ''}
-                            ${isPractice && status === 'incorrect' && isSelected === optKey ? '!border-[#FF3B30] !bg-rose-50 !text-rose-900 !ring-2 !ring-rose-300/50' : ''}
+                               ? (isFlagged ? 'apple-liquid-option-flagged-selected' : 'apple-liquid-option-selected') 
+                               : (isFlagged ? 'border-amber-200/90 hover:border-amber-400' : '')}
+                            ${isPractice && status === 'correct' && (isSelected === optKey || q.correct === optKey) ? 'apple-liquid-option-correct' : ''}
+                            ${isPractice && status === 'incorrect' && isSelected === optKey ? 'apple-liquid-option-incorrect' : ''}
                           `}>
                           <span className={`w-6 h-6 sm:w-6.5 sm:h-6.5 flex-shrink-0 rounded-lg sm:rounded-xl border flex items-center justify-center mr-2.5 text-[11px] sm:text-xs font-black transition-all ${
                              isSelected === optKey 
                                ? (isFlagged ? 'bg-gradient-to-tr from-amber-500 to-yellow-400 border-amber-400 text-slate-950 shadow-xs' : 'bg-[#007AFF] border-[#007AFF] text-white shadow-xs') 
-                               : 'border-slate-300 text-slate-700 group-hover:border-[#007AFF] group-hover:text-[#007AFF] bg-slate-50'
+                               : 'border-slate-300 text-slate-700 group-hover:border-[#007AFF] group-hover:text-[#007AFF] bg-slate-100'
                           }
                              ${isPractice && status === 'correct' && (isSelected === optKey || q.correct === optKey) ? '!bg-[#34C759] !border-[#34C759] !text-white shadow-xs' : ''}
                              ${isPractice && status === 'incorrect' && isSelected === optKey ? '!bg-[#FF3B30] !border-[#FF3B30] !text-white shadow-xs' : ''}
