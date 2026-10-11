@@ -106,14 +106,17 @@ HÃY TRẢ VỀ ĐÚNG FORMAT JSON NHƯ SAU (chỉ trả về JSON thuần, khô
     "name": "Tên chủ đề 2",
     "summary": "Tóm tắt ngắn gọn 1-2 câu về nội dung chủ đề này"
   }
-]`
+]
+`
       temperature = 0.1
     } else if (action === 'generate_quiz') {
       systemInstruction = `Bạn hãy làm việc như một nhân viên chuyên trách xây dựng ngân hàng câu hỏi trắc nghiệm chất lượng cao, có chuyên môn sâu về nội dung tài liệu tôi cung cấp. Tôi muốn bạn đọc tài liệu thật kỹ, sau đó tạo ra một bộ câu hỏi trắc nghiệm có khả năng giúp học sinh học thuộc, hiểu sâu và vận dụng thành thạo toàn bộ kiến thức trong tài liệu đó.
 
-Tôi không cần những câu hỏi chung chung, hời hợt hay chỉ hỏi những ý chính nổi bật. Tôi cần bạn khai thác nội dung đến từng chi tiết nhỏ nhất có giá trị kiến thức, không bỏ sót bất kỳ khái niệm, định nghĩa, đặc điểm, phân loại, điều kiện, cơ chế, quy trình, số liệu, mốc thời gian, ngoại lệ, trường hợp đặc biệt, mối liên hệ, nguyên nhân, kết quả, sự giống nhau, khác nhau hay chi tiết dễ gây nhầm lẫn nào được đề cập trong nguồn. Hãy xem đây là nhiệm vụ xây dựng một ngân hàng câu hỏi để người học có thể làm chủ toàn bộ tài liệu, chứ không đơn thuần là tạo một đề thi thông thường.
+QUY TẮC BẮT BUỘC VỀ SỐ LƯỢNG (CRITICAL RULE - TUÂN THỦ 100%):
+- BẠN BẮT BUỘC PHẢI TẠO ĐỦ VÀ CHÍNH XÁC ${questionCount} CÂU HỎI TRẮC NGHIỆM (Đánh số liên tục từ Câu 1 đến Câu ${questionCount}).
+- TUYỆT ĐỐI KHÔNG DỪNG SỚM HOẶC BỎ DỞ GIỮA CHỪNG. Nếu người dùng yêu cầu ${questionCount} câu, bạn PHẢI tạo đầy đủ từ Câu 1, Câu 2... cho đến hết Câu ${questionCount}. Không được tạo thiếu dù chỉ 1 câu!
 
-Trước tiên, hãy tự phân tích toàn bộ tài liệu, chia thành các chủ đề, mục, tiểu mục và các đơn vị kiến thức nhỏ nhất có thể kiểm tra được. Sau đó, tạo câu hỏi theo từng phần để bảo đảm mọi đơn vị kiến thức đều được kiểm tra ít nhất một lần, đồng thời những kiến thức quan trọng, phức tạp hoặc dễ nhầm lẫn cần được kiểm tra bằng nhiều cách khác nhau.
+Tôi không cần những câu hỏi chung chung, hời hợt hay chỉ hỏi những ý chính nổi bật. Tôi cần bạn khai thác nội dung đến từng chi tiết nhỏ nhất có giá trị kiến thức, không bỏ sót bất kỳ khái niệm, định nghĩa, đặc điểm, phân loại, điều kiện, cơ chế, quy trình, số liệu, mốc thời gian, ngoại lệ, trường hợp đặc biệt, mối liên hệ, nguyên nhân, kết quả, sự giống nhau, khác nhau hay chi tiết dễ gây nhầm lẫn nào được đề cập trong nguồn.
 
 Tôi muốn câu hỏi được xây dựng theo nhiều tầng tư duy:
 - Câu kiểm tra khả năng nhớ chính xác kiến thức;
@@ -125,16 +128,13 @@ Tôi muốn câu hỏi được xây dựng theo nhiều tầng tư duy:
 - Câu yêu cầu suy luận từ dữ kiện;
 - Câu hỏi đảo chiều từ kết quả tìm nguyên nhân hoặc từ biểu hiện xác định cơ chế;
 - Câu hỏi về ngoại lệ, điều kiện cần, điều kiện đủ và những trường hợp dễ mắc bẫy.
-Hãy phân bổ độ khó theo tỉ lệ người dùng yêu cầu: ${easyMediumPercent}% Nhận biết & Thông hiểu, ${hardPercent}% Vận dụng & Vận dụng cao.
-
-Đặc biệt, hãy giúp tôi xâu chuỗi kiến thức. Tìm ra các mối liên hệ giữa định nghĩa, đặc điểm, phân loại, cơ chế, biểu hiện, nguyên nhân, hậu quả, ứng dụng. Tạo những câu hỏi buộc người học phải kết hợp nhiều dữ kiện.
+Hãy phân bổ độ khó theo đúng tỉ lệ người dùng yêu cầu: khoảng ${easyMediumPercent}% Nhận biết & Thông hiểu, khoảng ${hardPercent}% Vận dụng & Vận dụng cao.
 
 QUY TẮC CÁC PHƯƠNG ÁN TRẢ LỜI:
 1. Mỗi câu có đúng 4 lựa chọn A, B, C, D và chỉ có một đáp án đúng nhất.
 2. BẮT BUỘC: 4 phương án của mỗi câu hỏi phải có độ dài (số lượng từ) tương đương nhau, không để 3 phương án ngắn và 1 phương án dài lộ đáp án đúng.
 3. Các phương án nhiễu phải hợp lý, có tính phân hóa, xuất phát từ những nhầm lẫn thực tế mà người học dễ mắc phải.
-4. Có thể có phương án "Tất cả các phương án đều đúng" (hoặc đều sai), NHƯNG BẮT BUỘC ĐÂY KHÔNG PHẢI LÀ ĐÁP ÁN ĐÚNG. Hạn chế tối đa dạng này.
-5. Tuyệt đối không tự ý bịa kiến thức, số liệu không có căn cứ. Lấy tài liệu nguồn làm chuẩn tuyệt đối.
+4. Tuyệt đối không tự ý bịa kiến thức, số liệu không có căn cứ. Lấy tài liệu nguồn làm chuẩn tuyệt đối.
 
 QUY ĐỊNH ĐỊNH DẠNG CÂU HỎI BẮT BUỘC TUÂN THỦ 100%:
 Mỗi câu hỏi phải đúng mẫu sau:
@@ -163,7 +163,7 @@ TUYỆT ĐỐI KHÔNG CẦN NOTE THÊM BẤT CỨ GÌ ở giữa phương án D 
       }
 
       userPrompt = `Môn học: "${subjectName}".
-Số lượng câu hỏi cần tạo: ĐÚNG ${questionCount} CÂU HỎI TRẮC NGHIỆM.
+Số lượng câu hỏi cần tạo: ĐÚNG CHÍNH XÁC ${questionCount} CÂU HỎI TRẮC NGHIỆM (từ Câu 1 đến hết Câu ${questionCount}).
 Tỉ lệ mức độ tư duy:
 - Nhận biết & Thông hiểu: khoảng ${easyMediumPercent}% (tương đương ${Math.round((questionCount * easyMediumPercent) / 100)} câu)
 - Vận dụng & Vận dụng cao: khoảng ${hardPercent}% (tương đương ${Math.round((questionCount * hardPercent) / 100)} câu)
@@ -171,18 +171,23 @@ ${topicsText}${sampleExamText}${notesText}
 TÀI LIỆU NGUỒN CẦN KHAI THÁC CHUYÊN SÂU:
 ${sourceContent.slice(0, 60000)}
 
-HÃY BẮT ĐẦU TẠO ĐÚNG ${questionCount} CÂU HỎI THEO ĐÚNG FORMAT YÊU CẦU TRÊN (Câu 1 đến Câu ${questionCount}, phương án đúng in đậm toàn bộ dòng, 4 phương án bằng nhau về độ dài từ).`
-      temperature = 0.2
+HÃY BẮT ĐẦU TẠO ĐỦ VÀ ĐÚNG ${questionCount} CÂU HỎI THEO ĐÚNG FORMAT YÊU CẦU TRÊN (Liệt kê đủ từ Câu 1, Câu 2... đến Câu ${questionCount}. Phương án đúng in đậm toàn bộ dòng, 4 phương án tương đương về độ dài từ).`
+      temperature = 0.15
     } else if (action === 'chat') {
-      systemInstruction = `Bạn là trợ lý học tập AI chuẩn xác của NoteBook ND (tương tự Google NotebookLM).
+      systemInstruction = `Bạn là trợ lý học tập AI chuyên sâu của NoteBook ND (chuẩn phong cách Google NotebookLM).
 QUY TẮC CỐT LÕI:
 1. CHỈ sử dụng thông tin có trong phần [TÀI LIỆU NGUỒN] môn "${subjectName}" bên dưới để trả lời.
 2. KHÔNG sử dụng kiến thức ngoài luồng hoặc tự suy đoán/bịa đặt.
 3. Nếu câu hỏi không có trong tài liệu, hãy trả lời trung thực: "Thông tin này không có trong tài liệu nguồn được cung cấp."
-4. Trả lời rõ ràng, sư phạm, trích dẫn phần nội dung liên quan để người học đối chiếu.`
+4. Trả lời chi tiết, sư phạm, trích dẫn chính xác phần nội dung liên quan để người học đối chiếu.
+5. QUY TẮC ĐỊNH DẠNG:
+- Trình bày rõ ràng, mạch lạc, phân chia các đề mục lớn nhỏ có cấu trúc.
+- Sử dụng gạch đầu dòng chuẩn cho từng ý.
+- TUYỆT ĐỐI KHÔNG lạm dụng ký tự dấu gạch chéo '//' thừa hoặc dấu '*' lẻ loi.
+- In đậm đúng thuật ngữ cốt lõi để người học dễ nắm bắt.`
 
       userPrompt = `[TÀI LIỆU NGUỒN]:
-${sourceContent.slice(0, 40000)}
+${sourceContent.slice(0, 45000)}
 
 CÂU HỎI CỦA NGƯỜI HỌC:
 ${chatPrompt}`
@@ -213,7 +218,7 @@ ${chatPrompt}`
               temperature: temperature,
               topK: 40,
               topP: 0.95,
-              maxOutputTokens: action === 'generate_quiz' ? 8192 : 3000
+              maxOutputTokens: action === 'generate_quiz' ? 16384 : 4096
             }
           })
         })

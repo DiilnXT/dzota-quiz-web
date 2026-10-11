@@ -109,7 +109,7 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
   const isFriendsActive = isDashboardActive && activeTab === 'friends'
   const isSettingsActive = isDashboardActive && activeTab === 'settings'
   const isProfileActive = isDashboardActive && activeTab === 'profile'
-  const isNotebookNDActive = isDashboardActive && activeTab === 'notebook_nd'
+  const isNotebookNDActive = pathname.startsWith('/notebook') || (isDashboardActive && activeTab === 'notebook_nd')
 
   return (
     <>
@@ -241,8 +241,9 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                     <span>Sổ tay lỗi sai</span>
                   </button>
 
-                  <button
-                    onClick={() => handleNavigateTab('notebook_nd')}
+                  <Link
+                    href="/notebook"
+                    onClick={() => setMobileMenuOpen(false)}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
                       isNotebookNDActive
                         ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
@@ -258,7 +259,7 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                     }`}>
                       AI LM
                     </span>
-                  </button>
+                  </Link>
 
                   <button
                     onClick={() => handleNavigateTab('history')}
@@ -408,8 +409,9 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                   </span>
                 </Link>
 
-                <button
-                  onClick={() => handleNavigateTab('notebook_nd')}
+                <Link
+                  href="/notebook"
+                  onClick={() => setMobileMenuOpen(false)}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
                     isNotebookNDActive
                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25'
@@ -425,7 +427,7 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                   }`}>
                     AI LM
                   </span>
-                </button>
+                </Link>
 
                 <Link
                   href="/creator?view=bank"
