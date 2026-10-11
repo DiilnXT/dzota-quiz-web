@@ -23,11 +23,15 @@ export async function POST(request: Request) {
           session.username?.toLowerCase() === 'duylniedu' ||
           session.email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com'
         
-        // Check max limits for non-admin
-        if (!isUserAdmin) {
-          const user = await prisma.user.findUnique({ where: { id: authorId }, include: { _count: { select: { quizzes: true } } } })
-          if (user && user._count.quizzes >= user.maxTests) {
-            return NextResponse.json({ error: `Bạn đã đạt giới hạn tạo tối đa ${user.maxTests} bài test.` }, { status: 403 })
+        // Check max limits for non-admin only when creating a new standard quiz
+        const isBankType = data.config?.quizType === 'bank' || data.config?.isMatrixBank
+        if (!isUserAdmin && !isBankType) {
+          const existingCheck = await prisma.quickQuiz.findUnique({ where: { id }, select: { id: true } })
+          if (!existingCheck) {
+            const user = await prisma.user.findUnique({ where: { id: authorId }, include: { _count: { select: { quizzes: true } } } })
+            if (user && user._count.quizzes >= user.maxTests) {
+              return NextResponse.json({ error: `Bạn đã đạt giới hạn tạo tối đa ${user.maxTests} bài test.` }, { status: 403 })
+            }
           }
         }
       } catch (e) {}
@@ -103,16 +107,21 @@ export async function GET(request: Request) {
     // ─── 1. LẤY TOÀN BỘ DANH SÁCH CHO CREATOR / THƯ VIỆN ──────────────
     if (!id || id === 'all') {
       // Build filter query:
-      // - Nếu là Admin và filter !== 'mine': cho phép xem tất cả (khi admin muốn)
+      // - Nếu là Admin và filter !== 'mine': cho phép xem tất cả
       // - Nếu là Admin và filter === 'mine': chỉ xem đề của Admin
-      // - Nếu là Giáo viên bình thường (non-admin): CHỈ XEM ĐỀ CỦA CHÍNH MÌNH (luôn luôn lọc theo authorId)
+      // - Nếu là Giáo viên bình thường (non-admin): xem đề của chính mình và các đề/ngân hàng không gán tác giả
+      // - Nếu chưa đăng nhập: cho phép xem đề/ngân hàng không gán tác giả (guest tạo)
       let whereClause: any = {}
       if (!isUserAdmin) {
         if (currentSession?.id) {
-          whereClause = { authorId: currentSession.id }
+          whereClause = {
+            OR: [
+              { authorId: currentSession.id },
+              { authorId: null }
+            ]
+          }
         } else {
-          // Chưa đăng nhập mà gọi list: không trả về gì
-          return NextResponse.json([])
+          whereClause = { authorId: null }
         }
       } else {
         // Admin

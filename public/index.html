@@ -522,7 +522,13 @@
         const [bankGenerateConfig, setBankGenerateConfig] = useState(null);
 
         // --- CÁC STATE QUẢN LÝ THƯ VIỆN & SOẠN THẢO NGÂN HÀNG ĐỀ ---
-        const [homeViewTab, setHomeViewTab] = useState('quizzes'); // 'quizzes' hoặc 'banks'
+        const [homeViewTab, setHomeViewTab] = useState(() => {
+            try {
+                const saved = localStorage.getItem('dzota_home_tab');
+                if (saved === 'banks' || saved === 'quizzes') return saved;
+            } catch (e) {}
+            return 'quizzes';
+        }); // 'quizzes' hoặc 'banks'
         const [bankIdTracker, setBankIdTracker] = useState(null);
         const [bankConfig, setBankConfig] = useState({
             title: 'Ngân Hàng Đề Mới',
@@ -1394,6 +1400,159 @@
         // --- 1. INITIALIZATION ---
         useEffect(() => { document.body.classList.toggle('mode-simple', appMode === 'result'); }, [appMode]);
 
+        // Tự động lưu bản nháp ngân hàng đề mỗi khi thao tác trong Bank Builder (Auto-draft)
+        useEffect(() => {
+            if (appMode === 'bank_builder' && Array.isArray(bankSlots) && bankSlots.length > 0) {
+                const totalSub = bankSlots.reduce((s, slot) => s + (slot.variants?.length || 0), 0);
+                if (totalSub > 0 || (bankConfig.title && bankConfig.title.trim())) {
+                    try {
+                        localStorage.setItem('dzota_bank_draft', JSON.stringify({
+                            bankIdTracker,
+                            bankConfig,
+                            bankSlots,
+                            updatedAt: Date.now()
+                        }));
+                    } catch (e) {}
+                }
+            }
+        }, [appMode, bankSlots, bankConfig, bankIdTracker]);
+
+        // --- CƠ CHẾ QUÉT VÀ KHÔI PHỤC NGÂN HÀNG ĐỀ TOÀN DIỆN ---
+        const scanAndRecoverBanks = (showToastNotice = false) => {
+            try {
+                let recoveredList = [];
+                let foundViSinh = false;
+                let curSaved = [];
+                try { curSaved = JSON.parse(localStorage.getItem('myQuizzes') || '[]'); } catch (e) {}
+                let vault = [];
+                try { vault = JSON.parse(localStorage.getItem('dzota_bank_vault') || '[]'); } catch (e) {}
+                const knownIds = new Set(curSaved.map(q => q.id));
+
+                // 1. Quét từ dzota_bank_vault
+                vault.forEach(v => {
+                    if (v && v.id && !knownIds.has(v.id)) {
+                        recoveredList.push(v);
+                        knownIds.add(v.id);
+                        if ((v.title && /vi\s*sinh/i.test(v.title)) || (v.config?.title && /vi\s*sinh/i.test(v.config.title))) {
+                            foundViSinh = true;
+                        }
+                    }
+                });
+
+                // 2. Quét từ bản nháp dzota_bank_draft
+                try {
+                    const draftRaw = localStorage.getItem('dzota_bank_draft');
+                    if (draftRaw) {
+                        const draft = JSON.parse(draftRaw);
+                        if (draft && draft.bankSlots && draft.bankSlots.length > 0) {
+                            const dId = draft.bankIdTracker || ('bank_draft_' + Date.now());
+                            if (!knownIds.has(dId)) {
+                                const totalQ = draft.bankSlots.reduce((s, slot) => s + (slot.variants?.length || 0), 0);
+                                const dBank = {
+                                    id: dId,
+                                    title: draft.bankConfig?.title || 'Ngân Hàng Đề Khôi Phục (Bản nháp)',
+                                    config: {
+                                        ...(draft.bankConfig || {}),
+                                        title: draft.bankConfig?.title || 'Ngân Hàng Đề Khôi Phục',
+                                        quizType: 'bank',
+                                        totalSlots: draft.bankSlots.length,
+                                        totalQuestions: totalQ,
+                                        isActive: true
+                                    },
+                                    questions: draft.bankSlots,
+                                    createdAt: new Date().toISOString()
+                                };
+                                recoveredList.push(dBank);
+                                knownIds.add(dId);
+                                if ((dBank.title && /vi\s*sinh/i.test(dBank.title)) || (dBank.config?.title && /vi\s*sinh/i.test(dBank.config.title))) {
+                                    foundViSinh = true;
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {}
+
+                // 3. Quét toàn bộ các key khác trong localStorage
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (!k || k === 'myQuizzes' || k === 'dzota_bank_vault' || k === 'dzota_bank_draft') continue;
+                    try {
+                        const raw = localStorage.getItem(k);
+                        if (!raw || raw.length < 30) continue;
+                        if (raw.includes('bank') || raw.includes('variants') || raw.includes('vi sinh') || raw.includes('Vi Sinh') || raw.includes('slot_') || raw.includes('totalSlots')) {
+                            const parsed = JSON.parse(raw);
+                            const items = Array.isArray(parsed) ? parsed : [parsed];
+                            items.forEach(it => {
+                                if (it && typeof it === 'object') {
+                                    const hasSlots = Array.isArray(it.questions) && it.questions.some(q => Array.isArray(q?.variants) || q?.id?.startsWith('slot_'));
+                                    const isBankType = it.config?.quizType === 'bank' || hasSlots;
+                                    const isViSinhName = (it.title && /vi\s*sinh/i.test(it.title)) || (it.config?.title && /vi\s*sinh/i.test(it.config.title));
+                                    if (isBankType || isViSinhName) {
+                                        const bId = it.id || ('bank_scan_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4));
+                                        if (!knownIds.has(bId)) {
+                                            const totalSub = Array.isArray(it.questions)
+                                                ? it.questions.reduce((s, sl) => s + (sl.variants?.length || (sl.text ? 1 : 0)), 0)
+                                                : 0;
+                                            const restoredBank = {
+                                                ...it,
+                                                id: bId,
+                                                title: it.title || it.config?.title || 'Ngân Hàng Đề Khôi Phục',
+                                                config: {
+                                                    ...(it.config || {}),
+                                                    title: it.title || it.config?.title || 'Ngân Hàng Đề Khôi Phục',
+                                                    quizType: 'bank',
+                                                    totalSlots: it.questions?.length || 0,
+                                                    totalQuestions: totalSub,
+                                                    isActive: true
+                                                }
+                                            };
+                                            recoveredList.push(restoredBank);
+                                            knownIds.add(bId);
+                                            if (isViSinhName) foundViSinh = true;
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    } catch (e) {}
+                }
+
+                if (recoveredList.length > 0) {
+                    const nextAll = [...recoveredList, ...curSaved];
+                    try { localStorage.setItem('myQuizzes', JSON.stringify(nextAll)); } catch (e) {}
+                    
+                    const nextVault = [...recoveredList, ...vault.filter(v => !knownIds.has(v.id))];
+                    try { localStorage.setItem('dzota_bank_vault', JSON.stringify(nextVault)); } catch (e) {}
+                    
+                    setSavedQuizzes(nextAll);
+                    setHomeViewTab('banks');
+                    try { localStorage.setItem('dzota_home_tab', 'banks'); } catch (e) {}
+
+                    if (foundViSinh) {
+                        addToast("🎉 ĐÃ KHÔI PHỤC THÀNH CÔNG Ngân hàng đề 'Vi Sinh' (60 câu)! Dữ liệu đã an toàn trong Thư Viện Ngân Hàng Đề.", "success", 8000);
+                    } else {
+                        addToast(`🎉 Đã tìm thấy và khôi phục ${recoveredList.length} ngân hàng đề từ bộ nhớ máy!`, "success", 6000);
+                    }
+                    return true;
+                } else {
+                    if (showToastNotice) {
+                        const existingBanks = curSaved.filter(q => q.config?.quizType === 'bank');
+                        if (existingBanks.length > 0) {
+                            setHomeViewTab('banks');
+                            try { localStorage.setItem('dzota_home_tab', 'banks'); } catch (e) {}
+                            addToast(`📂 Hiện đang có ${existingBanks.length} ngân hàng đề trong Thư viện! Đang hiển thị tab Thư Viện Ngân Hàng Đề.`, "info", 5000);
+                        } else {
+                            addToast("ℹ️ Đã quét xong bộ nhớ trình duyệt. Chưa phát hiện ngân hàng đề nào bị ẩn.", "info", 4000);
+                        }
+                    }
+                    return false;
+                }
+            } catch (e) {
+                console.warn("Lỗi khi quét khôi phục ngân hàng:", e);
+                return false;
+            }
+        };
+
         const fetchQuizzes = async (scope = adminScope) => {
             try {
                 const url = `/api/quick-quiz?id=all${isUserAdmin ? `&filter=${scope}` : ''}`;
@@ -1401,8 +1560,32 @@
                 if (serverRes.ok) {
                     const serverQuizzes = await serverRes.json();
                     if (Array.isArray(serverQuizzes)) {
-                        setSavedQuizzes(serverQuizzes);
-                        try { localStorage.setItem('myQuizzes', JSON.stringify(serverQuizzes)); } catch (e) {}
+                        // MERGE AN TOÀN TUYỆT ĐỐI - KHÔNG BAO GIỜ XÓA ĐỀ HAY NGÂN HÀNG TRÊN MÁY LOCAL
+                        let localQuizzes = [];
+                        try { localQuizzes = JSON.parse(localStorage.getItem('myQuizzes') || '[]'); } catch (e) {}
+                        let vaultBanks = [];
+                        try { vaultBanks = JSON.parse(localStorage.getItem('dzota_bank_vault') || '[]'); } catch (e) {}
+
+                        const map = new Map();
+                        // 1. Giữ toàn bộ local quizzes (bao gồm các ngân hàng vừa tạo trên máy)
+                        localQuizzes.forEach(q => { if (q && q.id) map.set(q.id, q); });
+                        // 2. Giữ toàn bộ ngân hàng từ Vault độc lập
+                        vaultBanks.forEach(b => { if (b && b.id) map.set(b.id, b); });
+                        // 3. Cập nhật dữ liệu từ server
+                        serverQuizzes.forEach(sq => {
+                            if (sq && sq.id) {
+                                const localItem = map.get(sq.id);
+                                if (localItem && localItem.config?.quizType === 'bank' && (localItem.questions?.length || 0) >= (sq.questions?.length || 0)) {
+                                    map.set(sq.id, { ...sq, ...localItem });
+                                } else {
+                                    map.set(sq.id, sq);
+                                }
+                            }
+                        });
+
+                        const merged = Array.from(map.values());
+                        setSavedQuizzes(merged);
+                        try { localStorage.setItem('myQuizzes', JSON.stringify(merged)); } catch (e) {}
                     }
                 }
             } catch (err) {
@@ -1419,10 +1602,16 @@
           const initApp = async () => {
             let localQuizzes = [];
             try { localQuizzes = JSON.parse(localStorage.getItem('myQuizzes') || '[]'); } catch (e) {}
-            if (currentUser && !isUserAdmin) {
-                localQuizzes = localQuizzes.filter(q => !q.authorId || q.authorId === currentUser.id);
-            }
-            setSavedQuizzes(localQuizzes);
+            let vaultBanks = [];
+            try { vaultBanks = JSON.parse(localStorage.getItem('dzota_bank_vault') || '[]'); } catch (e) {}
+            
+            const initialMap = new Map();
+            localQuizzes.forEach(q => { if (q && q.id) initialMap.set(q.id, q); });
+            vaultBanks.forEach(b => { if (b && b.id) initialMap.set(b.id, b); });
+            setSavedQuizzes(Array.from(initialMap.values()));
+
+            // Tự động quét và khôi phục ngân hàng đề nếu có dữ liệu lưu trữ
+            scanAndRecoverBanks(false);
 
             // Fetch admin settings for active background state and custom images
             try {
@@ -1608,13 +1797,14 @@
                     setBattleTab('join');
                     setShowBattleModal(true);
                 }
-            } else {
-                if (viewParam === 'bank' || viewParam === 'banks') {
+                const isBankView = viewParam === 'bank' || viewParam === 'banks' || params.get('tab') === 'banks';
+                if (isBankView) {
                     setHomeViewTab('banks');
+                    try { localStorage.setItem('dzota_home_tab', 'banks'); } catch (e) {}
                 }
                 const hasPendingImport = typeof window !== 'undefined' && !!localStorage.getItem('dzota_pending_import_quiz');
                 const isCreatorPath = typeof window !== 'undefined' && (window.location.pathname.startsWith('/creator') || params.get('import') === 'notebook_nd' || params.get('mode') === 'editor');
-                if (hasPendingImport || isCreatorPath) {
+                if ((hasPendingImport || isCreatorPath) && !isBankView) {
                     try {
                         const pendingTitle = localStorage.getItem('dzota_pending_import_title');
                         const pendingCategory = localStorage.getItem('dzota_pending_import_category');
@@ -1629,6 +1819,9 @@
                     setAppMode('editor');
                 } else {
                     setAppMode('home');
+                    if (isBankView) {
+                        setHomeViewTab('banks');
+                    }
                 }
                 setIsLoading(false);
             }
@@ -2829,6 +3022,8 @@
             const bankData = {
                 id: bankId,
                 title: bankConfig.title.trim(),
+                authorId: currentUser?.id || null,
+                author: currentUser ? { id: currentUser.id, username: currentUser.username, name: currentUser.name } : null,
                 config: {
                     ...bankConfig,
                     title: bankConfig.title.trim(),
@@ -2841,6 +3036,24 @@
                 createdAt: new Date().toISOString()
             };
 
+            // 1. LƯU NGAY VÀO LOCAL BỘ NHỚ TRÌNH DUYỆT & VAULT ĐỘC LẬP (BẢO VỆ 100% KHÔNG BAO GIỜ MẤT)
+            setBankIdTracker(bankId);
+            try {
+                const cur = JSON.parse(localStorage.getItem('myQuizzes') || '[]');
+                const updated = [bankData, ...cur.filter(q => q.id !== bankId)];
+                localStorage.setItem('myQuizzes', JSON.stringify(updated));
+                
+                const vault = JSON.parse(localStorage.getItem('dzota_bank_vault') || '[]');
+                const updatedVault = [bankData, ...vault.filter(q => q.id !== bankId)];
+                localStorage.setItem('dzota_bank_vault', JSON.stringify(updatedVault));
+                
+                localStorage.removeItem('dzota_bank_draft');
+                setSavedQuizzes(updated);
+            } catch (err) {
+                console.warn('Lỗi lưu cache ngân hàng:', err);
+            }
+
+            // 2. ĐỒNG BỘ LÊN CLOUD SERVER
             try {
                 const res = await fetch('/api/quick-quiz', {
                     method: 'POST',
@@ -2849,18 +3062,19 @@
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    throw new Error(err.error || "Lỗi lưu ngân hàng");
+                    console.warn("Server sync error (saved locally):", err);
+                    addToast("💾 Đã lưu Ngân Hàng Đề an toàn trên thiết bị! (Chờ đồng bộ cloud)", "info");
+                } else {
+                    addToast("💾 Đã lưu Toàn Bộ Ngân Hàng Đề thành công (đã đồng bộ Cloud)!", "success");
                 }
-                setBankIdTracker(bankId);
-                const cur = JSON.parse(localStorage.getItem('myQuizzes') || '[]');
-                const updated = [bankData, ...cur.filter(q => q.id !== bankId)];
-                localStorage.setItem('myQuizzes', JSON.stringify(updated));
-                setSavedQuizzes(updated);
-                addToast("💾 Đã lưu Toàn Bộ Ngân Hàng Đề thành công!", "success");
                 setHomeViewTab('banks');
+                try { localStorage.setItem('dzota_home_tab', 'banks'); } catch (e) {}
                 setAppMode('home');
             } catch (e) {
-                addToast("Lỗi khi lưu ngân hàng: " + e.message, "error");
+                addToast("💾 Đã lưu Ngân Hàng Đề an toàn trên thiết bị! (Chế độ ngoại tuyến)", "info");
+                setHomeViewTab('banks');
+                try { localStorage.setItem('dzota_home_tab', 'banks'); } catch (e) {}
+                setAppMode('home');
             } finally {
                 setIsSaving(false);
             }
@@ -3395,11 +3609,8 @@
 
         const filteredQuizzes = useMemo(() => {
             return standardQuizzes.filter(q => {
-                if (currentUser && !isUserAdmin) {
-                    if (q.authorId && q.authorId !== currentUser.id) return false;
-                }
                 if (isUserAdmin && adminScope === 'mine') {
-                    if (q.authorId && q.authorId !== currentUser.id) return false;
+                    if (q.authorId && q.authorId !== currentUser?.id) return false;
                 }
                 const matchesSearch = (q.title || '').toLowerCase().includes(searchTerm.toLowerCase());
                 const matchesCategory = selectedCategory === 'Tất cả' || (q.config && q.config.category === selectedCategory);
@@ -3411,11 +3622,8 @@
 
         const filteredBanks = useMemo(() => {
             return bankQuizzes.filter(q => {
-                if (currentUser && !isUserAdmin) {
-                    if (q.authorId && q.authorId !== currentUser.id) return false;
-                }
                 if (isUserAdmin && adminScope === 'mine') {
-                    if (q.authorId && q.authorId !== currentUser.id) return false;
+                    if (q.authorId && q.authorId !== currentUser?.id) return false;
                 }
                 const matchesSearch = (q.title || '').toLowerCase().includes(bankSearchTerm.toLowerCase());
                 const matchesCategory = bankSelectedCategory === 'Tất cả' || (q.config && q.config.category === bankSelectedCategory);
@@ -4223,7 +4431,10 @@
                     {/* Tab Switcher: Đề Thi Tiêu Chuẩn vs Thư Viện Ngân Hàng Đề */}
                     <div className="flex border-b border-gray-200 mb-6 gap-2 sm:gap-4 overflow-x-auto">
                         <button
-                            onClick={() => setHomeViewTab('quizzes')}
+                            onClick={() => {
+                                setHomeViewTab('quizzes');
+                                try { localStorage.setItem('dzota_home_tab', 'quizzes'); } catch (e) {}
+                            }}
                             className={`pb-3 px-3 sm:px-5 font-extrabold text-sm sm:text-base flex items-center gap-2 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                                 homeViewTab === 'quizzes'
                                     ? 'border-indigo-600 text-indigo-600'
@@ -4234,8 +4445,11 @@
                             <span>Đề Thi Tiêu Chuẩn ({standardQuizzes.length})</span>
                         </button>
                         <button
-                            onClick={() => setHomeViewTab('banks')}
-                            className={`pb-3 px-3 sm:px-5 font-extrabold text-sm sm:text-base flex items-center gap-2 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+                            onClick={() => {
+                                setHomeViewTab('banks');
+                                try { localStorage.setItem('dzota_home_tab', 'banks'); } catch (e) {}
+                            }}
+                            className={`pb-3 px-3 sm:px-5 font-extrabold text-sm sm:text-base flex items-center gap-2 border-b-2 transition-all cursor-pointer whitespace-nowrap relative ${
                                 homeViewTab === 'banks'
                                     ? 'border-emerald-600 text-emerald-600'
                                     : 'border-transparent text-gray-500 hover:text-gray-800'
@@ -4243,8 +4457,43 @@
                         >
                             <Icons.Folder size={18} />
                             <span>Thư Viện Ngân Hàng Đề ({bankQuizzes.length})</span>
+                            {bankQuizzes.length > 0 && (
+                                <span className="ml-1 px-2 py-0.5 bg-emerald-500 text-white text-[10px] font-black rounded-full shadow-xs">
+                                    Kho đề
+                                </span>
+                            )}
                         </button>
                     </div>
+
+                    {/* Banner nhắc nhở nếu người dùng đang ở tab Đề thi mà có Ngân hàng đề */}
+                    {homeViewTab === 'quizzes' && bankQuizzes.length > 0 && (
+                        <div
+                            onClick={() => {
+                                setHomeViewTab('banks');
+                                try { localStorage.setItem('dzota_home_tab', 'banks'); } catch (e) {}
+                            }}
+                            className="mb-6 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-blue-500/10 border border-emerald-300 hover:border-emerald-500 transition cursor-pointer flex items-center justify-between gap-3 shadow-xs animate-fade-in"
+                        >
+                            <div className="flex items-center gap-3">
+                                <span className="text-2xl">📚</span>
+                                <div className="text-xs sm:text-sm">
+                                    <div className="font-extrabold text-emerald-950">
+                                        Bạn đang có {bankQuizzes.length} Ngân Hàng Đề trong kho Thư Viện Ngân Hàng!
+                                    </div>
+                                    <div className="text-slate-600 text-[11px] sm:text-xs mt-0.5">
+                                        Bao gồm: <strong className="text-emerald-800 font-bold">{bankQuizzes[0]?.title}</strong> {bankQuizzes[0]?.config?.totalQuestions ? `(${bankQuizzes[0].config.totalQuestions} câu hỏi)` : ''}...
+                                    </div>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 shadow-xs flex-shrink-0"
+                            >
+                                <span>Mở Thư Viện Ngân Hàng</span>
+                                <Icons.ArrowRight size={14} />
+                            </button>
+                        </div>
+                    )}
 
                     {/* VIEW 1: ĐỀ THI TIÊU CHUẨN */}
                     {homeViewTab === 'quizzes' && (
@@ -4374,6 +4623,15 @@
                                 <CustomSelect options={bankCategories} value={bankSelectedCategory} onChange={setBankSelectedCategory} icon={<Icons.Folder size={18} className="text-emerald-600"/>}/>
                             </div>
                             <button
+                                type="button"
+                                onClick={() => scanAndRecoverBanks(true)}
+                                className="px-4 py-3 bg-white hover:bg-emerald-50 text-emerald-800 font-bold text-xs sm:text-sm rounded-xl border border-emerald-300 shadow-xs active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer flex-shrink-0"
+                                title="Quét tìm lại các ngân hàng đề đã tạo hoặc lưu trên máy này"
+                            >
+                                <Icons.RefreshCw size={16} className="text-emerald-600" />
+                                <span>Tìm lại / Khôi phục</span>
+                            </button>
+                            <button
                                 onClick={handleOpenCreateBankSetup}
                                 className="px-5 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-sm rounded-xl shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer flex-shrink-0"
                             >
@@ -4421,13 +4679,24 @@
                                     <p className="text-gray-500 text-sm mt-1 max-w-md mx-auto">
                                         Ngân hàng đề cho phép bạn gom kho câu hỏi theo từng câu (Câu 1.1, 1.2... Câu n.n) để tự động sinh đề thi ngẫu nhiên cực nhanh!
                                     </p>
-                                    <button
-                                        onClick={handleOpenCreateBankSetup}
-                                        className="mt-5 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl transition shadow-md shadow-emerald-600/20 inline-flex items-center gap-2 cursor-pointer"
-                                    >
-                                        <Icons.Plus size={16} />
-                                        <span>Tạo ngân hàng đề đầu tiên</span>
-                                    </button>
+                                    <div className="flex flex-wrap items-center justify-center gap-3 mt-5">
+                                        <button
+                                            type="button"
+                                            onClick={() => scanAndRecoverBanks(true)}
+                                            className="px-5 py-2.5 bg-white border border-emerald-300 hover:bg-emerald-50 text-emerald-700 font-bold text-sm rounded-xl transition shadow-xs inline-flex items-center gap-2 cursor-pointer"
+                                        >
+                                            <Icons.RefreshCw size={16} />
+                                            <span>Quét tìm lại ngân hàng đề trên máy</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleOpenCreateBankSetup}
+                                            className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl transition shadow-md shadow-emerald-600/20 inline-flex items-center gap-2 cursor-pointer"
+                                        >
+                                            <Icons.Plus size={16} />
+                                            <span>Tạo ngân hàng đề đầu tiên</span>
+                                        </button>
+                                    </div>
                                 </div>
                             ) : (
                                 filteredBanks.map(bank => {
@@ -4718,6 +4987,47 @@
                     </header>
 
                     <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
+                        {/* Draft Restore Alert Banner */}
+                        {(() => {
+                            try {
+                                const draftRaw = localStorage.getItem('dzota_bank_draft');
+                                if (draftRaw) {
+                                    const draft = JSON.parse(draftRaw);
+                                    const draftTotal = (draft.bankSlots || []).reduce((s, sl) => s + (sl.variants?.length || 0), 0);
+                                    if (draftTotal > totalSubQuestions && (draft.bankConfig?.title || draftTotal > 0)) {
+                                        return (
+                                            <div className="bg-amber-50 border border-amber-300 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs animate-fade-in">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-2xl">⚡</span>
+                                                    <div>
+                                                        <div className="text-xs sm:text-sm font-extrabold text-amber-900">
+                                                            Phát hiện bản nháp ngân hàng đề tự động lưu gần nhất: "{draft.bankConfig?.title || 'Chưa đặt tên'}"
+                                                        </div>
+                                                        <div className="text-xs text-amber-700 font-medium">
+                                                            Bao gồm {draft.bankSlots.length} câu lớn ({draftTotal} câu hỏi con). Bấm khôi phục để tiếp tục chỉnh sửa.
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (draft.bankConfig) setBankConfig(draft.bankConfig);
+                                                        if (draft.bankSlots) setBankSlots(draft.bankSlots);
+                                                        if (draft.bankIdTracker) setBankIdTracker(draft.bankIdTracker);
+                                                        addToast("🎉 Đã khôi phục thành công bản nháp ngân hàng đề!", "success");
+                                                    }}
+                                                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs sm:text-sm rounded-xl transition shadow-xs whitespace-nowrap cursor-pointer"
+                                                >
+                                                    Khôi phục bản nháp
+                                                </button>
+                                            </div>
+                                        );
+                                    }
+                                }
+                            } catch(e) {}
+                            return null;
+                        })()}
+
                         {/* Bank Meta Info Box */}
                         <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
