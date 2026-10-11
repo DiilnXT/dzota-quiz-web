@@ -208,14 +208,8 @@ export default function TestInterface({ test }: { test: any }) {
             return
           }
 
-          // Tự động khôi phục bài làm đang dở
-          setAnswers(saved.answers || {})
-          setShowExplanation(saved.showExplanation || {})
-          setTimeLeft(isExam ? remaining : (saved.timeLeft || test.timeLimit * 60))
-          setIsStarted(true)
-          const ansCount = Object.keys(saved.answers || {}).length
-          setRestoredToast(`🔄 Đã tự động khôi phục bài làm (${ansCount}/${test.questions?.length || 0} câu đã chọn)!`)
-          setTimeout(() => setRestoredToast(null), 4500)
+          // Giữ ở màn hình Chờ, KHÔNG tự ý ép vào bài thi để tránh tình trạng câu hỏi bị tự chọn đáp án cũ trước khi làm bài
+          // Người dùng có thể bấm "Tiếp tục" trên thẻ bài làm dở hoặc bấm "Bắt đầu làm bài" mới 100%
         }
       }
     } catch (e) {
@@ -333,17 +327,25 @@ export default function TestInterface({ test }: { test: any }) {
       try { localStorage.removeItem(key) } catch (e) {}
       setAnswers({})
       setShowExplanation({})
+      setFlaggedQuestions({})
       setTimeLeft(test.timeLimit * 60)
+      setSavedSession(null)
+    } else if (savedSession) {
+      setAnswers(savedSession.answers || {})
+      setShowExplanation(savedSession.showExplanation || {})
+      setFlaggedQuestions(savedSession.flaggedQuestions || {})
+      setTimeLeft(savedSession.timeLeft || test.timeLimit * 60)
     }
     setIsStarted(true)
     const now = Date.now()
+    const curTime = isResume && savedSession ? (savedSession.timeLeft || test.timeLimit * 60) : test.timeLimit * 60
     const sessionData = {
       testId: test.id,
       isStarted: true,
-      answers: isResume ? answers : {},
-      showExplanation: isResume ? showExplanation : {},
-      timeLeft: isResume ? timeLeft : test.timeLimit * 60,
-      endTime: test.mode === 'exam' ? (now + (isResume ? timeLeft : test.timeLimit * 60) * 1000) : null,
+      answers: isResume && savedSession ? (savedSession.answers || {}) : {},
+      showExplanation: isResume && savedSession ? (savedSession.showExplanation || {}) : {},
+      timeLeft: curTime,
+      endTime: test.mode === 'exam' ? (now + curTime * 1000) : null,
       submitted: false,
       savedAt: now
     }
@@ -872,11 +874,13 @@ export default function TestInterface({ test }: { test: any }) {
     setScore(parseFloat(((correctCount / questionsToGrade.length) * 10).toFixed(1)))
     setSubmitted(true)
     if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-      if (typeof document !== 'undefined') {
-        document.documentElement.scrollTop = 0
-        document.body.scrollTop = 0
-      }
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'instant' })
+        if (typeof document !== 'undefined') {
+          document.documentElement.scrollTop = 0
+          document.body.scrollTop = 0
+        }
+      }, 60)
     }
 
     // Cập nhật ngân hàng câu sai chỉ khi làm ở lượt thi chính thức (!isWrongReviewMode)

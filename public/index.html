@@ -1888,50 +1888,8 @@
                         return;
                     }
 
-                    // Kiểm tra và khôi phục đa nhiệm nếu người dùng đang làm dở trên điện thoại
-                    const savedSessionKey = 'dzota_quiz_session_' + id;
-                    let savedSession = null;
-                    try {
-                        const raw = localStorage.getItem(savedSessionKey);
-                        if (raw) savedSession = JSON.parse(raw);
-                    } catch (e) {}
-
-                    if (savedSession && savedSession.appMode === 'taking' && Array.isArray(savedSession.currentQuestions) && savedSession.currentQuestions.length > 0) {
-                        const now = Date.now();
-                        const isExam = (savedSession.mode || data.config?.mode) === 'exam';
-                        const remaining = savedSession.endTime ? Math.round((savedSession.endTime - now) / 1000) : savedSession.timeLeft;
-                        
-                        if (isExam && remaining <= 0) {
-                            // Hết giờ làm bài trong lúc ở app khác -> tự nộp bài
-                            setCurrentQuestions(savedSession.currentQuestions);
-                            setUserAnswers(savedSession.userAnswers || {});
-                            setShowExplanation(savedSession.showExplanation || {});
-                            setCurrentQIndex(savedSession.currentQIndex || 0);
-                            setTimeLeft(0);
-                            setAppMode('taking');
-                            setIsLoading(false);
-                            setTimeout(() => {
-                                addToast("Thời gian làm bài đã kết thúc trong lúc thoát ứng dụng. Đã tự động nộp bài!", 'warning');
-                                processSubmit();
-                            }, 400);
-                            return;
-                        }
-
-                        // Khôi phục nguyên vẹn câu hỏi, các câu đã làm và câu đang đứng
-                        setCurrentQuestions(savedSession.currentQuestions);
-                        setUserAnswers(savedSession.userAnswers || {});
-                        setShowExplanation(savedSession.showExplanation || {});
-                        setFlaggedQuestions(savedSession.flaggedQuestions || {});
-                        const targetQIdx = Math.min(savedSession.currentQIndex || 0, savedSession.currentQuestions.length - 1);
-                        setCurrentQIndex(targetQIdx);
-                        setTimeLeft(isExam ? remaining : (savedSession.timeLeft || (data.config?.timeLimit || 15) * 60));
-                        setAppMode('taking');
-                        setIsLoading(false);
-                        const answeredCount = Object.keys(savedSession.userAnswers || {}).length;
-                        addToast(`🔄 Đã khôi phục bài làm của bạn (Câu ${targetQIdx + 1}, đã làm ${answeredCount} câu)!`, 'success');
-                        return;
-                    }
-
+                    // Luôn mở ở màn hình Chờ (Entry) để người dùng chủ động bấm 'Bắt Đầu Làm Bài' mới 100% hoặc chọn 'Tiếp Tục' nếu có bài dở
+                    // Tuyệt đối không tự động ép vào làm bài làm dở để tránh lỗi tự chọn đáp án cũ
                     setAppMode('entry'); setIsLoading(false);
                 } catch (e) {
                     // Thử tìm dữ liệu đề thi offline trong máy nếu đang mất kết nối
@@ -4027,6 +3985,11 @@
         const startQuiz = (resume = false) => {
           if (!resume) {
             if (quizConfig.password && accessPassword !== quizConfig.password) { addToast("Sai mật khẩu!", 'error'); return; }
+            try {
+              localStorage.removeItem('dzota_quiz_session_' + (quizIdTracker || 'default'));
+              const qParam = new URLSearchParams(window.location.search).get('id');
+              if (qParam) localStorage.removeItem('dzota_quiz_session_' + qParam);
+            } catch(e) {}
           }
           
           let finalQuestions = parsedQuestions.map((slot, sIdx) => {
@@ -4049,13 +4012,15 @@
           } else if (quizConfig.shuffleQuestions) finalQuestions = shuffleArray(finalQuestions);
 
           // Cấp ID phiên thi duy nhất 100% cho từng câu hỏi sau khi bốc ngẫu nhiên / xáo trộn (Chống nhảy đáp án & tự chọn nhầm)
+          const runTimestamp = Date.now();
           finalQuestions = finalQuestions.map((q, qOrder) => {
-              const baseRawId = q.rawId || q.originalId || q.id || ('q_' + (qOrder + 1));
+              const uniqueQId = 'q_run_' + (qOrder + 1) + '_' + runTimestamp + '_' + Math.random().toString(36).substring(2, 7);
               return {
                   ...q,
-                  id: 'q_run_' + (qOrder + 1) + '_' + baseRawId,
-                  rawId: baseRawId,
-                  originalId: baseRawId
+                  id: uniqueQId,
+                  runId: uniqueQId,
+                  originalId: uniqueQId,
+                  displayNumber: qOrder + 1
               };
           });
 
@@ -4258,24 +4223,26 @@
         };
 
         const processSubmit = () => {
-            const uniqueQuestions = currentQuestions.filter((q, index, self) => index === self.findIndex((t) => (t.originalId || t.id) === (q.originalId || q.id)));
             let count = 0;
-            uniqueQuestions.forEach(origQ => {
-                const oid = origQ.originalId || origQ.id;
-                const instances = currentQuestions.filter(q => (q.originalId || q.id) === oid);
-                const lastAttempt = instances[instances.length - 1];
-                if (userAnswers[lastAttempt.id] === lastAttempt.correct) {
+            currentQuestions.forEach(q => {
+                if (userAnswers[q.id] === q.correct) {
                     count++;
                 }
             });
-            const finalScore = parseFloat(((count / uniqueQuestions.length) * 10).toFixed(1));
-            setCorrectCount(count); setScore(finalScore);
-            setSubmitted(true); setAppMode('result'); addToast("Đã ghi nhận kết quả!", 'success');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            if (typeof document !== 'undefined') {
-                document.documentElement.scrollTop = 0;
-                document.body.scrollTop = 0;
-            }
+            const totalQ = Math.max(1, currentQuestions.length);
+            const finalScore = parseFloat(((count / totalQ) * 10).toFixed(1));
+            setCorrectCount(count); 
+            setScore(finalScore);
+            setSubmitted(true); 
+            setAppMode('result'); 
+            addToast("Đã ghi nhận kết quả!", 'success');
+            setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'instant' });
+                if (typeof document !== 'undefined') {
+                    document.documentElement.scrollTop = 0;
+                    document.body.scrollTop = 0;
+                }
+            }, 60);
 
             // Cập nhật kết quả lên server Battle nếu đang thi đấu đối kháng
             if (isBattleMode && currentBattleRoom) {
@@ -6084,22 +6051,37 @@
                           </p>
                           <p className="text-[11px] text-blue-700/80 truncate">Đa nhiệm đã tự động lưu lại bài làm của bạn.</p>
                         </div>
-                        <button
-                          onClick={() => {
-                            setCurrentQuestions(existingSession.currentQuestions);
-                            setUserAnswers(existingSession.userAnswers || {});
-                            setShowExplanation(existingSession.showExplanation || {});
-                            setFlaggedQuestions(existingSession.flaggedQuestions || {});
-                            const targetQIdx = Math.min(existingSession.currentQIndex || 0, existingSession.currentQuestions.length - 1);
-                            setCurrentQIndex(targetQIdx);
-                            setTimeLeft(existingSession.timeLeft || 0);
-                            setAppMode('taking');
-                            addToast(`Đã tiếp tục bài làm tại câu ${targetQIdx + 1}!`, 'success');
-                          }}
-                          className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-xs whitespace-nowrap active:scale-95 transition-all cursor-pointer"
-                        >
-                          Tiếp tục
-                        </button>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              try { localStorage.removeItem(savedSessionKey); } catch(e) {}
+                              setUserAnswers({});
+                              addToast("Đã xóa bài làm dở! Bạn có thể bắt đầu bài làm mới.", "info");
+                              setTimeout(() => window.location.reload(), 300);
+                            }}
+                            className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                            title="Xóa bài làm dở để làm mới từ đầu"
+                          >
+                            Xóa
+                          </button>
+                          <button
+                            onClick={() => {
+                              setCurrentQuestions(existingSession.currentQuestions);
+                              setUserAnswers(existingSession.userAnswers || {});
+                              setShowExplanation(existingSession.showExplanation || {});
+                              setFlaggedQuestions(existingSession.flaggedQuestions || {});
+                              const targetQIdx = Math.min(existingSession.currentQIndex || 0, existingSession.currentQuestions.length - 1);
+                              setCurrentQIndex(targetQIdx);
+                              setTimeLeft(existingSession.timeLeft || 0);
+                              setAppMode('taking');
+                              addToast(`Đã tiếp tục bài làm tại câu ${targetQIdx + 1}!`, 'success');
+                            }}
+                            className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-xs whitespace-nowrap active:scale-95 transition-all cursor-pointer"
+                          >
+                            Tiếp tục
+                          </button>
+                        </div>
                       </div>
                     );
                   })()}
@@ -6215,7 +6197,14 @@
                   <div className="flex items-center gap-2.5 sm:gap-3 w-full">
                     {/* Nút Làm Bài: To hơn (chiếm tỉ lệ lớn hơn), nhỏ gọn thanh lịch */}
                     <button
-                      onClick={() => startQuiz(false)}
+                      onClick={() => {
+                        try {
+                          localStorage.removeItem('dzota_quiz_session_' + (quizIdTracker || 'default'));
+                          const qParam = new URLSearchParams(window.location.search).get('id');
+                          if (qParam) localStorage.removeItem('dzota_quiz_session_' + qParam);
+                        } catch(e) {}
+                        startQuiz(false);
+                      }}
                       className={`relative overflow-hidden ${quizConfig.mode === 'exam' ? 'flex-[1.4] sm:flex-[1.5]' : 'w-full'} py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl font-black text-white text-xs sm:text-sm lg:text-[15px] transition-all active:scale-[0.98] hover:-translate-y-0.5 flex items-center justify-center gap-2 shadow-md shadow-blue-500/25 hover:shadow-lg hover:shadow-blue-500/35 cursor-pointer group`}
                       style={{
                         background: 'linear-gradient(90deg, #0052FF 0%, #1677FF 48%, #00C2FF 100%)',
@@ -6824,12 +6813,12 @@
         };
 
         const renderResult = () => {
-           const uniqueQuestions = currentQuestions.filter((q, index, self) => index === self.findIndex((t) => (t.originalId || t.id) === (q.originalId || q.id)));
-           const filtered = uniqueQuestions.filter(q => {
-             const baseId = q.originalId || q.id;
-             const userAns = userAnswers[q.id] !== undefined ? userAnswers[q.id] : userAnswers[baseId];
+           const filtered = currentQuestions.filter(q => {
+             const userAns = userAnswers[q.id];
              const isCorrect = userAns === q.correct;
-             if (resultFilter === 'correct') return isCorrect; if (resultFilter === 'incorrect') return !isCorrect; return true;
+             if (resultFilter === 'correct') return isCorrect; 
+             if (resultFilter === 'incorrect') return !isCorrect; 
+             return true;
            });
 
            return (
@@ -7046,12 +7035,11 @@
                     </div>
                     <div className="space-y-4">
                       {filtered.map((q, i) => {
-                        const baseId = q.originalId || q.id;
-                        const userAnswer = userAnswers[q.id] !== undefined ? userAnswers[q.id] : userAnswers[baseId];
+                        const userAnswer = userAnswers[q.id];
                         const isCorrect = userAnswer === q.correct;
-                        const examIndex = uniqueQuestions.findIndex(item => item.id === q.id || (item.originalId && item.originalId === baseId)) + 1; 
+                        const examIndex = q.displayNumber || (currentQuestions.findIndex(item => item.id === q.id) + 1); 
                         return (
-                          <div key={baseId} className="apple-liquid-glass p-5 rounded-[24px] relative overflow-hidden mb-4">
+                          <div key={q.id || i} className="apple-liquid-glass p-5 rounded-[24px] relative overflow-hidden mb-4">
                              <div className={`absolute top-0 left-0 w-1.5 h-full ${isCorrect ? 'bg-ios-green' : 'bg-ios-red'}`}></div>
                              <div className="flex items-start justify-between gap-3 mb-3">
                                 <div className="flex gap-2 items-start flex-1">
