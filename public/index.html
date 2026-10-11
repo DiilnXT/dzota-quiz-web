@@ -6184,24 +6184,34 @@
                <div
                  key={qId}
                  id={`exam-question-${idx}`}
-                 className={`backdrop-blur-xl rounded-2xl sm:rounded-3xl transition-all duration-200 animate-slide-up scroll-mt-20 sm:scroll-mt-24 p-3.5 sm:p-5.5 mb-3 sm:mb-4 border ${
+                 className={`backdrop-blur-2xl rounded-2xl sm:rounded-3xl transition-all duration-200 animate-slide-up scroll-mt-20 sm:scroll-mt-24 p-4 sm:p-6 mb-3 sm:mb-4.5 border relative ${
                    isFlagged 
-                     ? 'border-2 border-amber-400 ring-4 ring-amber-400/30 bg-amber-50/35 shadow-[0_0_25px_rgba(251,191,36,0.25)]' 
-                     : 'border-white/70 dark:border-white/10 bg-white/65 dark:bg-slate-900/65 shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:border-blue-300/60'
+                     ? 'border-2 border-amber-400 dark:border-amber-300 ring-4 ring-amber-400/40 bg-gradient-to-br from-amber-500/25 via-yellow-500/15 to-orange-500/25 shadow-[0_0_35px_rgba(251,191,36,0.4),inset_0_0_20px_rgba(251,191,36,0.15)]' 
+                     : 'border-white/50 dark:border-white/20 bg-white/20 dark:bg-slate-900/25 shadow-[0_10px_35px_rgba(0,0,0,0.12)] hover:border-white/80'
                  }`}
                >
+                  {/* Dải Banner Hoàng Kim chuyên biệt khi Đánh Dấu Xem Lại */}
+                  {isFlagged && (
+                    <div className="mb-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] sm:text-xs font-black bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 shadow-md shadow-amber-500/30 border border-amber-300 animate-pulse">
+                      <Icons.Bookmark size={12} fill="currentColor" />
+                      <span>⭐ CÂU HỎI ĐANG ĐƯỢC LƯU Ý XEM LẠI</span>
+                    </div>
+                  )}
+
                   {/* Question Header */}
                   <div className="flex items-start justify-between gap-2.5 mb-4">
                      <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
-                       <span className={`flex-shrink-0 font-bold w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs sm:text-sm shadow-md mt-0.5 ${
-                         isFlagged ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-amber-500/30 ring-2 ring-amber-300/60' : 'bg-[#1a73e8] text-white shadow-blue-500/25'
+                       <span className={`flex-shrink-0 font-black w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs sm:text-sm shadow-md mt-0.5 transition-all ${
+                         isFlagged 
+                           ? 'bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-600 text-slate-950 shadow-orange-500/50 ring-2 ring-yellow-300 scale-105' 
+                           : 'bg-gradient-to-tr from-blue-600 to-cyan-500 text-white shadow-blue-500/30'
                        }`}>
                          {idx + 1}
                        </span>
-                       <div className="text-[#202124] font-medium text-[15px] sm:text-[16px] leading-snug w-full">
+                       <div className="text-[#202124] dark:text-white font-semibold text-[15px] sm:text-[16px] leading-snug w-full drop-shadow-[0_1px_1px_rgba(255,255,255,0.7)] dark:drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
                            {q.isReview && (
                               <div className="mb-2">
-                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#fef7e0] text-[#b06000] border border-[#fce8b2]">
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#fef7e0]/95 text-[#b06000] border border-[#fce8b2] shadow-2xs">
                                      <Icons.Repeat size={13} className="text-[#b06000]" /> Câu hỏi ôn tập (Đã đảo phương án)
                                   </span>
                               </div>
@@ -6209,45 +6219,50 @@
                            <MathText text={q.text} />
                            {q.images && q.images.length > 0 && (
                               <div className="question-image-container flex flex-col gap-2 mt-3">
-                                  {q.images.map((src, i) => <img key={i} src={getDirectImageUrl(src)} alt="Minh họa" className="rounded-2xl border border-[#dadce0] shadow-xs max-h-72 sm:max-h-96 object-contain w-full bg-slate-50"/>)}
+                                  {q.images.map((src, i) => <img key={i} src={getDirectImageUrl(src)} alt="Minh họa" className="rounded-2xl border border-white/60 shadow-md max-h-72 sm:max-h-96 object-contain w-full bg-white/70 backdrop-blur-md"/>)}
                               </div>
                            )}
                        </div>
                      </div>
 
-                     {/* Nút Đánh dấu xem lại ở cả 2 chế độ */}
+                     {/* Nút Đánh dấu xem lại */}
                      <button
                        type="button"
                        onClick={() => handleToggleFlag(qId)}
                        className={`flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer select-none active:scale-95 ${
                          isFlagged
-                           ? 'bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-amber-950 shadow-md border border-amber-500 ring-2 ring-amber-300/80 font-black'
-                           : 'bg-white/80 hover:bg-amber-50 text-slate-500 hover:text-amber-700 border border-slate-200/90 shadow-2xs backdrop-blur-sm'
+                           ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 shadow-lg shadow-amber-500/40 border-2 border-amber-300 ring-2 ring-yellow-300/80 font-black scale-105'
+                           : 'bg-white/85 hover:bg-white text-slate-600 hover:text-amber-700 border border-white/70 shadow-sm backdrop-blur-md hover:scale-102'
                        }`}
                        title={isFlagged ? 'Bỏ đánh dấu xem lại câu này' : 'Đánh dấu để xem lại câu này'}
                      >
-                       <Icons.Bookmark size={13} fill={isFlagged ? 'currentColor' : 'none'} className={isFlagged ? 'text-amber-950' : 'text-slate-400'} />
-                       <span className="text-[11px] sm:text-xs">{isFlagged ? 'Đã lưu ý' : 'Xem lại'}</span>
+                       <Icons.Bookmark size={13} fill={isFlagged ? 'currentColor' : 'none'} className={isFlagged ? 'text-slate-950' : 'text-amber-500'} />
+                       <span className="text-[11px] sm:text-xs font-extrabold">{isFlagged ? 'Đã lưu ý' : 'Xem lại'}</span>
                      </button>
                   </div>
                   
                   {/* Options List */}
-                  <div className="space-y-2 sm:space-y-2.5 pt-1">
+                  <div className="space-y-2.5 sm:space-y-3 pt-1">
                     {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(optKey => (
                       q.options[optKey] && (
                         <div key={optKey} onClick={() => handleSelectAnswer(qId, optKey)} 
                           className={`
-                            p-2.5 sm:p-3 sm:px-4 rounded-xl sm:rounded-2xl border-2 cursor-pointer transition-all duration-150 flex items-center group min-h-[44px] backdrop-blur-sm
-                            ${isSelected === optKey ? 'border-[#1a73e8] bg-[#e8f0fe]/85 shadow-xs' : 'border-slate-200/80 hover:border-[#1a73e8]/60 hover:bg-[#f8fafd]/90 bg-white/85 active:bg-slate-50'}
-                            ${isPractice && status === 'correct' && (isSelected === optKey || q.correct === optKey) ? '!border-[#137333] !bg-[#e6f4ea]/95 text-[#137333] shadow-xs' : ''}
-                            ${isPractice && status === 'incorrect' && isSelected === optKey ? '!border-[#c5221f] !bg-[#fce8e6]/95 text-[#c5221f] shadow-xs' : ''}
+                            p-3 sm:p-3.5 sm:px-4.5 rounded-2xl border-2 cursor-pointer transition-all duration-150 flex items-center group min-h-[46px] backdrop-blur-md
+                            ${isSelected === optKey 
+                               ? (isFlagged ? 'border-amber-500 bg-amber-50/95 shadow-md ring-2 ring-amber-400/40 text-amber-950' : 'border-[#1a73e8] bg-[#e8f0fe]/95 shadow-md ring-2 ring-blue-400/30 text-blue-900') 
+                               : (isFlagged ? 'border-amber-200/80 hover:border-amber-400 bg-white/90 hover:bg-white text-slate-800 shadow-sm' : 'border-white/80 dark:border-slate-700/80 hover:border-[#1a73e8]/70 bg-white/90 dark:bg-slate-900/85 hover:bg-white text-slate-800 dark:text-slate-100 shadow-sm hover:shadow-md')}
+                            ${isPractice && status === 'correct' && (isSelected === optKey || q.correct === optKey) ? '!border-[#137333] !bg-[#e6f4ea] text-[#137333] shadow-md ring-2 ring-emerald-400/40' : ''}
+                            ${isPractice && status === 'incorrect' && isSelected === optKey ? '!border-[#c5221f] !bg-[#fce8e6] text-[#c5221f] shadow-md ring-2 ring-rose-400/40' : ''}
                           `}>
-                          <span className={`w-7 h-7 flex-shrink-0 rounded-full border-2 flex items-center justify-center mr-3 text-xs font-bold transition-all
-                             ${isSelected === optKey ? 'bg-[#1a73e8] border-[#1a73e8] text-white shadow-xs' : 'border-[#5f6368] text-[#5f6368] group-hover:border-[#1a73e8] group-hover:text-[#1a73e8]'}
+                          <span className={`w-7 h-7 flex-shrink-0 rounded-full border-2 flex items-center justify-center mr-3 text-xs font-bold transition-all ${
+                             isSelected === optKey 
+                               ? (isFlagged ? 'bg-amber-500 border-amber-500 text-slate-950 shadow-sm' : 'bg-[#1a73e8] border-[#1a73e8] text-white shadow-sm') 
+                               : 'border-[#5f6368] text-[#5f6368] group-hover:border-[#1a73e8] group-hover:text-[#1a73e8] bg-white'
+                          }
                              ${isPractice && status === 'correct' && (isSelected === optKey || q.correct === optKey) ? '!bg-[#137333] !border-[#137333] !text-white' : ''}
                              ${isPractice && status === 'incorrect' && isSelected === optKey ? '!bg-[#c5221f] !border-[#c5221f] !text-white' : ''}
                           `}>{optKey}</span>
-                          <span className="text-[15px] sm:text-[16px] text-[#3c4043] leading-snug font-normal group-hover:text-[#202124]"><MathText text={q.options[optKey]} /></span>
+                          <span className="text-[15px] sm:text-[16px] text-[#202124] dark:text-slate-100 leading-snug font-medium group-hover:text-black"><MathText text={q.options[optKey]} /></span>
                           {isPractice && status === 'correct' && (isSelected === optKey || q.correct === optKey) && <div className="ml-auto text-[#137333] flex-shrink-0 pl-2"><Icons.CheckCircle size={20}/></div>}
                           {isPractice && status === 'incorrect' && isSelected === optKey && <div className="ml-auto text-[#c5221f] flex-shrink-0 pl-2"><Icons.XCircle size={20}/></div>}
                         </div>

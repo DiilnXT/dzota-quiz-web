@@ -1691,7 +1691,7 @@ export default function TestInterface({ test }: { test: any }) {
           const opts = JSON.parse(q.options)
           
           return (
-            <div key={q.id} className="backdrop-blur-xl bg-white/65 dark:bg-slate-900/65 p-6 rounded-3xl shadow-[0_8px_30px_rgba(15,35,75,0.08)] border border-white/70 dark:border-white/10 hover:border-blue-300/60 transition-all">
+            <div key={q.id} className="backdrop-blur-2xl bg-white/20 dark:bg-slate-900/25 p-6 rounded-3xl shadow-[0_10px_35px_rgba(0,0,0,0.12)] border border-white/50 dark:border-white/20 hover:border-white/80 transition-all">
               <div className="flex gap-3 mb-6">
                  <span className="flex-shrink-0 bg-[#007AFF] text-white font-bold w-8 h-8 flex items-center justify-center rounded-full text-sm shadow-xs">{i + 1}</span>
                  <div className="prose prose-sm max-w-none text-slate-800 pt-1" dangerouslySetInnerHTML={{ __html: q.content }} />
