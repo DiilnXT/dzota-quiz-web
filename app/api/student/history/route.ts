@@ -43,19 +43,38 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const body = await request.json()
+    const { quizId, quizTitle, score, correctCount, totalCount, timeSpent, details, userId: bodyUserId, userEmail: bodyUserEmail, username: bodyUsername } = body
+
+    let resolvedUserId: string | null = null
+
     const cookieStore = await cookies()
     const sessionStr = cookieStore.get('dzota_session')?.value
-    if (!sessionStr) {
+    if (sessionStr) {
+      try {
+        const session = JSON.parse(sessionStr)
+        if (session?.id) resolvedUserId = session.id
+      } catch (e) {}
+    }
+
+    if (!resolvedUserId) {
+      if (bodyUserId) {
+        const found = await prisma.user.findUnique({ where: { id: bodyUserId } })
+        if (found) resolvedUserId = found.id
+      }
+      if (!resolvedUserId && bodyUserEmail) {
+        const found = await prisma.user.findFirst({ where: { email: bodyUserEmail.toLowerCase().trim() } })
+        if (found) resolvedUserId = found.id
+      }
+      if (!resolvedUserId && bodyUsername) {
+        const found = await prisma.user.findFirst({ where: { username: bodyUsername.trim() } })
+        if (found) resolvedUserId = found.id
+      }
+    }
+
+    if (!resolvedUserId) {
       return NextResponse.json({ success: false, guest: true, message: 'Khách chưa đăng nhập' })
     }
-
-    const session = JSON.parse(sessionStr)
-    if (!session?.id) {
-      return NextResponse.json({ success: false, guest: true })
-    }
-
-    const body = await request.json()
-    const { quizId, quizTitle, score, correctCount, totalCount, timeSpent, details } = body
 
     if (!quizId) {
       return NextResponse.json({ error: 'Thiếu mã đề thi (quizId)' }, { status: 400 })
@@ -66,7 +85,7 @@ export async function POST(request: Request) {
 
     const record = await prisma.quizHistory.create({
       data: {
-        userId: session.id,
+        userId: resolvedUserId,
         quizId: String(quizId),
         quizTitle: quizTitle ? String(quizTitle) : 'Bài thi',
         score: typeof score === 'number' ? score : Number(score) || 0,

@@ -60,6 +60,7 @@ import {
 import TeacherChatTab from './TeacherChatTab'
 import StudentStudyTab from './StudentStudyTab'
 import MistakeNotebookTab from './MistakeNotebookTab'
+import NoteBookNDTab from './NoteBookNDTab'
 
 interface TeacherQuiz {
   id: string
@@ -220,9 +221,9 @@ export default function DashboardClient({
 
   // Navigation Tabs State
   const defaultTab = isStudent ? 'history' : 'dashboard'
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'quizzes' | 'classes' | 'teachers' | 'friends' | 'settings' | 'profile' | 'history'>(defaultTab)
+  const [activeTab, setActiveTab] = useState<string>(defaultTab)
 
-  const switchTab = (tab: 'dashboard' | 'quizzes' | 'classes' | 'teachers' | 'friends' | 'settings' | 'profile' | 'history') => {
+  const switchTab = (tab: string) => {
     setActiveTab(tab)
     if (typeof window !== 'undefined') {
       window.history.pushState({}, '', `/dashboard?tab=${tab}`)
@@ -594,11 +595,11 @@ export default function DashboardClient({
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       const tab = params.get('tab')
-      if (tab && ['dashboard', 'overview', 'quizzes', 'classes', 'teachers', 'friends', 'settings', 'profile', 'history'].includes(tab)) {
-        if (isStudent && (tab === 'history' || tab === 'profile')) {
-          setActiveTab(tab as any)
+      if (tab && ['dashboard', 'overview', 'quizzes', 'classes', 'teachers', 'friends', 'settings', 'profile', 'history', 'notebook_nd', 'study', 'mistakes'].includes(tab)) {
+        if (isStudent && (tab === 'history' || tab === 'profile' || tab === 'study' || tab === 'mistakes' || tab === 'notebook_nd')) {
+          setActiveTab(tab)
         } else if (!isStudent) {
-          setActiveTab(tab as any)
+          setActiveTab(tab)
         }
       }
     }
@@ -1526,6 +1527,13 @@ export default function DashboardClient({
       ───────────────────────────────────────────────────────────── */}
       {activeTab === 'mistakes' && (
         <MistakeNotebookTab currentUser={currentUser} showToast={showToast} />
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          TAB: NOTEBOOK ND (AI NOTEBOOKLM TẠO TRẮC NGHIỆM CHUYÊN SÂU)
+      ───────────────────────────────────────────────────────────── */}
+      {activeTab === 'notebook_nd' && (
+        <NoteBookNDTab currentUser={currentUser} showToast={showToast} />
       )}
 
       {/* ─────────────────────────────────────────────────────────────

@@ -1612,7 +1612,24 @@
                 if (viewParam === 'bank' || viewParam === 'banks') {
                     setHomeViewTab('banks');
                 }
-                setAppMode('home');
+                const hasPendingImport = typeof window !== 'undefined' && !!localStorage.getItem('dzota_pending_import_quiz');
+                const isCreatorPath = typeof window !== 'undefined' && (window.location.pathname.startsWith('/creator') || params.get('import') === 'notebook_nd' || params.get('mode') === 'editor');
+                if (hasPendingImport || isCreatorPath) {
+                    try {
+                        const pendingTitle = localStorage.getItem('dzota_pending_import_title');
+                        const pendingCategory = localStorage.getItem('dzota_pending_import_category');
+                        if (pendingTitle) {
+                            setQuizConfig(prev => ({
+                                ...prev,
+                                title: pendingTitle,
+                                category: pendingCategory || prev.category
+                            }));
+                        }
+                    } catch(e) {}
+                    setAppMode('editor');
+                } else {
+                    setAppMode('home');
+                }
                 setIsLoading(false);
             }
           };
@@ -1638,7 +1655,39 @@
                              images_upload_handler: (blobInfo, progress) => new Promise((resolve, reject) => {
                                  resolve('data:' + blobInfo.blob().type + ';base64,' + blobInfo.base64());
                              }),
-                             setup: (editor) => window.tinymceInstance = editor
+                             setup: (editor) => {
+                                 window.tinymceInstance = editor;
+                                 editor.on('init', () => {
+                                     try {
+                                         const pending = localStorage.getItem('dzota_pending_import_quiz');
+                                         if (pending) {
+                                             localStorage.removeItem('dzota_pending_import_quiz');
+                                             localStorage.removeItem('dzota_pending_import_title');
+                                             localStorage.removeItem('dzota_pending_import_category');
+
+                                             const formattedHtml = pending
+                                                 .split('\n')
+                                                 .map(line => {
+                                                     const t = line.trim();
+                                                     if (!t) return '<p><br></p>';
+                                                     if (t.startsWith('**') && t.endsWith('**')) {
+                                                         return `<p><strong>${t.slice(2, -2)}</strong></p>`;
+                                                     }
+                                                     return `<p>${t}</p>`;
+                                                 })
+                                                 .join('');
+
+                                             editor.setContent(formattedHtml);
+                                             addToast('Đã nạp toàn bộ câu hỏi từ NoteBook ND! Đang phân tích đề thi...', 'success');
+                                             setTimeout(() => {
+                                                 parseQuiz();
+                                             }, 600);
+                                         }
+                                     } catch (err) {
+                                         console.warn('Auto import NoteBook ND error:', err);
+                                     }
+                                 });
+                             }
                          });
                      } catch(e) {
                          alert("TinyMCE Lỗi: " + e.message);
@@ -1831,14 +1880,15 @@
           if (currentBattleRoom) {
             saveLocalBattleHistory(currentBattleRoom);
           }
-          if (currentUser) {
-            setAppMode('home');
-            if (window.history.pushState) {
-              window.history.pushState({}, '', '/');
-            }
-          } else {
+          if (window.location.pathname !== '/' && !window.location.pathname.startsWith('/index')) {
             window.location.href = '/';
+            return;
           }
+          setAppMode('home');
+          if (window.history.pushState) {
+            window.history.pushState({}, '', '/');
+          }
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
         const saveLocalBattleHistory = (room) => {
@@ -1853,8 +1903,8 @@
             } else {
               list.unshift(room);
             }
-            const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
-            list = list.filter(r => (r.completedAt || r.createdAt || Date.now()) > twoHoursAgo);
+            const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
+            list = list.filter(r => (r.completedAt || r.createdAt || Date.now()) > threeDaysAgo);
             localStorage.setItem('dzota_my_battles', JSON.stringify(list));
           } catch(e) {
             console.error(e);
@@ -3987,7 +4037,11 @@
               fetch('/api/student/history', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
+                  userId: currentUser?.id,
+                  userEmail: currentUser?.email,
+                  username: currentUser?.username,
                   quizId: quizIdTracker || 'quiz',
                   quizTitle: quizConfig.title || 'Bài thi Dzota',
                   score: finalScore,
@@ -3995,6 +4049,13 @@
                   totalCount: uniqueQuestions.length,
                   timeSpent: spent > 0 ? spent : 0
                 })
+              }).then(r => r.json()).then(res => {
+                if (res.success) {
+                  try {
+                    localStorage.setItem('dzota_last_submit_ts', Date.now().toString());
+                    window.dispatchEvent(new CustomEvent('dzota_quiz_submitted', { detail: { score: finalScore, quizId: quizIdTracker } }));
+                  } catch(e) {}
+                }
               }).catch(() => {});
             } catch(e) {}
         };
@@ -4028,6 +4089,13 @@
                                     title="Về Dashboard quản trị"
                                 >
                                     <Icons.LayoutDashboard size={14}/> Dashboard
+                                </a>
+                                <a 
+                                    href="/dashboard?tab=notebook_nd" 
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700 hover:from-blue-100 hover:to-indigo-100 border border-indigo-100 transition-colors shadow-xs"
+                                    title="NoteBook ND - Trợ lý AI tạo câu hỏi từ tài liệu"
+                                >
+                                    <Icons.Sparkles size={14} className="text-indigo-600"/> NoteBook ND
                                 </a>
                                 <a 
                                     href="/tests" 
@@ -4084,13 +4152,23 @@
                                                     <div className="text-[12px] text-gray-500 leading-snug">Đề thi cố định, trắc nghiệm tiêu chuẩn.</div>
                                                 </div>
                                             </button>
-                                            <button onClick={() => { setShowCreateMenu(false); handleCreateNew('bank'); }} className="w-full text-left p-4 hover:bg-gray-50 flex gap-3 transition-colors">
+                                            <button onClick={() => { setShowCreateMenu(false); handleCreateNew('bank'); }} className="w-full text-left p-4 hover:bg-gray-50 flex gap-3 border-b border-gray-50 transition-colors">
                                                 <div className="bg-emerald-50 p-2 rounded-xl text-emerald-600 h-fit"><Icons.Folder size={20}/></div>
                                                 <div>
                                                     <div className="font-bold text-gray-900 text-[14px] mb-0.5">Tạo Ngân Hàng Đề</div>
                                                     <div className="text-[12px] text-gray-500 leading-snug">Kho câu hỏi để rút ngẫu nhiên sinh đề.</div>
                                                 </div>
                                             </button>
+                                            <a href="/dashboard?tab=notebook_nd" onClick={() => setShowCreateMenu(false)} className="w-full text-left p-4 hover:bg-indigo-50/50 flex gap-3 transition-colors no-underline">
+                                                <div className="bg-gradient-to-tr from-indigo-500 to-purple-500 p-2 rounded-xl text-white h-fit shadow-xs"><Icons.Sparkles size={20}/></div>
+                                                <div>
+                                                    <div className="font-bold text-gray-900 text-[14px] mb-0.5 flex items-center gap-1.5">
+                                                        NoteBook ND
+                                                        <span className="bg-indigo-100 text-indigo-700 text-[10px] font-black px-1.5 py-0.2 rounded-full">AI LM</span>
+                                                    </div>
+                                                    <div className="text-[12px] text-gray-500 leading-snug">Nạp tài liệu, tách chủ đề, clone đề mẫu & tạo bài test.</div>
+                                                </div>
+                                            </a>
                                         </div>
                                     </>
                                 )}
@@ -4999,6 +5077,14 @@
                             <Icons.Wand2 size={15}/> 
                             <span>Chuẩn hóa Dzota</span>
                         </button>
+                        <a 
+                            href="/dashboard?tab=notebook_nd" 
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700 hover:from-blue-100 hover:to-indigo-100 border border-indigo-100/80 transition-all active:scale-95 whitespace-nowrap shadow-xs"
+                            title="Mở NoteBook ND - Trợ lý AI tạo đề từ tài liệu"
+                        >
+                            <Icons.Sparkles size={15} className="text-indigo-600"/> 
+                            <span>NoteBook ND</span>
+                        </a>
                         <a 
                             href="/dashboard" 
                             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 border border-indigo-100 transition-all active:scale-95 whitespace-nowrap shadow-xs"
@@ -6240,12 +6326,18 @@
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => handleGoHome(false)}
+                      onClick={() => {
+                        if (currentUser) {
+                          window.location.href = '/dashboard';
+                        } else {
+                          handleGoHome(false);
+                        }
+                      }}
                       className="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-500/20 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
-                      title="Về Dashboard quản trị của bạn"
+                      title={currentUser ? "Vào xem Dashboard của bạn (Lịch sử làm bài, Điểm số, Sổ tay lỗi sai)" : "Về Trang chủ"}
                     >
                       <Icons.LayoutDashboard size={15} />
-                      <span>{currentUser ? "Dashboard" : "Trang chủ"}</span>
+                      <span>{currentUser ? (currentUser.role === 'STUDENT' ? 'Dashboard Học Sinh' : 'Dashboard') : 'Trang chủ'}</span>
                     </button>
                   </div>
                 </div>
@@ -6938,10 +7030,13 @@
                           <button
                             type="button"
                             onClick={() => {
+                              if (currentBattleRoom) {
+                                saveLocalBattleHistory(currentBattleRoom);
+                              }
                               setCurrentBattleRoom(null);
                               setIsBattleMode(false);
                               setBattleTab('create');
-                              addToast("Đã rời phòng thi đấu", "info");
+                              addToast("Đã rời phòng thi đấu (Lịch sử phòng đã được lưu)", "info");
                             }}
                             className="w-full sm:w-auto px-4 py-3 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 font-bold text-xs transition cursor-pointer"
                           >

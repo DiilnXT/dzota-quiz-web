@@ -109,6 +109,7 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
   const isFriendsActive = isDashboardActive && activeTab === 'friends'
   const isSettingsActive = isDashboardActive && activeTab === 'settings'
   const isProfileActive = isDashboardActive && activeTab === 'profile'
+  const isNotebookNDActive = isDashboardActive && activeTab === 'notebook_nd'
 
   return (
     <>
@@ -238,6 +239,25 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                   >
                     <Sparkles size={18} />
                     <span>Sổ tay lỗi sai</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleNavigateTab('notebook_nd')}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
+                      isNotebookNDActive
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <BookOpen size={18} />
+                      <span>NoteBook ND</span>
+                    </div>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
+                      isNotebookNDActive ? 'bg-white/20 text-white' : 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300'
+                    }`}>
+                      AI LM
+                    </span>
                   </button>
 
                   <button
@@ -387,6 +407,25 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                     Mới
                   </span>
                 </Link>
+
+                <button
+                  onClick={() => handleNavigateTab('notebook_nd')}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
+                    isNotebookNDActive
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25'
+                      : 'text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <BookOpen size={18} className={isNotebookNDActive ? 'text-white' : 'text-indigo-500'} />
+                    <span>NoteBook ND</span>
+                  </div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
+                    isNotebookNDActive ? 'bg-white/20 text-white' : 'bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300'
+                  }`}>
+                    AI LM
+                  </span>
+                </button>
 
                 <Link
                   href="/creator?view=bank"
