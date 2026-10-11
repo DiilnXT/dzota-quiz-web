@@ -1697,7 +1697,7 @@ export default function TestInterface({ test }: { test: any }) {
         )}
       </header>
 
-      <div className="flex-1 overflow-auto p-4 pt-20 max-w-3xl mx-auto w-full pb-20 space-y-6 relative z-10">
+      <div className="flex-1 overflow-auto p-2.5 sm:p-4 pt-18 sm:pt-20 max-w-3xl mx-auto w-full pb-20 space-y-3 sm:space-y-3.5 relative z-10">
         {activeQuestions.map((tq: any, i: number) => {
           const q = tq.question
           const isSelected = answers[q.id]
@@ -1706,75 +1706,79 @@ export default function TestInterface({ test }: { test: any }) {
           const isFlagged = !!flaggedQuestions[q.id]
           
           return (
-            <div key={q.id} className={`p-5 sm:p-6 mb-4 relative select-none ${isFlagged ? 'apple-liquid-glass apple-liquid-glass-flagged' : 'apple-liquid-glass'}`}>
+            <div key={q.id} className={`p-2.5 sm:p-3.5 mb-2.5 sm:mb-3 relative select-none ${isFlagged ? 'apple-liquid-glass apple-liquid-glass-flagged' : 'apple-liquid-glass'}`}>
               {/* Glass specular refraction light streak at top */}
-              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent pointer-events-none rounded-t-[26px] sm:rounded-t-[30px]" />
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent pointer-events-none rounded-t-[20px] sm:rounded-t-[24px]" />
 
               {/* Dải Banner Hoàng Kim chuyên biệt khi Đánh Dấu Xem Lại */}
               {isFlagged && (
-                <div className="mb-3.5 inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] sm:text-xs font-black bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 shadow-md shadow-amber-500/35 border border-white/70 animate-pulse">
-                  <Bookmark size={12} fill="currentColor" />
+                <div className="mb-2 sm:mb-2.5 inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] sm:text-xs font-black bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 shadow-xs border border-white/70 animate-pulse">
+                  <Bookmark size={11} fill="currentColor" />
                   <span>⭐ CÂU HỎI ĐANG ĐƯỢC LƯU Ý XEM LẠI</span>
                 </div>
               )}
 
-              <div className="flex items-start justify-between gap-3 mb-5">
-                <div className="flex items-start gap-3 flex-1 min-w-0">
-                  <span className={`flex-shrink-0 font-extrabold w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-2xl text-xs sm:text-sm shadow-md mt-0.5 transition-all ${
-                    isFlagged 
-                      ? 'bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-600 text-slate-950 shadow-orange-500/50 ring-2 ring-yellow-300 scale-105' 
-                      : 'bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 text-white shadow-blue-500/35 ring-1 ring-white/60'
-                  }`}>
-                    {i + 1}
-                  </span>
-                  <div className="prose prose-sm max-w-none text-slate-800 pt-0.5 flex-1 drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]" dangerouslySetInnerHTML={{ __html: q.content }} />
-                </div>
+              {/* Khung nội dung câu hỏi với nền trắng sạch, tương phản cao, siêu dễ đọc */}
+              <div className="bg-white/95 dark:bg-slate-900/95 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 mb-2 sm:mb-2.5 border border-white/90 dark:border-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.03)] backdrop-blur-md">
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex items-start gap-2.5 sm:gap-3 flex-1 min-w-0">
+                    <span className={`flex-shrink-0 font-extrabold w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-xl text-xs sm:text-sm shadow-xs mt-0.5 transition-all ${
+                      isFlagged 
+                        ? 'bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-600 text-slate-950 shadow-orange-500/50 ring-2 ring-yellow-300 scale-105' 
+                        : 'bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 text-white shadow-blue-500/35 ring-1 ring-white/60'
+                    }`}>
+                      {i + 1}
+                    </span>
+                    <div className="prose prose-sm max-w-none text-slate-900 dark:text-white pt-0.5 flex-1 font-bold text-[14.5px] sm:text-[16px] leading-snug" dangerouslySetInnerHTML={{ __html: q.content }} />
+                  </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleToggleFlag(q.id)}
-                  className={`flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer select-none active:scale-95 ${
-                    isFlagged
-                      ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 shadow-lg shadow-amber-500/40 border border-white/80 ring-2 ring-yellow-300 font-black scale-105'
-                      : 'bg-white/85 hover:bg-white text-slate-700 hover:text-amber-700 border border-white/80 shadow-xs backdrop-blur-md hover:scale-102'
-                  }`}
-                  title={isFlagged ? 'Bỏ đánh dấu xem lại câu này' : 'Đánh dấu để xem lại câu này'}
-                >
-                  <Bookmark size={13} fill={isFlagged ? 'currentColor' : 'none'} className={isFlagged ? 'text-slate-950' : 'text-amber-500'} />
-                  <span className="text-[11px] sm:text-xs font-extrabold">{isFlagged ? 'Đã lưu ý' : 'Xem lại'}</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleFlag(q.id)}
+                    className={`flex-shrink-0 flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer select-none active:scale-95 ${
+                      isFlagged
+                        ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 shadow-xs border border-white/80 ring-2 ring-yellow-300 font-black scale-105'
+                        : 'bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-amber-700 border border-slate-200 shadow-2xs hover:scale-102'
+                    }`}
+                    title={isFlagged ? 'Bỏ đánh dấu xem lại câu này' : 'Đánh dấu để xem lại câu này'}
+                  >
+                    <Bookmark size={12} fill={isFlagged ? 'currentColor' : 'none'} className={isFlagged ? 'text-slate-950' : 'text-amber-500'} />
+                    <span className="text-[11px] sm:text-xs font-extrabold">{isFlagged ? 'Đã lưu ý' : 'Xem lại'}</span>
+                  </button>
+                </div>
               </div>
               
-              <div className="space-y-2.5 sm:space-y-3 pt-1">
+              {/* Options List with Apple Liquid Glass Capsules - Compact & Neat */}
+              <div className="space-y-1.5 sm:space-y-2 pt-0.5">
                 {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(k => {
                   if (!opts[k]) return null
                   
                   return (
                     <div key={k} onClick={() => handleSelectAnswer(q.id, k)} 
                       className={`
-                        p-3 sm:p-3.5 sm:px-4.5 cursor-pointer transition-all duration-200 flex items-center group min-h-[48px] apple-liquid-option
+                        py-2 px-3 sm:py-2.5 sm:px-3.5 cursor-pointer transition-all duration-180 flex items-center group min-h-[38px] sm:min-h-[40px] apple-liquid-option
                         ${isSelected === k 
                            ? (isFlagged ? 'apple-liquid-option-flagged-selected' : 'apple-liquid-option-selected') 
                            : (isFlagged ? 'border-amber-200/90 hover:border-amber-400' : '')}
                         ${test.mode === 'practice' && status === 'correct' && (isSelected === k || q.correctOption === k) ? 'apple-liquid-option-correct' : ''}
                         ${test.mode === 'practice' && status === 'incorrect' && isSelected === k ? 'apple-liquid-option-incorrect' : ''}
                       `}>
-                      <span className={`w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-xl border flex items-center justify-center mr-3 text-xs sm:text-sm font-extrabold transition-all ${
+                      <span className={`w-6 h-6 sm:w-6.5 sm:h-6.5 flex-shrink-0 rounded-lg sm:rounded-xl border flex items-center justify-center mr-2.5 text-[11px] sm:text-xs font-black transition-all ${
                          isSelected === k 
-                           ? (isFlagged ? 'bg-gradient-to-tr from-amber-500 to-yellow-400 border-amber-400 text-slate-950 shadow-sm' : 'bg-gradient-to-tr from-[#007AFF] to-blue-500 border-transparent text-white shadow-sm') 
-                           : 'border-slate-300/80 text-slate-600 group-hover:border-[#007AFF] group-hover:text-[#007AFF] bg-white/90'
+                           ? (isFlagged ? 'bg-gradient-to-tr from-amber-500 to-yellow-400 border-amber-400 text-slate-950 shadow-xs' : 'bg-gradient-to-tr from-[#007AFF] to-blue-500 border-transparent text-white shadow-xs') 
+                           : 'border-slate-300/80 text-slate-600 group-hover:border-[#007AFF] group-hover:text-[#007AFF] bg-white'
                       }
-                         ${test.mode === 'practice' && status === 'correct' && (isSelected === k || q.correctOption === k) ? '!bg-[#34C759] !border-[#34C759] !text-white shadow-sm' : ''}
-                         ${test.mode === 'practice' && status === 'incorrect' && isSelected === k ? '!bg-[#FF3B30] !border-[#FF3B30] !text-white shadow-sm' : ''}
+                         ${test.mode === 'practice' && status === 'correct' && (isSelected === k || q.correctOption === k) ? '!bg-[#34C759] !border-[#34C759] !text-white shadow-xs' : ''}
+                         ${test.mode === 'practice' && status === 'incorrect' && isSelected === k ? '!bg-[#FF3B30] !border-[#FF3B30] !text-white shadow-xs' : ''}
                       `}>{k}</span>
-                      <span className="text-slate-800 text-sm flex-1 font-medium">{opts[k]}</span>
-                      {test.mode === 'practice' && status === 'correct' && (isSelected === k || q.correctOption === k) && <CheckCircle size={22} className="text-[#34C759] ml-2"/>}
-                      {test.mode === 'practice' && status === 'incorrect' && isSelected === k && <XCircle size={22} className="text-[#FF3B30] ml-2"/>}
+                      <span className="text-slate-900 text-[13.5px] sm:text-[15px] flex-1 font-medium leading-snug">{opts[k]}</span>
+                      {test.mode === 'practice' && status === 'correct' && (isSelected === k || q.correctOption === k) && <CheckCircle size={18} className="text-[#34C759] ml-1.5 flex-shrink-0"/>}
+                      {test.mode === 'practice' && status === 'incorrect' && isSelected === k && <XCircle size={18} className="text-[#FF3B30] ml-1.5 flex-shrink-0"/>}
                     </div>
                   )
                 })}
               </div>
-
+              
               {/* Practice Mode: Button (?) Hỏi Giảng Viên AI sau khi trả lời */}
               {test.mode === 'practice' && isSelected && (
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
