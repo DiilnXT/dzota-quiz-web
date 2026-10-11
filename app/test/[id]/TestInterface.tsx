@@ -1754,17 +1754,17 @@ export default function TestInterface({ test }: { test: any }) {
                   return (
                     <div key={k} onClick={() => handleSelectAnswer(q.id, k)} 
                       className={`
-                        py-2 px-3 sm:py-2.5 sm:px-3.5 cursor-pointer transition-all duration-150 flex items-center group min-h-[38px] sm:min-h-[40px] apple-liquid-option
+                        py-2 px-3 sm:py-2.5 sm:px-3.5 cursor-pointer transition-all duration-150 flex items-center min-h-[38px] sm:min-h-[40px] apple-liquid-option
                         ${isSelected === k 
                            ? (isFlagged ? 'apple-liquid-option-flagged-selected' : 'apple-liquid-option-selected') 
-                           : (isFlagged ? 'border-amber-200/90 hover:border-amber-400' : '')}
+                           : (isFlagged ? 'border-amber-200/90' : '')}
                         ${test.mode === 'practice' && status === 'correct' && (isSelected === k || q.correctOption === k) ? 'apple-liquid-option-correct' : ''}
                         ${test.mode === 'practice' && status === 'incorrect' && isSelected === k ? 'apple-liquid-option-incorrect' : ''}
                       `}>
                       <span className={`w-6 h-6 sm:w-6.5 sm:h-6.5 flex-shrink-0 rounded-lg sm:rounded-xl border flex items-center justify-center mr-2.5 text-[11px] sm:text-xs font-black transition-all ${
                          isSelected === k 
                            ? (isFlagged ? 'bg-gradient-to-tr from-amber-500 to-yellow-400 border-amber-400 text-slate-950 shadow-xs' : 'bg-[#007AFF] border-[#007AFF] text-white shadow-xs') 
-                           : 'border-slate-300 text-slate-700 group-hover:border-[#007AFF] group-hover:text-[#007AFF] bg-slate-100'
+                           : 'border-slate-300 text-slate-700 bg-slate-100'
                       }
                          ${test.mode === 'practice' && status === 'correct' && (isSelected === k || q.correctOption === k) ? '!bg-[#34C759] !border-[#34C759] !text-white shadow-xs' : ''}
                          ${test.mode === 'practice' && status === 'incorrect' && isSelected === k ? '!bg-[#FF3B30] !border-[#FF3B30] !text-white shadow-xs' : ''}

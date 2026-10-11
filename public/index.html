@@ -245,15 +245,6 @@
         }
       }
       
-      .apple-liquid-option:hover {
-        background: #ffffff;
-        border-color: rgba(59, 130, 246, 0.65);
-        box-shadow: 
-          0 4px 14px rgba(37, 99, 235, 0.12),
-          inset 0 1px 0 #ffffff;
-        transform: translateY(-0.5px);
-      }
-      
       .apple-liquid-option-selected {
         background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%) !important;
         border: 2px solid #007AFF !important;
@@ -745,6 +736,31 @@
         const [isSavedOffline, setIsSavedOffline] = useState(false);
         const [offlineToast, setOfflineToast] = useState(null);
         const [offlineSavedList, setOfflineSavedList] = useState([]);
+        const [inProgressSession, setInProgressSession] = useState(null);
+
+        const checkInProgressSession = (targetQuizId = quizIdTracker) => {
+          try {
+            const key = 'dzota_quiz_session_' + (targetQuizId || 'default');
+            let raw = localStorage.getItem(key);
+            if (!raw && typeof window !== 'undefined') {
+              const qParam = new URLSearchParams(window.location.search).get('id');
+              if (qParam) raw = localStorage.getItem('dzota_quiz_session_' + qParam);
+            }
+            if (raw) {
+              const s = JSON.parse(raw);
+              if (s && s.appMode === 'taking' && s.currentQuestions && s.currentQuestions.length > 0) {
+                setInProgressSession(s);
+                return s;
+              }
+            }
+          } catch(e) {}
+          setInProgressSession(null);
+          return null;
+        };
+
+        useEffect(() => {
+          checkInProgressSession(quizIdTracker);
+        }, [quizIdTracker, appMode]);
 
         const refreshOfflineSavedList = () => {
           try {
@@ -1988,8 +2004,8 @@
                                                  .map(line => {
                                                      const t = line.trim();
                                                      if (!t) return '<p><br></p>';
-                                                     if (t.startsWith('**') && t.endsWith('**')) {
-                                                         return `<p><strong>${t.slice(2, -2)}</strong></p>`;
+                                                     if ((t.startsWith('**') && t.endsWith('**')) || /^\*\*[A-D]\./i.test(t)) {
+                                                         return `<p><strong>${t.replace(/\*\*/g, '').trim()}</strong></p>`;
                                                      }
                                                      return `<p>${t}</p>`;
                                                  })
@@ -3990,6 +4006,7 @@
               const qParam = new URLSearchParams(window.location.search).get('id');
               if (qParam) localStorage.removeItem('dzota_quiz_session_' + qParam);
             } catch(e) {}
+            setInProgressSession(null);
           }
           
           let finalQuestions = parsedQuestions.map((slot, sIdx) => {
@@ -4397,7 +4414,10 @@
 
             try {
               localStorage.removeItem('dzota_quiz_session_' + (quizIdTracker || 'default'));
+              const qParam = new URLSearchParams(window.location.search).get('id');
+              if (qParam) localStorage.removeItem('dzota_quiz_session_' + qParam);
             } catch(e) {}
+            setInProgressSession(null);
             try {
               const spent = (quizConfig.timeLimit * 60) - (timeLeft || 0);
               fetch('/api/student/history', {
@@ -6033,58 +6053,53 @@
                   )}
 
                   {/* Saved in-progress session box (nếu có bài làm dở) */}
-                  {(() => {
-                    const savedSessionKey = 'dzota_quiz_session_' + (quizIdTracker || 'default');
-                    let existingSession = null;
-                    try {
-                      const raw = localStorage.getItem(savedSessionKey);
-                      if (raw) existingSession = JSON.parse(raw);
-                    } catch(e) {}
-
-                    if (!existingSession || existingSession.appMode !== 'taking' || !existingSession.currentQuestions?.length) return null;
-
-                    return (
-                      <div className="mb-4 p-3.5 bg-blue-50/90 border border-blue-200/80 rounded-2xl text-left flex items-center justify-between gap-3 animate-fade-in shadow-xs">
-                        <div className="min-w-0">
-                          <p className="text-xs font-black text-blue-900 flex items-center gap-1.5">
-                            <span>🔄</span> Có bài làm dở ({Object.keys(existingSession.userAnswers || {}).length}/{existingSession.currentQuestions?.length || 0} câu đã làm)
-                          </p>
-                          <p className="text-[11px] text-blue-700/80 truncate">Đa nhiệm đã tự động lưu lại bài làm của bạn.</p>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              try { localStorage.removeItem(savedSessionKey); } catch(e) {}
-                              setUserAnswers({});
-                              addToast("Đã xóa bài làm dở! Bạn có thể bắt đầu bài làm mới.", "info");
-                              setTimeout(() => window.location.reload(), 300);
-                            }}
-                            className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
-                            title="Xóa bài làm dở để làm mới từ đầu"
-                          >
-                            Xóa
-                          </button>
-                          <button
-                            onClick={() => {
-                              setCurrentQuestions(existingSession.currentQuestions);
-                              setUserAnswers(existingSession.userAnswers || {});
-                              setShowExplanation(existingSession.showExplanation || {});
-                              setFlaggedQuestions(existingSession.flaggedQuestions || {});
-                              const targetQIdx = Math.min(existingSession.currentQIndex || 0, existingSession.currentQuestions.length - 1);
-                              setCurrentQIndex(targetQIdx);
-                              setTimeLeft(existingSession.timeLeft || 0);
-                              setAppMode('taking');
-                              addToast(`Đã tiếp tục bài làm tại câu ${targetQIdx + 1}!`, 'success');
-                            }}
-                            className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-xs whitespace-nowrap active:scale-95 transition-all cursor-pointer"
-                          >
-                            Tiếp tục
-                          </button>
-                        </div>
+                  {inProgressSession && inProgressSession.appMode === 'taking' && inProgressSession.currentQuestions?.length > 0 && (
+                    <div className="mb-4 p-3.5 bg-blue-50/90 border border-blue-200/80 rounded-2xl text-left flex items-center justify-between gap-3 animate-fade-in shadow-xs">
+                      <div className="min-w-0">
+                        <p className="text-xs font-black text-blue-900 flex items-center gap-1.5">
+                          <span>🔄</span> Có bài làm dở ({Object.keys(inProgressSession.userAnswers || {}).length}/{inProgressSession.currentQuestions?.length || 0} câu đã làm)
+                        </p>
+                        <p className="text-[11px] text-blue-700/80 truncate">Đa nhiệm đã tự động lưu lại bài làm của bạn.</p>
                       </div>
-                    );
-                  })()}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const savedSessionKey = 'dzota_quiz_session_' + (quizIdTracker || 'default');
+                            try {
+                              localStorage.removeItem(savedSessionKey);
+                              const qParam = new URLSearchParams(window.location.search).get('id');
+                              if (qParam) localStorage.removeItem('dzota_quiz_session_' + qParam);
+                            } catch(e) {}
+                            setUserAnswers({});
+                            setInProgressSession(null);
+                            addToast("Đã xóa bài làm dở! Bạn có thể bắt đầu bài làm mới.", "info");
+                          }}
+                          className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                          title="Xóa bài làm dở để làm mới từ đầu"
+                        >
+                          Xóa
+                        </button>
+                        <button
+                          onClick={() => {
+                            setCurrentQuestions(inProgressSession.currentQuestions);
+                            setUserAnswers(inProgressSession.userAnswers || {});
+                            setShowExplanation(inProgressSession.showExplanation || {});
+                            setFlaggedQuestions(inProgressSession.flaggedQuestions || {});
+                            const targetQIdx = Math.min(inProgressSession.currentQIndex || 0, inProgressSession.currentQuestions.length - 1);
+                            setCurrentQIndex(targetQIdx);
+                            setTimeLeft(inProgressSession.timeLeft || 0);
+                            setAppMode('taking');
+                            setInProgressSession(null);
+                            addToast(`Đã tiếp tục bài làm tại câu ${targetQIdx + 1}!`, 'success');
+                          }}
+                          className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-xs whitespace-nowrap active:scale-95 transition-all cursor-pointer"
+                        >
+                          Tiếp tục
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Offline Toast */}
                   {offlineToast && (
@@ -6203,6 +6218,7 @@
                           const qParam = new URLSearchParams(window.location.search).get('id');
                           if (qParam) localStorage.removeItem('dzota_quiz_session_' + qParam);
                         } catch(e) {}
+                        setInProgressSession(null);
                         startQuiz(false);
                       }}
                       className={`relative overflow-hidden ${quizConfig.mode === 'exam' ? 'flex-[1.4] sm:flex-[1.5]' : 'w-full'} py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl font-black text-white text-xs sm:text-sm lg:text-[15px] transition-all active:scale-[0.98] hover:-translate-y-0.5 flex items-center justify-center gap-2 shadow-md shadow-blue-500/25 hover:shadow-lg hover:shadow-blue-500/35 cursor-pointer group`}
@@ -6374,17 +6390,17 @@
                       q.options[optKey] && (
                         <div key={optKey} onClick={() => handleSelectAnswer(qId, optKey)} 
                           className={`
-                            py-2 px-3 sm:py-2.5 sm:px-3.5 cursor-pointer transition-all duration-150 flex items-center group min-h-[38px] sm:min-h-[40px] apple-liquid-option
+                            py-2 px-3 sm:py-2.5 sm:px-3.5 cursor-pointer transition-all duration-150 flex items-center min-h-[38px] sm:min-h-[40px] apple-liquid-option
                             ${isSelected === optKey 
                                ? (isFlagged ? 'apple-liquid-option-flagged-selected' : 'apple-liquid-option-selected') 
-                               : (isFlagged ? 'border-amber-200/90 hover:border-amber-400' : '')}
+                               : (isFlagged ? 'border-amber-200/90' : '')}
                             ${isPractice && status === 'correct' && (isSelected === optKey || q.correct === optKey) ? 'apple-liquid-option-correct' : ''}
                             ${isPractice && status === 'incorrect' && isSelected === optKey ? 'apple-liquid-option-incorrect' : ''}
                           `}>
                           <span className={`w-6 h-6 sm:w-6.5 sm:h-6.5 flex-shrink-0 rounded-lg sm:rounded-xl border flex items-center justify-center mr-2.5 text-[11px] sm:text-xs font-black transition-all ${
                              isSelected === optKey 
                                ? (isFlagged ? 'bg-gradient-to-tr from-amber-500 to-yellow-400 border-amber-400 text-slate-950 shadow-xs' : 'bg-[#007AFF] border-[#007AFF] text-white shadow-xs') 
-                               : 'border-slate-300 text-slate-700 group-hover:border-[#007AFF] group-hover:text-[#007AFF] bg-slate-100'
+                               : 'border-slate-300 text-slate-700 bg-slate-100'
                           }
                              ${isPractice && status === 'correct' && (isSelected === optKey || q.correct === optKey) ? '!bg-[#34C759] !border-[#34C759] !text-white shadow-xs' : ''}
                              ${isPractice && status === 'incorrect' && isSelected === optKey ? '!bg-[#FF3B30] !border-[#FF3B30] !text-white shadow-xs' : ''}

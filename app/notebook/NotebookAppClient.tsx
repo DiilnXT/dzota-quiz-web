@@ -984,8 +984,8 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
           continue
         }
 
-        const isCorrectAnswer = trimmed.startsWith('**') && (trimmed.endsWith('**') || trimmed.includes('**.'))
-        const cleanLine = trimmed.replace(/\*\*/g, '')
+        const isCorrectAnswer = trimmed.startsWith('**') || /^\*\*[A-D]\./i.test(trimmed)
+        const cleanLine = trimmed.replace(/\*\*/g, '').trim()
 
         if (/^Câu\s*\d+/i.test(cleanLine)) {
           paragraphs.push(
@@ -2268,8 +2268,9 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
                         .map((block, qIdx) => {
                           const lines = block.trim().split('\n')
                           const qTitle = lines[0] || `Câu ${qIdx + 1}`
-                          const options = lines.slice(1).filter(l => /^[A-D]\./i.test(l.trim()))
-                          const explanationLines = lines.slice(1).filter(l => !/^[A-D]\./i.test(l.trim()) && l.trim().length > 0)
+                          const isOptLine = (l: string) => /^(?:\*\*|\*)?\s*[A-D][\.\)]/i.test(l.trim())
+                          const options = lines.slice(1).filter(l => isOptLine(l))
+                          const explanationLines = lines.slice(1).filter(l => !isOptLine(l) && l.trim().length > 0)
 
                           return (
                             <div
@@ -2282,8 +2283,8 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
 
                               <div className="space-y-1.5 pl-2">
                                 {options.map((opt, oIdx) => {
-                                  const isCorrect = opt.includes('**')
-                                  const cleanOpt = opt.replace(/\*\*/g, '')
+                                  const isCorrect = opt.includes('**') || /^\*\*[A-D]\./i.test(opt.trim())
+                                  const cleanOpt = opt.replace(/\*\*/g, '').trim()
 
                                   return (
                                     <div

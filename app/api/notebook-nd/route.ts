@@ -136,16 +136,24 @@ QUY TẮC CÁC PHƯƠNG ÁN TRẢ LỜI:
 3. Các phương án nhiễu phải hợp lý, có tính phân hóa, xuất phát từ những nhầm lẫn thực tế mà người học dễ mắc phải.
 4. Tuyệt đối không tự ý bịa kiến thức, số liệu không có căn cứ. Lấy tài liệu nguồn làm chuẩn tuyệt đối.
 
-QUY ĐỊNH ĐỊNH DẠNG CÂU HỎI BẮT BUỘC TUÂN THỦ 100%:
-Mỗi câu hỏi phải đúng mẫu sau:
+QUY ĐỊNH ĐỊNH DẠNG CÂU HỎI BẮT BUỘC TUÂN THỦ 100% (BẮT BUỘC 100% ĐỊNH DẠNG MARKDOWN):
+1. Toàn bộ phản hồi BẮT BUỘC phải ở định dạng Markdown chuẩn.
+2. Mỗi câu hỏi phải tuân thủ nghiêm ngặt cấu trúc sau:
 Câu 1. [Nội dung câu hỏi câu 1]
 A. [Nội dung phương án A]
-B. [Nội dung phương án B]
+**B. [Nội dung phương án B]**
 C. [Nội dung phương án C]
 D. [Nội dung phương án D]
 
-(Trong đó: ĐÁP ÁN ĐÚNG LÀ PHƯƠNG ÁN ĐƯỢC IN ĐẬM TOÀN BỘ NỘI DUNG PHƯƠNG ÁN VÀ CẢ CHỮ CÁI A B C D TƯƠNG ỨNG ĐỨNG ĐẦU. Ví dụ: **A. Nội dung phương án đúng** hoặc **C. Nội dung phương án đúng**).
-TUYỆT ĐỐI KHÔNG CẦN NOTE THÊM BẤT CỨ GÌ ở giữa phương án D và câu tiếp theo. KHÔNG ghi "Đáp án: A" hay giải thích rời rạc ở giữa các câu, để thuận tiện import trực tiếp vào hệ thống thi!`
+QUY TẮC ĐÁP ÁN ĐÚNG TRONG MARKDOWN:
+- ĐÁP ÁN ĐÚNG BẮT BUỘC LÀ PHƯƠNG ÁN ĐƯỢC IN ĐẬM TOÀN BỘ THEO CÚ PHÁP MARKDOWN: **[A-D]. [Nội dung phương án]** (In đậm cả chữ cái thứ tự và toàn bộ nội dung của phương án đó).
+- Ví dụ nếu phương án B là đáp án đúng:
+A. Nội dung phương án A
+**B. Nội dung phương án B**
+C. Nội dung phương án C
+D. Nội dung phương án D
+- BẮT BUỘC chỉ in đậm duy nhất 1 phương án đúng cho mỗi câu. 3 phương án còn lại tuyệt đối KHÔNG in đậm.
+- TUYỆT ĐỐI KHÔNG ghi thêm dòng "Đáp án: B" hay giải thích rời rạc giữa các câu, để thuận tiện import trực tiếp vào hệ thống thi!`
 
       let topicsText = ''
       if (selectedTopics && selectedTopics.length > 0) {
@@ -171,7 +179,7 @@ ${topicsText}${sampleExamText}${notesText}
 TÀI LIỆU NGUỒN CẦN KHAI THÁC CHUYÊN SÂU:
 ${sourceContent.slice(0, 60000)}
 
-HÃY BẮT ĐẦU TẠO ĐỦ VÀ ĐÚNG ${questionCount} CÂU HỎI THEO ĐÚNG FORMAT YÊU CẦU TRÊN (Liệt kê đủ từ Câu 1, Câu 2... đến Câu ${questionCount}. Phương án đúng in đậm toàn bộ dòng, 4 phương án tương đương về độ dài từ).`
+HÃY BẮT ĐẦU TẠO ĐỦ VÀ ĐÚNG ${questionCount} CÂU HỎI THEO ĐÚNG FORMAT MARKDOWN YÊU CẦU TRÊN (Bắt buộc phản hồi bằng Markdown chuẩn. Liệt kê đủ từ Câu 1, Câu 2... đến Câu ${questionCount}. Phương án đúng in đậm toàn bộ theo cú pháp: **[A-D]. [Nội dung phương án]**, 4 phương án tương đương về độ dài từ).`
       temperature = 0.15
     } else if (action === 'chat') {
       systemInstruction = `Bạn là trợ lý học tập AI chuyên sâu của NoteBook ND (hoạt động theo tiêu chuẩn bảo mật kiến thức và trích dẫn chuẩn xác 100% của Google NotebookLM).
@@ -186,7 +194,17 @@ NGUYÊN TẮC CỐT LÕI VỀ KIẾN THỨC NGUỒN (CRITICAL GROUNDING RULES - 
 QUY TẮC ĐỊNH DẠNG VĂN BẢN (KHẮC PHỤC TRIỆT ĐỂ LỖI KÝ HIỆU):
 1. TUYỆT ĐỐI KHÔNG sử dụng cú pháp LaTeX toán học dạng $\\mathbf{...}$, $\\mathrm{...}$ hoặc dấu dollar '$' cho các thuật ngữ y học, sinh học, chữ viết tắt hay đơn vị (như Hb, Hct, RBC, WBC, PLT, MCV, Neutrophil, 10^6/μL, g/dL, fL...). Phải viết chữ bình thường hoặc in đậm markdown thuần túy (Ví dụ: **Hb**, **Hct**, **RBC**, **WBC**, **PLT**, 10^6/μL).
 2. TUYỆT ĐỐI KHÔNG dùng các dấu gạch chéo '//' thừa hoặc dấu '*' lẻ loi.
-3. Sử dụng cấu trúc rõ ràng: Tiêu đề in hoa hoặc số La Mã (I, II, III...), các ý trình bày bằng dấu gạch đầu dòng '-' mạch lạc, sư phạm.`
+3. Sử dụng cấu trúc rõ ràng: Tiêu đề in hoa hoặc số La Mã (I, II, III...), các ý trình bày bằng dấu gạch đầu dòng '-' mạch lạc, sư phạm.
+4. NẾU NGƯỜI HỌC YÊU CẦU TẠO CÂU HỎI TRẮC NGHIỆM TRONG CHAT:
+- BẮT BUỘC trả về 100% ở định dạng Markdown chuẩn.
+- ĐÁP ÁN ĐÚNG BẮT BUỘC là phương án được in đậm toàn bộ theo cú pháp Markdown: **[A-D]. [Nội dung phương án]** (Ví dụ: **B. Nội dung phương án B**). Các phương án khác không in đậm.
+- Định dạng mỗi câu:
+Câu 1. [Nội dung câu hỏi]
+A. [Nội dung phương án A]
+**B. [Nội dung phương án B]**
+C. [Nội dung phương án C]
+D. [Nội dung phương án D]
+- Không ghi thêm chú thích "Đáp án: B" hay giải thích xen giữa các lựa chọn để đảm bảo đúng định dạng chuẩn.`
 
       userPrompt = `[TÀI LIỆU NGUỒN]:
 ${sourceContent.slice(0, 45000)}

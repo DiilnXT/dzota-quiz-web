@@ -177,15 +177,6 @@ body {
   }
 }
 
-.apple-liquid-option:hover {
-  background: #ffffff;
-  border-color: rgba(59, 130, 246, 0.65);
-  box-shadow: 
-    0 4px 14px rgba(37, 99, 235, 0.12),
-    inset 0 1px 0 #ffffff;
-  transform: translateY(-0.5px);
-}
-
 .apple-liquid-option-selected {
   background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%) !important;
   border: 2px solid #007AFF !important;
