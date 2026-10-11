@@ -34,13 +34,30 @@ export async function GET() {
 
     try {
       if ((prisma as any).systemSetting) {
-        keysSetting = await (prisma as any).systemSetting.findUnique({ where: { key: 'GEMINI_API_KEYS' } })
-        modelSetting = await (prisma as any).systemSetting.findUnique({ where: { key: 'GEMINI_ACTIVE_MODEL' } })
-        availableModelsSetting = await (prisma as any).systemSetting.findUnique({ where: { key: 'GEMINI_AVAILABLE_MODELS' } })
-        activeBgSetting = await (prisma as any).systemSetting.findUnique({ where: { key: 'ACTIVE_BG_ENABLED' } })
-        activeBgDesktopSetting = await (prisma as any).systemSetting.findUnique({ where: { key: 'ACTIVE_BG_DESKTOP' } })
-        activeBgMobileSetting = await (prisma as any).systemSetting.findUnique({ where: { key: 'ACTIVE_BG_MOBILE' } })
-        activeBgGallerySetting = await (prisma as any).systemSetting.findUnique({ where: { key: 'ACTIVE_BG_GALLERY' } })
+        const settingsList = await (prisma as any).systemSetting.findMany({
+          where: {
+            key: {
+              in: [
+                'GEMINI_API_KEYS',
+                'GEMINI_ACTIVE_MODEL',
+                'GEMINI_AVAILABLE_MODELS',
+                'ACTIVE_BG_ENABLED',
+                'ACTIVE_BG_DESKTOP',
+                'ACTIVE_BG_MOBILE',
+                'ACTIVE_BG_GALLERY'
+              ]
+            }
+          }
+        })
+        const map: Record<string, any> = {}
+        settingsList.forEach((s: any) => { map[s.key] = s })
+        keysSetting = map['GEMINI_API_KEYS']
+        modelSetting = map['GEMINI_ACTIVE_MODEL']
+        availableModelsSetting = map['GEMINI_AVAILABLE_MODELS']
+        activeBgSetting = map['ACTIVE_BG_ENABLED']
+        activeBgDesktopSetting = map['ACTIVE_BG_DESKTOP']
+        activeBgMobileSetting = map['ACTIVE_BG_MOBILE']
+        activeBgGallerySetting = map['ACTIVE_BG_GALLERY']
       }
     } catch (e) {
       console.warn('SystemSetting table not ready in DB, using fallback')

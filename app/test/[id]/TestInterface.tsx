@@ -134,8 +134,18 @@ export default function TestInterface({ test }: { test: any }) {
     } catch (e) {}
   }
 
-  // Fetch admin settings for active background mode and custom images
+  // Fetch admin settings for active background mode and custom images (với sessionStorage cache)
   useEffect(() => {
+    try {
+      const cached = sessionStorage.getItem('dzota_cached_bg_settings')
+      if (cached) {
+        const parsed = JSON.parse(cached)
+        if (parsed.activeBgEnabled !== undefined) setActiveBgEnabled(Boolean(parsed.activeBgEnabled))
+        if (parsed.activeBgDesktop) setActiveBgDesktop(parsed.activeBgDesktop)
+        if (parsed.activeBgMobile) setActiveBgMobile(parsed.activeBgMobile)
+      }
+    } catch (e) {}
+
     fetch('/api/admin/settings')
       .then(res => res.json())
       .then(data => {
@@ -144,6 +154,13 @@ export default function TestInterface({ test }: { test: any }) {
         }
         if (data?.activeBgDesktop) setActiveBgDesktop(data.activeBgDesktop)
         if (data?.activeBgMobile) setActiveBgMobile(data.activeBgMobile)
+        try {
+          sessionStorage.setItem('dzota_cached_bg_settings', JSON.stringify({
+            activeBgEnabled: data.activeBgEnabled,
+            activeBgDesktop: data.activeBgDesktop,
+            activeBgMobile: data.activeBgMobile
+          }))
+        } catch (e) {}
       })
       .catch(() => {})
   }, [])

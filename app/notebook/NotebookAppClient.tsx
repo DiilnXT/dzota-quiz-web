@@ -350,6 +350,8 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
 
   // 2 CHẾ ĐỘ CỐT LÕI THEO YÊU CẦU: 'chat' (hỏi đáp) | 'studio' (tạo đề)
   const [activeMode, setActiveMode] = useState<'chat' | 'studio'>('chat')
+  // Tab điều hướng độc lập trên điện thoại: 'sources' | 'chat' | 'studio'
+  const [mobileTab, setMobileTab] = useState<'sources' | 'chat' | 'studio'>('chat')
   const [outputTab, setOutputTab] = useState<'preview' | 'markdown'>('preview')
 
   // Modals
@@ -508,6 +510,17 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatMessages, isChatting])
+
+  // Khi mở sổ mới trên mobile: nếu sổ chưa có nguồn thì mở tab Nguồn, nếu đã có thì mở tab Chat
+  useEffect(() => {
+    if (activeNotebook) {
+      if (activeNotebook.sources.length === 0) {
+        setMobileTab('sources')
+      } else {
+        setMobileTab(activeMode)
+      }
+    }
+  }, [activeNotebookId])
 
   // ─── HÀM BÓC TÁCH VĂN BẢN TỪ FILE ───────────────────────────────
   const extractTextFromFile = async (file: File): Promise<string> => {
@@ -1147,7 +1160,7 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
         {/* Nội dung chính: Danh sách sổ ghi chú */}
         <main className="flex-1 min-w-0 min-h-0 flex flex-col h-full overflow-hidden">
           {/* Top Bar thư viện */}
-          <header className="h-16 shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 flex items-center justify-between gap-4">
+          <header className="h-16 shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4">
             <div className="flex items-center gap-4 flex-1 max-w-xl">
               <div className="relative w-full">
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -1164,22 +1177,22 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-md shadow-blue-500/20 transition flex items-center gap-2 cursor-pointer active:scale-95"
+                className="px-3 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-md shadow-blue-500/20 transition flex items-center gap-1.5 sm:gap-2 cursor-pointer active:scale-95 shrink-0"
               >
                 <Plus size={16} />
-                <span>+ Sổ Ghi Chú Mới</span>
+                <span>+ Sổ Mới</span>
               </button>
             </div>
           </header>
 
-          {/* Vùng danh sách Table View phong cách Google NotebookLM */}
-          <div className="flex-1 min-h-0 p-6 overflow-y-auto max-w-6xl mx-auto w-full space-y-6">
+          {/* Vùng danh sách Table / Card View phong cách Google NotebookLM */}
+          <div className="flex-1 min-h-0 p-3 sm:p-6 overflow-y-auto max-w-6xl mx-auto w-full space-y-4 sm:space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                <h2 className="text-lg sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                   Thư Viện Sổ Ghi Chú (Notebook Library)
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                <p className="text-[11px] sm:text-sm text-slate-500 mt-0.5">
                   {notebooks.length} sổ ghi chú • Tra cứu tài liệu thông minh & tự động tạo ngân hàng câu hỏi
                 </p>
               </div>
@@ -1229,82 +1242,136 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
                   </button>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-slate-100 dark:border-slate-800 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider bg-slate-50/50 dark:bg-slate-900/50">
-                        <th className="py-3 px-4 w-10 text-center">⭐</th>
-                        <th className="py-3 px-4">Tên Sổ Ghi Chú</th>
-                        <th className="py-3 px-4">Môn Học / Chủ Đề</th>
-                        <th className="py-3 px-4 text-center">Số Nguồn</th>
-                        <th className="py-3 px-4">Ngày Cập Nhật</th>
-                        <th className="py-3 px-4 text-right">Thao Tác</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs sm:text-sm">
-                      {filteredNotebooks.map(nb => (
-                        <tr
-                          key={nb.id}
-                          onClick={() => setActiveNotebookId(nb.id)}
-                          className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition cursor-pointer group"
-                        >
-                          <td className="py-4 px-4 text-center" onClick={e => handleToggleFavorite(nb.id, e)}>
-                            <button className="text-slate-300 hover:text-amber-500 transition">
+                <>
+                  {/* Card View cho điện thoại (md:hidden) */}
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                    {filteredNotebooks.map(nb => (
+                      <div
+                        key={nb.id}
+                        onClick={() => setActiveNotebookId(nb.id)}
+                        className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition cursor-pointer space-y-2.5 active:bg-slate-100"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                              <BookOpen size={18} />
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="font-extrabold text-sm text-slate-900 dark:text-slate-100 truncate">
+                                {nb.title}
+                              </h4>
+                              <p className="text-[11px] text-slate-400">
+                                {nb.subject || 'Tổng hợp'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                            <button
+                              onClick={e => handleToggleFavorite(nb.id, e)}
+                              className="p-1.5 text-slate-300 hover:text-amber-500 transition"
+                            >
                               <Star size={16} className={nb.isFavorite ? 'fill-amber-400 text-amber-400' : ''} />
                             </button>
-                          </td>
-                          <td className="py-4 px-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition">
-                                <BookOpen size={18} />
-                              </div>
-                              <div>
-                                <span className="font-extrabold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 transition block">
-                                  {nb.title}
-                                </span>
-                                <span className="text-[11px] text-slate-400">
-                                  {nb.generatedQuizzes.length > 0
-                                    ? `Đã tạo ${nb.generatedQuizzes.length} bộ đề`
-                                    : 'Chưa sinh đề thi'}
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="py-4 px-4">
-                            <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs">
-                              {nb.subject || 'Tổng hợp'}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4 text-center">
-                            <span className="px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-black text-xs">
-                              {nb.sources.length} tài liệu
-                            </span>
-                          </td>
-                          <td className="py-4 px-4 text-slate-400 text-xs">
-                            {new Date(nb.updatedAt).toLocaleDateString('vi-VN')}
-                          </td>
-                          <td className="py-4 px-4 text-right">
-                            <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
-                              <button
-                                onClick={() => setActiveNotebookId(nb.id)}
-                                className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold text-xs transition cursor-pointer"
-                              >
-                                Mở Sổ
-                              </button>
-                              <button
-                                onClick={e => handleDeleteNotebook(nb.id, e)}
-                                className="p-1.5 text-slate-400 hover:text-red-600 transition cursor-pointer"
-                                title="Xóa sổ ghi chú"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </td>
+                            <button
+                              onClick={e => handleDeleteNotebook(nb.id, e)}
+                              className="p-1.5 text-slate-400 hover:text-red-600 transition"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-50 dark:border-slate-800/50">
+                          <span className="font-semibold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                            {nb.sources.length} tài liệu nguồn
+                          </span>
+                          <span>
+                            {nb.generatedQuizzes.length > 0 ? `${nb.generatedQuizzes.length} bộ đề đã tạo` : 'Chưa tạo đề'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Table View cho máy tính (hidden md:block) */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-100 dark:border-slate-800 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider bg-slate-50/50 dark:bg-slate-900/50">
+                          <th className="py-3 px-4 w-10 text-center">⭐</th>
+                          <th className="py-3 px-4">Tên Sổ Ghi Chú</th>
+                          <th className="py-3 px-4">Môn Học / Chủ Đề</th>
+                          <th className="py-3 px-4 text-center">Số Nguồn</th>
+                          <th className="py-3 px-4">Ngày Cập Nhật</th>
+                          <th className="py-3 px-4 text-right">Thao Tác</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs sm:text-sm">
+                        {filteredNotebooks.map(nb => (
+                          <tr
+                            key={nb.id}
+                            onClick={() => setActiveNotebookId(nb.id)}
+                            className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition cursor-pointer group"
+                          >
+                            <td className="py-4 px-4 text-center" onClick={e => handleToggleFavorite(nb.id, e)}>
+                              <button className="text-slate-300 hover:text-amber-500 transition">
+                                <Star size={16} className={nb.isFavorite ? 'fill-amber-400 text-amber-400' : ''} />
+                              </button>
+                            </td>
+                            <td className="py-4 px-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition">
+                                  <BookOpen size={18} />
+                                </div>
+                                <div>
+                                  <span className="font-extrabold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 transition block">
+                                    {nb.title}
+                                  </span>
+                                  <span className="text-[11px] text-slate-400">
+                                    {nb.generatedQuizzes.length > 0
+                                      ? `Đã tạo ${nb.generatedQuizzes.length} bộ đề`
+                                      : 'Chưa sinh đề thi'}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-4 px-4">
+                              <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs">
+                                {nb.subject || 'Tổng hợp'}
+                              </span>
+                            </td>
+                            <td className="py-4 px-4 text-center">
+                              <span className="px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-black text-xs">
+                                {nb.sources.length} tài liệu
+                              </span>
+                            </td>
+                            <td className="py-4 px-4 text-slate-400 text-xs">
+                              {new Date(nb.updatedAt).toLocaleDateString('vi-VN')}
+                            </td>
+                            <td className="py-4 px-4 text-right">
+                              <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
+                                <button
+                                  onClick={() => setActiveNotebookId(nb.id)}
+                                  className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold text-xs transition cursor-pointer"
+                                >
+                                  Mở Sổ
+                                </button>
+                                <button
+                                  onClick={e => handleDeleteNotebook(nb.id, e)}
+                                  className="p-1.5 text-slate-400 hover:text-red-600 transition cursor-pointer"
+                                  title="Xóa sổ ghi chú"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </div>
           </div>
@@ -1426,35 +1493,38 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
       )}
 
       {/* TOP BAR WORKSPACE CHUẨN NOTEBOOKLM */}
-      <header className="h-16 shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 sm:px-6 flex items-center justify-between gap-3 sticky top-0 z-30 shadow-2xs">
-        <div className="flex items-center gap-3 min-w-0">
+      <header className="h-14 sm:h-16 shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-3 sticky top-0 z-30 shadow-2xs">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             onClick={() => setActiveNotebookId(null)}
-            className="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer flex-shrink-0"
+            className="p-1.5 sm:p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer shrink-0"
             title="Quay lại danh sách sổ ghi chú"
           >
             <ArrowLeft size={18} />
           </button>
 
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-[9px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 truncate max-w-[120px] sm:max-w-none">
                 {activeNotebook.subject || 'Tổng Hợp'}
               </span>
-              <span className="text-[10px] font-bold text-slate-400">
+              <span className="text-[10px] font-bold text-slate-400 hidden sm:inline">
                 {activeNotebook.sources.filter(s => s.active).length} nguồn đang bật
               </span>
             </div>
-            <h1 className="font-black text-sm sm:text-base text-slate-900 dark:text-white truncate">
+            <h1 className="font-black text-xs sm:text-base text-slate-900 dark:text-white truncate max-w-[180px] sm:max-w-md">
               {activeNotebook.title}
             </h1>
           </div>
         </div>
 
-        {/* ─── 2 CHẾ ĐỘ CỐT LÕI THEO YÊU CẦU: CHAT vs TẠO ĐỀ ─── */}
-        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700">
+        {/* ─── 2 CHẾ ĐỘ CỐT LÕI THEO YÊU CẦU: CHAT vs TẠO ĐỀ (DESKTOP) ─── */}
+        <div className="hidden md:flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700">
           <button
-            onClick={() => setActiveMode('chat')}
+            onClick={() => {
+              setActiveMode('chat')
+              setMobileTab('chat')
+            }}
             className={`px-3.5 sm:px-5 py-2 rounded-xl font-extrabold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer ${
               activeMode === 'chat'
                 ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm'
@@ -1466,7 +1536,10 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
           </button>
 
           <button
-            onClick={() => setActiveMode('studio')}
+            onClick={() => {
+              setActiveMode('studio')
+              setMobileTab('studio')
+            }}
             className={`px-3.5 sm:px-5 py-2 rounded-xl font-extrabold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer ${
               activeMode === 'studio'
                 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm'
@@ -1479,10 +1552,10 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
         </div>
 
         {/* Phím thao tác nhanh */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <button
             onClick={() => setShowCreateModal(true)}
-            className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold transition flex items-center gap-1.5"
+            className="p-1.5 sm:p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold transition flex items-center gap-1"
             title="Tạo sổ mới"
           >
             <Plus size={16} />
@@ -1491,10 +1564,55 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
         </div>
       </header>
 
+      {/* ─── THANH ĐIỀU HƯỚNG TAB TRÊN MOBILE (CHUẨN DI ĐỘNG NATIVE) ─── */}
+      <div className="md:hidden flex items-center bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-1.5 shrink-0 gap-1.5 z-20 shadow-2xs">
+        <button
+          onClick={() => setMobileTab('sources')}
+          className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+            mobileTab === 'sources'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 font-black'
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+          }`}
+        >
+          <FileText size={14} />
+          <span>Nguồn ({activeNotebook.sources.filter(s => s.active).length})</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setMobileTab('chat')
+            setActiveMode('chat')
+          }}
+          className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+            mobileTab === 'chat'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 font-black'
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+          }`}
+        >
+          <MessageSquare size={14} />
+          <span>Hỏi đáp</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setMobileTab('studio')
+            setActiveMode('studio')
+          }}
+          className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+            mobileTab === 'studio'
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20 font-black'
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+          }`}
+        >
+          <Sparkles size={14} />
+          <span>Tạo đề</span>
+        </button>
+      </div>
+
       {/* VÙNG NỘI DUNG CHÍNH (3 CỘT NOTEBOOKLM) */}
       <div className="flex-1 min-h-0 flex overflow-hidden">
-        {/* ─── CỘT TRÁI (320px): NGUỒN TÀI LIỆU (SOURCES) ─── */}
-        <aside className="w-80 h-full border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between shrink-0 overflow-y-auto p-4 space-y-4 min-h-0">
+        {/* ─── CỘT TRÁI (320px trên Desktop, Full màn hình trên Mobile khi tab='sources') ─── */}
+        <aside className={`${mobileTab === 'sources' ? 'flex w-full' : 'hidden'} md:flex md:w-80 md:shrink-0 h-full border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex-col justify-between overflow-y-auto p-4 space-y-4 min-h-0`}>
           <div className="space-y-4">
             {/* Header Nguồn */}
             <div className="flex items-center justify-between">
@@ -1659,11 +1777,35 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
                 </div>
               )}
             </div>
+
+            {/* Nút hành động nhanh trên mobile sau khi quản lý nguồn */}
+            <div className="md:hidden pt-4 pb-2 border-t border-slate-100 dark:border-slate-800 space-y-2 shrink-0">
+              <button
+                onClick={() => {
+                  setMobileTab('chat')
+                  setActiveMode('chat')
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
+              >
+                <MessageSquare size={15} />
+                <span>Mở khung Hỏi đáp về tài liệu</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMobileTab('studio')
+                  setActiveMode('studio')
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
+              >
+                <Sparkles size={15} />
+                <span>Chuyển sang Tạo đề trắc nghiệm</span>
+              </button>
+            </div>
           </div>
         </aside>
 
         {/* ─── VÙNG TRUNG TÂM / PHẢI: PHỤ THUỘC VÀO ACTIVE MODE ─── */}
-        <div className="flex-1 min-h-0 flex overflow-hidden bg-slate-100/50 dark:bg-slate-950">
+        <div className={`${mobileTab !== 'sources' ? 'flex w-full' : 'hidden'} md:flex flex-1 min-h-0 overflow-hidden bg-slate-100/50 dark:bg-slate-950`}>
           {/* ========================================================= */}
           {/* CHẾ ĐỘ 1: 💬 HỎI ĐÁP & TRÒ CHUYỆN (CHAT)                  */}
           {/* TẮT HOÀN TOÀN SETUP TẠO TRẮC NGHIỆM ĐỂ CHAT THOÁNG ĐẸP     */}
@@ -1671,16 +1813,16 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
           {activeMode === 'chat' && (
             <div className="flex-1 min-h-0 flex flex-col h-full bg-white dark:bg-slate-900 overflow-hidden">
               {/* Header Chat */}
-              <div className="px-6 py-3 shrink-0 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 z-10">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/50 text-blue-600 flex items-center justify-center font-bold">
+              <div className="px-3.5 sm:px-6 py-2.5 sm:py-3 shrink-0 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 z-10">
+                <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/50 text-blue-600 flex items-center justify-center font-bold shrink-0">
                     💬
                   </div>
-                  <div>
-                    <h3 className="font-black text-sm text-slate-900 dark:text-white">
+                  <div className="min-w-0">
+                    <h3 className="font-black text-xs sm:text-sm text-slate-900 dark:text-white truncate">
                       Tra Cứu & Đối Thoại Tài Liệu Nguồn
                     </h3>
-                    <p className="text-[11px] text-slate-400">
+                    <p className="text-[10px] sm:text-[11px] text-slate-400 truncate">
                       100% dựa trên {activeNotebook.sources.filter(s => s.active).length} tài liệu đang kích hoạt • Không ảo giác
                     </p>
                   </div>
@@ -1688,9 +1830,9 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
 
                 <button
                   onClick={() => setChatMessages([])}
-                  className="px-3 py-1 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                  className="px-2.5 sm:px-3 py-1 rounded-xl text-[11px] sm:text-xs font-bold text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition shrink-0"
                 >
-                  Xóa lịch sử chat
+                  Xóa chat
                 </button>
               </div>
 
@@ -1799,29 +1941,29 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
               </div>
 
               {/* Khung nhập Chat bo tròn Pill chuẩn NotebookLM */}
-              <div className="p-4 shrink-0 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
-                <div className="max-w-4xl mx-auto flex items-center gap-3 bg-slate-100 dark:bg-slate-800 p-2 rounded-full border border-slate-200 dark:border-slate-700 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition shadow-2xs">
+              <div className="p-2.5 sm:p-4 shrink-0 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+                <div className="max-w-4xl mx-auto flex items-center gap-2 sm:gap-3 bg-slate-100 dark:bg-slate-800 p-1.5 sm:p-2 rounded-full border border-slate-200 dark:border-slate-700 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition shadow-2xs">
                   <input
                     type="text"
                     value={chatInput}
                     onChange={e => setChatInput(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleSendChat()}
-                    placeholder="Đặt câu hỏi hoặc tạo nội dung từ tài liệu nguồn..."
+                    placeholder="Hỏi bất kỳ điều gì từ tài liệu nguồn..."
                     disabled={isChatting}
-                    className="flex-1 px-4 py-2 bg-transparent text-xs sm:text-sm text-slate-800 dark:text-slate-100 outline-none placeholder-slate-400"
+                    className="flex-1 px-3 sm:px-4 py-1.5 sm:py-2 bg-transparent text-xs sm:text-sm text-slate-800 dark:text-slate-100 outline-none placeholder-slate-400 min-w-0"
                   />
 
-                  <div className="flex items-center gap-2 pr-1">
-                    <span className="text-[10px] font-bold text-slate-400 bg-white dark:bg-slate-900 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-700 hidden sm:inline">
+                  <div className="flex items-center gap-1.5 sm:gap-2 pr-1 shrink-0">
+                    <span className="text-[10px] font-bold text-slate-400 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700 hidden sm:inline">
                       {activeNotebook.sources.filter(s => s.active).length} nguồn
                     </span>
 
                     <button
                       onClick={handleSendChat}
                       disabled={isChatting || !chatInput.trim()}
-                      className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition disabled:opacity-40 cursor-pointer shadow-md shadow-blue-500/20 active:scale-95 flex-shrink-0"
+                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition disabled:opacity-40 cursor-pointer shadow-md shadow-blue-500/20 active:scale-95 shrink-0"
                     >
-                      <Send size={16} />
+                      <Send size={15} />
                     </button>
                   </div>
                 </div>
@@ -1834,7 +1976,7 @@ export default function NotebookAppClient({ currentUser }: { currentUser?: any }
           {/* TẮT CHAT, TẬP TRUNG SETUP & XUẤT BẢN BỘ CÂU HỎI            */}
           {/* ========================================================= */}
           {activeMode === 'studio' && (
-            <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 overflow-y-auto">
+            <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 p-3 sm:p-6 overflow-y-auto">
               {/* ─── CỘT CÀI ĐẶT TẠO ĐỀ (5 Cols) ─── */}
               <div className="lg:col-span-5 space-y-4">
                 <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
