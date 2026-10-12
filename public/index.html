@@ -643,18 +643,23 @@
         
         const uniqueQuestions = useMemo(() => {
           if (!Array.isArray(currentQuestions)) return [];
+          if (quizConfig.mode === 'exam') return currentQuestions;
           const seen = new Set();
           const list = [];
           currentQuestions.forEach(q => {
             if (!q) return;
-            const key = q.originalSlotId || q.originalId || q.id;
-            if (!seen.has(key)) {
-              seen.add(key);
+            if (!q.isReview) {
               list.push(q);
+            } else {
+              const key = q.originalReviewId || q.originalId || q.id;
+              if (!seen.has(key)) {
+                seen.add(key);
+                list.push(q);
+              }
             }
           });
           return list.length > 0 ? list : currentQuestions;
-        }, [currentQuestions]);
+        }, [currentQuestions, quizConfig.mode]);
         
         const [generatedLink, setGeneratedLink] = useState('');
         const [isSaving, setIsSaving] = useState(false);
@@ -3988,9 +3993,27 @@
         };
 
         // --- 5. TAKING LOGIC ---
+        // Thuật toán xáo trộn đa chu kỳ với entropy mật mã cao cấp (Siêu ngẫu nhiên - True Crypto Fisher-Yates)
         const shuffleArray = (array) => {
+            if (!Array.isArray(array) || array.length <= 1) return [...(array || [])];
             const arr = [...array];
-            for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+            const getRandomInt = (max) => {
+                if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+                    const buf = new Uint32Array(1);
+                    window.crypto.getRandomValues(buf);
+                    return buf[0] % max;
+                }
+                return Math.floor(Math.random() * max);
+            };
+            // 3 chu kỳ xáo trộn liên tục để đạt độ xáo trộn phân bố ngẫu nhiên tối đa
+            for (let round = 0; round < 3; round++) {
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = getRandomInt(i + 1);
+                    const temp = arr[i];
+                    arr[i] = arr[j];
+                    arr[j] = temp;
+                }
+            }
             return arr;
         };
 
@@ -4066,6 +4089,11 @@
               localStorage.removeItem('dzota_quiz_session_' + (quizIdTracker || 'default'));
               const qParam = new URLSearchParams(window.location.search).get('id');
               if (qParam) localStorage.removeItem('dzota_quiz_session_' + qParam);
+              const testParam = new URLSearchParams(window.location.search).get('test');
+              if (testParam) localStorage.removeItem('dzota_quiz_session_' + testParam);
+              const editParam = new URLSearchParams(window.location.search).get('editId');
+              if (editParam) localStorage.removeItem('dzota_quiz_session_' + editParam);
+              localStorage.removeItem('dzota_quiz_session_default');
             } catch(e) {}
             setInProgressSession(null);
           }
@@ -4087,17 +4115,26 @@
               let idxs = shuffleArray(finalQuestions.map((_, i) => i)).slice(0, quizConfig.randomPickCount);
               if (!quizConfig.shuffleQuestions) idxs.sort((a, b) => a - b);
               finalQuestions = idxs.map(i => finalQuestions[i]);
-          } else if (quizConfig.shuffleQuestions) finalQuestions = shuffleArray(finalQuestions);
+          } else if (quizConfig.shuffleQuestions) {
+              finalQuestions = shuffleArray(finalQuestions);
+          }
 
-          // Cấp ID phiên thi duy nhất 100% cho từng câu hỏi sau khi bốc ngẫu nhiên / xáo trộn (Chống nhảy đáp án & tự chọn nhầm)
+          // Cấp ID phiên thi duy nhất 100% cho từng câu hỏi sau khi bốc ngẫu nhiên / xáo trộn (Chống trùng ID, chống nhảy đáp án & tự chọn trước)
           const runTimestamp = Date.now();
           finalQuestions = finalQuestions.map((q, qOrder) => {
-              const uniqueQId = 'q_run_' + (qOrder + 1) + '_' + runTimestamp + '_' + Math.random().toString(36).substring(2, 7);
+              const uniqueQId = 'q_run_' + (qOrder + 1) + '_' + runTimestamp + '_' + Math.random().toString(36).substring(2, 8);
+              const cleanQ = { ...q };
+              delete cleanQ.userAnswer;
+              delete cleanQ.userAns;
+              delete cleanQ.selected;
+              delete cleanQ.selectedOption;
+              delete cleanQ.status;
               return {
-                  ...q,
+                  ...cleanQ,
                   id: uniqueQId,
                   runId: uniqueQId,
                   originalId: uniqueQId,
+                  originalSlotId: 'slot_inst_' + (qOrder + 1) + '_' + runTimestamp + '_' + Math.random().toString(36).substring(2, 6),
                   displayNumber: qOrder + 1
               };
           });
@@ -4209,7 +4246,7 @@
           setUserAnswers(nextAnswers);
           let nextExp = showExplanation;
           if (quizConfig.mode === 'practice') {
-              const q = currentQuestions.find(q => q.id === qId || (q.originalId || q.id) === qId);
+              const q = currentQuestions.find(q => q.id === qId);
               if (q) {
                   nextExp = { ...showExplanation, [qId]: q.correct === option ? 'correct' : 'incorrect' };
                   setShowExplanation(nextExp);
@@ -4302,14 +4339,20 @@
 
         const processSubmit = () => {
             try {
-                const uniqueList = (uniqueQuestions && uniqueQuestions.length > 0) ? uniqueQuestions : currentQuestions;
+                const uniqueList = (quizConfig.mode === 'exam' || !uniqueQuestions || uniqueQuestions.length === 0) ? currentQuestions : uniqueQuestions;
                 let count = 0;
                 uniqueList.forEach(q => {
-                    const oid = q.originalSlotId || q.originalId || q.id;
-                    const instances = currentQuestions.filter(item => (item.originalSlotId || item.originalId || item.id) === oid);
-                    const isCorrect = instances.some(inst => userAnswers[inst.id] === inst.correct);
-                    if (isCorrect) {
-                        count++;
+                    if (quizConfig.mode === 'exam') {
+                        if (userAnswers[q.id] === q.correct) {
+                            count++;
+                        }
+                    } else {
+                        const oid = q.originalSlotId || q.originalId || q.id;
+                        const instances = currentQuestions.filter(item => (item.originalSlotId || item.originalId || item.id) === oid);
+                        const isCorrect = instances.some(inst => userAnswers[inst.id] === inst.correct);
+                        if (isCorrect) {
+                            count++;
+                        }
                     }
                 });
                 const totalQ = Math.max(1, uniqueList.length);
@@ -4437,35 +4480,35 @@
                         } catch(e) {}
 
                         uniqueList.forEach(origQ => {
-                            const oid = origQ.originalSlotId || origQ.originalId || origQ.id;
-                            const instances = currentQuestions.filter(q => (q.originalSlotId || q.originalId || q.id) === oid);
-                            const firstInstance = instances[0] || origQ;
-                            const firstAns = firstAttempts[firstInstance.id] !== undefined ? firstAttempts[firstInstance.id] : userAnswers[firstInstance.id];
-                            const isFirstTryCorrect = firstAns !== undefined && firstAns !== null && firstAns === firstInstance.correct;
-                            const qKey = (firstInstance.text || '').trim();
+                            const finalAns = userAnswers[origQ.id];
+                            const isSubmittedCorrect = finalAns !== undefined && finalAns !== null && finalAns === origQ.correct;
+                            const qKey = (origQ.text || '').trim();
+                            const oid = origQ.id || origQ.originalId || origQ.originalSlotId;
 
-                            if (isFirstTryCorrect) {
-                                // Trả lời đúng ngay lần đầu làm bài chính thức -> Xóa khỏi danh sách câu sai
+                            if (isSubmittedCorrect) {
+                                // Trả lời đúng khi nộp bài -> Xóa khỏi danh sách câu sai
                                 currentWrong = currentWrong.filter(wq => {
                                     const wKey = (wq.text || '').trim();
-                                    const wId = wq.originalSlotId || wq.originalId || wq.id;
-                                    return wKey !== qKey && wId !== oid;
+                                    const wId = wq.id || wq.originalId;
+                                    const isSameContent = wKey === qKey && JSON.stringify(wq.options || {}) === JSON.stringify(origQ.options || {});
+                                    return wId !== origQ.id && !isSameContent;
                                 });
                             } else {
-                                // Làm sai hoặc bỏ trống lần đầu -> Giữ/thêm vào danh sách câu sai
+                                // Làm sai hoặc bỏ trống -> Thêm vào danh sách câu sai
                                 const alreadyInWrong = currentWrong.some(wq => {
                                     const wKey = (wq.text || '').trim();
-                                    const wId = wq.originalSlotId || wq.originalId || wq.id;
-                                    return wKey === qKey || wId === oid;
+                                    const wId = wq.id || wq.originalId;
+                                    const isSameContent = wKey === qKey && JSON.stringify(wq.options || {}) === JSON.stringify(origQ.options || {});
+                                    return wId === origQ.id || isSameContent;
                                 });
                                 if (!alreadyInWrong) {
                                     currentWrong.push({
-                                        id: firstInstance.id,
+                                        id: origQ.id,
                                         originalId: oid,
-                                        text: firstInstance.text,
-                                        options: { ...firstInstance.options },
-                                        correct: firstInstance.correct,
-                                        explanation: firstInstance.explanation || ''
+                                        text: origQ.text,
+                                        options: { ...origQ.options },
+                                        correct: origQ.correct,
+                                        explanation: origQ.explanation || ''
                                     });
                                 }
                             }
@@ -6174,6 +6217,34 @@
                       <div className="text-[10px] sm:text-[11px] font-semibold text-[#64748B]">Hình thức làm bài</div>
                       <div className="text-sm sm:text-base font-black text-[#1E293B] mt-0.5">{quizConfig.mode === 'practice' ? 'Luyện tập' : 'Trắc nghiệm'}</div>
                     </div>
+                  </div>
+
+                  {/* Tùy chọn xáo trộn đề thi (Siêu ngẫu nhiên) */}
+                  <div className="grid grid-cols-2 gap-2 mb-3.5 text-left">
+                    <label className={`p-2 sm:p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all select-none shadow-2xs ${quizConfig.shuffleQuestions ? 'bg-indigo-50/70 border-indigo-200' : 'bg-slate-50 border-slate-200'}`}>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <Icons.Shuffle size={13} className={quizConfig.shuffleQuestions ? "text-indigo-600 flex-shrink-0" : "text-slate-400 flex-shrink-0"} />
+                        <span className={`text-[11px] sm:text-xs font-bold truncate ${quizConfig.shuffleQuestions ? "text-indigo-900" : "text-slate-600"}`}>Trộn câu hỏi</span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={!!quizConfig.shuffleQuestions}
+                        onChange={e => setQuizConfig(prev => ({ ...prev, shuffleQuestions: e.target.checked }))}
+                        className="w-4 h-4 accent-indigo-600 rounded cursor-pointer flex-shrink-0 ml-1.5"
+                      />
+                    </label>
+                    <label className={`p-2 sm:p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all select-none shadow-2xs ${quizConfig.shuffleOptions ? 'bg-emerald-50/70 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <Icons.ListOrdered size={13} className={quizConfig.shuffleOptions ? "text-emerald-600 flex-shrink-0" : "text-slate-400 flex-shrink-0"} />
+                        <span className={`text-[11px] sm:text-xs font-bold truncate ${quizConfig.shuffleOptions ? "text-emerald-900" : "text-slate-600"}`}>Trộn A,B,C,D</span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={!!quizConfig.shuffleOptions}
+                        onChange={e => setQuizConfig(prev => ({ ...prev, shuffleOptions: e.target.checked }))}
+                        className="w-4 h-4 accent-emerald-600 rounded cursor-pointer flex-shrink-0 ml-1.5"
+                      />
+                    </label>
                   </div>
 
                   {/* Password if protected */}
