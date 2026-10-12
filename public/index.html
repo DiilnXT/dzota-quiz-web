@@ -641,6 +641,21 @@
         const [parsedQuestions, setParsedQuestions] = useState([]); 
         const [currentQuestions, setCurrentQuestions] = useState([]);
         
+        const uniqueQuestions = useMemo(() => {
+          if (!Array.isArray(currentQuestions)) return [];
+          const seen = new Set();
+          const list = [];
+          currentQuestions.forEach(q => {
+            if (!q) return;
+            const key = q.originalSlotId || q.originalId || q.id;
+            if (!seen.has(key)) {
+              seen.add(key);
+              list.push(q);
+            }
+          });
+          return list.length > 0 ? list : currentQuestions;
+        }, [currentQuestions]);
+        
         const [generatedLink, setGeneratedLink] = useState('');
         const [isSaving, setIsSaving] = useState(false);
         const [showReview, setShowReview] = useState(false); 
@@ -1586,6 +1601,8 @@
 
         // --- CƠ CHẾ QUÉT VÀ KHÔI PHỤC NGÂN HÀNG ĐỀ TOÀN DIỆN ---
         const scanAndRecoverBanks = (showToastNotice = false) => {
+            // Tuyệt đối không chạy hoặc hiển thị thông báo với tài khoản học sinh
+            if (currentUser && currentUser.role === 'STUDENT') return false;
             try {
                 let recoveredList = [];
                 let foundViSinh = false;
@@ -1593,14 +1610,18 @@
                 try { curSaved = JSON.parse(localStorage.getItem('myQuizzes') || '[]'); } catch (e) {}
                 let vault = [];
                 try { vault = JSON.parse(localStorage.getItem('dzota_bank_vault') || '[]'); } catch (e) {}
-                const knownIds = new Set(curSaved.map(q => q.id));
+                const knownIds = new Set(curSaved.map(q => q && q.id).filter(Boolean));
+                const knownTitles = new Set(curSaved.map(q => (q && (q.title || q.config?.title) || '').trim().toLowerCase()).filter(Boolean));
 
                 // 1. Quét từ dzota_bank_vault
                 vault.forEach(v => {
-                    if (v && v.id && !knownIds.has(v.id)) {
+                    if (!v || !v.id) return;
+                    const vTitle = (v.title || v.config?.title || '').trim().toLowerCase();
+                    if (!knownIds.has(v.id) && !knownTitles.has(vTitle)) {
                         recoveredList.push(v);
                         knownIds.add(v.id);
-                        if ((v.title && /vi\s*sinh/i.test(v.title)) || (v.config?.title && /vi\s*sinh/i.test(v.config.title))) {
+                        if (vTitle) knownTitles.add(vTitle);
+                        if (/vi\s*sinh/i.test(vTitle)) {
                             foundViSinh = true;
                         }
                     }
@@ -1612,8 +1633,9 @@
                     if (draftRaw) {
                         const draft = JSON.parse(draftRaw);
                         if (draft && draft.bankSlots && draft.bankSlots.length > 0) {
-                            const dId = draft.bankIdTracker || ('bank_draft_' + Date.now());
-                            if (!knownIds.has(dId)) {
+                            const dTitle = (draft.bankConfig?.title || '').trim().toLowerCase();
+                            const dId = draft.bankIdTracker || 'bank_draft_recovered';
+                            if (!knownIds.has(dId) && !knownTitles.has(dTitle)) {
                                 const totalQ = draft.bankSlots.reduce((s, slot) => s + (slot.variants?.length || 0), 0);
                                 const dBank = {
                                     id: dId,
@@ -1631,7 +1653,8 @@
                                 };
                                 recoveredList.push(dBank);
                                 knownIds.add(dId);
-                                if ((dBank.title && /vi\s*sinh/i.test(dBank.title)) || (dBank.config?.title && /vi\s*sinh/i.test(dBank.config.title))) {
+                                if (dTitle) knownTitles.add(dTitle);
+                                if (/vi\s*sinh/i.test(dTitle)) {
                                     foundViSinh = true;
                                 }
                             }
@@ -1653,9 +1676,14 @@
                                 if (it && typeof it === 'object') {
                                     const hasSlots = Array.isArray(it.questions) && it.questions.some(q => Array.isArray(q?.variants) || q?.id?.startsWith('slot_'));
                                     const isBankType = it.config?.quizType === 'bank' || hasSlots;
-                                    const isViSinhName = (it.title && /vi\s*sinh/i.test(it.title)) || (it.config?.title && /vi\s*sinh/i.test(it.config.title));
+                                    const rawTitle = (it.title || it.config?.title || '').trim();
+                                    const isViSinhName = /vi\s*sinh/i.test(rawTitle);
                                     if (isBankType || isViSinhName) {
-                                        const bId = it.id || ('bank_scan_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4));
+                                        const lowerTitle = rawTitle.toLowerCase();
+                                        if (lowerTitle && knownTitles.has(lowerTitle)) return;
+
+                                        const safeSlug = (rawTitle || 'bank').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+                                        const bId = it.id || ('bank_recovered_' + safeSlug);
                                         if (!knownIds.has(bId)) {
                                             const totalSub = Array.isArray(it.questions)
                                                 ? it.questions.reduce((s, sl) => s + (sl.variants?.length || (sl.text ? 1 : 0)), 0)
@@ -1675,6 +1703,7 @@
                                             };
                                             recoveredList.push(restoredBank);
                                             knownIds.add(bId);
+                                            if (lowerTitle) knownTitles.add(lowerTitle);
                                             if (isViSinhName) foundViSinh = true;
                                         }
                                     }
@@ -1695,10 +1724,12 @@
                     setHomeViewTab('banks');
                     try { localStorage.setItem('dzota_home_tab', 'banks'); } catch (e) {}
 
-                    if (foundViSinh) {
-                        addToast("🎉 ĐÃ KHÔI PHỤC THÀNH CÔNG Ngân hàng đề 'Vi Sinh' (60 câu)! Dữ liệu đã an toàn trong Thư Viện Ngân Hàng Đề.", "success", 8000);
-                    } else {
-                        addToast(`🎉 Đã tìm thấy và khôi phục ${recoveredList.length} ngân hàng đề từ bộ nhớ máy!`, "success", 6000);
+                    if (showToastNotice) {
+                        if (foundViSinh) {
+                            addToast("🎉 ĐÃ KHÔI PHỤC THÀNH CÔNG Ngân hàng đề 'Vi Sinh' (60 câu)! Dữ liệu đã an toàn trong Thư Viện Ngân Hàng Đề.", "success", 8000);
+                        } else {
+                            addToast(`🎉 Đã tìm thấy và khôi phục ${recoveredList.length} ngân hàng đề từ bộ nhớ máy!`, "success", 6000);
+                        }
                     }
                     return true;
                 } else {
@@ -1834,9 +1865,6 @@
             localQuizzes.forEach(q => { if (q && q.id) initialMap.set(q.id, q); });
             vaultBanks.forEach(b => { if (b && b.id) initialMap.set(b.id, b); });
             setSavedQuizzes(Array.from(initialMap.values()));
-
-            // Tự động quét và khôi phục ngân hàng đề chạy ngầm
-            scanAndRecoverBanks(false);
 
             // Fetch admin settings chạy ngầm không block UI
             fetch('/api/admin/settings')
@@ -4273,210 +4301,220 @@
         };
 
         const processSubmit = () => {
-            let count = 0;
-            currentQuestions.forEach(q => {
-                if (userAnswers[q.id] === q.correct) {
-                    count++;
-                }
-            });
-            const totalQ = Math.max(1, currentQuestions.length);
-            const finalScore = parseFloat(((count / totalQ) * 10).toFixed(1));
-            setCorrectCount(count); 
-            setScore(finalScore);
-            setSubmitted(true); 
-            setAppMode('result'); 
-            addToast("Đã ghi nhận kết quả!", 'success');
-            setTimeout(() => {
-                window.scrollTo({ top: 0, behavior: 'instant' });
-                if (typeof document !== 'undefined') {
-                    document.documentElement.scrollTop = 0;
-                    document.body.scrollTop = 0;
-                }
-            }, 60);
-
-            // Cập nhật kết quả lên server Battle nếu đang thi đấu đối kháng
-            if (isBattleMode && currentBattleRoom) {
-                const durationSec = Math.max(1, Math.round((Date.now() - (battleStartTime || Date.now())) / 1000));
-                const pName = (battlePlayerName && battlePlayerName.trim()) || (currentUser?.name || currentUser?.username || 'Thí sinh');
-                const pId = currentUser?.id || localStorage.getItem('dzota_battle_pid') || ('p_' + Date.now());
-
-                // Cập nhật ngay trong local currentBattleRoom để UI phản hồi tức thì
-                if (currentBattleRoom && Array.isArray(currentBattleRoom.players)) {
-                    const clonedPlayers = currentBattleRoom.players.map(p => ({ ...p }));
-                    let plIndex = clonedPlayers.findIndex(p => p.id === pId);
-                    if (plIndex === -1 && pName) {
-                        plIndex = clonedPlayers.findIndex(p => p.name && p.name.trim().toLowerCase() === pName.trim().toLowerCase());
+            try {
+                const uniqueList = (uniqueQuestions && uniqueQuestions.length > 0) ? uniqueQuestions : currentQuestions;
+                let count = 0;
+                uniqueList.forEach(q => {
+                    const oid = q.originalSlotId || q.originalId || q.id;
+                    const instances = currentQuestions.filter(item => (item.originalSlotId || item.originalId || item.id) === oid);
+                    const isCorrect = instances.some(inst => userAnswers[inst.id] === inst.correct);
+                    if (isCorrect) {
+                        count++;
                     }
-                    if (plIndex === -1) {
-                        const curName = (currentUser?.name || currentUser?.username || '').trim().toLowerCase();
-                        if (curName) {
-                            plIndex = clonedPlayers.findIndex(p => p.name && p.name.trim().toLowerCase() === curName);
+                });
+                const totalQ = Math.max(1, uniqueList.length);
+                const finalScore = parseFloat(((count / totalQ) * 10).toFixed(1));
+                setCorrectCount(count); 
+                setScore(finalScore);
+                setSubmitted(true); 
+                setAppMode('result'); 
+                addToast("Đã ghi nhận kết quả!", 'success');
+                setTimeout(() => {
+                    window.scrollTo({ top: 0, behavior: 'instant' });
+                    if (typeof document !== 'undefined') {
+                        document.documentElement.scrollTop = 0;
+                        document.body.scrollTop = 0;
+                    }
+                }, 60);
+
+                // Cập nhật kết quả lên server Battle nếu đang thi đấu đối kháng
+                if (isBattleMode && currentBattleRoom) {
+                    const durationSec = Math.max(1, Math.round((Date.now() - (battleStartTime || Date.now())) / 1000));
+                    const pName = (battlePlayerName && battlePlayerName.trim()) || (currentUser?.name || currentUser?.username || 'Thí sinh');
+                    const pId = currentUser?.id || localStorage.getItem('dzota_battle_pid') || ('p_' + Date.now());
+
+                    // Cập nhật ngay trong local currentBattleRoom để UI phản hồi tức thì
+                    if (currentBattleRoom && Array.isArray(currentBattleRoom.players)) {
+                        const clonedPlayers = currentBattleRoom.players.map(p => ({ ...p }));
+                        let plIndex = clonedPlayers.findIndex(p => p.id === pId);
+                        if (plIndex === -1 && pName) {
+                            plIndex = clonedPlayers.findIndex(p => p.name && p.name.trim().toLowerCase() === pName.trim().toLowerCase());
                         }
-                    }
-                    if (plIndex === -1) {
-                        const isHostPlayer = clonedPlayers.find(p => p.isHost && (p.id === pId || (p.name && p.name.trim().toLowerCase() === pName.trim().toLowerCase())));
-                        if (isHostPlayer) {
-                            plIndex = clonedPlayers.indexOf(isHostPlayer);
-                        }
-                    }
-                    if (plIndex === -1) {
-                        plIndex = clonedPlayers.findIndex(p => !p.submitted);
-                    }
-                    if (plIndex === -1 && clonedPlayers.length > 0) plIndex = 0;
-
-                    if (plIndex >= 0 && clonedPlayers[plIndex]) {
-                        clonedPlayers[plIndex].submitted = true;
-                        clonedPlayers[plIndex].score = finalScore;
-                        clonedPlayers[plIndex].correctCount = count;
-                        clonedPlayers[plIndex].totalQuestions = uniqueQuestions.length;
-                        clonedPlayers[plIndex].durationSeconds = durationSec;
-                        clonedPlayers[plIndex].submittedAt = Date.now();
-                    }
-
-                    // Sắp xếp thứ hạng ngay lập tức
-                    clonedPlayers.sort((a, b) => {
-                        if (!a.submitted && !b.submitted) return 0;
-                        if (!a.submitted) return 1;
-                        if (!b.submitted) return -1;
-                        if ((b.score ?? 0) !== (a.score ?? 0)) return (b.score ?? 0) - (a.score ?? 0);
-                        return (a.durationSeconds ?? 0) - (b.durationSeconds ?? 0);
-                    });
-
-                    const updatedRoomLocal = {
-                        ...currentBattleRoom,
-                        players: clonedPlayers,
-                        completedAt: currentBattleRoom.completedAt || Date.now(),
-                        resultExpiresAt: Date.now() + 2 * 60 * 60 * 1000,
-                        status: clonedPlayers.every(p => p.submitted) ? 'completed' : currentBattleRoom.status
-                    };
-
-                    setCurrentBattleRoom(updatedRoomLocal);
-                    saveLocalBattleHistory(updatedRoomLocal);
-                }
-
-                fetch('/api/battle', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'submit',
-                        roomId: currentBattleRoom.id,
-                        playerId: pId,
-                        playerName: pName,
-                        result: {
-                            score: finalScore,
-                            correctCount: count,
-                            totalQuestions: uniqueQuestions.length,
-                            durationSeconds: durationSec
-                        }
-                    })
-                }).then(r => r.json()).then(res => {
-                    if (res.success && res.room) {
-                        setCurrentBattleRoom(prev => {
-                            const mergedPlayers = (res.room.players || []).map(p => {
-                                if (p.submitted) return p;
-                                const localP = prev?.players?.find(lp => lp.id === p.id || lp.name === p.name);
-                                if (localP && localP.submitted) return { ...p, ...localP };
-                                return p;
-                            });
-                            mergedPlayers.sort((a, b) => {
-                                if (!a.submitted && !b.submitted) return 0;
-                                if (!a.submitted) return 1;
-                                if (!b.submitted) return -1;
-                                if ((b.score ?? 0) !== (a.score ?? 0)) return (b.score ?? 0) - (a.score ?? 0);
-                                return (a.durationSeconds ?? 0) - (b.durationSeconds ?? 0);
-                            });
-                            const finalRoom = { ...res.room, players: mergedPlayers };
-                            saveLocalBattleHistory(finalRoom);
-                            return finalRoom;
-                        });
-                    }
-                }).catch(console.error);
-            }
-
-            // Cập nhật ngân hàng câu sai chỉ khi làm ở lượt thi chính thức (!isWrongReviewMode)
-            const targetQuizId = quizIdTracker || 'default';
-            if (!isWrongReviewMode) {
-                try {
-                    let currentWrong = [];
-                    try {
-                        const raw = localStorage.getItem('dzota_wrong_questions_' + targetQuizId);
-                        if (raw) currentWrong = JSON.parse(raw) || [];
-                    } catch(e) {}
-
-                    uniqueQuestions.forEach(origQ => {
-                        const oid = origQ.originalSlotId || origQ.originalId || origQ.id;
-                        const instances = currentQuestions.filter(q => (q.originalSlotId || q.originalId || q.id) === oid);
-                        const firstInstance = instances[0] || origQ;
-                        const firstAns = firstAttempts[firstInstance.id] !== undefined ? firstAttempts[firstInstance.id] : userAnswers[firstInstance.id];
-                        const isFirstTryCorrect = firstAns !== undefined && firstAns !== null && firstAns === firstInstance.correct;
-                        const qKey = (firstInstance.text || '').trim();
-
-                        if (isFirstTryCorrect) {
-                            // Trả lời đúng ngay lần đầu làm bài chính thức -> Xóa khỏi danh sách câu sai
-                            currentWrong = currentWrong.filter(wq => {
-                                const wKey = (wq.text || '').trim();
-                                const wId = wq.originalSlotId || wq.originalId || wq.id;
-                                return wKey !== qKey && wId !== oid;
-                            });
-                        } else {
-                            // Làm sai hoặc bỏ trống lần đầu -> Giữ/thêm vào danh sách câu sai
-                            const alreadyInWrong = currentWrong.some(wq => {
-                                const wKey = (wq.text || '').trim();
-                                const wId = wq.originalSlotId || wq.originalId || wq.id;
-                                return wKey === qKey || wId === oid;
-                            });
-                            if (!alreadyInWrong) {
-                                currentWrong.push({
-                                    id: firstInstance.id,
-                                    originalId: oid,
-                                    text: firstInstance.text,
-                                    options: { ...firstInstance.options },
-                                    correct: firstInstance.correct,
-                                    explanation: firstInstance.explanation || ''
-                                });
+                        if (plIndex === -1) {
+                            const curName = (currentUser?.name || currentUser?.username || '').trim().toLowerCase();
+                            if (curName) {
+                                plIndex = clonedPlayers.findIndex(p => p.name && p.name.trim().toLowerCase() === curName);
                             }
                         }
-                    });
+                        if (plIndex === -1) {
+                            const isHostPlayer = clonedPlayers.find(p => p.isHost && (p.id === pId || (p.name && p.name.trim().toLowerCase() === pName.trim().toLowerCase())));
+                            if (isHostPlayer) {
+                                plIndex = clonedPlayers.indexOf(isHostPlayer);
+                            }
+                        }
+                        if (plIndex === -1) {
+                            plIndex = clonedPlayers.findIndex(p => !p.submitted);
+                        }
+                        if (plIndex === -1 && clonedPlayers.length > 0) plIndex = 0;
 
-                    localStorage.setItem('dzota_wrong_questions_' + targetQuizId, JSON.stringify(currentWrong));
-                    setWrongQuestionsList(currentWrong);
-                } catch(err) {
-                    console.error("Lỗi cập nhật danh sách câu sai:", err);
+                        if (plIndex >= 0 && clonedPlayers[plIndex]) {
+                            clonedPlayers[plIndex].submitted = true;
+                            clonedPlayers[plIndex].score = finalScore;
+                            clonedPlayers[plIndex].correctCount = count;
+                            clonedPlayers[plIndex].totalQuestions = uniqueList.length;
+                            clonedPlayers[plIndex].durationSeconds = durationSec;
+                            clonedPlayers[plIndex].submittedAt = Date.now();
+                        }
+
+                        // Sắp xếp thứ hạng ngay lập tức
+                        clonedPlayers.sort((a, b) => {
+                            if (!a.submitted && !b.submitted) return 0;
+                            if (!a.submitted) return 1;
+                            if (!b.submitted) return -1;
+                            if ((b.score ?? 0) !== (a.score ?? 0)) return (b.score ?? 0) - (a.score ?? 0);
+                            return (a.durationSeconds ?? 0) - (b.durationSeconds ?? 0);
+                        });
+
+                        const updatedRoomLocal = {
+                            ...currentBattleRoom,
+                            players: clonedPlayers,
+                            completedAt: currentBattleRoom.completedAt || Date.now(),
+                            resultExpiresAt: Date.now() + 2 * 60 * 60 * 1000,
+                            status: clonedPlayers.every(p => p.submitted) ? 'completed' : currentBattleRoom.status
+                        };
+
+                        setCurrentBattleRoom(updatedRoomLocal);
+                        saveLocalBattleHistory(updatedRoomLocal);
+                    }
+
+                    fetch('/api/battle', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'submit',
+                            roomId: currentBattleRoom.id,
+                            playerId: pId,
+                            playerName: pName,
+                            result: {
+                                score: finalScore,
+                                correctCount: count,
+                                totalQuestions: uniqueList.length,
+                                durationSeconds: durationSec
+                            }
+                        })
+                    }).then(r => r.json()).then(res => {
+                        if (res.success && res.room) {
+                            setCurrentBattleRoom(prev => {
+                                const mergedPlayers = (res.room.players || []).map(p => {
+                                    if (p.submitted) return p;
+                                    const localP = prev?.players?.find(lp => lp.id === p.id || lp.name === p.name);
+                                    if (localP && localP.submitted) return { ...p, ...localP };
+                                    return p;
+                                });
+                                mergedPlayers.sort((a, b) => {
+                                    if (!a.submitted && !b.submitted) return 0;
+                                    if (!a.submitted) return 1;
+                                    if (!b.submitted) return -1;
+                                    if ((b.score ?? 0) !== (a.score ?? 0)) return (b.score ?? 0) - (a.score ?? 0);
+                                    return (a.durationSeconds ?? 0) - (b.durationSeconds ?? 0);
+                                });
+                                const finalRoom = { ...res.room, players: mergedPlayers };
+                                saveLocalBattleHistory(finalRoom);
+                                return finalRoom;
+                            });
+                        }
+                    }).catch(console.error);
                 }
+
+                // Cập nhật ngân hàng câu sai chỉ khi làm ở lượt thi chính thức (!isWrongReviewMode)
+                const targetQuizId = quizIdTracker || 'default';
+                if (!isWrongReviewMode) {
+                    try {
+                        let currentWrong = [];
+                        try {
+                            const raw = localStorage.getItem('dzota_wrong_questions_' + targetQuizId);
+                            if (raw) currentWrong = JSON.parse(raw) || [];
+                        } catch(e) {}
+
+                        uniqueList.forEach(origQ => {
+                            const oid = origQ.originalSlotId || origQ.originalId || origQ.id;
+                            const instances = currentQuestions.filter(q => (q.originalSlotId || q.originalId || q.id) === oid);
+                            const firstInstance = instances[0] || origQ;
+                            const firstAns = firstAttempts[firstInstance.id] !== undefined ? firstAttempts[firstInstance.id] : userAnswers[firstInstance.id];
+                            const isFirstTryCorrect = firstAns !== undefined && firstAns !== null && firstAns === firstInstance.correct;
+                            const qKey = (firstInstance.text || '').trim();
+
+                            if (isFirstTryCorrect) {
+                                // Trả lời đúng ngay lần đầu làm bài chính thức -> Xóa khỏi danh sách câu sai
+                                currentWrong = currentWrong.filter(wq => {
+                                    const wKey = (wq.text || '').trim();
+                                    const wId = wq.originalSlotId || wq.originalId || wq.id;
+                                    return wKey !== qKey && wId !== oid;
+                                });
+                            } else {
+                                // Làm sai hoặc bỏ trống lần đầu -> Giữ/thêm vào danh sách câu sai
+                                const alreadyInWrong = currentWrong.some(wq => {
+                                    const wKey = (wq.text || '').trim();
+                                    const wId = wq.originalSlotId || wq.originalId || wq.id;
+                                    return wKey === qKey || wId === oid;
+                                });
+                                if (!alreadyInWrong) {
+                                    currentWrong.push({
+                                        id: firstInstance.id,
+                                        originalId: oid,
+                                        text: firstInstance.text,
+                                        options: { ...firstInstance.options },
+                                        correct: firstInstance.correct,
+                                        explanation: firstInstance.explanation || ''
+                                    });
+                                }
+                            }
+                        });
+
+                        localStorage.setItem('dzota_wrong_questions_' + targetQuizId, JSON.stringify(currentWrong));
+                        setWrongQuestionsList(currentWrong);
+                    } catch(err) {
+                        console.error("Lỗi cập nhật danh sách câu sai:", err);
+                    }
+                }
+
+                try {
+                  localStorage.removeItem('dzota_quiz_session_' + (quizIdTracker || 'default'));
+                  const qParam = new URLSearchParams(window.location.search).get('id');
+                  if (qParam) localStorage.removeItem('dzota_quiz_session_' + qParam);
+                } catch(e) {}
+                setInProgressSession(null);
+                try {
+                  const spent = (quizConfig.timeLimit * 60) - (timeLeft || 0);
+                  fetch('/api/student/history', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                      userId: currentUser?.id,
+                      userEmail: currentUser?.email,
+                      username: currentUser?.username,
+                      quizId: quizIdTracker || 'quiz',
+                      quizTitle: quizConfig.title || 'Bài thi Dzota',
+                      score: finalScore,
+                      correctCount: count,
+                      totalCount: uniqueList.length,
+                      timeSpent: spent > 0 ? spent : 0
+                    })
+                  }).then(r => r.json()).then(res => {
+                    if (res.success) {
+                      try {
+                        localStorage.setItem('dzota_last_submit_ts', Date.now().toString());
+                        window.dispatchEvent(new CustomEvent('dzota_quiz_submitted', { detail: { score: finalScore, quizId: quizIdTracker } }));
+                      } catch(e) {}
+                    }
+                  }).catch(() => {});
+                } catch(e) {}
+            } catch (err) {
+                console.error("Lỗi khi xử lý nộp bài:", err);
+                setSubmitted(true);
+                setAppMode('result');
             }
-
-            try {
-              localStorage.removeItem('dzota_quiz_session_' + (quizIdTracker || 'default'));
-              const qParam = new URLSearchParams(window.location.search).get('id');
-              if (qParam) localStorage.removeItem('dzota_quiz_session_' + qParam);
-            } catch(e) {}
-            setInProgressSession(null);
-            try {
-              const spent = (quizConfig.timeLimit * 60) - (timeLeft || 0);
-              fetch('/api/student/history', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({
-                  userId: currentUser?.id,
-                  userEmail: currentUser?.email,
-                  username: currentUser?.username,
-                  quizId: quizIdTracker || 'quiz',
-                  quizTitle: quizConfig.title || 'Bài thi Dzota',
-                  score: finalScore,
-                  correctCount: count,
-                  totalCount: uniqueQuestions.length,
-                  timeSpent: spent > 0 ? spent : 0
-                })
-              }).then(r => r.json()).then(res => {
-                if (res.success) {
-                  try {
-                    localStorage.setItem('dzota_last_submit_ts', Date.now().toString());
-                    window.dispatchEvent(new CustomEvent('dzota_quiz_submitted', { detail: { score: finalScore, quizId: quizIdTracker } }));
-                  } catch(e) {}
-                }
-              }).catch(() => {});
-            } catch(e) {}
         };
 
         // --- RENDER SECTIONS ---
@@ -6828,6 +6866,14 @@
                );
              } else {
                const q = currentQuestions[currentQIndex];
+               if (!q) {
+                 return (
+                   <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center">
+                     <div className="w-10 h-10 rounded-full border-4 border-blue-600 border-t-transparent animate-spin mb-3" />
+                     <p className="text-xs font-bold text-slate-600">Đang tải câu hỏi...</p>
+                   </div>
+                 );
+               }
                const progressPercent = ((currentQIndex + 1) / Math.max(1, currentQuestions.length)) * 100;
                return (
                 <div className={`flex flex-col h-screen h-[100dvh] max-h-screen font-sans overflow-hidden relative ${activeBgEnabled ? 'dzota-active-bg' : 'bg-[#F8F9FA]'}`}>
@@ -6955,7 +7001,8 @@
         };
 
         const renderResult = () => {
-           const filtered = currentQuestions.filter(q => {
+           const uniqueList = (uniqueQuestions && uniqueQuestions.length > 0) ? uniqueQuestions : currentQuestions;
+           const filtered = uniqueList.filter(q => {
              const userAns = userAnswers[q.id];
              const isCorrect = userAns === q.correct;
              if (resultFilter === 'correct') return isCorrect; 
@@ -7119,7 +7166,7 @@
                    <div className="text-[80px] font-extrabold text-black leading-none mb-2 tracking-tight">{score}<span className="text-[32px] text-gray-300">/10</span></div>
                    <div className="flex justify-center gap-3 mt-6 mb-8">
                       <div className="bg-green-50 text-ios-green px-4 py-2 rounded-2xl font-bold text-[15px]">Đúng {correctCount}</div>
-                      <div className="bg-red-50 text-ios-red px-4 py-2 rounded-2xl font-bold text-[15px]">Sai {uniqueQuestions.length - correctCount}</div>
+                      <div className="bg-red-50 text-ios-red px-4 py-2 rounded-2xl font-bold text-[15px]">Sai {Math.max(0, uniqueList.length - correctCount)}</div>
                    </div>
                    <Button onClick={() => { if (currentBattleRoom) saveLocalBattleHistory(currentBattleRoom); startQuiz(); }} className="w-full py-4 rounded-2xl text-[17px] ios-override" icon={<Icons.RefreshCw size={20}/>}>Làm Lại Lần Nữa</Button>
                    <button
