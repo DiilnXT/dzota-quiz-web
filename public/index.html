@@ -6219,34 +6219,6 @@
                     </div>
                   </div>
 
-                  {/* Tùy chọn xáo trộn đề thi (Siêu ngẫu nhiên) */}
-                  <div className="grid grid-cols-2 gap-2 mb-3.5 text-left">
-                    <label className={`p-2 sm:p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all select-none shadow-2xs ${quizConfig.shuffleQuestions ? 'bg-indigo-50/70 border-indigo-200' : 'bg-slate-50 border-slate-200'}`}>
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <Icons.Shuffle size={13} className={quizConfig.shuffleQuestions ? "text-indigo-600 flex-shrink-0" : "text-slate-400 flex-shrink-0"} />
-                        <span className={`text-[11px] sm:text-xs font-bold truncate ${quizConfig.shuffleQuestions ? "text-indigo-900" : "text-slate-600"}`}>Trộn câu hỏi</span>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={!!quizConfig.shuffleQuestions}
-                        onChange={e => setQuizConfig(prev => ({ ...prev, shuffleQuestions: e.target.checked }))}
-                        className="w-4 h-4 accent-indigo-600 rounded cursor-pointer flex-shrink-0 ml-1.5"
-                      />
-                    </label>
-                    <label className={`p-2 sm:p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all select-none shadow-2xs ${quizConfig.shuffleOptions ? 'bg-emerald-50/70 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <Icons.ListOrdered size={13} className={quizConfig.shuffleOptions ? "text-emerald-600 flex-shrink-0" : "text-slate-400 flex-shrink-0"} />
-                        <span className={`text-[11px] sm:text-xs font-bold truncate ${quizConfig.shuffleOptions ? "text-emerald-900" : "text-slate-600"}`}>Trộn A,B,C,D</span>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={!!quizConfig.shuffleOptions}
-                        onChange={e => setQuizConfig(prev => ({ ...prev, shuffleOptions: e.target.checked }))}
-                        className="w-4 h-4 accent-emerald-600 rounded cursor-pointer flex-shrink-0 ml-1.5"
-                      />
-                    </label>
-                  </div>
-
                   {/* Password if protected */}
                   {quizConfig.password && (
                     <div className="mb-4 w-full text-left animate-fade-in">
