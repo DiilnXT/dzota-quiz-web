@@ -72,22 +72,42 @@
       }
     </script>
     
+    <!-- Preconnect & DNS-Prefetch tăng tốc kết nối mạng -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
+
     <!-- React & ReactDOM -->
     <script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js" crossorigin></script>
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-    <!-- docx.js for exporting Microsoft Word (.docx) files -->
-    <script src="/docx.umd.cjs"></script>
-    <!-- Babel -->
+    <!-- Babel Standalone -->
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js"></script>
-    
-    <!-- TinyMCE -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
     
     <!-- KaTeX cho công thức Toán/Hóa (LaTeX) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+
+    <!-- Async Dynamic Loader: Thư viện nặng (Mammoth, Docx, TinyMCE) chỉ tải khi người dùng vào soạn đề -->
+    <script>
+      window.__scriptLoaders = window.__scriptLoaders || {};
+      window.loadScriptAsync = function(src) {
+        if (window.__scriptLoaders[src]) return window.__scriptLoaders[src];
+        window.__scriptLoaders[src] = new Promise(function(resolve, reject) {
+          if (document.querySelector('script[src="' + src + '"]')) return resolve();
+          var s = document.createElement('script');
+          s.src = src;
+          s.async = true;
+          s.onload = function() { resolve(); };
+          s.onerror = function(err) { reject(err); };
+          document.head.appendChild(s);
+        });
+        return window.__scriptLoaders[src];
+      };
+    </script>
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -182,6 +202,14 @@
         transform: translateZ(0);
       }
       
+      @media (max-width: 639px) {
+        .apple-liquid-glass {
+          -webkit-backdrop-filter: blur(8px);
+          backdrop-filter: blur(8px);
+          border-radius: 16px;
+        }
+      }
+
       @media (min-width: 640px) {
         .apple-liquid-glass {
           border-radius: 26px;
@@ -565,23 +593,38 @@
           );
       };
 
-      const MathText = ({ text }) => {
-          if (!text || typeof text !== 'string') return text;
+      const katexHtmlCache = new Map();
+      const MathText = React.memo(({ text }) => {
+          if (!text || typeof text !== 'string') return text || null;
+          // Fast-path: 95% câu hỏi/phương án không chứa công thức LaTeX, render thẳng text không tốn CPU
+          if (!text.includes('$')) return <span>{text}</span>;
           if (!window.katex) return <span>{text}</span>;
-          const parts = text.split(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$)/g);
-          return (
-              <span className="math-text-wrapper">
-                  {parts.map((part, index) => {
-                      if (part.startsWith('$$') && part.endsWith('$$')) {
-                          try { return <span key={index} dangerouslySetInnerHTML={{ __html: window.katex.renderToString(part.slice(2, -2), { displayMode: true, throwOnError: false }) }} />; } catch (e) { return <span key={index}>{part}</span>; }
-                      } else if (part.startsWith('$') && part.endsWith('$')) {
-                          try { return <span key={index} dangerouslySetInnerHTML={{ __html: window.katex.renderToString(part.slice(1, -1), { displayMode: false, throwOnError: false }) }} />; } catch (e) { return <span key={index}>{part}</span>; }
-                      }
-                      return <span key={index}>{part}</span>;
-                  })}
-              </span>
-          );
-      };
+
+          const cached = katexHtmlCache.get(text);
+          if (cached !== undefined) {
+              return <span className="math-text-wrapper" dangerouslySetInnerHTML={{ __html: cached }} />;
+          }
+
+          try {
+              const parts = text.split(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$)/g);
+              let compiledHtml = '';
+              for (let i = 0; i < parts.length; i++) {
+                  const part = parts[i];
+                  if (part.startsWith('$$') && part.endsWith('$$')) {
+                      compiledHtml += window.katex.renderToString(part.slice(2, -2), { displayMode: true, throwOnError: false });
+                  } else if (part.startsWith('$') && part.endsWith('$')) {
+                      compiledHtml += window.katex.renderToString(part.slice(1, -1), { displayMode: false, throwOnError: false });
+                  } else {
+                      compiledHtml += part.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                  }
+              }
+              if (katexHtmlCache.size > 2000) katexHtmlCache.clear();
+              katexHtmlCache.set(text, compiledHtml);
+              return <span className="math-text-wrapper" dangerouslySetInnerHTML={{ __html: compiledHtml }} />;
+          } catch (e) {
+              return <span>{text}</span>;
+          }
+      });
 
       // --- CUSTOM SELECT (DROPDOWN) ---
       const CustomSelect = ({ options, value, onChange, icon }) => {
@@ -1871,36 +1914,84 @@
             vaultBanks.forEach(b => { if (b && b.id) initialMap.set(b.id, b); });
             setSavedQuizzes(Array.from(initialMap.values()));
 
-            // Fetch admin settings chạy ngầm không block UI
-            fetch('/api/admin/settings')
-              .then(res => res.ok ? res.json() : null)
-              .then(sData => {
-                if (sData) {
-                  if (sData.activeBgEnabled !== undefined) setActiveBgEnabled(Boolean(sData.activeBgEnabled));
-                  if (sData.activeBgDesktop) setActiveBgDesktop(sData.activeBgDesktop);
-                  if (sData.activeBgMobile) setActiveBgMobile(sData.activeBgMobile);
-                }
-              })
-              .catch(() => {});
-
-            // Đồng bộ dữ liệu đề thi chạy ngầm không block UI
-            fetchQuizzes(adminScope).catch(() => {});
-
-            // Tải thông báo người dùng chạy ngầm
-            fetch('/api/notifications')
-              .then(res => res.ok ? res.json() : null)
-              .then(nData => {
-                if (nData && nData.notifications && Array.isArray(nData.notifications)) {
-                  setUserNotifications(nData.notifications);
-                  if (nData.unreadCount > 0) {
-                    addToast(`🔔 Bạn có ${nData.unreadCount} thông báo mới! Bấm chuông trên menu để xem.`, 'info');
+            // Chạy đồng bộ nền (deferred nếu đang mở link làm bài để tránh nghẽn mạng)
+            const syncBackgroundData = () => {
+              fetch('/api/admin/settings')
+                .then(res => res.ok ? res.json() : null)
+                .then(sData => {
+                  if (sData) {
+                    if (sData.activeBgEnabled !== undefined) setActiveBgEnabled(Boolean(sData.activeBgEnabled));
+                    if (sData.activeBgDesktop) setActiveBgDesktop(sData.activeBgDesktop);
+                    if (sData.activeBgMobile) setActiveBgMobile(sData.activeBgMobile);
                   }
-                }
-              })
-              .catch(() => {});
+                })
+                .catch(() => {});
+
+              fetchQuizzes(adminScope).catch(() => {});
+
+              fetch('/api/notifications')
+                .then(res => res.ok ? res.json() : null)
+                .then(nData => {
+                  if (nData && nData.notifications && Array.isArray(nData.notifications)) {
+                    setUserNotifications(nData.notifications);
+                    if (nData.unreadCount > 0) {
+                      addToast(`🔔 Bạn có ${nData.unreadCount} thông báo mới! Bấm chuông trên menu để xem.`, 'info');
+                    }
+                  }
+                })
+                .catch(() => {});
+            };
+
+            if (quizId) {
+              setTimeout(syncBackgroundData, 2500);
+            } else {
+              syncBackgroundData();
+            }
 
             const handleLoadQuiz = async (id, isEditMode = false) => {
-                setIsLoading(true);
+                // 1. FAST PATH HYDRATION: Kiểm tra cache để mở bài thi <10ms không độ trễ
+                let hasCachedData = false;
+                try {
+                    const cachedRaw = sessionStorage.getItem('dzota_quiz_cache_' + id) || 
+                                     localStorage.getItem('dzota_quiz_cache_' + id) || 
+                                     localStorage.getItem('dzota_offline_quiz_' + id);
+                    if (cachedRaw) {
+                        const cachedObj = JSON.parse(cachedRaw);
+                        const cData = cachedObj.test || cachedObj;
+                        if (cData && (cData.questions || cData.title || cData.config)) {
+                            hasCachedData = true;
+                            if (cData.config && cData.config.title) {
+                                document.title = (isEditMode ? "Chỉnh sửa: " : "") + cData.config.title + " | Dzota";
+                            }
+                            setQuizConfig({
+                                title: cData.config?.title || cData.title || 'Bài Thi',
+                                timeLimit: cData.config?.timeLimit || cData.timeLimit || 15,
+                                mode: cData.config?.mode || cData.mode || 'exam',
+                                category: cData.config?.category || cData.category || 'Chung',
+                                password: cData.config?.password || '',
+                                shuffleQuestions: !!cData.config?.shuffleQuestions,
+                                shuffleOptions: !!cData.config?.shuffleOptions,
+                                isActive: cData.config?.isActive !== false,
+                                randomPickCount: cData.config?.randomPickCount || 0,
+                                quizType: cData.config?.quizType || (cData.config?.randomPickCount > 0 ? 'bank' : 'standard')
+                            });
+                            let qList = cData.questions || [];
+                            if (qList.length > 0 && !qList[0].variants) {
+                                qList = qList.map(q => ({ id: 'slot_' + (q.id || Math.random()), variants: [q] }));
+                            }
+                            setParsedQuestions(qList);
+                            if (!isEditMode) {
+                                setAppMode('entry');
+                                setIsLoading(false);
+                            }
+                        }
+                    }
+                } catch(cErr) {}
+
+                if (!hasCachedData) {
+                    setIsLoading(true);
+                }
+
                 try {
                     const res = await fetch('/api/quick-quiz?id=' + id);
                     if (!res.ok) {
@@ -1914,7 +2005,11 @@
                             }
                         }
                         if (res.status === 404) {
-                            try { localStorage.removeItem('dzota_offline_quiz_' + id); } catch (e) {}
+                            try { 
+                                localStorage.removeItem('dzota_quiz_cache_' + id);
+                                localStorage.removeItem('dzota_offline_quiz_' + id);
+                                sessionStorage.removeItem('dzota_quiz_cache_' + id);
+                            } catch (e) {}
                             setAppMode('not_found');
                             setIsLoading(false);
                             return;
@@ -1928,6 +2023,12 @@
                         setIsLoading(false);
                         return;
                     }
+
+                    // Lưu cache cho các lần mở sau tức thì
+                    try {
+                        localStorage.setItem('dzota_quiz_cache_' + id, JSON.stringify(data));
+                        sessionStorage.setItem('dzota_quiz_cache_' + id, JSON.stringify(data));
+                    } catch (e) {}
                     
                     if (data.config && data.config.isActive === false && appMode !== 'editor' && !isEditMode) {
                         setAppMode('blocked'); setIsLoading(false); return;
@@ -1966,10 +2067,11 @@
                         return;
                     }
 
-                    // Luôn mở ở màn hình Chờ (Entry) để người dùng chủ động bấm 'Bắt Đầu Làm Bài' mới 100% hoặc chọn 'Tiếp Tục' nếu có bài dở
-                    // Tuyệt đối không tự động ép vào làm bài làm dở để tránh lỗi tự chọn đáp án cũ
                     setAppMode('entry'); setIsLoading(false);
                 } catch (e) {
+                    if (hasCachedData) {
+                        return; // Đã mở thành công từ cache
+                    }
                     // Thử tìm dữ liệu đề thi offline trong máy nếu đang mất kết nối
                     try {
                         const offlineRaw = localStorage.getItem('dzota_offline_quiz_' + id);
@@ -2035,7 +2137,10 @@
         // --- TinyMCE cho Soạn thảo Đề Thi ---
         useEffect(() => {
           if (appMode === 'editor') {
-             const initEditor = (retries = 5) => {
+             if (!window.tinymce && window.loadScriptAsync) {
+                 window.loadScriptAsync('https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js').catch(() => {});
+             }
+             const initEditor = (retries = 15) => {
                  if (window.tinymce) {
                      try {
                          if (window.tinymce.get('quiz-editor-area')) {
@@ -2090,10 +2195,10 @@
                          console.error(e);
                      }
                  } else if (retries > 0) {
-                     setTimeout(() => initEditor(retries - 1), 500);
+                     setTimeout(() => initEditor(retries - 1), 300);
                  }
              };
-             setTimeout(() => initEditor(5), 100);
+             setTimeout(() => initEditor(15), 100);
           }
           return () => { if (appMode === 'editor' && window.tinymce && window.tinymce.get('quiz-editor-area')) { window.tinymce.remove('#quiz-editor-area'); window.tinymceInstance = null; } };
         }, [appMode]);
@@ -2101,7 +2206,10 @@
         // --- TinyMCE cho Khung nhập câu hỏi Ngân hàng (Slot Import - Chuẩn Ảnh 1) ---
         useEffect(() => {
           if (showSlotImportModal) {
-             const initSlotEditor = (retries = 8) => {
+             if (!window.tinymce && window.loadScriptAsync) {
+                 window.loadScriptAsync('https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js').catch(() => {});
+             }
+             const initSlotEditor = (retries = 15) => {
                  if (window.tinymce) {
                      try {
                          if (window.tinymce.get('slot-quiz-editor-area')) {
@@ -2126,7 +2234,7 @@
                      setTimeout(() => initSlotEditor(retries - 1), 300);
                  }
              };
-             setTimeout(() => initSlotEditor(8), 100);
+             setTimeout(() => initSlotEditor(15), 100);
           }
           return () => {
               if (window.tinymce && window.tinymce.get('slot-quiz-editor-area')) {
@@ -2139,7 +2247,10 @@
         // --- TinyMCE cho Khung nhập câu hỏi Ngân hàng Hàng Loạt (Batch Bank Import: 1.1, 1.2... 2.1, 2.2...) ---
         useEffect(() => {
           if (showBatchBankImportModal) {
-             const initBatchEditor = (retries = 8) => {
+             if (!window.tinymce && window.loadScriptAsync) {
+                 window.loadScriptAsync('https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js').catch(() => {});
+             }
+             const initBatchEditor = (retries = 15) => {
                  if (window.tinymce) {
                      try {
                          if (window.tinymce.get('batch-bank-editor-area')) {
@@ -2164,7 +2275,7 @@
                      setTimeout(() => initBatchEditor(retries - 1), 300);
                  }
              };
-             setTimeout(() => initBatchEditor(8), 100);
+             setTimeout(() => initBatchEditor(15), 100);
           }
           return () => {
               if (window.tinymce && window.tinymce.get('batch-bank-editor-area')) {
@@ -2763,8 +2874,15 @@
                 return;
             }
             const reader = new FileReader();
-            reader.onload = (event) => {
+            reader.onload = async (event) => {
                 const arrayBuffer = event.target.result;
+                if (!window.mammoth && window.loadScriptAsync) {
+                    try { await window.loadScriptAsync('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js'); } catch(e) {}
+                }
+                if (!window.mammoth) {
+                    addToast("Không thể tải thư viện đọc file Word, vui lòng thử lại!", "error");
+                    return;
+                }
                 window.mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
                     .then(function(result) {
                         const html = result.value;
@@ -2927,8 +3045,15 @@
                 return;
             }
             const reader = new FileReader();
-            reader.onload = (event) => {
+            reader.onload = async (event) => {
                 const arrayBuffer = event.target.result;
+                if (!window.mammoth && window.loadScriptAsync) {
+                    try { await window.loadScriptAsync('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js'); } catch(e) {}
+                }
+                if (!window.mammoth) {
+                    addToast("Không thể tải thư viện đọc file Word, vui lòng thử lại!", "error");
+                    return;
+                }
                 window.mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
                     .then(function(result) {
                         const html = result.value;
@@ -3440,7 +3565,16 @@
             }
 
             if (!window.docx) {
-                addToast("Thư viện Word chưa sẵn sàng, vui lòng thử lại sau 1-2 giây!", "warning");
+                try {
+                    addToast("Đang chuẩn bị thư viện xuất Word...", "info");
+                    if (window.loadScriptAsync) {
+                        await window.loadScriptAsync('/docx.umd.cjs');
+                    }
+                } catch(e) {}
+            }
+
+            if (!window.docx) {
+                addToast("Không thể tải thư viện Word, vui lòng kiểm tra kết nối mạng!", "error");
                 return;
             }
 
@@ -4026,8 +4160,15 @@
                   return;
               }
               const reader = new FileReader();
-              reader.onload = (event) => {
+              reader.onload = async (event) => {
                   const arrayBuffer = event.target.result;
+                  if (!window.mammoth && window.loadScriptAsync) {
+                      try { await window.loadScriptAsync('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js'); } catch(e) {}
+                  }
+                  if (!window.mammoth) {
+                      addToast("Không thể tải thư viện đọc file Word, vui lòng thử lại!", "error");
+                      return;
+                  }
                   window.mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
                       .then(function(result) {
                           const html = result.value;
@@ -6531,11 +6672,12 @@
                <div
                  key={qId}
                  id={`exam-question-${idx}`}
-                 className={`animate-slide-up scroll-mt-20 sm:scroll-mt-24 p-2.5 sm:p-3.5 mb-2.5 sm:mb-3.5 relative select-none ${
+                 className={`scroll-mt-20 sm:scroll-mt-24 p-2.5 sm:p-3.5 mb-2.5 sm:mb-3.5 relative select-none transition-shadow ${
                    isFlagged 
                      ? 'apple-liquid-glass apple-liquid-glass-flagged' 
                      : 'apple-liquid-glass'
                  }`}
+                 style={{ contentVisibility: 'auto', containIntrinsicSize: '240px' }}
                >
                   {/* Dải Banner Hoàng Kim khi Đánh Dấu Xem Lại */}
                   {isFlagged && (

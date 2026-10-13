@@ -206,11 +206,14 @@ export async function GET(request: Request) {
           },
           visitorEmail: visitorEmail || null,
           isLoggedIn: !!currentSession?.id
-        }, { status: 403 })
+        }, { 
+          status: 403,
+          headers: { 'Cache-Control': 'no-store, max-age=0' }
+        })
       }
     }
 
-    return NextResponse.json({
+    const payload = {
       ...parsed,
       id: quiz.id,
       title: quiz.title,
@@ -222,6 +225,14 @@ export async function GET(request: Request) {
         phone: quiz.author.phone,
         avatar: quiz.author.avatar
       } : (parsed.author || null)
+    }
+
+    return NextResponse.json(payload, {
+      headers: {
+        'Cache-Control': isConfigRestricted 
+          ? 'private, no-cache' 
+          : 'public, s-maxage=60, stale-while-revalidate=300'
+      }
     })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })

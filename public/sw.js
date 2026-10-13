@@ -1,5 +1,5 @@
 // Dzota Quiz - Service Worker for Offline Exam Support
-const CACHE_NAME = 'dzota-quiz-offline-v2';
+const CACHE_NAME = 'dzota-quiz-offline-v3';
 
 const CORE_ASSETS = [
   '/',
@@ -8,12 +8,9 @@ const CORE_ASSETS = [
   'https://cdn.tailwindcss.com',
   'https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js',
   'https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js',
   'https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js',
   'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css',
-  'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js',
-  '/docx.umd.cjs'
+  'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js'
 ];
 
 self.addEventListener('install', (event) => {
