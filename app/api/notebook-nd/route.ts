@@ -42,7 +42,7 @@ export async function POST(request: Request) {
 
     // 1. Lấy danh sách API keys từ DB hoặc Client hoặc ENV
     let rawKeys = ''
-    let activeModel = 'gemini-2.5-flash'
+    let activeModel = 'gemini-2.0-flash'
 
     try {
       if ((prisma as any).systemSetting) {
@@ -214,55 +214,70 @@ ${chatPrompt}`
       temperature = 0.0
     }
 
-    // 3. Gọi Gemini API với cơ chế xoay vòng Key
+    // 3. Gọi Gemini API với cơ chế xoay vòng Key và Fallback model
+    const candidateModels = [
+      activeModel,
+      'gemini-2.0-flash',
+      'gemini-2.5-flash',
+      'gemini-1.5-flash'
+    ].filter((v, i, a) => a.indexOf(v) === i)
+
     let lastError = ''
     let resultText = ''
 
     for (const key of shuffledKeys) {
-      try {
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${key}`
+      for (const m of candidateModels) {
+        try {
+          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`
 
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [{ text: userPrompt }]
-              }
-            ],
-            systemInstruction: {
-              parts: [{ text: systemInstruction }]
-            },
-            generationConfig: {
-              temperature: temperature,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: action === 'generate_quiz' ? 16384 : 4096
-            }
+          const genConfig: any = {
+            temperature: temperature,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: action === 'generate_quiz' ? 16384 : 4096
+          }
+          if (m.includes('2.5')) {
+            genConfig.thinkingConfig = { thinkingBudget: 0 }
+          }
+
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: AbortSignal.timeout(20000), // Timeout 20s
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [{ text: userPrompt }]
+                }
+              ],
+              systemInstruction: systemInstruction ? {
+                parts: [{ text: systemInstruction }]
+              } : undefined,
+              generationConfig: genConfig
+            })
           })
-        })
 
-        const resData = await response.json()
+          const resData = await response.json()
 
-        if (!response.ok) {
-          const errMsg = resData.error?.message || `HTTP ${response.status}`
-          console.warn(`NoteBook ND: Key ...${key.slice(-4)} failed (${errMsg}), switching to next key...`)
-          lastError = errMsg
+          if (!response.ok) {
+            const errMsg = resData.error?.message || `HTTP ${response.status}`
+            lastError = errMsg
+            continue
+          }
+
+          const candidate = resData.candidates?.[0]?.content?.parts?.[0]?.text
+          if (candidate) {
+            resultText = candidate
+            break
+          } else {
+            lastError = 'API không trả về nội dung'
+          }
+        } catch (err: any) {
+          lastError = err.message
           continue
         }
-
-        const candidate = resData.candidates?.[0]?.content?.parts?.[0]?.text
-        if (candidate) {
-          resultText = candidate
-          break
-        } else {
-          lastError = 'API không trả về nội dung'
-        }
-      } catch (err: any) {
-        console.warn(`NoteBook ND: Key ...${key.slice(-4)} error:`, err.message)
-        lastError = err.message
       }
+      if (resultText) break
     }
 
     if (!resultText) {

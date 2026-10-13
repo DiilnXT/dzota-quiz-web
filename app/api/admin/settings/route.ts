@@ -64,16 +64,15 @@ export async function GET() {
     }
 
     const defaultModels = [
-      'gemini-2.5-flash',
-      'gemini-2.5-pro',
       'gemini-2.0-flash',
-      'gemini-2.0-flash-lite',
+      'gemini-2.5-flash',
       'gemini-1.5-flash',
-      'gemini-1.5-pro'
+      'gemini-2.0-flash-lite',
+      'gemini-2.5-pro'
     ]
 
     const apiKeys = keysSetting?.value || process.env.GEMINI_API_KEYS || process.env.GEMINI_API_KEY || ''
-    const activeModel = modelSetting?.value || 'gemini-2.5-flash'
+    const activeModel = modelSetting?.value || 'gemini-2.0-flash'
     const availableModels = availableModelsSetting?.value
       ? JSON.parse(availableModelsSetting.value)
       : defaultModels

@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
     // 1. Lấy danh sách API keys từ DB / Client / ENV
     let rawKeys = ''
-    let activeModel = 'gemini-2.5-flash'
+    let activeModel = 'gemini-2.0-flash'
 
     try {
       if ((prisma as any).systemSetting) {
@@ -106,45 +106,64 @@ QUY TẮC ĐỊNH DẠNG:
 - TUYỆT ĐỐI KHÔNG để dấu hoa thị lộn xộn hoặc \`**:\` lơ lửng.
 - Công thức khoa học: dùng LaTeX \`$công thức$\` (ví dụ: $\\alpha$, $H_2SO_4$, $f'(x)$).`
 
+    const candidateModels = [
+      activeModel,
+      'gemini-2.0-flash',
+      'gemini-2.5-flash',
+      'gemini-1.5-flash'
+    ].filter((v, i, a) => a.indexOf(v) === i)
+
     let lastError = ''
     let analysisResult = ''
+    let actualModelUsed = activeModel
 
     for (const key of shuffledKeys) {
-      try {
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${key}`
+      for (const m of candidateModels) {
+        try {
+          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`
 
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.2,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 8192
-            }
+          const genConfig: any = {
+            temperature: 0.2,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 8192
+          }
+          if (m.includes('2.5')) {
+            genConfig.thinkingConfig = { thinkingBudget: 0 }
+          }
+
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: AbortSignal.timeout(18000), // Timeout 18s tránh nghẽn
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: genConfig
+            })
           })
-        })
 
-        const resData = await response.json()
+          const resData = await response.json()
 
-        if (!response.ok) {
-          const errMsg = resData.error?.message || `HTTP ${response.status}`
-          lastError = errMsg
+          if (!response.ok) {
+            const errMsg = resData.error?.message || `HTTP ${response.status}`
+            lastError = errMsg
+            continue
+          }
+
+          const candidate = resData.candidates?.[0]?.content?.parts?.[0]?.text
+          if (candidate) {
+            analysisResult = candidate
+            actualModelUsed = m
+            break
+          } else {
+            lastError = 'API không trả về nội dung'
+          }
+        } catch (err: any) {
+          lastError = err.message
           continue
         }
-
-        const candidate = resData.candidates?.[0]?.content?.parts?.[0]?.text
-        if (candidate) {
-          analysisResult = candidate
-          break
-        } else {
-          lastError = 'API không trả về nội dung'
-        }
-      } catch (err: any) {
-        lastError = err.message
       }
+      if (analysisResult) break
     }
 
     if (!analysisResult) {
@@ -162,7 +181,7 @@ QUY TẮC ĐỊNH DẠNG:
 
     return NextResponse.json({
       success: true,
-      modelUsed: activeModel,
+      modelUsed: actualModelUsed,
       analysis: cleaned,
       mistakeCount: mistakes.length
     })

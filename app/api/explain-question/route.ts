@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 
     // 1. Lấy danh sách API keys từ DB hoặc Client hoặc ENV
     let rawKeys = ''
-    let activeModel = 'gemini-2.5-flash'
+    let activeModel = 'gemini-2.0-flash'
 
     try {
       if ((prisma as any).systemSetting) {
@@ -99,63 +99,79 @@ LƯU Ý QUAN TRỌNG:
 - Không lặp lại đề bài không cần thiết.
 `
 
-    // 3. Gọi Gemini API với cơ chế tự động xoay vòng key khi gặp lỗi
+    // Danh sách models ưu tiên: Thử model chỉ định, nếu gặp lỗi quota hoặc 404 thì fallback siêu tốc
+    const candidateModels = [
+      activeModel,
+      'gemini-2.0-flash',
+      'gemini-2.5-flash',
+      'gemini-1.5-flash'
+    ].filter((v, i, a) => a.indexOf(v) === i)
+
+    // 3. Gọi Gemini API với cơ chế tự động xoay vòng key và model
     let lastError = ''
     let explanationText = ''
+    let actualModelUsed = activeModel
 
     for (const key of shuffledKeys) {
-      try {
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${key}`
-        
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [{ text: prompt }]
-              }
-            ],
-            generationConfig: {
-              temperature: 0.3,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 1500
-            }
+      for (const m of candidateModels) {
+        try {
+          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`
+          
+          const genConfig: any = {
+            temperature: 0.2,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 1800
+          }
+          // TẮT BỎ SUY LUẬN NGẦM (Thinking Budget = 0) ĐỂ TRẢ VỀ NGAY LẬP TỨC TRONG 1-2S
+          if (m.includes('2.5')) {
+            genConfig.thinkingConfig = { thinkingBudget: 0 }
+          }
+
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: AbortSignal.timeout(12000), // Timeout 12s tránh treo
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: genConfig
+            })
           })
-        })
 
-        const resData = await response.json()
+          const resData = await response.json()
 
-        if (!response.ok) {
-          const errMsg = resData.error?.message || `HTTP ${response.status}`
-          console.warn(`Key ...${key.slice(-4)} thất bại (${errMsg}), đang chuyển sang key tiếp theo...`)
-          lastError = errMsg
-          continue // Đổi lẹ qua key khác
+          if (!response.ok) {
+            const errMsg = resData.error?.message || `HTTP ${response.status}`
+            lastError = errMsg
+            // Nếu lỗi 404 (model không hỗ trợ) hoặc 429 (hạn mức), thử ngay model tiếp theo
+            continue
+          }
+
+          const candidate = resData.candidates?.[0]?.content?.parts?.[0]?.text
+          if (candidate) {
+            explanationText = candidate
+            actualModelUsed = m
+            break // Thành công!
+          } else {
+            lastError = 'API không trả về nội dung'
+          }
+        } catch (err: any) {
+          lastError = err.message
+          continue
         }
-
-        const candidate = resData.candidates?.[0]?.content?.parts?.[0]?.text
-        if (candidate) {
-          explanationText = candidate
-          break // Thành công!
-        } else {
-          lastError = 'API không trả về nội dung'
-        }
-      } catch (err: any) {
-        console.warn(`Lỗi gọi key ...${key.slice(-4)}:`, err.message)
-        lastError = err.message
       }
+      if (explanationText) break
     }
 
     if (!explanationText) {
       return NextResponse.json({
-        error: `Không thể kết nối giảng viên AI (Tất cả ${keyList.length} API key đều gặp lỗi: ${lastError}). Vui lòng kiểm tra lại API Key hoặc hạn mức trong Cài Đặt.`
+        error: `Không thể kết nối giảng viên AI (${lastError}). Vui lòng kiểm tra lại API Key hoặc hạn mức trong Cài Đặt.`
       }, { status: 502 })
     }
 
     return NextResponse.json({
       success: true,
-      modelUsed: activeModel,
+      modelUsed: actualModelUsed,
       explanation: explanationText
     })
   } catch (error: any) {

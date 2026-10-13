@@ -974,6 +974,15 @@
 
           if (mistakeAnalysisText) return;
 
+          const cacheKey = 'dzota_ai_mistakes_' + (quizIdTracker || 'default') + '_' + wrongQuestionsList.length;
+          try {
+            const cached = sessionStorage.getItem(cacheKey);
+            if (cached) {
+              setMistakeAnalysisText(cached);
+              return;
+            }
+          } catch(e) {}
+
           setIsAnalyzingMistakes(true);
           try {
             const res = await fetch('/api/analyze-mistakes', {
@@ -992,6 +1001,7 @@
             const data = await res.json();
             if (res.ok && data.analysis) {
               setMistakeAnalysisText(data.analysis);
+              try { sessionStorage.setItem(cacheKey, data.analysis); } catch(e) {}
             } else {
               setMistakeAnalysisText(`❌ Không thể phân tích: ${data.error || 'Lỗi kết nối máy chủ'}`);
             }
@@ -1345,31 +1355,46 @@
 
         // Handler hỏi giảng viên AI
         const handleAskTeacher = async (q) => {
+          if (!q) return;
           setActiveExplainQ(q);
           setExplainError('');
-          if (explanationCache[q.id]) {
-            setExplanationContent(explanationCache[q.id]);
+          const qId = q.id || q._id || String(q.index || '0');
+          if (explanationCache[qId]) {
+            setExplanationContent(explanationCache[qId]);
             setExplainLoading(false);
             return;
           }
+          try {
+            const cached = sessionStorage.getItem('dzota_ai_exp_' + qId);
+            if (cached) {
+              setExplanationContent(cached);
+              setExplanationCache(prev => ({ ...prev, [qId]: cached }));
+              setExplainLoading(false);
+              return;
+            }
+          } catch(e) {}
+
           setExplainLoading(true);
           setExplanationContent('');
           try {
+            const qText = q.text || q.questionText || q.question || '';
+            const qCorrect = q.correct || q.correctOption || '';
             const res = await fetch('/api/explain-question', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                questionText: q.text,
-                options: q.options,
-                correctOption: q.correct,
-                selectedOption: userAnswers[q.id] || undefined,
+                questionText: qText,
+                options: q.options || {},
+                correctOption: qCorrect,
+                selectedOption: userAnswers[qId] || userAnswers[q.id] || undefined,
                 subjectName: quizConfig.title || quizConfig.category || 'Trắc nghiệm'
               })
             });
             const data = await res.json();
             if (res.ok && data.explanation) {
               setExplanationContent(data.explanation);
-              setExplanationCache(prev => ({ ...prev, [q.id]: data.explanation }));
+              setExplanationCache(prev => ({ ...prev, [qId]: data.explanation }));
+              try { sessionStorage.setItem('dzota_ai_exp_' + qId, data.explanation); } catch(e) {}
             } else {
               setExplainError(data.error || 'Không thể nhận phản hồi từ giảng viên AI.');
             }
@@ -1390,7 +1415,7 @@
             const sanitized = content.replace(/:(\*\*)/g, ': $1');
 
             // 2. Tách chuỗi theo cú pháp **in đậm** và *in nghiêng*
-            const tokens = sanitized.split(/(\*\*[\s\S]*?\*\*|\*[^*]+?\*)/g);
+            const tokens = sanitized.split(/(\*\*[^\n*]+?\*\*|\*[^\n*]+?\*)/g);
 
             return tokens.map((token, pIdx) => {
               const k = `${keyPrefix}_p_${pIdx}`;
