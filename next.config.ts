@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: true },
   experimental: {
-    cpus: 4,
+    cpus: 1,
   },
   async rewrites() {
     return {

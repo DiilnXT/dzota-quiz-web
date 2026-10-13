@@ -691,14 +691,10 @@
           const list = [];
           currentQuestions.forEach(q => {
             if (!q) return;
-            if (!q.isReview) {
+            const key = q.originalReviewId || q.originalId || q.id;
+            if (!seen.has(key)) {
+              seen.add(key);
               list.push(q);
-            } else {
-              const key = q.originalReviewId || q.originalId || q.id;
-              if (!seen.has(key)) {
-                seen.add(key);
-                list.push(q);
-              }
             }
           });
           return list.length > 0 ? list : currentQuestions;
@@ -939,6 +935,26 @@
             loadWrongQuestionsForQuiz(quizIdTracker);
           }
         }, [quizIdTracker]);
+
+        // Xóa một câu hỏi đã làm đúng ra khỏi danh sách câu sai
+        const removeSingleWrongQuestion = (targetQ) => {
+          if (!targetQ) return;
+          const targetQuizId = quizIdTracker || 'default';
+          setWrongQuestionsList(prev => {
+            const updated = prev.filter(wq => {
+              const sameId = (wq.id && targetQ.id && wq.id === targetQ.id) ||
+                             (wq.originalId && targetQ.originalId && wq.originalId === targetQ.originalId) ||
+                             (wq.id && targetQ.originalId && wq.id === targetQ.originalId) ||
+                             (wq.originalId && targetQ.id && wq.originalId === targetQ.id);
+              const sameText = (wq.text || '').trim() === (targetQ.text || '').trim();
+              return !sameId && !sameText;
+            });
+            try {
+              localStorage.setItem('dzota_wrong_questions_' + targetQuizId, JSON.stringify(updated));
+            } catch(e) {}
+            return updated;
+          });
+        };
 
         const handleStartWrongQuestionsPractice = () => {
           if (wrongQuestionsList.length === 0) {
@@ -4238,6 +4254,7 @@
             userAnswers: overrides.userAnswers || userAnswers,
             showExplanation: overrides.showExplanation || showExplanation,
             flaggedQuestions: overrides.flaggedQuestions !== undefined ? overrides.flaggedQuestions : flaggedQuestions,
+            firstAttempts: overrides.firstAttempts !== undefined ? overrides.firstAttempts : firstAttempts,
             timeLeft: curTimeLeft,
             endTime: endTime,
             savedAt: now,
@@ -4400,13 +4417,12 @@
 
         const handleSelectAnswer = (qId, option) => {
           if (submitted && quizConfig.mode === 'exam') return;
+          let currentFirst = { ...firstAttempts };
           if (!isWrongReviewMode) {
-            setFirstAttempts(prev => {
-              if (prev[qId] === undefined) {
-                return { ...prev, [qId]: option };
-              }
-              return prev;
-            });
+            if (currentFirst[qId] === undefined) {
+              currentFirst[qId] = option;
+              setFirstAttempts(currentFirst);
+            }
           }
           const nextAnswers = { ...userAnswers, [qId]: option };
           setUserAnswers(nextAnswers);
@@ -4416,9 +4432,17 @@
               if (q) {
                   nextExp = { ...showExplanation, [qId]: q.correct === option ? 'correct' : 'incorrect' };
                   setShowExplanation(nextExp);
+                  if (isWrongReviewMode && option === q.correct) {
+                      removeSingleWrongQuestion(q);
+                      addToast("✨ Tuyệt vời! Trả lời đúng đã loại câu này khỏi danh sách câu sai.", "success");
+                  }
               }
           }
-          saveSessionProgress({ userAnswers: nextAnswers, showExplanation: nextExp });
+          saveSessionProgress({ 
+            userAnswers: nextAnswers, 
+            showExplanation: nextExp,
+            firstAttempts: currentFirst 
+          });
         };
 
         const handleNextQuestion = () => { 
@@ -4513,10 +4537,10 @@
                             count++;
                         }
                     } else {
-                        const oid = q.originalSlotId || q.originalId || q.id;
-                        const instances = currentQuestions.filter(item => (item.originalSlotId || item.originalId || item.id) === oid);
-                        const isCorrect = instances.some(inst => userAnswers[inst.id] === inst.correct);
-                        if (isCorrect) {
+                        const studentAns = (firstAttempts[q.id] !== undefined && firstAttempts[q.id] !== null)
+                            ? firstAttempts[q.id]
+                            : userAnswers[q.id];
+                        if (studentAns === q.correct) {
                             count++;
                         }
                     }
@@ -4635,9 +4659,39 @@
                     }).catch(console.error);
                 }
 
-                // Cập nhật ngân hàng câu sai chỉ khi làm ở lượt thi chính thức (!isWrongReviewMode)
+                // Cập nhật ngân hàng câu sai
                 const targetQuizId = quizIdTracker || 'default';
                 if (!isWrongReviewMode) {
+                    // Lượt thi chính thức: RESET MỚI danh sách câu sai theo kết quả của lượt thi này (không cộng dồn câu sai cũ)
+                    try {
+                        const newWrongList = [];
+                        uniqueList.forEach(origQ => {
+                            const studentAns = (quizConfig.mode === 'practice' && firstAttempts[origQ.id] !== undefined)
+                                ? firstAttempts[origQ.id]
+                                : userAnswers[origQ.id];
+                            const isSubmittedCorrect = studentAns !== undefined && studentAns !== null && studentAns === origQ.correct;
+                            const oid = origQ.originalId || origQ.id || origQ.originalSlotId;
+
+                            if (!isSubmittedCorrect) {
+                                newWrongList.push({
+                                    id: origQ.id,
+                                    originalId: oid,
+                                    text: origQ.text,
+                                    options: { ...origQ.options },
+                                    correct: origQ.correct,
+                                    explanation: origQ.explanation || ''
+                                });
+                            }
+                        });
+
+                        localStorage.setItem('dzota_wrong_questions_' + targetQuizId, JSON.stringify(newWrongList));
+                        setWrongQuestionsList(newWrongList);
+                    } catch(err) {
+                        console.error("Lỗi cập nhật danh sách câu sai:", err);
+                    }
+                } else {
+                    // Đang ở chế độ ôn lại câu sai (isWrongReviewMode === true):
+                    // Bỏ ra những câu đã làm đúng trong lượt ôn này, giữ lại những câu vẫn làm sai
                     try {
                         let currentWrong = [];
                         try {
@@ -4645,45 +4699,32 @@
                             if (raw) currentWrong = JSON.parse(raw) || [];
                         } catch(e) {}
 
-                        uniqueList.forEach(origQ => {
-                            const finalAns = userAnswers[origQ.id];
-                            const isSubmittedCorrect = finalAns !== undefined && finalAns !== null && finalAns === origQ.correct;
-                            const qKey = (origQ.text || '').trim();
-                            const oid = origQ.id || origQ.originalId || origQ.originalSlotId;
+                        const remainingWrong = currentWrong.filter(wq => {
+                            const reviewedQ = uniqueList.find(q => 
+                                q.id === wq.id || 
+                                (q.originalId && wq.originalId && q.originalId === wq.originalId) ||
+                                (q.originalId && q.originalId === wq.id) ||
+                                (wq.originalId && wq.originalId === q.id) ||
+                                (q.text || '').trim() === (wq.text || '').trim()
+                            );
+                            if (!reviewedQ) return true; // Chưa làm câu này trong lượt ôn thì giữ lại
 
-                            if (isSubmittedCorrect) {
-                                // Trả lời đúng khi nộp bài -> Xóa khỏi danh sách câu sai
-                                currentWrong = currentWrong.filter(wq => {
-                                    const wKey = (wq.text || '').trim();
-                                    const wId = wq.id || wq.originalId;
-                                    const isSameContent = wKey === qKey && JSON.stringify(wq.options || {}) === JSON.stringify(origQ.options || {});
-                                    return wId !== origQ.id && !isSameContent;
-                                });
-                            } else {
-                                // Làm sai hoặc bỏ trống -> Thêm vào danh sách câu sai
-                                const alreadyInWrong = currentWrong.some(wq => {
-                                    const wKey = (wq.text || '').trim();
-                                    const wId = wq.id || wq.originalId;
-                                    const isSameContent = wKey === qKey && JSON.stringify(wq.options || {}) === JSON.stringify(origQ.options || {});
-                                    return wId === origQ.id || isSameContent;
-                                });
-                                if (!alreadyInWrong) {
-                                    currentWrong.push({
-                                        id: origQ.id,
-                                        originalId: oid,
-                                        text: origQ.text,
-                                        options: { ...origQ.options },
-                                        correct: origQ.correct,
-                                        explanation: origQ.explanation || ''
-                                    });
-                                }
-                            }
+                            const studentAns = (quizConfig.mode === 'practice' && firstAttempts[reviewedQ.id] !== undefined)
+                                ? firstAttempts[reviewedQ.id]
+                                : userAnswers[reviewedQ.id];
+                            const isSubmittedCorrect = studentAns !== undefined && studentAns !== null && studentAns === reviewedQ.correct;
+                            return !isSubmittedCorrect; // Đúng thì loại bỏ (false), sai thì giữ lại (true)
                         });
 
-                        localStorage.setItem('dzota_wrong_questions_' + targetQuizId, JSON.stringify(currentWrong));
-                        setWrongQuestionsList(currentWrong);
+                        localStorage.setItem('dzota_wrong_questions_' + targetQuizId, JSON.stringify(remainingWrong));
+                        setWrongQuestionsList(remainingWrong);
+                        if (remainingWrong.length === 0) {
+                            addToast("🎉 Chúc mừng! Bạn đã làm đúng toàn bộ và xóa sạch danh sách câu sai!", "success");
+                        } else {
+                            addToast(`Đã cập nhật: Còn lại ${remainingWrong.length} câu cần củng cố thêm.`, "info");
+                        }
                     } catch(err) {
-                        console.error("Lỗi cập nhật danh sách câu sai:", err);
+                        console.error("Lỗi cập nhật danh sách ôn câu sai:", err);
                     }
                 }
 
@@ -6465,6 +6506,7 @@
                             setUserAnswers(inProgressSession.userAnswers || {});
                             setShowExplanation(inProgressSession.showExplanation || {});
                             setFlaggedQuestions(inProgressSession.flaggedQuestions || {});
+                            setFirstAttempts(inProgressSession.firstAttempts || {});
                             const targetQIdx = Math.min(inProgressSession.currentQIndex || 0, inProgressSession.currentQuestions.length - 1);
                             setCurrentQIndex(targetQIdx);
                             setTimeLeft(inProgressSession.timeLeft || 0);
@@ -7212,11 +7254,26 @@
 
         const renderResult = () => {
            const uniqueList = (uniqueQuestions && uniqueQuestions.length > 0) ? uniqueQuestions : currentQuestions;
+
+           const countAll = uniqueList.length;
+           const countCorrect = uniqueList.filter(q => {
+             const studentAns = (quizConfig.mode === 'practice' && firstAttempts[q.id] !== undefined)
+               ? firstAttempts[q.id]
+               : userAnswers[q.id];
+             return studentAns === q.correct;
+           }).length;
+           const countIncorrect = countAll - countCorrect;
+           const countFlagged = uniqueList.filter(q => !!flaggedQuestions[q.id]).length;
+
            const filtered = uniqueList.filter(q => {
-             const userAns = userAnswers[q.id];
-             const isCorrect = userAns === q.correct;
+             const studentAns = (quizConfig.mode === 'practice' && firstAttempts[q.id] !== undefined)
+               ? firstAttempts[q.id]
+               : userAnswers[q.id];
+             const isCorrect = studentAns === q.correct;
+             const isFlagged = !!flaggedQuestions[q.id];
              if (resultFilter === 'correct') return isCorrect; 
              if (resultFilter === 'incorrect') return !isCorrect; 
+             if (resultFilter === 'flagged') return isFlagged;
              return true;
            });
 
@@ -7427,22 +7484,59 @@
                 </div>
 
                 <div className="max-w-2xl w-full animate-slide-up">
-                    <div className="flex bg-gray-200/60 p-1 rounded-xl mb-6 shadow-inner">
-                        {['all', 'correct', 'incorrect'].map(f => (
-                            <button key={f} onClick={() => setResultFilter(f)} className={`flex-1 py-2 text-[14px] font-semibold rounded-lg transition-all ${resultFilter === f ? 'bg-white shadow-sm text-black' : 'text-gray-500'}`}>{f === 'all' ? 'Tất cả' : (f === 'correct' ? 'Đúng' : 'Sai')}</button>
-                        ))}
+                    <div className="flex bg-gray-200/60 p-1 rounded-xl mb-6 shadow-inner gap-1">
+                        <button
+                            type="button"
+                            onClick={() => setResultFilter('all')}
+                            className={`flex-1 py-2 px-1 text-[13px] sm:text-[14px] font-semibold rounded-lg transition-all ${resultFilter === 'all' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-800'}`}
+                        >
+                            Tất cả ({countAll})
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setResultFilter('correct')}
+                            className={`flex-1 py-2 px-1 text-[13px] sm:text-[14px] font-semibold rounded-lg transition-all ${resultFilter === 'correct' ? 'bg-white shadow-sm text-emerald-700' : 'text-gray-500 hover:text-gray-800'}`}
+                        >
+                            Đúng ({countCorrect})
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setResultFilter('incorrect')}
+                            className={`flex-1 py-2 px-1 text-[13px] sm:text-[14px] font-semibold rounded-lg transition-all ${resultFilter === 'incorrect' ? 'bg-white shadow-sm text-rose-700' : 'text-gray-500 hover:text-gray-800'}`}
+                        >
+                            Sai ({countIncorrect})
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setResultFilter('flagged')}
+                            className={`flex-1 py-2 px-1 text-[13px] sm:text-[14px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 ${resultFilter === 'flagged' ? 'bg-white shadow-sm text-amber-700' : 'text-gray-500 hover:text-gray-800'}`}
+                        >
+                            <Icons.Flag size={13} className={resultFilter === 'flagged' ? 'text-amber-600' : 'text-gray-400'} />
+                            <span>Xem lại ({countFlagged})</span>
+                        </button>
                     </div>
                     <div className="space-y-4">
                       {filtered.map((q, i) => {
-                        const userAnswer = userAnswers[q.id];
-                        const isCorrect = userAnswer === q.correct;
+                        const studentAnswer = (quizConfig.mode === 'practice' && firstAttempts[q.id] !== undefined)
+                          ? firstAttempts[q.id]
+                          : userAnswers[q.id];
+                        const isCorrect = studentAnswer === q.correct;
+                        const isFlagged = !!flaggedQuestions[q.id];
                         const examIndex = q.displayNumber || (currentQuestions.findIndex(item => item.id === q.id) + 1); 
                         return (
                           <div key={q.id || i} className="apple-liquid-glass p-5 rounded-[24px] relative overflow-hidden mb-4">
                              <div className={`absolute top-0 left-0 w-1.5 h-full ${isCorrect ? 'bg-ios-green' : 'bg-ios-red'}`}></div>
                              <div className="flex items-start justify-between gap-3 mb-3">
-                                <div className="flex gap-2 items-start flex-1">
-                                   <span className={`font-bold flex-shrink-0 ${isCorrect ? "text-ios-green" : "text-ios-red"}`}>Câu {examIndex}:</span>
+                                <div className="flex gap-2 items-start flex-1 flex-wrap">
+                                   <div className="flex items-center gap-1.5 flex-shrink-0">
+                                     <span className={`font-bold ${isCorrect ? "text-ios-green" : "text-ios-red"}`}>Câu {examIndex}:</span>
+                                     {isFlagged && (
+                                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                         <Icons.Flag size={11} className="text-amber-600" />
+                                         <span>Xem lại</span>
+                                       </span>
+                                     )}
+                                   </div>
                                    <span className="text-[15px] font-medium text-black leading-snug whitespace-pre-line w-full"><MathText text={q.text} /></span>
                                 </div>
                                 <button
@@ -7460,18 +7554,23 @@
                              <div className="space-y-2 mt-3">
                                {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(optKey => (
                                   q.options[optKey] && (
-                                    <div key={optKey} className={`p-2.5 rounded-xl border flex items-center transition-colors ${optKey === q.correct ? 'bg-green-50 border-ios-green' : ''} ${optKey === userAnswer && optKey !== q.correct ? 'bg-red-50 border-ios-red' : ''} ${optKey !== userAnswer && optKey !== q.correct ? 'bg-gray-50 border-gray-100 opacity-60' : ''}`}>
-                                       <span className={`w-6 h-6 flex-shrink-0 flex items-center justify-center rounded-full text-[12px] font-bold mr-3 border ${optKey === q.correct ? 'bg-ios-green border-ios-green text-white' : ''} ${optKey === userAnswer && optKey !== q.correct ? 'bg-ios-red border-ios-red text-white' : ''} ${optKey !== userAnswer && optKey !== q.correct ? 'bg-white border-gray-300 text-gray-500' : ''}`}>{optKey}</span>
-                                       <span className={`text-[14px] ${optKey === q.correct || optKey === userAnswer ? 'text-black font-medium' : 'text-gray-600'}`}><MathText text={q.options[optKey]} /></span>
+                                    <div key={optKey} className={`p-2.5 rounded-xl border flex items-center transition-colors ${optKey === q.correct ? 'bg-green-50 border-ios-green' : ''} ${optKey === studentAnswer && optKey !== q.correct ? 'bg-red-50 border-ios-red' : ''} ${optKey !== studentAnswer && optKey !== q.correct ? 'bg-gray-50 border-gray-100 opacity-60' : ''}`}>
+                                       <span className={`w-6 h-6 flex-shrink-0 flex items-center justify-center rounded-full text-[12px] font-bold mr-3 border ${optKey === q.correct ? 'bg-ios-green border-ios-green text-white' : ''} ${optKey === studentAnswer && optKey !== q.correct ? 'bg-ios-red border-ios-red text-white' : ''} ${optKey !== studentAnswer && optKey !== q.correct ? 'bg-white border-gray-300 text-gray-500' : ''}`}>{optKey}</span>
+                                       <span className={`text-[14px] ${optKey === q.correct || optKey === studentAnswer ? 'text-black font-medium' : 'text-gray-600'}`}><MathText text={q.options[optKey]} /></span>
                                        {optKey === q.correct && <span className="ml-auto text-ios-green text-[13px] font-bold flex items-center gap-1"><Icons.CheckCircle size={14}/> Đúng</span>}
-                                       {optKey === userAnswer && optKey !== q.correct && <span className="ml-auto text-ios-red text-[13px] font-bold flex items-center gap-1"><Icons.XCircle size={14}/> Bạn chọn</span>}
-                                     </div>
+                                       {optKey === studentAnswer && optKey !== q.correct && <span className="ml-auto text-ios-red text-[13px] font-bold flex items-center gap-1"><Icons.XCircle size={14}/> Bạn chọn</span>}
+                                    </div>
                                   )
-                                ))}
+                               ))}
                              </div>
                           </div>
                         )
                       })}
+                      {filtered.length === 0 && (
+                        <div className="apple-liquid-glass p-8 rounded-2xl text-center text-slate-500 font-medium">
+                          {resultFilter === 'flagged' ? '🎯 Bạn không đánh dấu xem lại câu hỏi nào trong bài này.' : 'Không có câu hỏi nào trong danh mục này.'}
+                        </div>
+                      )}
                     </div>
                 </div>
              </div>
@@ -9671,7 +9770,7 @@
                         <span>Quy tắc ôn luyện thông minh:</span>
                       </div>
                       <p className="text-[12px] text-amber-800/90 leading-relaxed">
-                        Các câu hỏi trong danh sách này <strong>chỉ biến mất</strong> khi bạn làm lượt thi chính thức ở phần <strong>"Bắt Đầu Làm Bài"</strong> và trả lời đúng ngay lần đầu tiên.
+                        Khi ôn luyện, câu nào bạn trả lời đúng sẽ được tự động xóa khỏi danh sách. Khi trả lời đúng tất cả, danh sách câu sai sẽ được xóa sạch! Khi làm lại bài thi, danh sách câu sai sẽ được làm mới theo kết quả lần đó.
                       </p>
                     </div>
 
