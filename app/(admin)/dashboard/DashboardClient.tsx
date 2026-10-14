@@ -376,13 +376,14 @@ export default function DashboardClient({
   // System Settings Modal State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [geminiKeys, setGeminiKeys] = useState('')
-  const [geminiModel, setGeminiModel] = useState('gemini-2.5-flash')
+  const [geminiModel, setGeminiModel] = useState('gemini-3.8-flash')
   const defaultModels = [
-    'gemini-2.5-flash',
-    'gemini-2.5-pro',
+    'gemini-3.8-flash',
+    'gemini-3.5-flash',
     'gemini-2.0-flash',
-    'gemini-1.5-flash',
-    'gemini-1.5-pro'
+    'gemini-2.5-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-2.5-pro'
   ]
   const [availableModels, setAvailableModels] = useState<string[]>(defaultModels)
   const [customModelInput, setCustomModelInput] = useState('')
@@ -623,8 +624,18 @@ export default function DashboardClient({
         .then(data => {
           if (data.apiKeys) setGeminiKeys(data.apiKeys)
           if (data.activeModel) {
-            setGeminiModel(data.activeModel)
-            setAvailableModels(prev => prev.includes(data.activeModel) ? prev : [...prev, data.activeModel])
+            let m = data.activeModel
+            if (m.startsWith('gemini-1.5')) {
+              m = 'gemini-3.8-flash'
+            }
+            setGeminiModel(m)
+          }
+          if (Array.isArray(data.availableModels)) {
+            const cleanModels = data.availableModels.filter((m: string) => !m.startsWith('gemini-1.5'))
+            setAvailableModels(cleanModels)
+          } else if (data.activeModel) {
+            const m = data.activeModel.startsWith('gemini-1.5') ? 'gemini-3.8-flash' : data.activeModel
+            setAvailableModels(prev => prev.includes(m) ? prev : [...prev, m])
           }
           if (data.activeBgEnabled !== undefined) setActiveBgEnabled(Boolean(data.activeBgEnabled))
           if (data.activeBgDesktop) setActiveBgDesktop(data.activeBgDesktop)
@@ -2862,11 +2873,12 @@ export default function DashboardClient({
                     >
                       {availableModels.map(m => (
                         <option key={m} value={m}>
-                          {m === 'gemini-2.5-flash' ? '⚡ gemini-2.5-flash (Siêu nhanh, tối ưu nhất)' :
+                          {m === 'gemini-3.8-flash' ? '⚡ gemini-3.8-flash (Mới nhất, siêu nhanh & suy luận chuẩn)' :
+                           m === 'gemini-3.5-flash' ? '🚀 gemini-3.5-flash (Tốc độ cao, ổn định)' :
+                           m === 'gemini-2.0-flash' ? '⚡ gemini-2.0-flash (Phổ biến, phản hồi tức thì)' :
+                           m === 'gemini-2.5-flash' ? '🎯 gemini-2.5-flash (Siêu nhanh)' :
+                           m === 'gemini-3.5-flash-lite' ? '💡 gemini-3.5-flash-lite (Tiết kiệm quota)' :
                            m === 'gemini-2.5-pro' ? '🧠 gemini-2.5-pro (Thông minh chuyên sâu)' :
-                           m === 'gemini-2.0-flash' ? '🚀 gemini-2.0-flash (Tốc độ cao)' :
-                           m === 'gemini-1.5-flash' ? '⚡ gemini-1.5-flash (Bản ổn định)' :
-                           m === 'gemini-1.5-pro' ? '🎯 gemini-1.5-pro (Suy luận tốt)' :
                            `✨ ${m} (Tùy chỉnh)`}
                         </option>
                       ))}

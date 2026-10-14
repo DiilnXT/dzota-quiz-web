@@ -106,16 +106,22 @@ QUY TẮC ĐỊNH DẠNG:
 - TUYỆT ĐỐI KHÔNG để dấu hoa thị lộn xộn hoặc \`**:\` lơ lửng.
 - Công thức khoa học: dùng LaTeX \`$công thức$\` (ví dụ: $\\alpha$, $H_2SO_4$, $f'(x)$).`
 
+    // Khử trùng model, loại bỏ hoàn toàn các model 1.5 cũ đã bị Google ngừng phục vụ
+    const sanitizedActiveModel = (activeModel && !activeModel.startsWith('gemini-1.5'))
+      ? activeModel
+      : 'gemini-3.8-flash'
+
     const candidateModels = [
-      activeModel,
+      sanitizedActiveModel,
+      'gemini-3.8-flash',
+      'gemini-3.5-flash',
       'gemini-2.0-flash',
-      'gemini-2.5-flash',
-      'gemini-1.5-flash'
-    ].filter((v, i, a) => a.indexOf(v) === i)
+      'gemini-2.5-flash'
+    ].filter((v, i, a) => a.indexOf(v) === i && !v.startsWith('gemini-1.5'))
 
     let lastError = ''
     let analysisResult = ''
-    let actualModelUsed = activeModel
+    let actualModelUsed = sanitizedActiveModel
 
     for (const key of shuffledKeys) {
       for (const m of candidateModels) {
@@ -128,21 +134,45 @@ QUY TẮC ĐỊNH DẠNG:
             topP: 0.95,
             maxOutputTokens: 8192
           }
-          if (m.includes('2.5')) {
+
+          // CẤU HÌNH TỐI ƯU TỐC ĐỘ (LOW LATENCY) CHO TỪNG THẾ HỆ GEMINI:
+          // 1. Dòng Gemini 3 (3.8-flash, 3.5-flash...):
+          //    Mặc định Gemini 3 dùng thinkingLevel "medium" suy luận ngầm rất lâu gây treo.
+          //    Đặt thinkingLevel: "low" giúp phản hồi nhanh chóng mà vẫn phân tích cực kỳ sắc bén.
+          // 2. Dòng Gemini 2.5 (2.5-flash...):
+          //    Dùng thinkingBudget: 0 để tắt bỏ suy luận ngầm và trả về tức thì.
+          if (m.includes('3.') || m.startsWith('gemini-3')) {
+            genConfig.thinkingConfig = { thinkingLevel: 'low' }
+          } else if (m.includes('2.5')) {
             genConfig.thinkingConfig = { thinkingBudget: 0 }
           }
 
-          const response = await fetch(endpoint, {
+          let response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            signal: AbortSignal.timeout(18000), // Timeout 18s tránh nghẽn
+            signal: AbortSignal.timeout(35000), // Timeout 35s an toàn
             body: JSON.stringify({
               contents: [{ parts: [{ text: prompt }] }],
               generationConfig: genConfig
             })
           })
 
-          const resData = await response.json()
+          let resData = await response.json()
+
+          // Nếu model tùy chỉnh không hỗ trợ thinkingConfig, tự động thử lại 1 lần không kèm thinkingConfig
+          if (!response.ok && resData.error?.message?.toLowerCase().includes('thinking')) {
+            delete genConfig.thinkingConfig
+            response = await fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              signal: AbortSignal.timeout(35000),
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: genConfig
+              })
+            })
+            resData = await response.json()
+          }
 
           if (!response.ok) {
             const errMsg = resData.error?.message || `HTTP ${response.status}`
@@ -150,7 +180,10 @@ QUY TẮC ĐỊNH DẠNG:
             continue
           }
 
-          const candidate = resData.candidates?.[0]?.content?.parts?.[0]?.text
+          const parts = resData.candidates?.[0]?.content?.parts || []
+          // Trích xuất phần text câu trả lời (loại trừ thought tokens nếu có)
+          const answerParts = parts.filter((p: any) => !p.thought && p.text).map((p: any) => p.text)
+          const candidate = answerParts.length > 0 ? answerParts.join('\n') : parts[0]?.text
           if (candidate) {
             analysisResult = candidate
             actualModelUsed = m

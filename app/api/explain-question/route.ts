@@ -99,18 +99,24 @@ LƯU Ý QUAN TRỌNG:
 - Không lặp lại đề bài không cần thiết.
 `
 
+    // Khử trùng model, loại bỏ hoàn toàn các model 1.5 cũ đã bị Google ngừng phục vụ
+    const sanitizedActiveModel = (activeModel && !activeModel.startsWith('gemini-1.5'))
+      ? activeModel
+      : 'gemini-3.8-flash'
+
     // Danh sách models ưu tiên: Thử model chỉ định, nếu gặp lỗi quota hoặc 404 thì fallback siêu tốc
     const candidateModels = [
-      activeModel,
+      sanitizedActiveModel,
+      'gemini-3.8-flash',
+      'gemini-3.5-flash',
       'gemini-2.0-flash',
-      'gemini-2.5-flash',
-      'gemini-1.5-flash'
-    ].filter((v, i, a) => a.indexOf(v) === i)
+      'gemini-2.5-flash'
+    ].filter((v, i, a) => a.indexOf(v) === i && !v.startsWith('gemini-1.5'))
 
     // 3. Gọi Gemini API với cơ chế tự động xoay vòng key và model
     let lastError = ''
     let explanationText = ''
-    let actualModelUsed = activeModel
+    let actualModelUsed = sanitizedActiveModel
 
     for (const key of shuffledKeys) {
       for (const m of candidateModels) {
@@ -121,24 +127,47 @@ LƯU Ý QUAN TRỌNG:
             temperature: 0.2,
             topK: 40,
             topP: 0.95,
-            maxOutputTokens: 1800
+            maxOutputTokens: 2048
           }
-          // TẮT BỎ SUY LUẬN NGẦM (Thinking Budget = 0) ĐỂ TRẢ VỀ NGAY LẬP TỨC TRONG 1-2S
-          if (m.includes('2.5')) {
+
+          // CẤU HÌNH TỐI ƯU TỐC ĐỘ (LOW LATENCY) CHO TỪNG THẾ HỆ GEMINI:
+          // 1. Dòng Gemini 3 (3.8-flash, 3.5-flash...):
+          //    Mặc định Gemini 3 dùng thinkingLevel "medium" suy luận ngầm 20-40s gây timeout/chậm.
+          //    Đặt thinkingLevel: "low" giúp phản hồi siêu tốc trong 1-3s mà vẫn giữ độ chính xác cao.
+          // 2. Dòng Gemini 2.5 (2.5-flash...):
+          //    Dùng thinkingBudget: 0 để tắt bỏ suy luận ngầm và trả về tức thì.
+          if (m.includes('3.') || m.startsWith('gemini-3')) {
+            genConfig.thinkingConfig = { thinkingLevel: 'low' }
+          } else if (m.includes('2.5')) {
             genConfig.thinkingConfig = { thinkingBudget: 0 }
           }
 
-          const response = await fetch(endpoint, {
+          let response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            signal: AbortSignal.timeout(12000), // Timeout 12s tránh treo
+            signal: AbortSignal.timeout(30000), // Timeout 30s an toàn
             body: JSON.stringify({
               contents: [{ parts: [{ text: prompt }] }],
               generationConfig: genConfig
             })
           })
 
-          const resData = await response.json()
+          let resData = await response.json()
+
+          // Nếu model tùy chỉnh không hỗ trợ thinkingConfig, tự động thử lại 1 lần không kèm thinkingConfig
+          if (!response.ok && resData.error?.message?.toLowerCase().includes('thinking')) {
+            delete genConfig.thinkingConfig
+            response = await fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              signal: AbortSignal.timeout(30000),
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: genConfig
+              })
+            })
+            resData = await response.json()
+          }
 
           if (!response.ok) {
             const errMsg = resData.error?.message || `HTTP ${response.status}`
@@ -147,7 +176,10 @@ LƯU Ý QUAN TRỌNG:
             continue
           }
 
-          const candidate = resData.candidates?.[0]?.content?.parts?.[0]?.text
+          const parts = resData.candidates?.[0]?.content?.parts || []
+          // Trích xuất phần text câu trả lời (loại trừ thought tokens nếu có)
+          const answerParts = parts.filter((p: any) => !p.thought && p.text).map((p: any) => p.text)
+          const candidate = answerParts.length > 0 ? answerParts.join('\n') : parts[0]?.text
           if (candidate) {
             explanationText = candidate
             actualModelUsed = m

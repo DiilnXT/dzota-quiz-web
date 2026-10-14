@@ -64,18 +64,33 @@ export async function GET() {
     }
 
     const defaultModels = [
+      'gemini-3.8-flash',
+      'gemini-3.5-flash',
       'gemini-2.0-flash',
       'gemini-2.5-flash',
-      'gemini-1.5-flash',
-      'gemini-2.0-flash-lite',
+      'gemini-3.5-flash-lite',
       'gemini-2.5-pro'
     ]
 
     const apiKeys = keysSetting?.value || process.env.GEMINI_API_KEYS || process.env.GEMINI_API_KEY || ''
-    const activeModel = modelSetting?.value || 'gemini-2.0-flash'
-    const availableModels = availableModelsSetting?.value
+    let activeModel = modelSetting?.value || 'gemini-3.8-flash'
+    // Tự động nâng cấp nếu cấu hình cũ còn lưu model 1.5 đã bị Google ngừng phục vụ
+    if (activeModel.startsWith('gemini-1.5')) {
+      activeModel = 'gemini-3.8-flash'
+    }
+
+    let availableModels = availableModelsSetting?.value
       ? JSON.parse(availableModelsSetting.value)
       : defaultModels
+    // Lọc bỏ bất kỳ model 1.5 cũ nào và đảm bảo có gemini-3.8-flash
+    if (Array.isArray(availableModels)) {
+      availableModels = availableModels.filter((m: string) => !m.startsWith('gemini-1.5'))
+      if (!availableModels.includes('gemini-3.8-flash')) {
+        availableModels.unshift('gemini-3.8-flash')
+      }
+    } else {
+      availableModels = defaultModels
+    }
     // Mặc định là true (bật ảnh background) trừ khi admin tắt explicitly thành 'false'
     const activeBgEnabled = activeBgSetting ? activeBgSetting.value !== 'false' : true
     const activeBgDesktop = activeBgDesktopSetting?.value || ''
