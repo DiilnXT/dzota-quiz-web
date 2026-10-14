@@ -2,7 +2,7 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     
     <!-- Open Graph Meta Tags cho Zalo / Facebook -->
     <meta property="og:title" content="Dzota - Thư viện Đề Thi & Trắc Nghiệm" id="og-title" />
@@ -869,6 +869,15 @@
         useEffect(() => {
           refreshOfflineSavedList();
         }, []);
+
+        // Tự động cuộn lên đầu câu hỏi khi chuyển câu trên mobile/desktop
+        useEffect(() => {
+          try {
+            const mainEl = document.querySelector('.dzota-practice-main');
+            if (mainEl) mainEl.scrollTop = 0;
+            window.scrollTo({ top: 0, behavior: 'instant' });
+          } catch(e) {}
+        }, [currentQIndex]);
 
         const handleLoadOfflineQuizDirectly = (offData) => {
           setQuizConfig({
@@ -6798,7 +6807,7 @@
                <div
                  key={qId}
                  id={`exam-question-${idx}`}
-                 className={`scroll-mt-20 sm:scroll-mt-24 p-2.5 sm:p-3.5 mb-2.5 sm:mb-3.5 relative select-none transition-shadow ${
+                 className={`scroll-mt-20 sm:scroll-mt-24 p-2 sm:p-3.5 mb-1.5 sm:mb-3.5 relative select-none transition-shadow ${
                    isFlagged 
                      ? 'apple-liquid-glass apple-liquid-glass-flagged' 
                      : 'apple-liquid-glass'
@@ -6807,24 +6816,24 @@
                >
                   {/* Dải Banner Hoàng Kim khi Đánh Dấu Xem Lại */}
                   {isFlagged && (
-                    <div className="mb-2 sm:mb-2.5 inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] sm:text-xs font-black bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 shadow-xs border border-white/70">
+                    <div className="mb-1.5 sm:mb-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] sm:text-xs font-black bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 shadow-xs border border-white/70">
                       <Icons.Bookmark size={11} fill="currentColor" />
                       <span>⭐ CÂU HỎI ĐANG ĐƯỢC LƯU Ý XEM LẠI</span>
                     </div>
                   )}
 
                   {/* Khung nội dung câu hỏi: Capsule trắng tinh thể sang trọng, chữ đen đậm siêu sắc nét 100% */}
-                  <div className="apple-question-capsule p-3 sm:p-3.5 mb-2 sm:mb-2.5">
+                  <div className="apple-question-capsule p-2.5 sm:p-3.5 mb-1.5 sm:mb-2.5">
                     <div className="flex items-start justify-between gap-2.5">
                       <div className="flex items-start gap-2.5 sm:gap-3 flex-1 min-w-0">
-                        <span className={`flex-shrink-0 font-black w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-xl text-xs sm:text-sm shadow-xs mt-0.5 transition-all ${
+                        <span className={`flex-shrink-0 font-black w-6.5 h-6.5 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg sm:rounded-xl text-xs sm:text-sm shadow-xs mt-0.5 transition-all ${
                           isFlagged 
                             ? 'bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-600 text-slate-950 shadow-xs ring-2 ring-yellow-300 scale-105' 
                             : 'bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 text-white shadow-xs'
                         }`}>
                           {idx + 1}
                         </span>
-                        <div className="text-slate-900 font-bold text-[14.5px] sm:text-[16px] leading-snug w-full">
+                        <div className="text-slate-900 font-bold text-[14px] sm:text-[16px] leading-snug w-full">
                             {q.isReview && (
                                <div className="mb-1.5">
                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#fef7e0] text-[#b06000] border border-[#fce8b2]">
@@ -6860,19 +6869,19 @@
                   </div>
                   
                   {/* Danh sách phương án: Apple Liquid Option Capsules - Đẹp bóng bẩy, nhẹ mượt 120FPS */}
-                  <div className="space-y-1.5 sm:space-y-2 pt-0.5">
+                  <div className="space-y-1 sm:space-y-1.5 pt-0.5">
                     {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(optKey => (
                       q.options[optKey] && (
                         <div key={optKey} onClick={() => handleSelectAnswer(qId, optKey)} 
                           className={`
-                            py-2 px-3 sm:py-2.5 sm:px-3.5 cursor-pointer transition-all duration-150 flex items-center min-h-[38px] sm:min-h-[40px] apple-liquid-option
+                            py-1.5 px-2.5 sm:py-2.5 sm:px-3.5 cursor-pointer transition-all duration-150 flex items-center min-h-[36px] sm:min-h-[40px] apple-liquid-option
                             ${isSelected === optKey 
                                ? (isFlagged ? 'apple-liquid-option-flagged-selected' : 'apple-liquid-option-selected') 
                                : (isFlagged ? 'border-amber-200/90' : '')}
                             ${isPractice && status === 'correct' && (isSelected === optKey || q.correct === optKey) ? 'apple-liquid-option-correct' : ''}
                             ${isPractice && status === 'incorrect' && isSelected === optKey ? 'apple-liquid-option-incorrect' : ''}
                           `}>
-                          <span className={`w-6 h-6 sm:w-6.5 sm:h-6.5 flex-shrink-0 rounded-lg sm:rounded-xl border flex items-center justify-center mr-2.5 text-[11px] sm:text-xs font-black transition-all ${
+                          <span className={`w-5.5 h-5.5 sm:w-6.5 sm:h-6.5 flex-shrink-0 rounded-md sm:rounded-xl border flex items-center justify-center mr-2 sm:mr-2.5 text-[11px] sm:text-xs font-black transition-all ${
                              isSelected === optKey 
                                ? (isFlagged ? 'bg-gradient-to-tr from-amber-500 to-yellow-400 border-amber-400 text-slate-950 shadow-xs' : 'bg-[#007AFF] border-[#007AFF] text-white shadow-xs') 
                                : 'border-slate-300 text-slate-700 bg-slate-100'
@@ -6880,7 +6889,7 @@
                              ${isPractice && status === 'correct' && (isSelected === optKey || q.correct === optKey) ? '!bg-[#34C759] !border-[#34C759] !text-white shadow-xs' : ''}
                              ${isPractice && status === 'incorrect' && isSelected === optKey ? '!bg-[#FF3B30] !border-[#FF3B30] !text-white shadow-xs' : ''}
                           `}>{optKey}</span>
-                          <span className="text-[13.5px] sm:text-[15px] text-slate-900 leading-snug font-medium flex-1"><MathText text={q.options[optKey]} /></span>
+                          <span className="text-[13px] sm:text-[15px] text-slate-900 leading-snug font-medium flex-1"><MathText text={q.options[optKey]} /></span>
                           {isPractice && status === 'correct' && (isSelected === optKey || q.correct === optKey) && <div className="ml-auto text-[#34C759] flex-shrink-0 pl-1.5"><Icons.CheckCircle size={18}/></div>}
                           {isPractice && status === 'incorrect' && isSelected === optKey && <div className="ml-auto text-[#FF3B30] flex-shrink-0 pl-1.5"><Icons.XCircle size={18}/></div>}
                         </div>
@@ -6890,7 +6899,7 @@
 
                   {/* Practice Feedback Bar & Nút Hỏi Giảng Viên AI (?) */}
                   {isPractice && isSelected && (
-                    <div className="mt-2.5 pt-2 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-2 animate-fade-in">
+                    <div className="mt-2 pt-1.5 sm:mt-2.5 sm:pt-2 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-1.5 animate-fade-in">
                       <div className="text-xs font-semibold flex items-center gap-1.5">
                         {status === 'correct' ? (
                           <span className="text-[#137333] font-bold flex items-center gap-1 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 text-[11px] sm:text-xs">
@@ -6916,7 +6925,7 @@
 
                   {/* Practice Requeue Bar */}
                   {isPractice && status === 'incorrect' && (
-                      <div className="mt-2.5 p-2.5 sm:p-3 rounded-xl bg-amber-50 border border-amber-200 shadow-xs animate-fade-in">
+                      <div className="mt-2 p-2 sm:mt-2.5 sm:p-3 rounded-xl bg-amber-50 border border-amber-200 shadow-xs animate-fade-in">
                           <div className="text-[#804200] text-[11px] sm:text-xs font-bold flex items-center gap-1 mb-2 uppercase tracking-wider">
                              <Icons.Repeat size={13} className="text-[#b06000]"/> Ôn tập lại câu này sau:
                           </div>
@@ -7187,7 +7196,7 @@
                }
                const progressPercent = ((currentQIndex + 1) / Math.max(1, currentQuestions.length)) * 100;
                return (
-                <div className={`flex flex-col h-screen h-[100dvh] max-h-screen font-sans overflow-hidden relative ${activeBgEnabled ? 'dzota-active-bg' : 'bg-[#F8F9FA]'}`}>
+                <div className={`fixed inset-0 flex flex-col font-sans overflow-hidden z-20 ${activeBgEnabled ? 'dzota-active-bg' : 'bg-[#F8F9FA]'}`} style={{ height: '100dvh', maxHeight: '100dvh' }}>
                     {/* Dynamic custom background styles if configured */}
                     <style>{`
                       ${activeBgMobile ? `.dzota-active-bg { background-image: url('${activeBgMobile}') !important; }` : ''}
@@ -7200,12 +7209,12 @@
                    
 
                     {/* Top Progress bar in Google Blue */}
-                    <div className="w-full bg-[#dadce0] h-1.5 flex-shrink-0 z-30">
+                    <div className="w-full bg-[#dadce0] h-1 flex-shrink-0 z-30">
                        <div className="bg-[#1a73e8] h-full transition-all duration-300" style={{ width: `${progressPercent}%` }}></div>
                     </div>
 
                     {/* Header: Non-fixed flex child with prominent Title & Counter */}
-                    <header className="flex-shrink-0 z-20 bg-white/90 backdrop-blur-md border-b border-white/80 px-3 sm:px-6 h-13 sm:h-15 flex justify-between items-center shadow-xs">
+                    <header className="flex-shrink-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-2.5 sm:px-6 h-12 sm:h-15 flex justify-between items-center shadow-xs">
                         <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1 mr-2 sm:mr-4">
                           <button
                             type="button"
@@ -7243,7 +7252,7 @@
                      </header>
 
                     {/* Main Content Area - Scrollable ONLY when content overflows (flex-1 overflow-y-auto) */}
-                    <main className="flex-1 w-full max-w-2xl mx-auto px-3 sm:px-6 py-2 sm:py-3 overflow-y-auto flex flex-col justify-between min-h-0 relative z-10">
+                    <main className="dzota-practice-main flex-1 w-full max-w-2xl mx-auto px-2.5 sm:px-6 py-1.5 sm:py-3 overflow-y-auto flex flex-col justify-between min-h-0 relative z-10 overscroll-contain">
                        <div>
                           {renderQuestionCard(q, currentQIndex, true)}
                           
@@ -7257,18 +7266,18 @@
                           </div>
                        </div>
 
-                       <div className="mt-auto pt-1">
+                       <div className="mt-auto pt-1 hidden sm:block">
                          {renderCopyrightBadge('my-0.5 sm:my-1 scale-85 sm:scale-90 origin-center')}
                        </div>
                     </main>
 
                     {/* Bottom Navigation Dock: Đưa Làm Lại & Nộp Bài xuống chung với Lùi Lại & Tiếp Theo */}
-                    <nav className="flex-shrink-0 z-20 w-full bg-white/90 backdrop-blur-md border-t border-white/80 p-2 sm:p-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
+                    <nav className="flex-shrink-0 z-30 w-full bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 sm:px-4 py-1.5 sm:py-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]" style={{ paddingBottom: 'max(0.5rem, calc(env(safe-area-inset-bottom, 0px) + 6px))' }}>
                        <div className="max-w-2xl mx-auto flex gap-1.5 sm:gap-2.5 items-center">
                            {/* Nút Làm Lại */}
                            <button
                              onClick={handleRestartPractice}
-                             className="px-2.5 sm:px-3 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-bold bg-white hover:bg-slate-100 text-[#475569] border border-slate-300 shadow-xs active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer flex-shrink-0"
+                             className="px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold bg-white hover:bg-slate-100 text-[#475569] border border-slate-300 shadow-xs active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer flex-shrink-0"
                              title="Làm lại từ đầu"
                            >
                              <Icons.RotateCcw size={14} />
@@ -7279,7 +7288,7 @@
                            <button 
                              onClick={() => { const prevIdx = Math.max(0, currentQIndex - 1); setCurrentQIndex(prevIdx); saveSessionProgress({ currentQIndex: prevIdx }); }} 
                              disabled={currentQIndex === 0} 
-                             className="px-2.5 sm:px-3 py-2.5 sm:py-3 rounded-full font-bold text-xs sm:text-sm border-2 border-[#dadce0] bg-white text-[#3c4043] hover:bg-[#f8f9fa] disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1 flex-shrink-0"
+                             className="px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm border-2 border-[#dadce0] bg-white text-[#3c4043] hover:bg-[#f8f9fa] disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1 flex-shrink-0"
                              title="Quay lại câu trước"
                            >
                              <Icons.ChevronLeft size={15} />
@@ -7289,7 +7298,7 @@
                            {/* Nút Câu Tiếp Theo */}
                            <button 
                              onClick={handleNextQuestion} 
-                             className="flex-1 py-2.5 sm:py-3 rounded-full font-bold text-xs sm:text-sm bg-[#1a73e8] hover:bg-[#1557b0] text-white shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer min-w-0"
+                             className="flex-1 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm bg-[#1a73e8] hover:bg-[#1557b0] text-white shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer min-w-0"
                            >
                              <span className="truncate">{currentQIndex === currentQuestions.length - 1 ? 'Hoàn Thành' : 'Tiếp Theo'}</span>
                              <Icons.ArrowRight size={16} className="flex-shrink-0" />
@@ -7298,7 +7307,7 @@
                            {/* Nút Nộp Bài */}
                            <button
                              onClick={handleSubmitPractice}
-                             className="px-3 sm:px-4.5 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-md shadow-emerald-600/25 active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0 whitespace-nowrap"
+                             className="px-3 sm:px-4.5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-md shadow-emerald-600/25 active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0 whitespace-nowrap"
                              title="Nộp bài và xem điểm ngay"
                            >
                              <Icons.CheckCircle size={15} className="flex-shrink-0" />
