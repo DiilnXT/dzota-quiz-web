@@ -283,21 +283,13 @@
                 </p>
             </div>
 
-            <!-- Mini Quiz Interaction -->
-            <div id="astro-hud-quiz-box" class="space-y-2 pt-1 border-t border-slate-200/50 dark:border-slate-800/50">
-                <div class="flex items-center justify-between">
-                    <span class="text-[10px] font-extrabold uppercase text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                        <span>⚡ Thử thách nhanh</span>
-                    </span>
-                    <span id="astro-quiz-status" class="text-[10px] font-bold text-slate-400">1 câu trắc nghiệm</span>
-                </div>
-                <p id="astro-quiz-question" class="text-[11px] font-bold text-slate-800 dark:text-slate-100">
-                    Hai ngôi sao nào ở thành gáo Bắc Đẩu chỉ thẳng đến Sao Bắc Đẩu?
-                </p>
-                <div id="astro-quiz-options" class="grid grid-cols-2 gap-1.5 pt-0.5">
-                    <!-- Dynamic buttons -->
-                </div>
-                <div id="astro-quiz-feedback" class="hidden p-2 rounded-xl text-[10px] leading-snug"></div>
+            <!-- Interactive Floating Note -->
+            <div class="pt-2 border-t border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
+                <span class="flex items-center gap-1.5 font-bold text-sky-600 dark:text-sky-400">
+                    <span class="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse"></span>
+                    <span>Tương tác vật lý</span>
+                </span>
+                <span>Rê chuột để đẩy sao như nam châm dưới nước</span>
             </div>
         </div>
     </aside>
@@ -1510,31 +1502,41 @@
                 name: 'Đại Hùng (Ursa Major - Bắc Đẩu)',
                 starInfo: 'Bộ đôi Merak & Dubhe • Cách Trái Đất ~124 năm ánh sáng',
                 concept: 'Định vị Cực Bắc: Kéo dài đoạn thẳng từ sao Merak qua Dubhe khoảng 5 lần sẽ gặp ngay Sao Bắc Đẩu (Polaris) nằm trên trục tự quay của Trái Đất. Đây là bài học định hướng thiên văn kinh điển trong Địa lý & Vật lý.',
-                quiz: {
-                    q: 'Hai ngôi sao nào ở thành gáo Bắc Đẩu chỉ thẳng đến Sao Bắc Đẩu (Polaris)?',
-                    options: ['Merak & Dubhe', 'Sirius & Vega', 'Betelgeuse & Rigel', 'Castor & Pollux'],
-                    correct: 0,
-                    explain: 'Đúng! Hai ngôi sao Merak và Dubhe được các nhà hàng hải gọi là "Ngôi sao chỉ đường" (The Pointers) để tìm Cực Bắc.'
-                },
-                center: [-15, 6],
+                center: [-11, 7],
                 stars: [
-                    [-3.2, 1.4], [-1.8, 1.2], [-0.4, 0.6], [0.8, -0.4],
+                    [-3.0, 1.2], [-1.6, 1.0], [-0.3, 0.5], [0.8, -0.4],
                     [2.2, -0.6], [3.2, 0.8], [1.8, 1.0]
                 ],
                 edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 3]]
+            },
+            {
+                id: 'cassiopeia',
+                name: 'Thiên Hậu (Cassiopeia)',
+                starInfo: 'Schedar & Caph • Khoảng cách ~228 năm ánh sáng',
+                concept: 'Chòm sao hình chữ W đặc trưng của bầu trời phương Bắc, cùng với chòm Đại Hùng là hai hoa tiêu tự nhiên tuyệt vời nhất để tìm Cực Bắc khi Bắc Đẩu bị khuất mây.',
+                center: [2, 8],
+                stars: [
+                    [-3.0, 0.4], [-1.5, -0.8], [0, 0.6], [1.6, -0.6], [3.1, 0.8]
+                ],
+                edges: [[0, 1], [1, 2], [2, 3], [3, 4]]
+            },
+            {
+                id: 'cygnus',
+                name: 'Thiên Nga (Cygnus - Northern Cross)',
+                starInfo: 'Deneb (Đỉnh Tam Giác Mùa Hè) • Cách ~2.600 năm ánh sáng',
+                concept: 'Lỗ đen vũ trụ Cygnus X-1: Nằm trong chòm sao Thiên Nga, là nguồn phát tia X cực mạnh và là lỗ đen đầu tiên được các nhà vật lý học xác nhận trong lịch sử.',
+                center: [-1, 0.5],
+                stars: [
+                    [0, 2.8], [0, 0.8], [0, -2.0], [-2.5, 0.8], [2.5, 0.8]
+                ],
+                edges: [[0, 1], [1, 2], [3, 1], [1, 4]]
             },
             {
                 id: 'orion',
                 name: 'Thợ Săn (Orion)',
                 starInfo: 'Betelgeuse & Rigel • Cách ~642 & 860 năm ánh sáng',
                 concept: 'Định luật bức xạ Wien: Betelgeuse phát màu cam đỏ do nhiệt độ bề mặt ~3.500K, còn Rigel sáng xanh lam rực rỡ với nhiệt độ trên 12.000K (λ_max tỉ lệ nghịch với T).',
-                quiz: {
-                    q: 'Tại sao sao Rigel có màu xanh lam còn Betelgeuse lại có màu cam đỏ?',
-                    options: ['Rigel có nhiệt độ bề mặt nóng hơn Betelgeuse rất nhiều', 'Betelgeuse chứa nhiều sắt hơn', 'Do Rigel ở gần Trái Đất hơn', 'Do ánh sáng bị tán xạ trong khí quyển'],
-                    correct: 0,
-                    explain: 'Chính xác! Theo định luật dịch chuyển Wien (λ_max * T = b), thiên thể càng nóng thì bước sóng phát xạ đỉnh càng ngắn (thiên về màu lam tím).'
-                },
-                center: [16, 5],
+                center: [19, 1],
                 stars: [
                     [-1.8, 2.4], [1.8, 2.2], // Betelgeuse (0), Bellatrix (1)
                     [-0.8, 0.2], [0, 0], [0.8, -0.2], // Vành đai Orion (2, 3, 4)
@@ -1544,34 +1546,11 @@
                 edges: [[0, 2], [1, 4], [2, 3], [3, 4], [2, 5], [4, 6], [1, 8], [8, 7], [7, 9]]
             },
             {
-                id: 'cassiopeia',
-                name: 'Thiên Hậu (Cassiopeia)',
-                starInfo: 'Schedar & Caph • Khoảng cách ~228 năm ánh sáng',
-                concept: 'Chòm sao hình chữ W đặc trưng của bầu trời phương Bắc, cùng với chòm Đại Hùng là hai hoa tiêu tự nhiên tuyệt vời nhất để tìm Cực Bắc khi Bắc Đẩu bị khuất mây.',
-                quiz: {
-                    q: 'Chòm sao Thiên Hậu có hình dạng chữ cái nổi tiếng nào trên bầu trời?',
-                    options: ['Chữ W (hoặc chữ M)', 'Chữ V', 'Chữ X', 'Chữ S'],
-                    correct: 0,
-                    explain: 'Chính xác! 5 ngôi sao sáng nhất của Thiên Hậu xếp thành hình chữ W rất dễ nhận diện trên bầu trời đêm phương Bắc.'
-                },
-                center: [0, 10],
-                stars: [
-                    [-3.0, 0.4], [-1.5, -0.8], [0, 0.6], [1.6, -0.6], [3.1, 0.8]
-                ],
-                edges: [[0, 1], [1, 2], [2, 3], [3, 4]]
-            },
-            {
                 id: 'leo',
                 name: 'Sư Tử (Leo)',
                 starInfo: 'Regulus (Alpha Leonis) • Cách ~79 năm ánh sáng',
                 concept: 'Lực quán tính ly tâm trong Vật lý: Ngôi sao Regulus tự quay quanh trục với vận tốc cực lớn ~317 km/s (chỉ 15.9 giờ/vòng), khiến hình dạng của nó bị phình dẹt ở xích đạo.',
-                quiz: {
-                    q: 'Tốc độ tự quay cực nhanh của sao Regulus gây ra hiện tượng vật lý nào?',
-                    options: ['Phình dẹt ở xích đạo do lực quán tính ly tâm', 'Bị kéo dài thành hình sợi', 'Tạo ra lỗ đen ở tâm', 'Làm sao nguội đi ngay lập tức'],
-                    correct: 0,
-                    explain: 'Chính xác! Lực quán tính ly tâm ở xích đạo cực mạnh làm bán kính xích đạo của Regulus lớn hơn 32% so với bán kính cực!'
-                },
-                center: [-17, -6],
+                center: [-16, -6],
                 stars: [
                     [-2.2, 0.8], [-1.2, 1.6], [-0.4, 2.4], [0.6, 2.8], [1.2, 2.2],
                     [0.8, 1.2], [-0.6, -0.2], [1.4, -0.6], [1.0, 0.6]
@@ -1583,13 +1562,7 @@
                 name: 'Bọ Cạp (Scorpius)',
                 starInfo: 'Antares (Siêu khổng lồ đỏ) • Cách ~550 năm ánh sáng',
                 concept: 'Tiến hóa sao & Phản ứng nhiệt hạch: Antares đã cạn kiệt Hydro ở lõi và chuyển sang phản ứng tổng hợp Heli, phình to gấp hơn 700 lần Mặt Trời.',
-                quiz: {
-                    q: 'Phản ứng hạt nhân nào sinh ra năng lượng chính thắp sáng các ngôi sao ở giai đoạn chính?',
-                    options: ['Nhiệt hạch tổng hợp Hydro thành Heli', 'Phân hạch Uranium', 'Cháy khí methane hóa học', 'Bức xạ sóng hấp dẫn'],
-                    correct: 0,
-                    explain: 'Chính xác! Nhiệt độ và áp suất cực cao nén 4 hạt nhân Hydro thành 1 hạt nhân Heli, giải phóng năng lượng khổng lồ theo E=mc²!'
-                },
-                center: [17, -7],
+                center: [15, -7],
                 stars: [
                     [-2.4, 1.8], [-1.8, 1.0], [-1.4, 0.2], [-0.6, -0.4],
                     [0.2, -1.0], [0.8, -1.8], [1.4, -2.6], [2.2, -2.8],
@@ -1602,13 +1575,7 @@
                 name: 'Kim Ngưu (Taurus & Cụm Pleiades)',
                 starInfo: 'Aldebaran & Cụm Pleiades • Cách ~65 & 444 năm ánh sáng',
                 concept: 'Vận tốc ánh sáng & Khoảng cách vũ trụ: Khi ngắm chòm Kim Ngưu, thực chất chúng ta đang nhìn thấy ánh sáng đã truyền đi từ hàng trăm năm trước (s = c * t).',
-                quiz: {
-                    q: 'Khoảng cách 1 năm ánh sáng biểu thị điều gì trong Vật lý?',
-                    options: ['Quãng đường ánh sáng truyền được trong 1 năm chân không (~9.460 tỷ km)', 'Thời gian ánh sáng đi từ Mặt Trời đến Trái Đất', 'Một chu kỳ quay của Mặt Trời', 'Độ sáng lớn nhất của một ngôi sao'],
-                    correct: 0,
-                    explain: 'Chính xác! Năm ánh sáng là đơn vị đo quãng đường: s = c * t ≈ (300.000 km/s) * (31.536.000 s) ≈ 9.46 * 10^12 km.'
-                },
-                center: [0, -8],
+                center: [-2, -7],
                 stars: [
                     [-1.8, 1.2], [-0.8, 0.4], [0, 0], [0.8, 0.4], [1.6, 1.0],
                     [-2.8, 2.2], [2.6, 2.4]
@@ -1616,34 +1583,11 @@
                 edges: [[0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [4, 6]]
             },
             {
-                id: 'cygnus',
-                name: 'Thiên Nga (Cygnus - Northern Cross)',
-                starInfo: 'Deneb (Đỉnh Tam Giác Mùa Hè) • Cách ~2.600 năm ánh sáng',
-                concept: 'Lỗ đen vũ trụ Cygnus X-1: Nằm trong chòm sao Thiên Nga, là nguồn phát tia X cực mạnh và là lỗ đen đầu tiên được các nhà vật lý học xác nhận trong lịch sử.',
-                quiz: {
-                    q: 'Thiên thể Cygnus X-1 trong chòm sao Thiên Nga nổi tiếng vì là:',
-                    options: ['Lỗ đen vũ trụ đầu tiên được các nhà khoa học xác nhận', 'Hành tinh có sự sống đầu tiên', 'Thiên thạch lớn nhất từng va vào Trái Đất', 'Vệ tinh nhân tạo đầu tiên'],
-                    correct: 0,
-                    explain: 'Chính xác! Được phát hiện năm 1964, Cygnus X-1 là bằng chứng lịch sử đầu tiên chứng minh sự tồn tại thực tế của lỗ đen vũ trụ!'
-                },
-                center: [-2, 1],
-                stars: [
-                    [0, 2.6], [0, 0.8], [0, -1.8], [-2.4, 0.8], [2.4, 0.8]
-                ],
-                edges: [[0, 1], [1, 2], [3, 1], [1, 4]]
-            },
-            {
                 id: 'gemini',
                 name: 'Song Tử (Gemini)',
                 starInfo: 'Castor & Pollux • Khoảng cách ~51 & 34 năm ánh sáng',
                 concept: 'Hệ đa sao & Định luật Kepler: Ngôi sao Castor thực chất không phải 1 ngôi sao đơn độc mà là hệ gồm 6 ngôi sao quay quanh khối tâm chung theo định luật hấp dẫn tương hỗ.',
-                quiz: {
-                    q: 'Dưới kính thiên văn quang phổ, ngôi sao Castor thực chất là một hệ gồm:',
-                    options: ['Hệ 6 ngôi sao liên kết hấp dẫn với nhau', '1 ngôi sao đơn độc duy nhất', 'Hệ 2 ngôi sao', 'Hệ hành tinh không có sao'],
-                    correct: 0,
-                    explain: 'Chính xác! Castor là một hệ 6 sao gồm 3 cặp sao đôi quay quanh nhau rất kỳ thú trong thiên văn học.'
-                },
-                center: [-19, 10],
+                center: [-19, 0.5],
                 stars: [
                     [-1.6, 2.0], [-0.4, 1.8], [-1.2, 0.4], [-0.2, 0.2],
                     [-0.8, -0.8], [-0.1, -1.0], [-1.5, -1.6], [0.3, -1.7]
@@ -1655,7 +1599,7 @@
         // Mảng các điểm sao & đường nối
         let allStars = [];
         let allEdges = [];
-        let activeConstellationIdx = 0;
+        let activeConstellationIdx = -1;
 
         // Trạm Giáo Dục (Educational Observatory HUD UI Logic)
         function toggleAstroHud(expanded) {
@@ -1666,7 +1610,7 @@
                     pill.classList.add('hidden');
                     card.classList.remove('hidden');
                     card.classList.add('view-fade-enter');
-                    renderQuizForConstellation(CONSTELLATIONS[activeConstellationIdx]);
+                    if (activeConstellationIdx === -1) updateAstroEduHUD(0);
                 } else {
                     card.classList.add('hidden');
                     pill.classList.remove('hidden');
@@ -1689,60 +1633,37 @@
             if (nameEl) nameEl.textContent = c.name;
             if (starEl) starEl.textContent = c.starInfo;
             if (conceptEl) conceptEl.textContent = c.concept;
-
-            renderQuizForConstellation(c);
         }
 
-        function renderQuizForConstellation(c) {
-            if (!c || !c.quiz) return;
-            const qEl = document.getElementById('astro-quiz-question');
-            const optBox = document.getElementById('astro-quiz-options');
-            const fbBox = document.getElementById('astro-quiz-feedback');
-            const statusEl = document.getElementById('astro-quiz-status');
-
-            if (qEl) qEl.textContent = c.quiz.q;
-            if (fbBox) {
-                fbBox.classList.add('hidden');
-                fbBox.textContent = '';
-            }
-            if (statusEl) statusEl.textContent = '1 câu trắc nghiệm';
-
-            if (optBox) {
-                optBox.innerHTML = '';
-                c.quiz.options.forEach((optText, optIdx) => {
-                    const btn = document.createElement('button');
-                    btn.className = 'p-2 rounded-xl border border-slate-200 dark:border-slate-700/80 hover:border-blue-500 bg-white/70 dark:bg-slate-800/70 text-slate-700 dark:text-slate-200 text-[10px] font-semibold text-left transition hover:scale-[1.02] cursor-pointer';
-                    btn.textContent = optText;
-                    btn.onclick = () => {
-                        const isCorrect = optIdx === c.quiz.correct;
-                        if (fbBox) {
-                            fbBox.classList.remove('hidden');
-                            fbBox.className = isCorrect
-                                ? 'p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200 text-[10px] leading-snug'
-                                : 'p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-[10px] leading-snug';
-                            fbBox.innerHTML = `<strong>${isCorrect ? '✨ Chính xác!' : '💡 Gợi ý:'}</strong> ${c.quiz.explain}`;
-                        }
-                        if (statusEl) statusEl.textContent = isCorrect ? 'Đúng +1 điểm' : 'Thử lại';
-                    };
-                    optBox.appendChild(btn);
-                });
-            }
-        }
-
-        // Tạo Sprite ngôi sao phát quang
+        // Tạo Sprite ngôi sao phát quang rõ nét (Rực rỡ, độ phân giải cao)
         function createStarSprite() {
             const canvas = document.createElement('canvas');
-            canvas.width = 64;
-            canvas.height = 64;
+            canvas.width = 128;
+            canvas.height = 128;
             const ctx = canvas.getContext('2d');
-            const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+            ctx.clearRect(0, 0, 128, 128);
+
+            // Quầng sáng phát quang lan tỏa (Glowing Aura)
+            const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
             grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
             grad.addColorStop(0.2, 'rgba(224, 242, 254, 0.95)');
-            grad.addColorStop(0.5, 'rgba(56, 189, 248, 0.45)');
-            grad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+            grad.addColorStop(0.45, 'rgba(56, 189, 248, 0.85)');
+            grad.addColorStop(0.75, 'rgba(14, 165, 233, 0.3)');
+            grad.addColorStop(1, 'rgba(14, 165, 233, 0)');
             ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, 64, 64);
-            return new THREE.CanvasTexture(canvas);
+            ctx.beginPath();
+            ctx.arc(64, 64, 64, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Tâm sao kim cương lấp lánh (Diamond Core)
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(64, 64, 14, 0, Math.PI * 2);
+            ctx.fill();
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            return texture;
         }
 
         // Khởi tạo toàn bộ chòm sao trên mặt phẳng Planar (Z ≈ 0)
@@ -1763,7 +1684,7 @@
                 c.stars.forEach(([sx, sy], sIdx) => {
                     const wx = c.center[0] + sx;
                     const wy = c.center[1] + sy;
-                    const wz = (Math.random() - 0.5) * 0.4; // Mặt phẳng phẳng tinh khiết z ≈ 0
+                    const wz = (Math.random() - 0.5) * 0.4; // Mặt phẳng phẳng z ≈ 0
 
                     allStars.push({
                         idx: globalStarIdx,
@@ -1783,7 +1704,7 @@
                 });
             });
 
-            // 1. Buffer các điểm sao
+            // 1. Buffer các điểm sao (Sáng rõ, kích thước lớn)
             const starGeo = new THREE.BufferGeometry();
             starPosArray = new Float32Array(allStars.length * 3);
             const starColArray = new Float32Array(allStars.length * 3);
@@ -1802,18 +1723,18 @@
             starGeo.setAttribute('color', new THREE.BufferAttribute(starColArray, 3));
 
             const starMat = new THREE.PointsMaterial({
-                size: isMobileDevice ? 0.75 : 0.95,
+                size: isMobileDevice ? 2.6 : 3.8,
                 map: starTexture,
                 vertexColors: true,
                 transparent: true,
-                opacity: 0.95,
-                blending: THREE.AdditiveBlending,
+                opacity: 1.0,
+                blending: THREE.NormalBlending,
                 depthWrite: false
             });
             majorStarsPoints = new THREE.Points(starGeo, starMat);
             constellationGroup.add(majorStarsPoints);
 
-            // 2. Buffer các đường nối chòm sao uốn lượn đàn hồi
+            // 2. Buffer các đường nối chòm sao uốn lượn đàn hồi (Nét sáng rõ)
             const lineGeo = new THREE.BufferGeometry();
             linePosArray = new Float32Array(allEdges.length * 2 * 3);
 
@@ -1836,8 +1757,9 @@
             const lineMat = new THREE.LineBasicMaterial({
                 color: isDarkMode ? 0x38bdf8 : 0x2563eb,
                 transparent: true,
-                opacity: isDarkMode ? 0.65 : 0.45,
-                blending: THREE.AdditiveBlending
+                opacity: isDarkMode ? 0.95 : 0.80,
+                blending: THREE.NormalBlending,
+                depthWrite: false
             });
             constellationLinesMesh = new THREE.LineSegments(lineGeo, lineMat);
             constellationGroup.add(constellationLinesMesh);
@@ -1847,7 +1769,7 @@
 
         // Bụi sao sinh vật phát quang nền (Ambient Bioluminescent Stardust)
         function buildBackgroundStardust(starTexture) {
-            const count = isMobileDevice ? 500 : 900;
+            const count = isMobileDevice ? 450 : 800;
             const geo = new THREE.BufferGeometry();
             const pos = new Float32Array(count * 3);
             const cols = new Float32Array(count * 3);
@@ -1857,9 +1779,9 @@
 
             for (let i = 0; i < count; i++) {
                 const i3 = i * 3;
-                pos[i3] = (Math.random() - 0.5) * 75;
-                pos[i3 + 1] = (Math.random() - 0.5) * 55;
-                pos[i3 + 2] = -5 - Math.random() * 20; // Nằm ở tầng sâu phía sau
+                pos[i3] = (Math.random() - 0.5) * 80;
+                pos[i3 + 1] = (Math.random() - 0.5) * 60;
+                pos[i3 + 2] = -4 - Math.random() * 16; // Tầng sâu phía sau
 
                 const c = i % 2 === 0 ? cCyan : cWhite;
                 cols[i3] = c.r;
@@ -1871,12 +1793,12 @@
             geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
 
             const mat = new THREE.PointsMaterial({
-                size: isMobileDevice ? 0.25 : 0.35,
+                size: isMobileDevice ? 1.0 : 1.4,
                 map: starTexture,
                 vertexColors: true,
                 transparent: true,
-                opacity: 0.65,
-                blending: THREE.AdditiveBlending,
+                opacity: 0.75,
+                blending: THREE.NormalBlending,
                 depthWrite: false
             });
 
@@ -1890,14 +1812,16 @@
             scene = new THREE.Scene();
 
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 0, isMobileDevice ? 38 : 30);
+            camera.position.set(0, 0, isMobileDevice ? 34 : 26);
+            camera.lookAt(0, 0, 0);
 
             renderer = new THREE.WebGLRenderer({
                 canvas: canvas,
                 alpha: true,
-                antialias: !isMobileDevice,
+                antialias: true,
                 powerPreference: 'high-performance'
             });
+            renderer.setClearColor(0x000000, 0);
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileDevice ? 1.5 : 2));
 
@@ -1950,8 +1874,8 @@
                 // Tính toán vận tốc dòng nước khi kéo/lướt ngón tay
                 const dx = clientX - lastScreenX;
                 const dy = clientY - lastScreenY;
-                fluidVx = dx * 0.045;
-                fluidVy = -dy * 0.045;
+                fluidVx = dx * 0.05;
+                fluidVy = -dy * 0.05;
                 lastScreenX = clientX;
                 lastScreenY = clientY;
 
@@ -1997,10 +1921,10 @@
             // =================================================================
             // VẬT LÝ DƯỚI NƯỚC: NAM CHÂM ĐẨY + LỰC CẢN NHỚT + ĐÀN HỒI KÉO VỀ
             // =================================================================
-            const repelRadius = isMobileDevice ? 6.2 : 8.6;
-            const repelPower = isMobileDevice ? 0.36 : 0.54;
+            const repelRadius = isMobileDevice ? 6.5 : 8.8;
+            const repelPower = isMobileDevice ? 0.38 : 0.58;
             const waterViscosity = 0.88; // Độ nhớt cản chuyển động như dưới nước
-            const springK = 0.042; // Lực đàn hồi kéo về vị trí gốc
+            const springK = 0.045; // Lực đàn hồi kéo về vị trí gốc
 
             let closestConstellationIdx = -1;
             let minConstellationDist = Infinity;
@@ -2036,7 +1960,7 @@
                     }
                 });
 
-                if (closestConstellationIdx !== -1 && minConstellationDist < 12.0) {
+                if (closestConstellationIdx !== -1 && minConstellationDist < 14.0) {
                     updateAstroEduHUD(closestConstellationIdx);
                 }
             }
@@ -2095,13 +2019,13 @@
 
             // Nhấp nháy nhẹ sao phát sáng
             if (majorStarsPoints && majorStarsPoints.material) {
-                majorStarsPoints.material.size = (isMobileDevice ? 0.75 : 0.95) * (1.0 + Math.sin(clock * 2.0) * 0.08);
+                majorStarsPoints.material.size = (isMobileDevice ? 2.6 : 3.8) * (1.0 + Math.sin(clock * 2.0) * 0.08);
             }
 
             // Camera lướt nhẹ theo cuộn trang
-            const targetCamY = (scrollProgressRatio - 0.5) * -12;
+            const targetCamY = (scrollProgressRatio - 0.5) * -6;
             camera.position.y += (targetCamY - camera.position.y) * 0.04;
-            camera.position.x += (pointerX * 2.0 - camera.position.x) * 0.03;
+            camera.position.x += (pointerX * 1.5 - camera.position.x) * 0.04;
 
             if (renderer && scene && camera) {
                 renderer.render(scene, camera);
