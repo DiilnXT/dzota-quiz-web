@@ -1378,8 +1378,8 @@
             isDarkMode = !isDarkMode;
             document.documentElement.classList.toggle('dark', isDarkMode);
             try { localStorage.setItem('dzota_theme', isDarkMode ? 'dark' : 'light'); } catch (e) {}
-            if (typeof updatePlexusTheme === 'function') {
-                updatePlexusTheme();
+            if (typeof updateSnowCrystalTheme === 'function') {
+                updateSnowCrystalTheme();
             }
         }
 
@@ -1408,16 +1408,14 @@
         document.querySelectorAll('.reveal-item').forEach(el => revealObserver.observe(el));
 
         // -----------------------------------------------------------------
-        // 8. ULTRA-PRO PLEXUS CONSTELLATION NETWORK & LIQUID MAGNETIC PHYSICS
-        //    - Dynamic Interconnected Plexus Web (Distance-based fading filaments)
-        //    - Translucent Geometric Facets (High-end 3D crystalline mesh)
-        //    - Living Data Pulses (Glowing energy signals traveling between nodes)
-        //    - Fluid Underwater Repulsion (Magnetic push, fluid drag & shockwaves)
-        //    - Pure 60fps Pre-allocated Buffer Geometry Architecture
+        // 8. 3D DELICATE SNOWFLAKE CRYSTALS & ICE PRISMS (TINH THỂ TUYẾT 3D)
+        //    - Cấu trúc tinh thể hoa tuyết 6 cánh (6-fold Dendritic Snowflake)
+        //    - Khối lăng kính băng pha lê 3D (Faceted Octahedral Ice Crystals)
+        //    - Kích thước nhỏ tinh xảo, phân bố sâu trong không gian 3D
+        //    - Xoay lộn 3 chiều (3D Tumbling & Fluttering in Air)
+        //    - Làn gió rẽ hoa tuyết & Nam châm đẩy mượt mà theo cử chỉ chuột / chạm
         // -----------------------------------------------------------------
-        let scene, camera, renderer, plexusGroup;
-        let nodesMesh, linesMesh, facetsMesh, pulsesMesh, backgroundStardust;
-        let nodePosArray, nodeColArray, linePosArray, lineColArray, facetPosArray, pulsePosArray;
+        let scene, camera, renderer, crystalGroup, backgroundFrost;
         let pointerX = 0, pointerY = 0;
         const isMobileDevice = window.innerWidth < 768;
 
@@ -1428,62 +1426,97 @@
         const mouseWorld = new THREE.Vector3(-999, -999, 0);
         let isMouseActive = false;
 
-        // Động học chất lỏng (Liquid current drag) & Sóng xung kích (Shockwaves)
+        // Động học gió (Aerodynamic wind current) & Vòng sóng tuyết (Frost Shockwaves)
         let lastScreenX = 0, lastScreenY = 0;
-        let fluidVx = 0, fluidVy = 0;
+        let windVx = 0, windVy = 0;
         let isPointerDown = false;
-        const ripples = []; // Các vòng sóng xung kích khi click/tap
+        const frostRipples = [];
 
-        // Thông số mạng lưới Plexus
-        const PLEXUS_CONFIG = {
-            nodeCount: isMobileDevice ? 70 : 130,
-            maxConnectDist: isMobileDevice ? 5.2 : 6.4,
-            maxLines: isMobileDevice ? 600 : 1400,
-            facetDist: isMobileDevice ? 3.8 : 4.6,
-            maxFacets: isMobileDevice ? 60 : 160,
-            pulseCount: isMobileDevice ? 10 : 20,
-            repelRadius: isMobileDevice ? 6.5 : 8.8,
-            repelPower: isMobileDevice ? 0.45 : 0.68,
-            waterViscosity: 0.89,
-            springK: 0.038
-        };
+        // Danh sách các thực thể tinh thể tuyết 3D
+        const crystalObjects = [];
+        const crystalMaterials = [];
 
-        const plexusNodes = [];
-        const plexusPulses = [];
-        let activeNeighbors = []; // Danh sách kề cho từng node phục vụ xung năng lượng
+        // 1. Tạo hình hoa tuyết 6 cánh nhánh cây (6-Fold Dendritic Snowflake Geometry)
+        function createDendriticSnowflakeGeometry() {
+            const pts = [];
+            for (let i = 0; i < 6; i++) {
+                const angle = (i * Math.PI) / 3;
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
 
-        // Tạo texture đốm sáng Node viền hào quang neon
-        function createPlexusNodeTexture() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 128;
-            canvas.height = 128;
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, 128, 128);
+                // Thân trục chính từ tâm ra đỉnh
+                pts.push(0, 0, 0, cos, sin, 0);
 
-            const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-            grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
-            grad.addColorStop(0.22, 'rgba(224, 242, 254, 0.98)');
-            grad.addColorStop(0.48, 'rgba(56, 189, 248, 0.85)');
-            grad.addColorStop(0.75, 'rgba(14, 165, 233, 0.28)');
-            grad.addColorStop(1, 'rgba(14, 165, 233, 0)');
-            ctx.fillStyle = grad;
-            ctx.beginPath();
-            ctx.arc(64, 64, 64, 0, Math.PI * 2);
-            ctx.fill();
+                // Nhánh phụ tầng trong (Inner branches)
+                const b1Pos = 0.45;
+                const b1Len = 0.30;
+                const bx1 = cos * b1Pos;
+                const by1 = sin * b1Pos;
+                const aL1 = angle + Math.PI / 3.6;
+                const aR1 = angle - Math.PI / 3.6;
+                pts.push(bx1, by1, 0, bx1 + Math.cos(aL1) * b1Len, by1 + Math.sin(aL1) * b1Len, 0);
+                pts.push(bx1, by1, 0, bx1 + Math.cos(aR1) * b1Len, by1 + Math.sin(aR1) * b1Len, 0);
 
-            // Lõi kim cương sáng chói
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.arc(64, 64, 18, 0, Math.PI * 2);
-            ctx.fill();
+                // Nhánh phụ tầng ngoài (Outer branches)
+                const b2Pos = 0.75;
+                const b2Len = 0.20;
+                const bx2 = cos * b2Pos;
+                const by2 = sin * b2Pos;
+                pts.push(bx2, by2, 0, bx2 + Math.cos(aL1) * b2Len, by2 + Math.sin(aL1) * b2Len, 0);
+                pts.push(bx2, by2, 0, bx2 + Math.cos(aR1) * b2Len, by2 + Math.sin(aR1) * b2Len, 0);
 
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.needsUpdate = true;
-            return texture;
+                // Vòng lục giác trung tâm (Center Hexagon Ring)
+                const nextAngle = ((i + 1) * Math.PI) / 3;
+                const rHex = 0.22;
+                pts.push(Math.cos(angle) * rHex, Math.sin(angle) * rHex, 0, Math.cos(nextAngle) * rHex, Math.sin(nextAngle) * rHex, 0);
+            }
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+            return geo;
         }
 
-        // Texture đốm xung năng lượng chạy dọc đường nối
-        function createPulseGlowTexture() {
+        // 2. Tạo hình hoa tuyết hình học sao băng (Stellar Plate Snowflake Geometry)
+        function createStellarSnowflakeGeometry() {
+            const pts = [];
+            for (let i = 0; i < 6; i++) {
+                const angle = (i * Math.PI) / 3;
+                const nextAngle = ((i + 1) * Math.PI) / 3;
+                const midAngle = angle + Math.PI / 6;
+
+                // 6 cánh sao dài
+                const rLong = 1.0;
+                const rShort = 0.42;
+
+                pts.push(0, 0, 0, Math.cos(angle) * rLong, Math.sin(angle) * rLong, 0);
+                pts.push(
+                    Math.cos(angle) * rLong, Math.sin(angle) * rLong, 0,
+                    Math.cos(midAngle) * rShort, Math.sin(midAngle) * rShort, 0
+                );
+                pts.push(
+                    Math.cos(midAngle) * rShort, Math.sin(midAngle) * rShort, 0,
+                    Math.cos(nextAngle) * rLong, Math.sin(nextAngle) * rLong, 0
+                );
+
+                // Thanh giằng hoa văn đối xứng
+                const rInner = 0.25;
+                pts.push(0, 0, 0, Math.cos(midAngle) * rShort, Math.sin(midAngle) * rShort, 0);
+                pts.push(
+                    Math.cos(angle) * rInner, Math.sin(angle) * rInner, 0,
+                    Math.cos(nextAngle) * rInner, Math.sin(nextAngle) * rInner, 0
+                );
+            }
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+            return geo;
+        }
+
+        // 3. Tạo hình lăng kính tinh thể tuyết 3D (3D Faceted Octahedral Ice Gem)
+        function createIcePrismGeometry() {
+            return new THREE.OctahedronGeometry(0.7, 0);
+        }
+
+        // Texture đốm hạt sương giá lấp lánh
+        function createFrostGlintTexture() {
             const canvas = document.createElement('canvas');
             canvas.width = 64;
             canvas.height = 64;
@@ -1491,9 +1524,9 @@
             ctx.clearRect(0, 0, 64, 64);
 
             const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-            grad.addColorStop(0, '#ffffff');
-            grad.addColorStop(0.35, 'rgba(125, 211, 252, 1)');
-            grad.addColorStop(0.7, 'rgba(56, 189, 248, 0.45)');
+            grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            grad.addColorStop(0.3, 'rgba(224, 242, 254, 0.9)');
+            grad.addColorStop(0.6, 'rgba(56, 189, 248, 0.4)');
             grad.addColorStop(1, 'rgba(56, 189, 248, 0)');
             ctx.fillStyle = grad;
             ctx.beginPath();
@@ -1505,190 +1538,143 @@
             return texture;
         }
 
-        // Cập nhật màu sắc Plexus khi đổi Dark / Light mode
-        function updatePlexusTheme() {
-            if (linesMesh && linesMesh.material) {
-                linesMesh.material.opacity = isDarkMode ? 0.95 : 0.85;
-            }
-            if (facetsMesh && facetsMesh.material) {
-                facetsMesh.material.color.setHex(isDarkMode ? 0x38bdf8 : 0x0284c7);
-                facetsMesh.material.opacity = isDarkMode ? 0.055 : 0.038;
-            }
-            if (nodesMesh && nodesMesh.material) {
-                nodesMesh.material.opacity = isDarkMode ? 1.0 : 0.92;
-            }
-            if (backgroundStardust && backgroundStardust.material) {
-                backgroundStardust.material.opacity = isDarkMode ? 0.70 : 0.45;
+        // Đổi màu vật liệu tinh thể tuyết khi chuyển đổi Dark/Light mode
+        function updateSnowCrystalTheme() {
+            crystalMaterials.forEach(mat => {
+                if (mat.type === 'LineBasicMaterial') {
+                    mat.color.setHex(isDarkMode ? 0xe0f2fe : 0x0284c7);
+                    mat.opacity = isDarkMode ? 0.90 : 0.78;
+                } else if (mat.type === 'MeshBasicMaterial') {
+                    mat.color.setHex(isDarkMode ? 0x38bdf8 : 0x0ea5e9);
+                    mat.opacity = isDarkMode ? 0.22 : 0.16;
+                }
+            });
+            if (backgroundFrost && backgroundFrost.material) {
+                backgroundFrost.material.color.setHex(isDarkMode ? 0xe0f2fe : 0x0284c7);
+                backgroundFrost.material.opacity = isDarkMode ? 0.75 : 0.50;
             }
         }
 
-        // Khởi tạo mạng lưới Plexus 3D
-        function buildPlexusNetwork(nodeTexture, pulseTexture) {
-            plexusGroup = new THREE.Group();
-            plexusNodes.length = 0;
-            plexusPulses.length = 0;
-            activeNeighbors = [];
+        // Khởi tạo các tinh thể tuyết 3D phân bố theo trường sâu
+        function build3DSnowCrystals() {
+            crystalGroup = new THREE.Group();
+            crystalObjects.length = 0;
+            crystalMaterials.length = 0;
 
-            const colCyan = new THREE.Color(0x38bdf8);
-            const colSky = new THREE.Color(0x0ea5e9);
-            const colWhite = new THREE.Color(0xffffff);
-            const colIndigo = new THREE.Color(0x818cf8);
+            const geoDendritic = createDendriticSnowflakeGeometry();
+            const geoStellar = createStellarSnowflakeGeometry();
+            const geoPrism = createIcePrismGeometry();
 
-            // 1. Phân bố các Nodes tự nhiên đều đặn
-            const spreadX = isMobileDevice ? 15 : 24;
-            const spreadY = isMobileDevice ? 20 : 14;
-
-            for (let i = 0; i < PLEXUS_CONFIG.nodeCount; i++) {
-                // Tạo tọa độ phân bố cân xứng tránh dồn cục
-                const ox = (Math.random() - 0.5) * spreadX * 2;
-                const oy = (Math.random() - 0.5) * spreadY * 2;
-                const oz = (Math.random() - 0.5) * 3.5;
-
-                const cRand = Math.random();
-                let nCol = colCyan;
-                if (cRand > 0.75) nCol = colWhite;
-                else if (cRand > 0.5) nCol = colSky;
-                else if (cRand > 0.3) nCol = colIndigo;
-
-                plexusNodes.push({
-                    idx: i,
-                    originX: ox, originY: oy, originZ: oz,
-                    x: ox, y: oy, z: oz,
-                    vx: 0, vy: 0, vz: 0,
-                    wanderAngle: Math.random() * Math.PI * 2,
-                    wanderSpeed: 0.008 + Math.random() * 0.014,
-                    wanderRadiusX: 0.6 + Math.random() * 1.2,
-                    wanderRadiusY: 0.5 + Math.random() * 1.0,
-                    phase: Math.random() * Math.PI * 2,
-                    color: nCol
-                });
-                activeNeighbors.push([]);
-            }
-
-            // Buffer các Nodes (Điểm mạng)
-            const nodeGeo = new THREE.BufferGeometry();
-            nodePosArray = new Float32Array(PLEXUS_CONFIG.nodeCount * 3);
-            nodeColArray = new Float32Array(PLEXUS_CONFIG.nodeCount * 3);
-
-            plexusNodes.forEach((n, i) => {
-                nodePosArray[i * 3] = n.x;
-                nodePosArray[i * 3 + 1] = n.y;
-                nodePosArray[i * 3 + 2] = n.z;
-
-                nodeColArray[i * 3] = n.color.r;
-                nodeColArray[i * 3 + 1] = n.color.g;
-                nodeColArray[i * 3 + 2] = n.color.b;
-            });
-
-            nodeGeo.setAttribute('position', new THREE.BufferAttribute(nodePosArray, 3));
-            nodeGeo.setAttribute('color', new THREE.BufferAttribute(nodeColArray, 3));
-
-            const nodeMat = new THREE.PointsMaterial({
-                size: isMobileDevice ? 3.0 : 4.4,
-                map: nodeTexture,
-                vertexColors: true,
+            // Vật liệu đường viền tuyết phát quang
+            const lineMatDark = new THREE.LineBasicMaterial({
+                color: isDarkMode ? 0xe0f2fe : 0x0284c7,
                 transparent: true,
-                opacity: 1.0,
-                blending: THREE.NormalBlending,
-                depthWrite: false
+                opacity: isDarkMode ? 0.90 : 0.78,
+                depthWrite: false,
+                blending: THREE.NormalBlending
             });
-            nodesMesh = new THREE.Points(nodeGeo, nodeMat);
-            plexusGroup.add(nodesMesh);
+            crystalMaterials.push(lineMatDark);
 
-            // 2. Buffer các Đường nối động (Dynamic Filament Lines)
-            const lineGeo = new THREE.BufferGeometry();
-            linePosArray = new Float32Array(PLEXUS_CONFIG.maxLines * 2 * 3);
-            lineColArray = new Float32Array(PLEXUS_CONFIG.maxLines * 2 * 3);
-
-            lineGeo.setAttribute('position', new THREE.BufferAttribute(linePosArray, 3));
-            lineGeo.setAttribute('color', new THREE.BufferAttribute(lineColArray, 3));
-
-            const lineMat = new THREE.LineBasicMaterial({
-                vertexColors: true,
+            // Vật liệu bề mặt lăng kính băng bán trong suốt
+            const prismMatDark = new THREE.MeshBasicMaterial({
+                color: isDarkMode ? 0x38bdf8 : 0x0ea5e9,
                 transparent: true,
-                opacity: isDarkMode ? 0.95 : 0.85,
-                blending: THREE.NormalBlending,
-                depthWrite: false
-            });
-            linesMesh = new THREE.LineSegments(lineGeo, lineMat);
-            plexusGroup.add(linesMesh);
-
-            // 3. Buffer các Mặt tam giác pha lê tinh thể (Translucent Facet Triangles)
-            const facetGeo = new THREE.BufferGeometry();
-            facetPosArray = new Float32Array(PLEXUS_CONFIG.maxFacets * 3 * 3);
-            facetGeo.setAttribute('position', new THREE.BufferAttribute(facetPosArray, 3));
-
-            const facetMat = new THREE.MeshBasicMaterial({
-                color: isDarkMode ? 0x38bdf8 : 0x0284c7,
-                transparent: true,
-                opacity: isDarkMode ? 0.055 : 0.038,
+                opacity: isDarkMode ? 0.22 : 0.16,
+                wireframe: false,
                 side: THREE.DoubleSide,
                 depthWrite: false,
                 blending: THREE.NormalBlending
             });
-            facetsMesh = new THREE.Mesh(facetGeo, facetMat);
-            plexusGroup.add(facetsMesh);
+            const prismWireMat = new THREE.LineBasicMaterial({
+                color: isDarkMode ? 0xffffff : 0x0284c7,
+                transparent: true,
+                opacity: isDarkMode ? 0.85 : 0.70,
+                depthWrite: false
+            });
+            crystalMaterials.push(prismMatDark, prismWireMat);
 
-            // 4. Các Xung tín hiệu tri thức di chuyển (Flowing Data Pulses)
-            for (let p = 0; p < PLEXUS_CONFIG.pulseCount; p++) {
-                plexusPulses.push({
-                    fromIdx: Math.floor(Math.random() * PLEXUS_CONFIG.nodeCount),
-                    toIdx: -1,
-                    progress: Math.random(),
-                    speed: 0.012 + Math.random() * 0.016,
-                    x: 0, y: 0, z: 0
+            const count = isMobileDevice ? 65 : 125;
+            const spreadX = isMobileDevice ? 16 : 24;
+            const spreadY = isMobileDevice ? 20 : 15;
+            const spreadZ = 28;
+
+            for (let i = 0; i < count; i++) {
+                const ox = (Math.random() - 0.5) * spreadX * 2;
+                const oy = (Math.random() - 0.5) * spreadY * 2;
+                const oz = -20 + Math.random() * spreadZ; // Độ sâu z từ -20 đến +8
+
+                const typeRand = Math.random();
+                let crystalMesh;
+
+                if (typeRand < 0.45) {
+                    // Dạng hoa tuyết 6 cánh Dendritic
+                    crystalMesh = new THREE.LineSegments(geoDendritic, lineMatDark);
+                } else if (typeRand < 0.80) {
+                    // Dạng hoa tuyết sao Stellar
+                    crystalMesh = new THREE.LineSegments(geoStellar, lineMatDark);
+                } else {
+                    // Dạng lăng kính băng 3D (Kim cương tinh thể tuyết)
+                    const meshGroup = new THREE.Group();
+                    const solid = new THREE.Mesh(geoPrism, prismMatDark);
+                    const wire = new THREE.LineSegments(new THREE.WireframeGeometry(geoPrism), prismWireMat);
+                    meshGroup.add(solid);
+                    meshGroup.add(wire);
+                    crystalMesh = meshGroup;
+                }
+
+                // Kích thước nhỏ nhắn, tinh tế ("nhỏ nhỏ", không choán màn hình)
+                const baseScale = isMobileDevice ? (0.20 + Math.random() * 0.22) : (0.26 + Math.random() * 0.28);
+                crystalMesh.scale.set(baseScale, baseScale, baseScale);
+
+                // Góc xoay 3D ngẫu nhiên ban đầu
+                const rx = Math.random() * Math.PI * 2;
+                const ry = Math.random() * Math.PI * 2;
+                const rz = Math.random() * Math.PI * 2;
+                crystalMesh.rotation.set(rx, ry, rz);
+
+                crystalMesh.position.set(ox, oy, oz);
+                crystalGroup.add(crystalMesh);
+
+                crystalObjects.push({
+                    mesh: crystalMesh,
+                    originX: ox, originY: oy, originZ: oz,
+                    x: ox, y: oy, z: oz,
+                    vx: 0, vy: 0, vz: 0,
+                    rotX: rx, rotY: ry, rotZ: rz,
+                    // Tốc độ lộn nhào 3D chậm rãi, thanh lịch
+                    vRotX: (Math.random() - 0.5) * 0.008,
+                    vRotY: (Math.random() - 0.5) * 0.010,
+                    vRotZ: (Math.random() - 0.5) * 0.006,
+                    phase: Math.random() * Math.PI * 2,
+                    floatSpeed: 0.006 + Math.random() * 0.008,
+                    wanderRadius: 0.4 + Math.random() * 0.8
                 });
             }
 
-            const pulseGeo = new THREE.BufferGeometry();
-            pulsePosArray = new Float32Array(PLEXUS_CONFIG.pulseCount * 3);
-            pulseGeo.setAttribute('position', new THREE.BufferAttribute(pulsePosArray, 3));
-
-            const pulseMat = new THREE.PointsMaterial({
-                size: isMobileDevice ? 4.2 : 5.8,
-                map: pulseTexture,
-                transparent: true,
-                opacity: 0.95,
-                blending: THREE.NormalBlending,
-                depthWrite: false
-            });
-            pulsesMesh = new THREE.Points(pulseGeo, pulseMat);
-            plexusGroup.add(pulsesMesh);
-
-            return plexusGroup;
+            return crystalGroup;
         }
 
-        // Bụi sao trường sâu đa tầng (Ambient Stardust Parallax)
-        function buildBackgroundStardust(starTexture) {
-            const count = isMobileDevice ? 320 : 600;
+        // Bụi sương tuyết lấp lánh tầng sâu (Twinkling Frost Stardust)
+        function buildFrostDust(glintTexture) {
+            const count = isMobileDevice ? 250 : 500;
             const geo = new THREE.BufferGeometry();
             const pos = new Float32Array(count * 3);
-            const cols = new Float32Array(count * 3);
-
-            const cCyan = new THREE.Color(0x38bdf8);
-            const cWhite = new THREE.Color(0xffffff);
 
             for (let i = 0; i < count; i++) {
                 const i3 = i * 3;
-                pos[i3] = (Math.random() - 0.5) * 80;
-                pos[i3 + 1] = (Math.random() - 0.5) * 60;
-                pos[i3 + 2] = -5 - Math.random() * 16;
-
-                const c = i % 2 === 0 ? cCyan : cWhite;
-                cols[i3] = c.r;
-                cols[i3 + 1] = c.g;
-                cols[i3 + 2] = c.b;
+                pos[i3] = (Math.random() - 0.5) * 75;
+                pos[i3 + 1] = (Math.random() - 0.5) * 55;
+                pos[i3 + 2] = -28 + Math.random() * 22; // Nằm ở tầng sâu
             }
 
             geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-            geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
 
             const mat = new THREE.PointsMaterial({
                 size: isMobileDevice ? 1.0 : 1.3,
-                map: starTexture,
-                vertexColors: true,
+                map: glintTexture,
+                color: isDarkMode ? 0xe0f2fe : 0x0284c7,
                 transparent: true,
-                opacity: isDarkMode ? 0.70 : 0.45,
+                opacity: isDarkMode ? 0.75 : 0.50,
                 blending: THREE.NormalBlending,
                 depthWrite: false
             });
@@ -1703,7 +1689,7 @@
             scene = new THREE.Scene();
 
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 0, isMobileDevice ? 32 : 25);
+            camera.position.set(0, 0, isMobileDevice ? 28 : 22);
             camera.lookAt(0, 0, 0);
 
             renderer = new THREE.WebGLRenderer({
@@ -1716,25 +1702,24 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileDevice ? 1.5 : 2));
 
-            const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.25);
             scene.add(ambientLight);
 
-            const nodeTexture = createPlexusNodeTexture();
-            const pulseTexture = createPulseGlowTexture();
+            const glintTexture = createFrostGlintTexture();
 
-            // 1. Khởi tạo Mạng lưới Plexus
-            const pGroup = buildPlexusNetwork(nodeTexture, pulseTexture);
-            scene.add(pGroup);
+            // 1. Khởi tạo các tinh thể tuyết 3D
+            const cGroup = build3DSnowCrystals();
+            scene.add(cGroup);
 
-            // 2. Bụi sao nền
-            backgroundStardust = buildBackgroundStardust(nodeTexture);
-            scene.add(backgroundStardust);
+            // 2. Bụi sương giá lấp lánh tầng sâu
+            backgroundFrost = buildFrostDust(glintTexture);
+            scene.add(backgroundFrost);
 
-            // Render khung hình đầu tiên tức thì
+            // Render khung hình đầu tiên
             renderer.render(scene, camera);
 
             // =================================================================
-            // VẬT LÝ NƯỚC & TỪ TRƯỜNG NAM CHÂM ĐẨY (INTERACTIVE FLUID REPULSION)
+            // VẬT LÝ LÀN GIÓ RẼ TUYẾT & TỪ TRƯỜNG NAM CHÂM ĐẨY 3D
             // =================================================================
             const updatePointerCoords = (clientX, clientY) => {
                 pointerX = (clientX / window.innerWidth) - 0.5;
@@ -1748,16 +1733,16 @@
                 isMouseActive = true;
             };
 
-            const triggerRippleWave = (worldX, worldY) => {
-                ripples.push({
+            const triggerFrostRipple = (worldX, worldY) => {
+                frostRipples.push({
                     x: worldX,
                     y: worldY,
                     radius: 0.2,
                     maxRadius: isMobileDevice ? 16 : 22,
-                    strength: isMobileDevice ? 0.48 : 0.65,
-                    speed: isMobileDevice ? 0.32 : 0.42
+                    strength: isMobileDevice ? 0.40 : 0.55,
+                    speed: isMobileDevice ? 0.30 : 0.40
                 });
-                if (ripples.length > 5) ripples.shift();
+                if (frostRipples.length > 5) frostRipples.shift();
             };
 
             const onPointerDown = (e) => {
@@ -1770,18 +1755,18 @@
                 lastScreenX = clientX;
                 lastScreenY = clientY;
                 updatePointerCoords(clientX, clientY);
-                triggerRippleWave(mouseWorld.x, mouseWorld.y);
+                triggerFrostRipple(mouseWorld.x, mouseWorld.y);
             };
 
             const onPointerMove = (e) => {
                 const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
                 const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
 
-                // Tính toán gia tốc dòng chảy khi di chuột hoặc quẹt ngón tay
+                // Tính toán gia tốc làn gió khi di chuột
                 const dx = clientX - lastScreenX;
                 const dy = clientY - lastScreenY;
-                fluidVx = dx * 0.055;
-                fluidVy = -dy * 0.055;
+                windVx = dx * 0.045;
+                windVy = -dy * 0.045;
                 lastScreenX = clientX;
                 lastScreenY = clientY;
 
@@ -1818,223 +1803,119 @@
         function animateScene() {
             requestAnimationFrame(animateScene);
 
-            clock += 0.016;
+            clock += 0.015;
 
-            // 1. Xử lý các vòng sóng xung kích (Shockwave Ripples)
-            for (let r = ripples.length - 1; r >= 0; r--) {
-                const rip = ripples[r];
+            // 1. Cập nhật các vòng sóng gió tuyết (Frost Ripples)
+            for (let r = frostRipples.length - 1; r >= 0; r--) {
+                const rip = frostRipples[r];
                 rip.radius += rip.speed;
                 if (rip.radius >= rip.maxRadius) {
-                    ripples.splice(r, 1);
+                    frostRipples.splice(r, 1);
                 }
             }
 
-            // 2. Vật lý tương tác nam châm đẩy & rẽ nước cho các Nodes
-            const nLen = plexusNodes.length;
-            for (let i = 0; i < nLen; i++) {
-                const n = plexusNodes[i];
+            // 2. Chuyển động lơ lửng & Xoay lộn 3D của các tinh thể tuyết
+            const repelRadius = isMobileDevice ? 6.0 : 8.0;
+            const repelPower = isMobileDevice ? 0.35 : 0.52;
+            const airViscosity = 0.90; // Lực cản không khí êm ái
+            const springK = 0.035;
 
-                // Lực đẩy từ trường nam châm của chuột
+            const cLen = crystalObjects.length;
+            for (let i = 0; i < cLen; i++) {
+                const c = crystalObjects[i];
+
+                // Lực đẩy từ trường chuột trong không gian 3D
                 if (isMouseActive) {
-                    const dx = n.x - mouseWorld.x;
-                    const dy = n.y - mouseWorld.y;
+                    const dx = c.x - mouseWorld.x;
+                    const dy = c.y - mouseWorld.y;
                     const dist = Math.hypot(dx, dy);
 
-                    if (dist < PLEXUS_CONFIG.repelRadius && dist > 0.01) {
-                        const force = Math.pow(1 - dist / PLEXUS_CONFIG.repelRadius, 1.4) * PLEXUS_CONFIG.repelPower;
+                    if (dist < repelRadius && dist > 0.01) {
+                        const force = Math.pow(1 - dist / repelRadius, 1.4) * repelPower;
                         const angle = Math.atan2(dy, dx);
-                        n.vx += Math.cos(angle) * force;
-                        n.vy += Math.sin(angle) * force;
-                        n.vz += (Math.random() - 0.5) * force * 0.3;
+                        c.vx += Math.cos(angle) * force;
+                        c.vy += Math.sin(angle) * force;
+                        c.vz += (Math.random() - 0.5) * force * 0.6; // Đẩy bay nhẹ theo trục z
 
-                        // Cuốn theo dòng chảy khi rê nhanh
-                        n.vx += fluidVx * (1 - dist / PLEXUS_CONFIG.repelRadius) * 0.45;
-                        n.vy += fluidVy * (1 - dist / PLEXUS_CONFIG.repelRadius) * 0.45;
+                        // Cuốn theo luồng gió khi rê chuột nhanh
+                        c.vx += windVx * (1 - dist / repelRadius) * 0.40;
+                        c.vy += windVy * (1 - dist / repelRadius) * 0.40;
+
+                        // Tăng tốc độ xoay khi bị gió thổi vào
+                        c.vRotX += (Math.random() - 0.5) * 0.04;
+                        c.vRotY += (Math.random() - 0.5) * 0.05;
                     }
                 }
 
-                // Tác động từ các vòng sóng xung kích (Ripples)
-                for (let r = 0; r < ripples.length; r++) {
-                    const rip = ripples[r];
-                    const rdx = n.x - rip.x;
-                    const rdy = n.y - rip.y;
+                // Tác động từ các vòng sóng gió tuyết (Ripples)
+                for (let r = 0; r < frostRipples.length; r++) {
+                    const rip = frostRipples[r];
+                    const rdx = c.x - rip.x;
+                    const rdy = c.y - rip.y;
                     const rDist = Math.hypot(rdx, rdy);
                     const diff = Math.abs(rDist - rip.radius);
 
-                    if (diff < 2.2) {
-                        const ripFactor = (1 - diff / 2.2) * rip.strength * (1 - rip.radius / rip.maxRadius);
+                    if (diff < 2.0) {
+                        const ripFactor = (1 - diff / 2.0) * rip.strength * (1 - rip.radius / rip.maxRadius);
                         const rAngle = Math.atan2(rdy, rdx);
-                        n.vx += Math.cos(rAngle) * ripFactor;
-                        n.vy += Math.sin(rAngle) * ripFactor;
+                        c.vx += Math.cos(rAngle) * ripFactor;
+                        c.vy += Math.sin(rAngle) * ripFactor;
+                        c.vRotZ += ripFactor * 0.12;
                     }
                 }
 
-                // Chuyển động lững lờ tự nhiên (Organic Harmonic Breathing)
-                n.wanderAngle += n.wanderSpeed;
-                const targetX = n.originX + Math.sin(n.wanderAngle + n.phase) * n.wanderRadiusX;
-                const targetY = n.originY + Math.cos(n.wanderAngle * 0.8 + n.phase) * n.wanderRadiusY;
-                const targetZ = n.originZ + Math.sin(clock * 1.5 + n.phase) * 0.4;
+                // Chuyển động trôi lững lờ tự nhiên (Natural Harmonic Float)
+                const driftX = Math.sin(clock * c.floatSpeed * 60 + c.phase) * c.wanderRadius;
+                const driftY = Math.cos(clock * c.floatSpeed * 50 + c.phase) * c.wanderRadius;
+                const driftZ = Math.sin(clock * c.floatSpeed * 40 + c.phase) * 0.5;
+
+                const targetX = c.originX + driftX;
+                const targetY = c.originY + driftY;
+                const targetZ = c.originZ + driftZ;
 
                 // Lực đàn hồi kéo về vị trí cân bằng
-                n.vx += (targetX - n.x) * PLEXUS_CONFIG.springK;
-                n.vy += (targetY - n.y) * PLEXUS_CONFIG.springK;
-                n.vz += (targetZ - n.z) * PLEXUS_CONFIG.springK;
+                c.vx += (targetX - c.x) * springK;
+                c.vy += (targetY - c.y) * springK;
+                c.vz += (targetZ - c.z) * springK;
 
-                // Lực cản nhớt như trong môi trường nước
-                n.vx *= PLEXUS_CONFIG.waterViscosity;
-                n.vy *= PLEXUS_CONFIG.waterViscosity;
-                n.vz *= PLEXUS_CONFIG.waterViscosity;
+                // Cản không khí êm ái
+                c.vx *= airViscosity;
+                c.vy *= airViscosity;
+                c.vz *= airViscosity;
 
-                n.x += n.vx;
-                n.y += n.vy;
-                n.z += n.vz;
+                c.x += c.vx;
+                c.y += c.vy;
+                c.z += c.vz;
 
-                nodePosArray[i * 3] = n.x;
-                nodePosArray[i * 3 + 1] = n.y;
-                nodePosArray[i * 3 + 2] = n.z;
+                // Cập nhật góc xoay 3D (3D Tumbling)
+                c.rotX += c.vRotX;
+                c.rotY += c.vRotY;
+                c.rotZ += c.vRotZ;
 
-                activeNeighbors[i] = [];
+                // Giảm dần tốc độ xoay về mức xoay tự nhiên ban đầu
+                c.vRotX *= 0.95;
+                c.vRotY *= 0.95;
+                c.vRotZ *= 0.95;
+
+                // Áp dụng tọa độ và góc xoay vào mesh Three.js
+                c.mesh.position.set(c.x, c.y, c.z);
+                c.mesh.rotation.set(c.rotX, c.rotY, c.rotZ);
             }
 
-            nodesMesh.geometry.attributes.position.needsUpdate = true;
+            // Tiêu hao dần vận tốc gió
+            windVx *= 0.90;
+            windVy *= 0.90;
 
-            // Giảm dần vận tốc dòng nước
-            fluidVx *= 0.90;
-            fluidVy *= 0.90;
-
-            // 3. Tính toán các đường nối Plexus và Mặt tinh thể pha lê động
-            let lineIdx = 0;
-            let facetIdx = 0;
-            const maxConnectDist = PLEXUS_CONFIG.maxConnectDist;
-            const facetDist = PLEXUS_CONFIG.facetDist;
-
-            for (let i = 0; i < nLen; i++) {
-                const ni = plexusNodes[i];
-                for (let j = i + 1; j < nLen; j++) {
-                    const nj = plexusNodes[j];
-                    const dx = ni.x - nj.x;
-                    const dy = ni.y - nj.y;
-                    const dz = ni.z - nj.z;
-                    const dist = Math.hypot(dx, dy, dz);
-
-                    if (dist < maxConnectDist && lineIdx < PLEXUS_CONFIG.maxLines) {
-                        activeNeighbors[i].push(j);
-                        activeNeighbors[j].push(i);
-
-                        // Độ sáng đường nối tỉ lệ nghịch với khoảng cách (tạo chiều sâu mượt mà)
-                        const t = 1 - (dist / maxConnectDist);
-                        const alpha = Math.pow(t, 1.3);
-
-                        // Điểm 1
-                        linePosArray[lineIdx * 6] = ni.x;
-                        linePosArray[lineIdx * 6 + 1] = ni.y;
-                        linePosArray[lineIdx * 6 + 2] = ni.z;
-
-                        // Điểm 2
-                        linePosArray[lineIdx * 6 + 3] = nj.x;
-                        linePosArray[lineIdx * 6 + 4] = nj.y;
-                        linePosArray[lineIdx * 6 + 5] = nj.z;
-
-                        if (isDarkMode) {
-                            // Dark Mode: Cyan điện quang chuyển dần sang xanh neon
-                            lineColArray[lineIdx * 6] = 0.22 * alpha;
-                            lineColArray[lineIdx * 6 + 1] = 0.74 * alpha;
-                            lineColArray[lineIdx * 6 + 2] = 0.98 * alpha;
-
-                            lineColArray[lineIdx * 6 + 3] = 0.22 * alpha;
-                            lineColArray[lineIdx * 6 + 4] = 0.74 * alpha;
-                            lineColArray[lineIdx * 6 + 5] = 0.98 * alpha;
-                        } else {
-                            // Light Mode: Màu lam ngọc / sapphire sắc sảo
-                            lineColArray[lineIdx * 6] = 0.08 * alpha;
-                            lineColArray[lineIdx * 6 + 1] = 0.45 * alpha;
-                            lineColArray[lineIdx * 6 + 2] = 0.88 * alpha;
-
-                            lineColArray[lineIdx * 6 + 3] = 0.08 * alpha;
-                            lineColArray[lineIdx * 6 + 4] = 0.45 * alpha;
-                            lineColArray[lineIdx * 6 + 5] = 0.88 * alpha;
-                        }
-
-                        lineIdx++;
-
-                        // Kiểm tra tạo mặt tam giác tinh thể nếu 3 điểm gần nhau
-                        if (dist < facetDist && facetIdx < PLEXUS_CONFIG.maxFacets) {
-                            for (let k = j + 1; k < nLen; k++) {
-                                const nk = plexusNodes[k];
-                                const djk = Math.hypot(nj.x - nk.x, nj.y - nk.y, nj.z - nk.z);
-                                const dik = Math.hypot(ni.x - nk.x, ni.y - nk.y, ni.z - nk.z);
-
-                                if (djk < facetDist && dik < facetDist) {
-                                    const f9 = facetIdx * 9;
-                                    facetPosArray[f9] = ni.x; facetPosArray[f9 + 1] = ni.y; facetPosArray[f9 + 2] = ni.z;
-                                    facetPosArray[f9 + 3] = nj.x; facetPosArray[f9 + 4] = nj.y; facetPosArray[f9 + 5] = nj.z;
-                                    facetPosArray[f9 + 6] = nk.x; facetPosArray[f9 + 7] = nk.y; facetPosArray[f9 + 8] = nk.z;
-                                    facetIdx++;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
+            // Xoay nhẹ bụi sương nền
+            if (backgroundFrost) {
+                backgroundFrost.rotation.y = clock * 0.015;
             }
 
-            linesMesh.geometry.setDrawRange(0, lineIdx * 2);
-            linesMesh.geometry.attributes.position.needsUpdate = true;
-            linesMesh.geometry.attributes.color.needsUpdate = true;
-
-            facetsMesh.geometry.setDrawRange(0, facetIdx * 3);
-            facetsMesh.geometry.attributes.position.needsUpdate = true;
-
-            // 4. Cập nhật các Xung tín hiệu năng lượng (Data Pulses)
-            for (let p = 0; p < PLEXUS_CONFIG.pulseCount; p++) {
-                const pulse = plexusPulses[p];
-                const fromNode = plexusNodes[pulse.fromIdx];
-
-                if (pulse.toIdx < 0 || pulse.progress >= 1.0) {
-                    pulse.progress = 0;
-                    const neighbors = activeNeighbors[pulse.fromIdx];
-                    if (neighbors && neighbors.length > 0) {
-                        pulse.toIdx = neighbors[Math.floor(Math.random() * neighbors.length)];
-                    } else {
-                        pulse.fromIdx = Math.floor(Math.random() * nLen);
-                        pulse.toIdx = -1;
-                    }
-                }
-
-                if (pulse.toIdx >= 0 && pulse.toIdx < nLen) {
-                    const toNode = plexusNodes[pulse.toIdx];
-                    pulse.progress += pulse.speed;
-                    const prog = Math.min(pulse.progress, 1.0);
-
-                    pulse.x = fromNode.x + (toNode.x - fromNode.x) * prog;
-                    pulse.y = fromNode.y + (toNode.y - fromNode.y) * prog;
-                    pulse.z = fromNode.z + (toNode.z - fromNode.z) * prog;
-
-                    if (prog >= 1.0) {
-                        pulse.fromIdx = pulse.toIdx;
-                        pulse.toIdx = -1;
-                    }
-                } else {
-                    pulse.x = fromNode.x;
-                    pulse.y = fromNode.y;
-                    pulse.z = fromNode.z;
-                }
-
-                pulsePosArray[p * 3] = pulse.x;
-                pulsePosArray[p * 3 + 1] = pulse.y;
-                pulsePosArray[p * 3 + 2] = pulse.z;
-            }
-            pulsesMesh.geometry.attributes.position.needsUpdate = true;
-
-            // Nhấp nháy nhẹ kích thước các Nodes
-            if (nodesMesh && nodesMesh.material) {
-                nodesMesh.material.size = (isMobileDevice ? 3.0 : 4.4) * (1.0 + Math.sin(clock * 2.2) * 0.08);
-            }
-
-            // Camera lướt nhẹ theo cuộn trang
-            const targetCamY = (scrollProgressRatio - 0.5) * -6;
+            // Hiệu ứng Parallax 3D camera theo chuột và cuộn trang
+            const targetCamY = (scrollProgressRatio - 0.5) * -6 - pointerY * 2.0;
+            const targetCamX = pointerX * 2.6;
             camera.position.y += (targetCamY - camera.position.y) * 0.04;
-            camera.position.x += (pointerX * 1.5 - camera.position.x) * 0.04;
+            camera.position.x += (targetCamX - camera.position.x) * 0.04;
 
             if (renderer && scene && camera) {
                 renderer.render(scene, camera);
