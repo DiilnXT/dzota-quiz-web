@@ -233,67 +233,6 @@
     <canvas id="webgl-canvas"></canvas>
     <div class="ambient-sky"></div>
 
-    <!-- Interactive Educational Celestial Observatory HUD (Trạm Khám Phá Thiên Văn & Vật Lý) -->
-    <aside id="astro-edu-hud" class="fixed bottom-4 right-4 z-40 max-w-sm w-[92vw] sm:w-88 pointer-events-auto transition-all duration-300">
-        <!-- Collapsed Pill Badge -->
-        <div id="astro-hud-pill" onclick="toggleAstroHud(true)" class="glass-card flex items-center justify-between px-3.5 py-2 rounded-2xl shadow-xl cursor-pointer hover:border-blue-500/50 transition group">
-            <div class="flex items-center gap-2.5">
-                <div class="w-7 h-7 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white text-xs shadow-md shadow-blue-500/25 group-hover:scale-110 transition">
-                    🔭
-                </div>
-                <div>
-                    <div class="text-[11px] font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                        <span id="astro-pill-title">Đài Khám Phá Thiên Văn</span>
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                    </div>
-                    <div class="text-[10px] text-slate-500 dark:text-slate-400">Rê chuột/chạm đẩy chòm sao dưới nước</div>
-                </div>
-            </div>
-            <button class="text-slate-400 hover:text-blue-500 text-xs px-1">
-                <i data-lucide="chevron-up" class="w-4 h-4"></i>
-            </button>
-        </div>
-
-        <!-- Expanded Educational Card -->
-        <div id="astro-hud-card" class="hidden glass-card rounded-3xl p-4 shadow-2xl space-y-3 border border-white/50 dark:border-slate-700/60 backdrop-blur-xl">
-            <div class="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800/80 pb-2">
-                <div class="flex items-center gap-2">
-                    <span class="text-base">🌌</span>
-                    <div>
-                        <h4 id="astro-hud-name" class="font-black text-xs sm:text-sm text-slate-900 dark:text-white leading-tight">
-                            Đại Hùng (Ursa Major)
-                        </h4>
-                        <div id="astro-hud-star" class="text-[10px] text-blue-600 dark:text-sky-400 font-semibold">
-                            Sao Dubhe & Merak • ~124 năm ánh sáng
-                        </div>
-                    </div>
-                </div>
-                <button onclick="toggleAstroHud(false)" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg">
-                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
-                </button>
-            </div>
-
-            <!-- Physics / Astronomy Concept -->
-            <div class="p-2.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/40 text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed space-y-1">
-                <div class="flex items-center gap-1 text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">
-                    <span>🔬 Kiến thức Vật lý & Thiên văn:</span>
-                </div>
-                <p id="astro-hud-concept" class="text-[11px]">
-                    Kéo dài đường nối 2 ngôi sao Merak và Dubhe gấp 5 lần sẽ tìm thấy Sao Bắc Đẩu (Polaris), mấu chốt định vị thiên văn hàng thế kỷ qua.
-                </p>
-            </div>
-
-            <!-- Interactive Floating Note -->
-            <div class="pt-2 border-t border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
-                <span class="flex items-center gap-1.5 font-bold text-sky-600 dark:text-sky-400">
-                    <span class="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse"></span>
-                    <span>Tương tác vật lý</span>
-                </span>
-                <span>Rê chuột để đẩy sao như nam châm dưới nước</span>
-            </div>
-        </div>
-    </aside>
-
     <!-- Fallback SVG Definition (Used if external image fails) -->
     <svg class="hidden" aria-hidden="true">
         <defs>
@@ -1133,6 +1072,10 @@
         // 3. RELIABLE VIEW SWITCHER (LANDING <-> LOGIN <-> DASHBOARD)
         // -----------------------------------------------------------------
         let currentView = 'landing';
+        let pulseBoost = 1;
+        function triggerTransitionPulse() {
+            pulseBoost = 2.5;
+        }
 
         function switchView(targetView, loginTab = null, pushHistory = true) {
             const landingEl = document.getElementById('landing-view');
@@ -1473,14 +1416,12 @@
         //    - Chòm sao phân bố phẳng (Planar Celestial Chart)
         //    - Vật lý đẩy đồ dưới nước & Nam châm đẩy ra khi rê chuột (Magnetic Fluid Repulsion)
         //    - Co giãn đàn hồi đường nối chòm sao (Elastic Constellation Filaments)
-        //    - Tích hợp Trạm Giáo Dục Thiên Văn & Vật Lý học (Educational Astro-Physics Station)
         //    - Không gắn nhãn chữ trực tiếp lên sao (Clean & Aesthetic)
         // -----------------------------------------------------------------
         let scene, camera, renderer, constellationGroup;
         let constellationLinesMesh, majorStarsPoints, backgroundPoints;
         let starPosArray, linePosArray;
         let pointerX = 0, pointerY = 0;
-        let pulseBoost = 1;
         const isMobileDevice = window.innerWidth < 768;
 
         // Tọa độ chuột trong không gian 3D trên mặt phẳng z = 0
@@ -1495,13 +1436,11 @@
         let fluidVx = 0, fluidVy = 0;
         let isPointerDown = false;
 
-        // DỮ LIỆU CÁC CHÒM SAO & BÀI HỌC VẬT LÝ / THIÊN VĂN HỌC (Educational Astro-Physics)
+        // DỮ LIỆU CÁC CHÒM SAO THIÊN VĂN PHẲNG (Planar Celestial Atlas)
         const CONSTELLATIONS = [
             {
                 id: 'ursa_major',
                 name: 'Đại Hùng (Ursa Major - Bắc Đẩu)',
-                starInfo: 'Bộ đôi Merak & Dubhe • Cách Trái Đất ~124 năm ánh sáng',
-                concept: 'Định vị Cực Bắc: Kéo dài đoạn thẳng từ sao Merak qua Dubhe khoảng 5 lần sẽ gặp ngay Sao Bắc Đẩu (Polaris) nằm trên trục tự quay của Trái Đất. Đây là bài học định hướng thiên văn kinh điển trong Địa lý & Vật lý.',
                 center: [-11, 7],
                 stars: [
                     [-3.0, 1.2], [-1.6, 1.0], [-0.3, 0.5], [0.8, -0.4],
@@ -1512,8 +1451,6 @@
             {
                 id: 'cassiopeia',
                 name: 'Thiên Hậu (Cassiopeia)',
-                starInfo: 'Schedar & Caph • Khoảng cách ~228 năm ánh sáng',
-                concept: 'Chòm sao hình chữ W đặc trưng của bầu trời phương Bắc, cùng với chòm Đại Hùng là hai hoa tiêu tự nhiên tuyệt vời nhất để tìm Cực Bắc khi Bắc Đẩu bị khuất mây.',
                 center: [2, 8],
                 stars: [
                     [-3.0, 0.4], [-1.5, -0.8], [0, 0.6], [1.6, -0.6], [3.1, 0.8]
@@ -1523,8 +1460,6 @@
             {
                 id: 'cygnus',
                 name: 'Thiên Nga (Cygnus - Northern Cross)',
-                starInfo: 'Deneb (Đỉnh Tam Giác Mùa Hè) • Cách ~2.600 năm ánh sáng',
-                concept: 'Lỗ đen vũ trụ Cygnus X-1: Nằm trong chòm sao Thiên Nga, là nguồn phát tia X cực mạnh và là lỗ đen đầu tiên được các nhà vật lý học xác nhận trong lịch sử.',
                 center: [-1, 0.5],
                 stars: [
                     [0, 2.8], [0, 0.8], [0, -2.0], [-2.5, 0.8], [2.5, 0.8]
@@ -1534,8 +1469,6 @@
             {
                 id: 'orion',
                 name: 'Thợ Săn (Orion)',
-                starInfo: 'Betelgeuse & Rigel • Cách ~642 & 860 năm ánh sáng',
-                concept: 'Định luật bức xạ Wien: Betelgeuse phát màu cam đỏ do nhiệt độ bề mặt ~3.500K, còn Rigel sáng xanh lam rực rỡ với nhiệt độ trên 12.000K (λ_max tỉ lệ nghịch với T).',
                 center: [19, 1],
                 stars: [
                     [-1.8, 2.4], [1.8, 2.2], // Betelgeuse (0), Bellatrix (1)
@@ -1548,8 +1481,6 @@
             {
                 id: 'leo',
                 name: 'Sư Tử (Leo)',
-                starInfo: 'Regulus (Alpha Leonis) • Cách ~79 năm ánh sáng',
-                concept: 'Lực quán tính ly tâm trong Vật lý: Ngôi sao Regulus tự quay quanh trục với vận tốc cực lớn ~317 km/s (chỉ 15.9 giờ/vòng), khiến hình dạng của nó bị phình dẹt ở xích đạo.',
                 center: [-16, -6],
                 stars: [
                     [-2.2, 0.8], [-1.2, 1.6], [-0.4, 2.4], [0.6, 2.8], [1.2, 2.2],
@@ -1560,8 +1491,6 @@
             {
                 id: 'scorpius',
                 name: 'Bọ Cạp (Scorpius)',
-                starInfo: 'Antares (Siêu khổng lồ đỏ) • Cách ~550 năm ánh sáng',
-                concept: 'Tiến hóa sao & Phản ứng nhiệt hạch: Antares đã cạn kiệt Hydro ở lõi và chuyển sang phản ứng tổng hợp Heli, phình to gấp hơn 700 lần Mặt Trời.',
                 center: [15, -7],
                 stars: [
                     [-2.4, 1.8], [-1.8, 1.0], [-1.4, 0.2], [-0.6, -0.4],
@@ -1573,8 +1502,6 @@
             {
                 id: 'taurus',
                 name: 'Kim Ngưu (Taurus & Cụm Pleiades)',
-                starInfo: 'Aldebaran & Cụm Pleiades • Cách ~65 & 444 năm ánh sáng',
-                concept: 'Vận tốc ánh sáng & Khoảng cách vũ trụ: Khi ngắm chòm Kim Ngưu, thực chất chúng ta đang nhìn thấy ánh sáng đã truyền đi từ hàng trăm năm trước (s = c * t).',
                 center: [-2, -7],
                 stars: [
                     [-1.8, 1.2], [-0.8, 0.4], [0, 0], [0.8, 0.4], [1.6, 1.0],
@@ -1585,8 +1512,6 @@
             {
                 id: 'gemini',
                 name: 'Song Tử (Gemini)',
-                starInfo: 'Castor & Pollux • Khoảng cách ~51 & 34 năm ánh sáng',
-                concept: 'Hệ đa sao & Định luật Kepler: Ngôi sao Castor thực chất không phải 1 ngôi sao đơn độc mà là hệ gồm 6 ngôi sao quay quanh khối tâm chung theo định luật hấp dẫn tương hỗ.',
                 center: [-19, 0.5],
                 stars: [
                     [-1.6, 2.0], [-0.4, 1.8], [-1.2, 0.4], [-0.2, 0.2],
@@ -1599,41 +1524,6 @@
         // Mảng các điểm sao & đường nối
         let allStars = [];
         let allEdges = [];
-        let activeConstellationIdx = -1;
-
-        // Trạm Giáo Dục (Educational Observatory HUD UI Logic)
-        function toggleAstroHud(expanded) {
-            const pill = document.getElementById('astro-hud-pill');
-            const card = document.getElementById('astro-hud-card');
-            if (pill && card) {
-                if (expanded) {
-                    pill.classList.add('hidden');
-                    card.classList.remove('hidden');
-                    card.classList.add('view-fade-enter');
-                    if (activeConstellationIdx === -1) updateAstroEduHUD(0);
-                } else {
-                    card.classList.add('hidden');
-                    pill.classList.remove('hidden');
-                }
-            }
-        }
-
-        function updateAstroEduHUD(constellationIdx) {
-            if (activeConstellationIdx === constellationIdx) return;
-            activeConstellationIdx = constellationIdx;
-            const c = CONSTELLATIONS[constellationIdx];
-            if (!c) return;
-
-            const pillTitle = document.getElementById('astro-pill-title');
-            const nameEl = document.getElementById('astro-hud-name');
-            const starEl = document.getElementById('astro-hud-star');
-            const conceptEl = document.getElementById('astro-hud-concept');
-
-            if (pillTitle) pillTitle.textContent = `Khám phá: ${c.name}`;
-            if (nameEl) nameEl.textContent = c.name;
-            if (starEl) starEl.textContent = c.starInfo;
-            if (conceptEl) conceptEl.textContent = c.concept;
-        }
 
         // Tạo Sprite ngôi sao phát quang rõ nét (Rực rỡ, độ phân giải cao)
         function createStarSprite() {
@@ -1648,7 +1538,7 @@
             grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
             grad.addColorStop(0.2, 'rgba(224, 242, 254, 0.95)');
             grad.addColorStop(0.45, 'rgba(56, 189, 248, 0.85)');
-            grad.addColorStop(0.75, 'rgba(14, 165, 233, 0.3)');
+            grad.addColorStop(0.75, 'rgba(14, 165, 233, 0.35)');
             grad.addColorStop(1, 'rgba(14, 165, 233, 0)');
             ctx.fillStyle = grad;
             ctx.beginPath();
@@ -1658,7 +1548,7 @@
             // Tâm sao kim cương lấp lánh (Diamond Core)
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
-            ctx.arc(64, 64, 14, 0, Math.PI * 2);
+            ctx.arc(64, 64, 16, 0, Math.PI * 2);
             ctx.fill();
 
             const texture = new THREE.CanvasTexture(canvas);
@@ -1839,6 +1729,9 @@
             backgroundPoints = buildBackgroundStardust(starTexture);
             scene.add(backgroundPoints);
 
+            // Render ngay lập tức 1 frame đầu tiên
+            renderer.render(scene, camera);
+
             // =================================================================
             // VẬT LÝ ĐẨY DƯỚI NƯỚC & NAM CHÂM ĐẨY RA (UNDERWATER MAGNETIC REPULSION)
             // =================================================================
@@ -1907,9 +1800,6 @@
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
             });
-
-            // Khởi tạo dữ liệu hiển thị ban đầu cho Trạm Thiên Văn
-            updateAstroEduHUD(0);
         }
 
         let clock = 0;
@@ -1925,9 +1815,6 @@
             const repelPower = isMobileDevice ? 0.38 : 0.58;
             const waterViscosity = 0.88; // Độ nhớt cản chuyển động như dưới nước
             const springK = 0.045; // Lực đàn hồi kéo về vị trí gốc
-
-            let closestConstellationIdx = -1;
-            let minConstellationDist = Infinity;
 
             if (isMouseActive && allStars.length > 0) {
                 // 1. Lực đẩy từ trường nam châm của chuột
@@ -1950,26 +1837,13 @@
                         s.vy += fluidVy * (1 - dist / repelRadius) * 0.45;
                     }
                 }
-
-                // 2. Tự động phát hiện chòm sao gần chuột nhất để cập nhật Trạm Giáo Dục
-                CONSTELLATIONS.forEach((c, idx) => {
-                    const cDist = Math.hypot(c.center[0] - mouseWorld.x, c.center[1] - mouseWorld.y);
-                    if (cDist < minConstellationDist) {
-                        minConstellationDist = cDist;
-                        closestConstellationIdx = idx;
-                    }
-                });
-
-                if (closestConstellationIdx !== -1 && minConstellationDist < 14.0) {
-                    updateAstroEduHUD(closestConstellationIdx);
-                }
             }
 
             // Tiêu hao dần vận tốc dòng nước
             fluidVx *= 0.90;
             fluidVy *= 0.90;
 
-            // 3. Cập nhật vị trí vật lý dưới nước cho từng ngôi sao
+            // 2. Cập nhật vị trí vật lý dưới nước cho từng ngôi sao
             if (allStars.length > 0 && starPosArray) {
                 for (let i = 0; i < allStars.length; i++) {
                     const s = allStars[i];
@@ -1999,7 +1873,7 @@
                 majorStarsPoints.geometry.attributes.position.needsUpdate = true;
             }
 
-            // 4. Cập nhật các đường nối đàn hồi của chòm sao
+            // 3. Cập nhật các đường nối đàn hồi của chòm sao
             if (allEdges.length > 0 && linePosArray) {
                 let edgeIdx = 0;
                 for (let i = 0; i < allEdges.length; i++) {
