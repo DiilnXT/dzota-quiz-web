@@ -1378,12 +1378,8 @@
             isDarkMode = !isDarkMode;
             document.documentElement.classList.toggle('dark', isDarkMode);
             try { localStorage.setItem('dzota_theme', isDarkMode ? 'dark' : 'light'); } catch (e) {}
-            if (constellationLinesMesh && constellationLinesMesh.material) {
-                constellationLinesMesh.material.color.setHex(isDarkMode ? 0x38bdf8 : 0x2563eb);
-                constellationLinesMesh.material.opacity = isDarkMode ? 0.65 : 0.45;
-            }
-            if (majorStarsPoints && majorStarsPoints.material) {
-                majorStarsPoints.material.opacity = isDarkMode ? 0.98 : 0.88;
+            if (typeof updatePlexusTheme === 'function') {
+                updatePlexusTheme();
             }
         }
 
@@ -1412,143 +1408,73 @@
         document.querySelectorAll('.reveal-item').forEach(el => revealObserver.observe(el));
 
         // -----------------------------------------------------------------
-        // 8. PLANAR CONSTELLATIONS & UNDERWATER MAGNETIC REPULSION PHYSICS
-        //    - Chòm sao phân bố phẳng (Planar Celestial Chart)
-        //    - Vật lý đẩy đồ dưới nước & Nam châm đẩy ra khi rê chuột (Magnetic Fluid Repulsion)
-        //    - Co giãn đàn hồi đường nối chòm sao (Elastic Constellation Filaments)
-        //    - Không gắn nhãn chữ trực tiếp lên sao (Clean & Aesthetic)
+        // 8. ULTRA-PRO PLEXUS CONSTELLATION NETWORK & LIQUID MAGNETIC PHYSICS
+        //    - Dynamic Interconnected Plexus Web (Distance-based fading filaments)
+        //    - Translucent Geometric Facets (High-end 3D crystalline mesh)
+        //    - Living Data Pulses (Glowing energy signals traveling between nodes)
+        //    - Fluid Underwater Repulsion (Magnetic push, fluid drag & shockwaves)
+        //    - Pure 60fps Pre-allocated Buffer Geometry Architecture
         // -----------------------------------------------------------------
-        let scene, camera, renderer, constellationGroup;
-        let constellationLinesMesh, majorStarsPoints, backgroundPoints;
-        let starPosArray, linePosArray;
+        let scene, camera, renderer, plexusGroup;
+        let nodesMesh, linesMesh, facetsMesh, pulsesMesh, backgroundStardust;
+        let nodePosArray, nodeColArray, linePosArray, lineColArray, facetPosArray, pulsePosArray;
         let pointerX = 0, pointerY = 0;
         const isMobileDevice = window.innerWidth < 768;
 
-        // Tọa độ chuột trong không gian 3D trên mặt phẳng z = 0
+        // Tọa độ con trỏ trên mặt phẳng Z = 0
         const raycaster = new THREE.Raycaster();
         const pointerVector = new THREE.Vector2(-999, -999);
         const planeZ0 = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
         const mouseWorld = new THREE.Vector3(-999, -999, 0);
         let isMouseActive = false;
 
-        // Dòng chảy dưới nước khi di chuột / quẹt ngón tay
+        // Động học chất lỏng (Liquid current drag) & Sóng xung kích (Shockwaves)
         let lastScreenX = 0, lastScreenY = 0;
         let fluidVx = 0, fluidVy = 0;
         let isPointerDown = false;
+        const ripples = []; // Các vòng sóng xung kích khi click/tap
 
-        // DỮ LIỆU CÁC CHÒM SAO THIÊN VĂN PHẲNG (Planar Celestial Atlas)
-        const CONSTELLATIONS = [
-            {
-                id: 'ursa_major',
-                name: 'Đại Hùng (Ursa Major - Bắc Đẩu)',
-                center: [-11, 7],
-                stars: [
-                    [-3.0, 1.2], [-1.6, 1.0], [-0.3, 0.5], [0.8, -0.4],
-                    [2.2, -0.6], [3.2, 0.8], [1.8, 1.0]
-                ],
-                edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 3]]
-            },
-            {
-                id: 'cassiopeia',
-                name: 'Thiên Hậu (Cassiopeia)',
-                center: [2, 8],
-                stars: [
-                    [-3.0, 0.4], [-1.5, -0.8], [0, 0.6], [1.6, -0.6], [3.1, 0.8]
-                ],
-                edges: [[0, 1], [1, 2], [2, 3], [3, 4]]
-            },
-            {
-                id: 'cygnus',
-                name: 'Thiên Nga (Cygnus - Northern Cross)',
-                center: [-1, 0.5],
-                stars: [
-                    [0, 2.8], [0, 0.8], [0, -2.0], [-2.5, 0.8], [2.5, 0.8]
-                ],
-                edges: [[0, 1], [1, 2], [3, 1], [1, 4]]
-            },
-            {
-                id: 'orion',
-                name: 'Thợ Săn (Orion)',
-                center: [19, 1],
-                stars: [
-                    [-1.8, 2.4], [1.8, 2.2], // Betelgeuse (0), Bellatrix (1)
-                    [-0.8, 0.2], [0, 0], [0.8, -0.2], // Vành đai Orion (2, 3, 4)
-                    [-1.6, -2.4], [1.7, -2.2], // Saiph (5), Rigel (6)
-                    [2.6, 0.2], [2.7, 1.2], [2.5, -0.8] // Khiên chắn (7, 8, 9)
-                ],
-                edges: [[0, 2], [1, 4], [2, 3], [3, 4], [2, 5], [4, 6], [1, 8], [8, 7], [7, 9]]
-            },
-            {
-                id: 'leo',
-                name: 'Sư Tử (Leo)',
-                center: [-16, -6],
-                stars: [
-                    [-2.2, 0.8], [-1.2, 1.6], [-0.4, 2.4], [0.6, 2.8], [1.2, 2.2],
-                    [0.8, 1.2], [-0.6, -0.2], [1.4, -0.6], [1.0, 0.6]
-                ],
-                edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 2], [0, 6], [6, 7], [7, 8], [8, 5]]
-            },
-            {
-                id: 'scorpius',
-                name: 'Bọ Cạp (Scorpius)',
-                center: [15, -7],
-                stars: [
-                    [-2.4, 1.8], [-1.8, 1.0], [-1.4, 0.2], [-0.6, -0.4],
-                    [0.2, -1.0], [0.8, -1.8], [1.4, -2.6], [2.2, -2.8],
-                    [2.8, -2.2], [3.0, -1.4], [2.6, -0.6], [1.8, -0.2]
-                ],
-                edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 10], [10, 11]]
-            },
-            {
-                id: 'taurus',
-                name: 'Kim Ngưu (Taurus & Cụm Pleiades)',
-                center: [-2, -7],
-                stars: [
-                    [-1.8, 1.2], [-0.8, 0.4], [0, 0], [0.8, 0.4], [1.6, 1.0],
-                    [-2.8, 2.2], [2.6, 2.4]
-                ],
-                edges: [[0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [4, 6]]
-            },
-            {
-                id: 'gemini',
-                name: 'Song Tử (Gemini)',
-                center: [-19, 0.5],
-                stars: [
-                    [-1.6, 2.0], [-0.4, 1.8], [-1.2, 0.4], [-0.2, 0.2],
-                    [-0.8, -0.8], [-0.1, -1.0], [-1.5, -1.6], [0.3, -1.7]
-                ],
-                edges: [[0, 1], [0, 2], [1, 3], [2, 4], [3, 5], [4, 6], [5, 7], [2, 3]]
-            }
-        ];
+        // Thông số mạng lưới Plexus
+        const PLEXUS_CONFIG = {
+            nodeCount: isMobileDevice ? 70 : 130,
+            maxConnectDist: isMobileDevice ? 5.2 : 6.4,
+            maxLines: isMobileDevice ? 600 : 1400,
+            facetDist: isMobileDevice ? 3.8 : 4.6,
+            maxFacets: isMobileDevice ? 60 : 160,
+            pulseCount: isMobileDevice ? 10 : 20,
+            repelRadius: isMobileDevice ? 6.5 : 8.8,
+            repelPower: isMobileDevice ? 0.45 : 0.68,
+            waterViscosity: 0.89,
+            springK: 0.038
+        };
 
-        // Mảng các điểm sao & đường nối
-        let allStars = [];
-        let allEdges = [];
+        const plexusNodes = [];
+        const plexusPulses = [];
+        let activeNeighbors = []; // Danh sách kề cho từng node phục vụ xung năng lượng
 
-        // Tạo Sprite ngôi sao phát quang rõ nét (Rực rỡ, độ phân giải cao)
-        function createStarSprite() {
+        // Tạo texture đốm sáng Node viền hào quang neon
+        function createPlexusNodeTexture() {
             const canvas = document.createElement('canvas');
             canvas.width = 128;
             canvas.height = 128;
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, 128, 128);
 
-            // Quầng sáng phát quang lan tỏa (Glowing Aura)
             const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
             grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
-            grad.addColorStop(0.2, 'rgba(224, 242, 254, 0.95)');
-            grad.addColorStop(0.45, 'rgba(56, 189, 248, 0.85)');
-            grad.addColorStop(0.75, 'rgba(14, 165, 233, 0.35)');
+            grad.addColorStop(0.22, 'rgba(224, 242, 254, 0.98)');
+            grad.addColorStop(0.48, 'rgba(56, 189, 248, 0.85)');
+            grad.addColorStop(0.75, 'rgba(14, 165, 233, 0.28)');
             grad.addColorStop(1, 'rgba(14, 165, 233, 0)');
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.arc(64, 64, 64, 0, Math.PI * 2);
             ctx.fill();
 
-            // Tâm sao kim cương lấp lánh (Diamond Core)
+            // Lõi kim cương sáng chói
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
-            ctx.arc(64, 64, 16, 0, Math.PI * 2);
+            ctx.arc(64, 64, 18, 0, Math.PI * 2);
             ctx.fill();
 
             const texture = new THREE.CanvasTexture(canvas);
@@ -1556,110 +1482,185 @@
             return texture;
         }
 
-        // Khởi tạo toàn bộ chòm sao trên mặt phẳng Planar (Z ≈ 0)
-        function buildPlanarConstellations(starTexture) {
-            constellationGroup = new THREE.Group();
-            allStars = [];
-            allEdges = [];
+        // Texture đốm xung năng lượng chạy dọc đường nối
+        function createPulseGlowTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 64, 64);
 
-            const colWhite = new THREE.Color(0xffffff);
+            const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.35, 'rgba(125, 211, 252, 1)');
+            grad.addColorStop(0.7, 'rgba(56, 189, 248, 0.45)');
+            grad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(32, 32, 32, 0, Math.PI * 2);
+            ctx.fill();
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            return texture;
+        }
+
+        // Cập nhật màu sắc Plexus khi đổi Dark / Light mode
+        function updatePlexusTheme() {
+            if (linesMesh && linesMesh.material) {
+                linesMesh.material.opacity = isDarkMode ? 0.95 : 0.85;
+            }
+            if (facetsMesh && facetsMesh.material) {
+                facetsMesh.material.color.setHex(isDarkMode ? 0x38bdf8 : 0x0284c7);
+                facetsMesh.material.opacity = isDarkMode ? 0.055 : 0.038;
+            }
+            if (nodesMesh && nodesMesh.material) {
+                nodesMesh.material.opacity = isDarkMode ? 1.0 : 0.92;
+            }
+            if (backgroundStardust && backgroundStardust.material) {
+                backgroundStardust.material.opacity = isDarkMode ? 0.70 : 0.45;
+            }
+        }
+
+        // Khởi tạo mạng lưới Plexus 3D
+        function buildPlexusNetwork(nodeTexture, pulseTexture) {
+            plexusGroup = new THREE.Group();
+            plexusNodes.length = 0;
+            plexusPulses.length = 0;
+            activeNeighbors = [];
+
             const colCyan = new THREE.Color(0x38bdf8);
-            const colGold = new THREE.Color(0xfef08a);
+            const colSky = new THREE.Color(0x0ea5e9);
+            const colWhite = new THREE.Color(0xffffff);
+            const colIndigo = new THREE.Color(0x818cf8);
 
-            let globalStarIdx = 0;
+            // 1. Phân bố các Nodes tự nhiên đều đặn
+            const spreadX = isMobileDevice ? 15 : 24;
+            const spreadY = isMobileDevice ? 20 : 14;
 
-            CONSTELLATIONS.forEach((c, cIdx) => {
-                const startIdxForConstellation = globalStarIdx;
+            for (let i = 0; i < PLEXUS_CONFIG.nodeCount; i++) {
+                // Tạo tọa độ phân bố cân xứng tránh dồn cục
+                const ox = (Math.random() - 0.5) * spreadX * 2;
+                const oy = (Math.random() - 0.5) * spreadY * 2;
+                const oz = (Math.random() - 0.5) * 3.5;
 
-                c.stars.forEach(([sx, sy], sIdx) => {
-                    const wx = c.center[0] + sx;
-                    const wy = c.center[1] + sy;
-                    const wz = (Math.random() - 0.5) * 0.4; // Mặt phẳng phẳng z ≈ 0
+                const cRand = Math.random();
+                let nCol = colCyan;
+                if (cRand > 0.75) nCol = colWhite;
+                else if (cRand > 0.5) nCol = colSky;
+                else if (cRand > 0.3) nCol = colIndigo;
 
-                    allStars.push({
-                        idx: globalStarIdx,
-                        constellationIdx: cIdx,
-                        isAlpha: sIdx === 0,
-                        originX: wx, originY: wy, originZ: wz,
-                        x: wx, y: wy, z: wz,
-                        vx: 0, vy: 0, vz: 0,
-                        waveOffset: Math.random() * Math.PI * 2,
-                        color: sIdx === 0 ? colGold : (sIdx % 2 === 0 ? colWhite : colCyan)
-                    });
-                    globalStarIdx++;
+                plexusNodes.push({
+                    idx: i,
+                    originX: ox, originY: oy, originZ: oz,
+                    x: ox, y: oy, z: oz,
+                    vx: 0, vy: 0, vz: 0,
+                    wanderAngle: Math.random() * Math.PI * 2,
+                    wanderSpeed: 0.008 + Math.random() * 0.014,
+                    wanderRadiusX: 0.6 + Math.random() * 1.2,
+                    wanderRadiusY: 0.5 + Math.random() * 1.0,
+                    phase: Math.random() * Math.PI * 2,
+                    color: nCol
                 });
+                activeNeighbors.push([]);
+            }
 
-                c.edges.forEach(([p1, p2]) => {
-                    allEdges.push([startIdxForConstellation + p1, startIdxForConstellation + p2]);
-                });
+            // Buffer các Nodes (Điểm mạng)
+            const nodeGeo = new THREE.BufferGeometry();
+            nodePosArray = new Float32Array(PLEXUS_CONFIG.nodeCount * 3);
+            nodeColArray = new Float32Array(PLEXUS_CONFIG.nodeCount * 3);
+
+            plexusNodes.forEach((n, i) => {
+                nodePosArray[i * 3] = n.x;
+                nodePosArray[i * 3 + 1] = n.y;
+                nodePosArray[i * 3 + 2] = n.z;
+
+                nodeColArray[i * 3] = n.color.r;
+                nodeColArray[i * 3 + 1] = n.color.g;
+                nodeColArray[i * 3 + 2] = n.color.b;
             });
 
-            // 1. Buffer các điểm sao (Sáng rõ, kích thước lớn)
-            const starGeo = new THREE.BufferGeometry();
-            starPosArray = new Float32Array(allStars.length * 3);
-            const starColArray = new Float32Array(allStars.length * 3);
+            nodeGeo.setAttribute('position', new THREE.BufferAttribute(nodePosArray, 3));
+            nodeGeo.setAttribute('color', new THREE.BufferAttribute(nodeColArray, 3));
 
-            allStars.forEach((s, i) => {
-                starPosArray[i * 3] = s.x;
-                starPosArray[i * 3 + 1] = s.y;
-                starPosArray[i * 3 + 2] = s.z;
-
-                starColArray[i * 3] = s.color.r;
-                starColArray[i * 3 + 1] = s.color.g;
-                starColArray[i * 3 + 2] = s.color.b;
-            });
-
-            starGeo.setAttribute('position', new THREE.BufferAttribute(starPosArray, 3));
-            starGeo.setAttribute('color', new THREE.BufferAttribute(starColArray, 3));
-
-            const starMat = new THREE.PointsMaterial({
-                size: isMobileDevice ? 2.6 : 3.8,
-                map: starTexture,
+            const nodeMat = new THREE.PointsMaterial({
+                size: isMobileDevice ? 3.0 : 4.4,
+                map: nodeTexture,
                 vertexColors: true,
                 transparent: true,
                 opacity: 1.0,
                 blending: THREE.NormalBlending,
                 depthWrite: false
             });
-            majorStarsPoints = new THREE.Points(starGeo, starMat);
-            constellationGroup.add(majorStarsPoints);
+            nodesMesh = new THREE.Points(nodeGeo, nodeMat);
+            plexusGroup.add(nodesMesh);
 
-            // 2. Buffer các đường nối chòm sao uốn lượn đàn hồi (Nét sáng rõ)
+            // 2. Buffer các Đường nối động (Dynamic Filament Lines)
             const lineGeo = new THREE.BufferGeometry();
-            linePosArray = new Float32Array(allEdges.length * 2 * 3);
-
-            let lIdx = 0;
-            allEdges.forEach(([p1, p2]) => {
-                const s1 = allStars[p1];
-                const s2 = allStars[p2];
-
-                linePosArray[lIdx++] = s1.x;
-                linePosArray[lIdx++] = s1.y;
-                linePosArray[lIdx++] = s1.z;
-
-                linePosArray[lIdx++] = s2.x;
-                linePosArray[lIdx++] = s2.y;
-                linePosArray[lIdx++] = s2.z;
-            });
+            linePosArray = new Float32Array(PLEXUS_CONFIG.maxLines * 2 * 3);
+            lineColArray = new Float32Array(PLEXUS_CONFIG.maxLines * 2 * 3);
 
             lineGeo.setAttribute('position', new THREE.BufferAttribute(linePosArray, 3));
+            lineGeo.setAttribute('color', new THREE.BufferAttribute(lineColArray, 3));
 
             const lineMat = new THREE.LineBasicMaterial({
-                color: isDarkMode ? 0x38bdf8 : 0x2563eb,
+                vertexColors: true,
                 transparent: true,
-                opacity: isDarkMode ? 0.95 : 0.80,
+                opacity: isDarkMode ? 0.95 : 0.85,
                 blending: THREE.NormalBlending,
                 depthWrite: false
             });
-            constellationLinesMesh = new THREE.LineSegments(lineGeo, lineMat);
-            constellationGroup.add(constellationLinesMesh);
+            linesMesh = new THREE.LineSegments(lineGeo, lineMat);
+            plexusGroup.add(linesMesh);
 
-            return constellationGroup;
+            // 3. Buffer các Mặt tam giác pha lê tinh thể (Translucent Facet Triangles)
+            const facetGeo = new THREE.BufferGeometry();
+            facetPosArray = new Float32Array(PLEXUS_CONFIG.maxFacets * 3 * 3);
+            facetGeo.setAttribute('position', new THREE.BufferAttribute(facetPosArray, 3));
+
+            const facetMat = new THREE.MeshBasicMaterial({
+                color: isDarkMode ? 0x38bdf8 : 0x0284c7,
+                transparent: true,
+                opacity: isDarkMode ? 0.055 : 0.038,
+                side: THREE.DoubleSide,
+                depthWrite: false,
+                blending: THREE.NormalBlending
+            });
+            facetsMesh = new THREE.Mesh(facetGeo, facetMat);
+            plexusGroup.add(facetsMesh);
+
+            // 4. Các Xung tín hiệu tri thức di chuyển (Flowing Data Pulses)
+            for (let p = 0; p < PLEXUS_CONFIG.pulseCount; p++) {
+                plexusPulses.push({
+                    fromIdx: Math.floor(Math.random() * PLEXUS_CONFIG.nodeCount),
+                    toIdx: -1,
+                    progress: Math.random(),
+                    speed: 0.012 + Math.random() * 0.016,
+                    x: 0, y: 0, z: 0
+                });
+            }
+
+            const pulseGeo = new THREE.BufferGeometry();
+            pulsePosArray = new Float32Array(PLEXUS_CONFIG.pulseCount * 3);
+            pulseGeo.setAttribute('position', new THREE.BufferAttribute(pulsePosArray, 3));
+
+            const pulseMat = new THREE.PointsMaterial({
+                size: isMobileDevice ? 4.2 : 5.8,
+                map: pulseTexture,
+                transparent: true,
+                opacity: 0.95,
+                blending: THREE.NormalBlending,
+                depthWrite: false
+            });
+            pulsesMesh = new THREE.Points(pulseGeo, pulseMat);
+            plexusGroup.add(pulsesMesh);
+
+            return plexusGroup;
         }
 
-        // Bụi sao sinh vật phát quang nền (Ambient Bioluminescent Stardust)
+        // Bụi sao trường sâu đa tầng (Ambient Stardust Parallax)
         function buildBackgroundStardust(starTexture) {
-            const count = isMobileDevice ? 450 : 800;
+            const count = isMobileDevice ? 320 : 600;
             const geo = new THREE.BufferGeometry();
             const pos = new Float32Array(count * 3);
             const cols = new Float32Array(count * 3);
@@ -1671,7 +1672,7 @@
                 const i3 = i * 3;
                 pos[i3] = (Math.random() - 0.5) * 80;
                 pos[i3 + 1] = (Math.random() - 0.5) * 60;
-                pos[i3 + 2] = -4 - Math.random() * 16; // Tầng sâu phía sau
+                pos[i3 + 2] = -5 - Math.random() * 16;
 
                 const c = i % 2 === 0 ? cCyan : cWhite;
                 cols[i3] = c.r;
@@ -1683,11 +1684,11 @@
             geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
 
             const mat = new THREE.PointsMaterial({
-                size: isMobileDevice ? 1.0 : 1.4,
+                size: isMobileDevice ? 1.0 : 1.3,
                 map: starTexture,
                 vertexColors: true,
                 transparent: true,
-                opacity: 0.75,
+                opacity: isDarkMode ? 0.70 : 0.45,
                 blending: THREE.NormalBlending,
                 depthWrite: false
             });
@@ -1702,7 +1703,7 @@
             scene = new THREE.Scene();
 
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 0, isMobileDevice ? 34 : 26);
+            camera.position.set(0, 0, isMobileDevice ? 32 : 25);
             camera.lookAt(0, 0, 0);
 
             renderer = new THREE.WebGLRenderer({
@@ -1715,25 +1716,25 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileDevice ? 1.5 : 2));
 
-            // Ánh sáng vũ trụ tinh khôi
-            const ambientLight = new THREE.AmbientLight(0xffffff, isDarkMode ? 1.0 : 1.25);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
             scene.add(ambientLight);
 
-            const starTexture = createStarSprite();
+            const nodeTexture = createPlexusNodeTexture();
+            const pulseTexture = createPulseGlowTexture();
 
-            // 1. Chòm sao trên mặt phẳng Z ≈ 0
-            const cGroup = buildPlanarConstellations(starTexture);
-            scene.add(cGroup);
+            // 1. Khởi tạo Mạng lưới Plexus
+            const pGroup = buildPlexusNetwork(nodeTexture, pulseTexture);
+            scene.add(pGroup);
 
-            // 2. Bụi sao lơ lửng phía sau
-            backgroundPoints = buildBackgroundStardust(starTexture);
-            scene.add(backgroundPoints);
+            // 2. Bụi sao nền
+            backgroundStardust = buildBackgroundStardust(nodeTexture);
+            scene.add(backgroundStardust);
 
-            // Render ngay lập tức 1 frame đầu tiên
+            // Render khung hình đầu tiên tức thì
             renderer.render(scene, camera);
 
             // =================================================================
-            // VẬT LÝ ĐẨY DƯỚI NƯỚC & NAM CHÂM ĐẨY RA (UNDERWATER MAGNETIC REPULSION)
+            // VẬT LÝ NƯỚC & TỪ TRƯỜNG NAM CHÂM ĐẨY (INTERACTIVE FLUID REPULSION)
             // =================================================================
             const updatePointerCoords = (clientX, clientY) => {
                 pointerX = (clientX / window.innerWidth) - 0.5;
@@ -1742,10 +1743,21 @@
                 pointerVector.x = (clientX / window.innerWidth) * 2 - 1;
                 pointerVector.y = -(clientY / window.innerHeight) * 2 + 1;
 
-                // Chiếu tọa độ con trỏ vào mặt phẳng z = 0
                 raycaster.setFromCamera(pointerVector, camera);
                 raycaster.ray.intersectPlane(planeZ0, mouseWorld);
                 isMouseActive = true;
+            };
+
+            const triggerRippleWave = (worldX, worldY) => {
+                ripples.push({
+                    x: worldX,
+                    y: worldY,
+                    radius: 0.2,
+                    maxRadius: isMobileDevice ? 16 : 22,
+                    strength: isMobileDevice ? 0.48 : 0.65,
+                    speed: isMobileDevice ? 0.32 : 0.42
+                });
+                if (ripples.length > 5) ripples.shift();
             };
 
             const onPointerDown = (e) => {
@@ -1758,23 +1770,23 @@
                 lastScreenX = clientX;
                 lastScreenY = clientY;
                 updatePointerCoords(clientX, clientY);
+                triggerRippleWave(mouseWorld.x, mouseWorld.y);
             };
 
             const onPointerMove = (e) => {
                 const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
                 const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
 
-                // Tính toán vận tốc dòng nước khi kéo/lướt ngón tay
+                // Tính toán gia tốc dòng chảy khi di chuột hoặc quẹt ngón tay
                 const dx = clientX - lastScreenX;
                 const dy = clientY - lastScreenY;
-                fluidVx = dx * 0.05;
-                fluidVy = -dy * 0.05;
+                fluidVx = dx * 0.055;
+                fluidVy = -dy * 0.055;
                 lastScreenX = clientX;
                 lastScreenY = clientY;
 
                 updatePointerCoords(clientX, clientY);
 
-                // Nghiêng nhẹ thẻ Hero Demo Card
                 if (!isMobileDevice && currentView === 'landing') {
                     const card = document.getElementById('hero-demo-card');
                     if (card && !isPointerDown) {
@@ -1806,94 +1818,217 @@
         function animateScene() {
             requestAnimationFrame(animateScene);
 
-            clock += 0.014;
+            clock += 0.016;
 
-            // =================================================================
-            // VẬT LÝ DƯỚI NƯỚC: NAM CHÂM ĐẨY + LỰC CẢN NHỚT + ĐÀN HỒI KÉO VỀ
-            // =================================================================
-            const repelRadius = isMobileDevice ? 6.5 : 8.8;
-            const repelPower = isMobileDevice ? 0.38 : 0.58;
-            const waterViscosity = 0.88; // Độ nhớt cản chuyển động như dưới nước
-            const springK = 0.045; // Lực đàn hồi kéo về vị trí gốc
+            // 1. Xử lý các vòng sóng xung kích (Shockwave Ripples)
+            for (let r = ripples.length - 1; r >= 0; r--) {
+                const rip = ripples[r];
+                rip.radius += rip.speed;
+                if (rip.radius >= rip.maxRadius) {
+                    ripples.splice(r, 1);
+                }
+            }
 
-            if (isMouseActive && allStars.length > 0) {
-                // 1. Lực đẩy từ trường nam châm của chuột
-                for (let i = 0; i < allStars.length; i++) {
-                    const s = allStars[i];
-                    const dx = s.x - mouseWorld.x;
-                    const dy = s.y - mouseWorld.y;
+            // 2. Vật lý tương tác nam châm đẩy & rẽ nước cho các Nodes
+            const nLen = plexusNodes.length;
+            for (let i = 0; i < nLen; i++) {
+                const n = plexusNodes[i];
+
+                // Lực đẩy từ trường nam châm của chuột
+                if (isMouseActive) {
+                    const dx = n.x - mouseWorld.x;
+                    const dy = n.y - mouseWorld.y;
                     const dist = Math.hypot(dx, dy);
 
-                    if (dist < repelRadius && dist > 0.01) {
-                        // Nam châm đẩy ra: Lực tỉ lệ nghịch với khoảng cách
-                        const force = Math.pow(1 - dist / repelRadius, 1.4) * repelPower;
+                    if (dist < PLEXUS_CONFIG.repelRadius && dist > 0.01) {
+                        const force = Math.pow(1 - dist / PLEXUS_CONFIG.repelRadius, 1.4) * PLEXUS_CONFIG.repelPower;
                         const angle = Math.atan2(dy, dx);
-                        s.vx += Math.cos(angle) * force;
-                        s.vy += Math.sin(angle) * force;
-                        s.vz += (Math.random() - 0.5) * force * 0.35; // Gợn sóng 3D nhẹ
+                        n.vx += Math.cos(angle) * force;
+                        n.vy += Math.sin(angle) * force;
+                        n.vz += (Math.random() - 0.5) * force * 0.3;
 
-                        // Đẩy đồ dưới nước: Cuốn theo dòng nước nếu chuột đang lướt
-                        s.vx += fluidVx * (1 - dist / repelRadius) * 0.45;
-                        s.vy += fluidVy * (1 - dist / repelRadius) * 0.45;
+                        // Cuốn theo dòng chảy khi rê nhanh
+                        n.vx += fluidVx * (1 - dist / PLEXUS_CONFIG.repelRadius) * 0.45;
+                        n.vy += fluidVy * (1 - dist / PLEXUS_CONFIG.repelRadius) * 0.45;
+                    }
+                }
+
+                // Tác động từ các vòng sóng xung kích (Ripples)
+                for (let r = 0; r < ripples.length; r++) {
+                    const rip = ripples[r];
+                    const rdx = n.x - rip.x;
+                    const rdy = n.y - rip.y;
+                    const rDist = Math.hypot(rdx, rdy);
+                    const diff = Math.abs(rDist - rip.radius);
+
+                    if (diff < 2.2) {
+                        const ripFactor = (1 - diff / 2.2) * rip.strength * (1 - rip.radius / rip.maxRadius);
+                        const rAngle = Math.atan2(rdy, rdx);
+                        n.vx += Math.cos(rAngle) * ripFactor;
+                        n.vy += Math.sin(rAngle) * ripFactor;
+                    }
+                }
+
+                // Chuyển động lững lờ tự nhiên (Organic Harmonic Breathing)
+                n.wanderAngle += n.wanderSpeed;
+                const targetX = n.originX + Math.sin(n.wanderAngle + n.phase) * n.wanderRadiusX;
+                const targetY = n.originY + Math.cos(n.wanderAngle * 0.8 + n.phase) * n.wanderRadiusY;
+                const targetZ = n.originZ + Math.sin(clock * 1.5 + n.phase) * 0.4;
+
+                // Lực đàn hồi kéo về vị trí cân bằng
+                n.vx += (targetX - n.x) * PLEXUS_CONFIG.springK;
+                n.vy += (targetY - n.y) * PLEXUS_CONFIG.springK;
+                n.vz += (targetZ - n.z) * PLEXUS_CONFIG.springK;
+
+                // Lực cản nhớt như trong môi trường nước
+                n.vx *= PLEXUS_CONFIG.waterViscosity;
+                n.vy *= PLEXUS_CONFIG.waterViscosity;
+                n.vz *= PLEXUS_CONFIG.waterViscosity;
+
+                n.x += n.vx;
+                n.y += n.vy;
+                n.z += n.vz;
+
+                nodePosArray[i * 3] = n.x;
+                nodePosArray[i * 3 + 1] = n.y;
+                nodePosArray[i * 3 + 2] = n.z;
+
+                activeNeighbors[i] = [];
+            }
+
+            nodesMesh.geometry.attributes.position.needsUpdate = true;
+
+            // Giảm dần vận tốc dòng nước
+            fluidVx *= 0.90;
+            fluidVy *= 0.90;
+
+            // 3. Tính toán các đường nối Plexus và Mặt tinh thể pha lê động
+            let lineIdx = 0;
+            let facetIdx = 0;
+            const maxConnectDist = PLEXUS_CONFIG.maxConnectDist;
+            const facetDist = PLEXUS_CONFIG.facetDist;
+
+            for (let i = 0; i < nLen; i++) {
+                const ni = plexusNodes[i];
+                for (let j = i + 1; j < nLen; j++) {
+                    const nj = plexusNodes[j];
+                    const dx = ni.x - nj.x;
+                    const dy = ni.y - nj.y;
+                    const dz = ni.z - nj.z;
+                    const dist = Math.hypot(dx, dy, dz);
+
+                    if (dist < maxConnectDist && lineIdx < PLEXUS_CONFIG.maxLines) {
+                        activeNeighbors[i].push(j);
+                        activeNeighbors[j].push(i);
+
+                        // Độ sáng đường nối tỉ lệ nghịch với khoảng cách (tạo chiều sâu mượt mà)
+                        const t = 1 - (dist / maxConnectDist);
+                        const alpha = Math.pow(t, 1.3);
+
+                        // Điểm 1
+                        linePosArray[lineIdx * 6] = ni.x;
+                        linePosArray[lineIdx * 6 + 1] = ni.y;
+                        linePosArray[lineIdx * 6 + 2] = ni.z;
+
+                        // Điểm 2
+                        linePosArray[lineIdx * 6 + 3] = nj.x;
+                        linePosArray[lineIdx * 6 + 4] = nj.y;
+                        linePosArray[lineIdx * 6 + 5] = nj.z;
+
+                        if (isDarkMode) {
+                            // Dark Mode: Cyan điện quang chuyển dần sang xanh neon
+                            lineColArray[lineIdx * 6] = 0.22 * alpha;
+                            lineColArray[lineIdx * 6 + 1] = 0.74 * alpha;
+                            lineColArray[lineIdx * 6 + 2] = 0.98 * alpha;
+
+                            lineColArray[lineIdx * 6 + 3] = 0.22 * alpha;
+                            lineColArray[lineIdx * 6 + 4] = 0.74 * alpha;
+                            lineColArray[lineIdx * 6 + 5] = 0.98 * alpha;
+                        } else {
+                            // Light Mode: Màu lam ngọc / sapphire sắc sảo
+                            lineColArray[lineIdx * 6] = 0.08 * alpha;
+                            lineColArray[lineIdx * 6 + 1] = 0.45 * alpha;
+                            lineColArray[lineIdx * 6 + 2] = 0.88 * alpha;
+
+                            lineColArray[lineIdx * 6 + 3] = 0.08 * alpha;
+                            lineColArray[lineIdx * 6 + 4] = 0.45 * alpha;
+                            lineColArray[lineIdx * 6 + 5] = 0.88 * alpha;
+                        }
+
+                        lineIdx++;
+
+                        // Kiểm tra tạo mặt tam giác tinh thể nếu 3 điểm gần nhau
+                        if (dist < facetDist && facetIdx < PLEXUS_CONFIG.maxFacets) {
+                            for (let k = j + 1; k < nLen; k++) {
+                                const nk = plexusNodes[k];
+                                const djk = Math.hypot(nj.x - nk.x, nj.y - nk.y, nj.z - nk.z);
+                                const dik = Math.hypot(ni.x - nk.x, ni.y - nk.y, ni.z - nk.z);
+
+                                if (djk < facetDist && dik < facetDist) {
+                                    const f9 = facetIdx * 9;
+                                    facetPosArray[f9] = ni.x; facetPosArray[f9 + 1] = ni.y; facetPosArray[f9 + 2] = ni.z;
+                                    facetPosArray[f9 + 3] = nj.x; facetPosArray[f9 + 4] = nj.y; facetPosArray[f9 + 5] = nj.z;
+                                    facetPosArray[f9 + 6] = nk.x; facetPosArray[f9 + 7] = nk.y; facetPosArray[f9 + 8] = nk.z;
+                                    facetIdx++;
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
             }
 
-            // Tiêu hao dần vận tốc dòng nước
-            fluidVx *= 0.90;
-            fluidVy *= 0.90;
+            linesMesh.geometry.setDrawRange(0, lineIdx * 2);
+            linesMesh.geometry.attributes.position.needsUpdate = true;
+            linesMesh.geometry.attributes.color.needsUpdate = true;
 
-            // 2. Cập nhật vị trí vật lý dưới nước cho từng ngôi sao
-            if (allStars.length > 0 && starPosArray) {
-                for (let i = 0; i < allStars.length; i++) {
-                    const s = allStars[i];
+            facetsMesh.geometry.setDrawRange(0, facetIdx * 3);
+            facetsMesh.geometry.attributes.position.needsUpdate = true;
 
-                    // Lực kéo hồi vị đàn hồi về vị trí phẳng gốc
-                    s.vx += (s.originX - s.x) * springK;
-                    s.vy += (s.originY - s.y) * springK;
-                    s.vz += (s.originZ - s.z) * springK;
+            // 4. Cập nhật các Xung tín hiệu năng lượng (Data Pulses)
+            for (let p = 0; p < PLEXUS_CONFIG.pulseCount; p++) {
+                const pulse = plexusPulses[p];
+                const fromNode = plexusNodes[pulse.fromIdx];
 
-                    // Lực cản nhớt của nước
-                    s.vx *= waterViscosity;
-                    s.vy *= waterViscosity;
-                    s.vz *= waterViscosity;
-
-                    // Gợn sóng nước tự nhiên bồng bềnh êm ả
-                    const ambientWaveX = Math.sin(clock * 1.5 + s.waveOffset) * 0.015;
-                    const ambientWaveY = Math.cos(clock * 1.2 + s.waveOffset) * 0.015;
-
-                    s.x += s.vx + ambientWaveX;
-                    s.y += s.vy + ambientWaveY;
-                    s.z += s.vz;
-
-                    starPosArray[i * 3] = s.x;
-                    starPosArray[i * 3 + 1] = s.y;
-                    starPosArray[i * 3 + 2] = s.z;
+                if (pulse.toIdx < 0 || pulse.progress >= 1.0) {
+                    pulse.progress = 0;
+                    const neighbors = activeNeighbors[pulse.fromIdx];
+                    if (neighbors && neighbors.length > 0) {
+                        pulse.toIdx = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    } else {
+                        pulse.fromIdx = Math.floor(Math.random() * nLen);
+                        pulse.toIdx = -1;
+                    }
                 }
-                majorStarsPoints.geometry.attributes.position.needsUpdate = true;
-            }
 
-            // 3. Cập nhật các đường nối đàn hồi của chòm sao
-            if (allEdges.length > 0 && linePosArray) {
-                let edgeIdx = 0;
-                for (let i = 0; i < allEdges.length; i++) {
-                    const s1 = allStars[allEdges[i][0]];
-                    const s2 = allStars[allEdges[i][1]];
+                if (pulse.toIdx >= 0 && pulse.toIdx < nLen) {
+                    const toNode = plexusNodes[pulse.toIdx];
+                    pulse.progress += pulse.speed;
+                    const prog = Math.min(pulse.progress, 1.0);
 
-                    linePosArray[edgeIdx++] = s1.x;
-                    linePosArray[edgeIdx++] = s1.y;
-                    linePosArray[edgeIdx++] = s1.z;
+                    pulse.x = fromNode.x + (toNode.x - fromNode.x) * prog;
+                    pulse.y = fromNode.y + (toNode.y - fromNode.y) * prog;
+                    pulse.z = fromNode.z + (toNode.z - fromNode.z) * prog;
 
-                    linePosArray[edgeIdx++] = s2.x;
-                    linePosArray[edgeIdx++] = s2.y;
-                    linePosArray[edgeIdx++] = s2.z;
+                    if (prog >= 1.0) {
+                        pulse.fromIdx = pulse.toIdx;
+                        pulse.toIdx = -1;
+                    }
+                } else {
+                    pulse.x = fromNode.x;
+                    pulse.y = fromNode.y;
+                    pulse.z = fromNode.z;
                 }
-                constellationLinesMesh.geometry.attributes.position.needsUpdate = true;
-            }
 
-            // Nhấp nháy nhẹ sao phát sáng
-            if (majorStarsPoints && majorStarsPoints.material) {
-                majorStarsPoints.material.size = (isMobileDevice ? 2.6 : 3.8) * (1.0 + Math.sin(clock * 2.0) * 0.08);
+                pulsePosArray[p * 3] = pulse.x;
+                pulsePosArray[p * 3 + 1] = pulse.y;
+                pulsePosArray[p * 3 + 2] = pulse.z;
+            }
+            pulsesMesh.geometry.attributes.position.needsUpdate = true;
+
+            // Nhấp nháy nhẹ kích thước các Nodes
+            if (nodesMesh && nodesMesh.material) {
+                nodesMesh.material.size = (isMobileDevice ? 3.0 : 4.4) * (1.0 + Math.sin(clock * 2.2) * 0.08);
             }
 
             // Camera lướt nhẹ theo cuộn trang
