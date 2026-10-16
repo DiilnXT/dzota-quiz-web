@@ -10,9 +10,6 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
-    
-    let html = fs.readFileSync(path.join(process.cwd(), 'public/index.html'), 'utf8')
-    
     const cookieStore = await cookies()
     const sessionStr = cookieStore.get('dzota_session')?.value
     let sessionData = null
@@ -22,16 +19,16 @@ export async function GET(request: Request) {
       } catch (e) {}
     }
 
-    if (sessionData) {
-      const injectionScript = `<script>window.__DZOTA_SESSION__ = ${JSON.stringify(sessionData)};</script>`
-      if (html.includes('</head>')) {
-        html = html.replace('</head>', `${injectionScript}</head>`)
-      } else {
-        html = injectionScript + html
-      }
-    }
-
     if (id) {
+      let html = fs.readFileSync(path.join(process.cwd(), 'public/index.html'), 'utf8')
+      if (sessionData) {
+        const injectionScript = `<script>window.__DZOTA_SESSION__ = ${JSON.stringify(sessionData)};</script>`
+        if (html.includes('</head>')) {
+          html = html.replace('</head>', `${injectionScript}</head>`)
+        } else {
+          html = injectionScript + html
+        }
+      }
       const quiz = await prisma.quickQuiz.findUnique({ where: { id } })
       if (quiz) {
         // Replace OG tags in HTML safely
@@ -41,7 +38,16 @@ export async function GET(request: Request) {
       }
       return new NextResponse(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
     } else {
-      return NextResponse.redirect(new URL('/login', request.url))
+      let landingHtml = fs.readFileSync(path.join(process.cwd(), 'public/landing.html'), 'utf8')
+      if (sessionData) {
+        const injectionScript = `<script>window.__DZOTA_SESSION__ = ${JSON.stringify(sessionData)};</script>`
+        if (landingHtml.includes('</head>')) {
+          landingHtml = landingHtml.replace('</head>', `${injectionScript}</head>`)
+        } else {
+          landingHtml = injectionScript + landingHtml
+        }
+      }
+      return new NextResponse(landingHtml, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
     }
   } catch (error) {
     console.error(error)
