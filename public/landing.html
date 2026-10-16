@@ -1374,14 +1374,15 @@
             isDarkMode = !isDarkMode;
             document.documentElement.classList.toggle('dark', isDarkMode);
             try { localStorage.setItem('dzota_theme', isDarkMode ? 'dark' : 'light'); } catch (e) {}
-            if (starMaterial) {
-                starMaterial.opacity = isDarkMode ? 0.8 : 0.55;
+            if (galaxyMaterial) {
+                galaxyMaterial.opacity = isDarkMode ? 0.88 : 0.62;
             }
-            if (waveMesh && waveMesh.material) {
-                waveMesh.material.opacity = isDarkMode ? 0.38 : 0.28;
+            if (constellationLines) {
+                constellationLines.material.color.setHex(isDarkMode ? 0x38bdf8 : 0x2563eb);
+                constellationLines.material.opacity = isDarkMode ? 0.42 : 0.32;
             }
-            if (wavePoints && wavePoints.material) {
-                wavePoints.material.opacity = isDarkMode ? 0.7 : 0.5;
+            if (majorStarsPoints) {
+                majorStarsPoints.material.opacity = isDarkMode ? 0.95 : 0.78;
             }
         }
 
@@ -1410,38 +1411,36 @@
         document.querySelectorAll('.reveal-item').forEach(el => revealObserver.observe(el));
 
         // -----------------------------------------------------------------
-        // 8. MODERN HIGH-END THREE.JS CYBER AURORA WAVE & GALAXY HORIZON:
-        //    - Flowing cyber wave grid with dynamic height vertex shader
-        //    - Interactive mouse ripples & smooth camera choreography
-        //    - Flowing Aurora light ribbons & ambient stardust field
-        //    - Floating ethereal crystal prism core (DeepMind / Gemini aesthetic)
+        // 8. BREATHTAKING 3D SPIRAL GALAXY & ZODIAC CONSTELLATIONS ENGINE
+        //    - Majestic Spiral Galaxy (Dải Ngân Hà 3D) with multi-arm stardust disk
+        //    - Authentic Zodiac Constellations (Leo, Scorpius, Taurus, Gemini, Sagittarius, Cassiopeia)
+        //    - Glowing Stellar Nodes & Delicate Starlight Line Networks
+        //    - Twinkling Major Stars & Cosmic Shooting Stars (Sao Băng)
+        //    - Smooth Celestial Parallax & Scroll Navigation (Tranquil, deeply soothing, zero headache)
         // -----------------------------------------------------------------
-        let scene, camera, renderer, worldGroup;
-        let waveMesh, wavePoints, waveGeometry, wavePosAttr, waveColAttr, basePositions;
-        let ribbon1, ribbon2;
-        let prismGroup, crystalMesh, wireCage;
-        let starField, starMaterial;
-        let pointerX = 0, pointerY = 0, targetRippleX = 0, targetRippleY = 0;
-        let currentRippleX = 0, currentRippleY = 0;
+        let scene, camera, renderer, galaxyGroup, constellationsGroup, shootingStarsGroup;
+        let galaxyPoints, galaxyMaterial;
+        let constellationLines, majorStarsPoints;
+        let shootingStars = [];
+        let pointerX = 0, pointerY = 0;
         let pulseBoost = 1;
         const isMobileDevice = window.innerWidth < 768;
 
-        // Camera Waypoints for smooth scroll perspective
+        // Camera Waypoints for smooth panoramic cosmic tour
         const waypoints = [
-            { camX: 0, camY: 0.8, camZ: isMobileDevice ? 24 : 19, grpX: 0, grpY: -0.5, grpZ: 0, rotX: -0.05, rotY: 0 },
-            { camX: -1.0, camY: -0.6, camZ: isMobileDevice ? 20 : 16, grpX: -1.5, grpY: -0.8, grpZ: 1.0, rotX: -0.12, rotY: 0.15 },
-            { camX: 1.2, camY: 0.2, camZ: isMobileDevice ? 21 : 17, grpX: 1.8, grpY: -0.6, grpZ: 1.5, rotX: -0.08, rotY: -0.12 },
-            { camX: 0, camY: 1.6, camZ: isMobileDevice ? 23 : 18.5, grpX: 0, grpY: -0.2, grpZ: 0.5, rotX: 0.05, rotY: 0 }
+            { camX: 0, camY: 0.6, camZ: isMobileDevice ? 26 : 21, rotX: 0.05, rotY: 0 },
+            { camX: -1.8, camY: -0.6, camZ: isMobileDevice ? 22 : 18, rotX: -0.04, rotY: 0.1 },
+            { camX: 2.0, camY: 0.4, camZ: isMobileDevice ? 23 : 19, rotX: 0.06, rotY: -0.08 },
+            { camX: 0, camY: 1.2, camZ: isMobileDevice ? 25 : 20, rotX: 0.1, rotY: 0 }
         ];
 
         const loginWaypoint = {
-            camX: 0, camY: 0.4, camZ: isMobileDevice ? 17 : 13.5,
-            grpX: 0, grpY: -1.2, grpZ: -1.0,
-            rotX: -0.02, rotY: 0
+            camX: 0, camY: 0.2, camZ: isMobileDevice ? 19 : 15.5,
+            rotX: 0.02, rotY: 0
         };
 
         function triggerTransitionPulse() {
-            pulseBoost = 3.5;
+            pulseBoost = 2.5;
         }
 
         function lerp(a, b, t) {
@@ -1462,12 +1461,333 @@
                 camX: lerp(w1.camX, w2.camX, smoothT),
                 camY: lerp(w1.camY, w2.camY, smoothT),
                 camZ: lerp(w1.camZ, w2.camZ, smoothT),
-                grpX: lerp(w1.grpX, w2.grpX, smoothT),
-                grpY: lerp(w1.grpY, w2.grpY, smoothT),
-                grpZ: lerp(w1.grpZ, w2.grpZ, smoothT),
                 rotX: lerp(w1.rotX, w2.rotX, smoothT),
                 rotY: lerp(w1.rotY, w2.rotY, smoothT)
             };
+        }
+
+        // Procedural soft-glow circular star texture
+        function createStarSprite() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            gradient.addColorStop(0.2, 'rgba(224, 242, 254, 0.9)');
+            gradient.addColorStop(0.55, 'rgba(56, 189, 248, 0.32)');
+            gradient.addColorStop(1, 'rgba(56, 189, 248, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 64, 64);
+            const texture = new THREE.CanvasTexture(canvas);
+            return texture;
+        }
+
+        // 1. DẢI NGÂN HÀ XOẮN ỐC (SPIRAL GALAXY)
+        function buildSpiralGalaxy(starTexture) {
+            const count = isMobileDevice ? 2000 : 4200;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(count * 3);
+            const colors = new Float32Array(count * 3);
+
+            const arms = 3;
+            const maxRadius = 32;
+            const coreRadius = 5.0;
+
+            const colCoreWarm = new THREE.Color(0xfef08a); // Pale Gold
+            const colCoreWhite = new THREE.Color(0xffffff); // Star White
+            const colCyan = new THREE.Color(0x38bdf8);      // Electric Cyan
+            const colSapphire = new THREE.Color(0x2563eb);  // Deep Sapphire
+            const colViolet = new THREE.Color(0xa855f7);    // Cosmic Violet
+            const colEmerald = new THREE.Color(0x2dd4bf);   // Celestial Emerald
+
+            for (let i = 0; i < count; i++) {
+                const i3 = i * 3;
+                const isCore = Math.random() < 0.22;
+
+                let r, theta, spreadX, spreadY, spreadZ;
+                let c = new THREE.Color();
+
+                if (isCore) {
+                    // Concentrated around luminous core
+                    r = Math.pow(Math.random(), 1.6) * coreRadius;
+                    theta = Math.random() * Math.PI * 2;
+                    spreadX = (Math.random() - 0.5) * 1.5;
+                    spreadY = (Math.random() - 0.5) * 1.8;
+                    spreadZ = (Math.random() - 0.5) * 1.5;
+                    c.lerpColors(colCoreWarm, colCoreWhite, Math.random());
+                } else {
+                    // Curved spiral arms
+                    r = coreRadius + Math.pow(Math.random(), 0.88) * (maxRadius - coreRadius);
+                    const armIndex = i % arms;
+                    const armAngle = (armIndex / arms) * Math.PI * 2;
+                    const spiralAngle = r * 0.28;
+                    theta = armAngle + spiralAngle + (Math.random() - 0.5) * (0.42 + r * 0.02);
+
+                    const diskSpread = Math.max(0.35, 2.4 * Math.exp(-r / 18));
+                    spreadX = (Math.random() - 0.5) * 2.2;
+                    spreadY = (Math.random() - 0.5) * diskSpread;
+                    spreadZ = (Math.random() - 0.5) * 2.2;
+
+                    const colorPick = Math.random();
+                    if (colorPick < 0.4) {
+                        c.lerpColors(colCyan, colSapphire, Math.random());
+                    } else if (colorPick < 0.72) {
+                        c.lerpColors(colCyan, colEmerald, Math.random());
+                    } else {
+                        c.lerpColors(colSapphire, colViolet, Math.random());
+                    }
+                }
+
+                positions[i3] = Math.cos(theta) * r + spreadX;
+                positions[i3 + 1] = spreadY;
+                positions[i3 + 2] = Math.sin(theta) * r + spreadZ;
+
+                colors[i3] = c.r;
+                colors[i3 + 1] = c.g;
+                colors[i3 + 2] = c.b;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            galaxyMaterial = new THREE.PointsMaterial({
+                size: isMobileDevice ? 0.42 : 0.54,
+                map: starTexture,
+                vertexColors: true,
+                transparent: true,
+                opacity: isDarkMode ? 0.88 : 0.62,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            galaxyPoints = new THREE.Points(geometry, galaxyMaterial);
+            return galaxyPoints;
+        }
+
+        // 2. CÁC CHÒM SAO CUNG HOÀNG ĐẠO (ZODIAC CONSTELLATIONS)
+        function buildZodiacConstellations(starTexture) {
+            const group = new THREE.Group();
+
+            const CONSTELLATIONS = [
+                // 1. Leo (Sư Tử - ♌)
+                {
+                    name: 'Leo',
+                    center: [-13, 6, -9],
+                    scale: 1.05,
+                    stars: [
+                        [-2.0, 1.6, 0],   // Regulus (Bright Alpha)
+                        [-0.9, 2.0, 0.2], // Eta
+                        [-0.2, 2.9, -0.1],// Algieba
+                        [0.5, 3.5, 0.1],  // Adhafera
+                        [1.3, 3.0, 0],    // Rasalas
+                        [1.0, 2.1, -0.2], // Epsilon
+                        [-0.3, 0.7, 0.3], // Denebola
+                        [1.6, 0.4, -0.1], // Chertan
+                        [1.1, 1.6, 0.1]   // Zosma
+                    ],
+                    edges: [
+                        [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 2],
+                        [0, 6], [6, 7], [7, 8], [8, 2]
+                    ]
+                },
+                // 2. Scorpius (Bọ Cạp - ♏)
+                {
+                    name: 'Scorpius',
+                    center: [14, -3.5, -11],
+                    scale: 0.95,
+                    stars: [
+                        [-2.4, 2.2, 0],   // Graffias
+                        [-2.0, 1.2, 0.2], // Dschubba
+                        [-1.6, 0.1, -0.1],// Pi
+                        [-0.7, -0.5, 0],  // Antares (Glowing Heart of Scorpion)
+                        [0.2, -1.2, 0.1], // Tau
+                        [0.8, -2.1, -0.2],// Epsilon
+                        [1.2, -3.0, 0.1], // Mu
+                        [2.1, -3.3, 0.2], // Zeta
+                        [2.8, -2.6, -0.1],// Sargas
+                        [3.2, -1.6, 0.1], // Iota
+                        [2.8, -0.6, 0],   // Kappa
+                        [2.0, -0.2, -0.2] // Shaula (Stinger)
+                    ],
+                    edges: [
+                        [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6],
+                        [6, 7], [7, 8], [8, 9], [9, 10], [10, 11]
+                    ]
+                },
+                // 3. Taurus (Kim Ngưu - ♉)
+                {
+                    name: 'Taurus',
+                    center: [-15, -6, -11],
+                    scale: 1.0,
+                    stars: [
+                        [-1.4, 1.4, 0],   // Aldebaran (Eye of Bull)
+                        [-0.7, 0.5, 0.2], // Hyades 1
+                        [-0.2, 0.1, -0.1],// Hyades 2
+                        [0.5, 0.4, 0.1],  // Hyades 3
+                        [1.1, 1.1, -0.2], // Elnath
+                        [-2.5, 2.6, 0.3], // Horn 2
+                        [2.3, 2.9, 0]     // Pleiades
+                    ],
+                    edges: [
+                        [0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [4, 6]
+                    ]
+                },
+                // 4. Gemini (Song Tử - ♊)
+                {
+                    name: 'Gemini',
+                    center: [12, 7.5, -9],
+                    scale: 1.0,
+                    stars: [
+                        [-1.6, 2.6, 0],   // Castor
+                        [-0.5, 2.4, 0.2], // Pollux
+                        [-1.4, 0.9, -0.1],// Body 1
+                        [-0.3, 0.7, 0.1], // Body 2
+                        [-1.1, -0.7, 0],  // Leg 1
+                        [-0.2, -0.9, 0.2],// Leg 2
+                        [-2.0, -1.6, -0.1],// Foot 1
+                        [0.4, -1.8, 0.1]  // Foot 2
+                    ],
+                    edges: [
+                        [0, 1], [0, 2], [1, 3], [2, 4], [3, 5], [4, 6], [5, 7], [2, 3]
+                    ]
+                },
+                // 5. Sagittarius (Nhân Mã - ♐)
+                {
+                    name: 'Sagittarius',
+                    center: [0, -8.5, -13],
+                    scale: 1.1,
+                    stars: [
+                        [-1.6, 0.7, 0],   // Kaus Media
+                        [-1.1, 1.6, 0.2], // Kaus Borealis
+                        [-0.2, 0.5, -0.1],// Kaus Australis
+                        [-1.3, -0.5, 0],  // Alnasl (Spout)
+                        [0.7, 0.7, 0.2],  // Nunki
+                        [1.3, -0.2, -0.1],// Ascella
+                        [0.4, -0.7, 0],   // Tau
+                        [-0.5, -0.7, 0.1] // Zeta
+                    ],
+                    edges: [
+                        [0, 1], [1, 2], [2, 0],
+                        [0, 3], [2, 3],
+                        [2, 4], [4, 5], [5, 6], [6, 7], [7, 0], [2, 7]
+                    ]
+                },
+                // 6. Cassiopeia (Thiên Hậu - 🌟)
+                {
+                    name: 'Cassiopeia',
+                    center: [3, 10, -11],
+                    scale: 0.9,
+                    stars: [
+                        [-2.5, 0.2, 0],
+                        [-1.2, -0.7, 0.2],
+                        [0.0, 0.3, -0.1],
+                        [1.2, -0.5, 0.1],
+                        [2.3, 0.2, 0]
+                    ],
+                    edges: [
+                        [0, 1], [1, 2], [2, 3], [3, 4]
+                    ]
+                }
+            ];
+
+            const allStarPositions = [];
+            const allStarColors = [];
+            const allLinePositions = [];
+
+            const colStarBright = new THREE.Color(0xffffff);
+            const colStarGold = new THREE.Color(0xfde047);
+            const colStarCyan = new THREE.Color(0x38bdf8);
+
+            CONSTELLATIONS.forEach(c => {
+                const cx = c.center[0], cy = c.center[1], cz = c.center[2];
+                const s = c.scale || 1.0;
+
+                const worldStars = c.stars.map((pos, idx) => {
+                    const wx = cx + pos[0] * s;
+                    const wy = cy + pos[1] * s;
+                    const wz = cz + pos[2] * s;
+                    allStarPositions.push(wx, wy, wz);
+
+                    const col = idx === 0 ? colStarGold : (idx % 2 === 0 ? colStarBright : colStarCyan);
+                    allStarColors.push(col.r, col.g, col.b);
+                    return [wx, wy, wz];
+                });
+
+                c.edges.forEach(([p1, p2]) => {
+                    allLinePositions.push(...worldStars[p1]);
+                    allLinePositions.push(...worldStars[p2]);
+                });
+            });
+
+            // 1. Constellation Connecting Lines
+            const lineGeo = new THREE.BufferGeometry();
+            lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(allLinePositions, 3));
+            const lineMat = new THREE.LineBasicMaterial({
+                color: isDarkMode ? 0x38bdf8 : 0x2563eb,
+                transparent: true,
+                opacity: isDarkMode ? 0.42 : 0.32,
+                blending: THREE.AdditiveBlending
+            });
+            const lines = new THREE.LineSegments(lineGeo, lineMat);
+            group.add(lines);
+
+            // 2. Constellation Major Stars (Luminous diamond points)
+            const starGeo = new THREE.BufferGeometry();
+            starGeo.setAttribute('position', new THREE.Float32BufferAttribute(allStarPositions, 3));
+            starGeo.setAttribute('color', new THREE.Float32BufferAttribute(allStarColors, 3));
+
+            const starsMat = new THREE.PointsMaterial({
+                size: isMobileDevice ? 0.65 : 0.85,
+                map: starTexture,
+                vertexColors: true,
+                transparent: true,
+                opacity: isDarkMode ? 0.95 : 0.78,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+            const points = new THREE.Points(starGeo, starsMat);
+            group.add(points);
+
+            return { group, lines, points };
+        }
+
+        // 3. SAO BĂNG LƯỚT QUA VŨ TRỤ (SHOOTING STARS)
+        function createShootingStar() {
+            const length = 5.5 + Math.random() * 3.5;
+            const geo = new THREE.BufferGeometry();
+            const positions = new Float32Array([0, 0, 0, -length * 0.8, length * 0.6, -length * 0.5]);
+            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const mat = new THREE.LineBasicMaterial({
+                color: 0xe0f2fe,
+                transparent: true,
+                opacity: 0,
+                blending: THREE.AdditiveBlending
+            });
+
+            const mesh = new THREE.Line(geo, mat);
+            mesh.visible = false;
+            return {
+                mesh,
+                active: false,
+                life: 0,
+                maxLife: 55,
+                vx: -0.7 - Math.random() * 0.3,
+                vy: -0.5 - Math.random() * 0.25,
+                vz: -0.2
+            };
+        }
+
+        function spawnShootingStar(star) {
+            star.active = true;
+            star.life = star.maxLife;
+            star.mesh.visible = true;
+            star.mesh.position.set(
+                (Math.random() - 0.2) * 35,
+                12 + Math.random() * 8,
+                -8 - Math.random() * 12
+            );
         }
 
         function initThreeJS() {
@@ -1477,7 +1797,7 @@
             scene = new THREE.Scene();
 
             camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 0.8, isMobileDevice ? 24 : 19);
+            camera.position.set(0, 0.6, isMobileDevice ? 26 : 21);
 
             renderer = new THREE.WebGLRenderer({
                 canvas: canvas,
@@ -1488,183 +1808,48 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileDevice ? 1.5 : 2));
 
-            // Atmospheric lighting
-            const ambientLight = new THREE.AmbientLight(0xffffff, isDarkMode ? 0.85 : 1.1);
+            // Ambient gentle celestial light
+            const ambientLight = new THREE.AmbientLight(0xffffff, isDarkMode ? 0.9 : 1.15);
             scene.add(ambientLight);
 
-            const blueLight = new THREE.DirectionalLight(0x3b82f6, 1.8);
-            blueLight.position.set(15, 20, 15);
-            scene.add(blueLight);
+            const starTexture = createStarSprite();
 
-            const cyanLight = new THREE.PointLight(0x06b6d4, 1.6, 50);
-            cyanLight.position.set(-15, -8, 10);
-            scene.add(cyanLight);
+            // 1. Spiral Galaxy Disk
+            galaxyGroup = new THREE.Group();
+            galaxyGroup.rotation.x = 0.58;
+            galaxyGroup.rotation.z = -0.32;
+            galaxyGroup.position.set(0, -1.5, -4);
 
-            const violetLight = new THREE.PointLight(0x8b5cf6, 1.2, 40);
-            violetLight.position.set(10, -5, -5);
-            scene.add(violetLight);
+            const galaxyMeshObj = buildSpiralGalaxy(starTexture);
+            galaxyGroup.add(galaxyMeshObj);
+            scene.add(galaxyGroup);
 
-            worldGroup = new THREE.Group();
-            scene.add(worldGroup);
+            // 2. Zodiac Constellations
+            const constellationData = buildZodiacConstellations(starTexture);
+            constellationsGroup = constellationData.group;
+            constellationLines = constellationData.lines;
+            majorStarsPoints = constellationData.points;
+            scene.add(constellationsGroup);
 
-            // =============================================================
-            // 1. DYNAMIC CYBER WAVE GRID (FLOWING SILK HORIZON)
-            // =============================================================
-            const gridW = isMobileDevice ? 65 : 105;
-            const gridH = isMobileDevice ? 48 : 72;
-            const segW = isMobileDevice ? 38 : 65;
-            const segH = isMobileDevice ? 26 : 46;
-
-            waveGeometry = new THREE.PlaneGeometry(gridW, gridH, segW, segH);
-            waveGeometry.rotateX(-Math.PI / 2.2);
-            waveGeometry.translate(0, -6.2, -4);
-
-            const vertCount = waveGeometry.attributes.position.count;
-            basePositions = new Float32Array(vertCount * 3);
-            basePositions.set(waveGeometry.attributes.position.array);
-
-            const colors = new Float32Array(vertCount * 3);
-            for (let i = 0; i < vertCount; i++) {
-                colors[i * 3] = 0.14;     // R
-                colors[i * 3 + 1] = 0.42; // G
-                colors[i * 3 + 2] = 0.95; // B
+            // 3. Shooting Stars Pool
+            shootingStarsGroup = new THREE.Group();
+            shootingStars = [];
+            for (let i = 0; i < 3; i++) {
+                const s = createShootingStar();
+                shootingStars.push(s);
+                shootingStarsGroup.add(s.mesh);
             }
-            waveGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            scene.add(shootingStarsGroup);
 
-            // Wireframe Wave Mesh
-            const waveMaterial = new THREE.MeshBasicMaterial({
-                wireframe: true,
-                vertexColors: true,
-                transparent: true,
-                opacity: isDarkMode ? 0.38 : 0.28,
-                blending: THREE.AdditiveBlending
-            });
-            waveMesh = new THREE.Mesh(waveGeometry, waveMaterial);
-            worldGroup.add(waveMesh);
-
-            // Glowing Points at wave intersections
-            const wavePointsMat = new THREE.PointsMaterial({
-                size: isMobileDevice ? 0.14 : 0.18,
-                vertexColors: true,
-                transparent: true,
-                opacity: isDarkMode ? 0.7 : 0.5,
-                blending: THREE.AdditiveBlending
-            });
-            wavePoints = new THREE.Points(waveGeometry, wavePointsMat);
-            worldGroup.add(wavePoints);
-
-            wavePosAttr = waveGeometry.attributes.position;
-            waveColAttr = waveGeometry.attributes.color;
-
-            // =============================================================
-            // 2. FLOWING AURORA LIGHT RIBBONS
-            // =============================================================
-            const createAuroraRibbon = (colorHex, yOffset, scaleFactor) => {
-                const curvePoints = [];
-                const count = 35;
-                for (let i = 0; i <= count; i++) {
-                    const u = (i / count) * Math.PI * 2;
-                    curvePoints.push(new THREE.Vector3(
-                        (i - count / 2) * 2.2,
-                        Math.sin(u * 2) * 2.0 + yOffset,
-                        Math.cos(u * 1.5) * 4.5 - 6
-                    ));
-                }
-                const curve = new THREE.CatmullRomCurve3(curvePoints);
-                const tubeGeo = new THREE.TubeGeometry(curve, 50, 0.15 * scaleFactor, 8, false);
-                const tubeMat = new THREE.MeshBasicMaterial({
-                    color: colorHex,
-                    transparent: true,
-                    opacity: isDarkMode ? 0.45 : 0.3,
-                    blending: THREE.AdditiveBlending
-                });
-                return new THREE.Mesh(tubeGeo, tubeMat);
-            };
-
-            ribbon1 = createAuroraRibbon(0x38bdf8, 2.5, 1.0);
-            ribbon2 = createAuroraRibbon(0x818cf8, 4.0, 0.8);
-            worldGroup.add(ribbon1);
-            worldGroup.add(ribbon2);
-
-            // =============================================================
-            // 3. FLOATING REFRACTIVE CRYSTAL PRISM (AI KNOWLEDGE CORE)
-            // =============================================================
-            prismGroup = new THREE.Group();
-            prismGroup.position.set(isMobileDevice ? 0 : 8.5, isMobileDevice ? 3.0 : 2.5, isMobileDevice ? -2 : 1);
-
-            const crystalMat = new THREE.MeshPhysicalMaterial({
-                color: 0x3b82f6,
-                metalness: 0.25,
-                roughness: 0.15,
-                transmission: 0.6,
-                transparent: true,
-                opacity: 0.65,
-                clearcoat: 1.0,
-                clearcoatRoughness: 0.1
-            });
-            crystalMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(2.0, 0), crystalMat);
-            prismGroup.add(crystalMesh);
-
-            const cageMat = new THREE.MeshBasicMaterial({
-                color: 0x60a5fa,
-                wireframe: true,
-                transparent: true,
-                opacity: 0.35
-            });
-            wireCage = new THREE.Mesh(new THREE.IcosahedronGeometry(2.4, 1), cageMat);
-            prismGroup.add(wireCage);
-
-            worldGroup.add(prismGroup);
-
-            // =============================================================
-            // 4. FLOATING STARDUST GALAXY
-            // =============================================================
-            const starCount = isMobileDevice ? 500 : 950;
-            const starGeo = new THREE.BufferGeometry();
-            const starPositions = new Float32Array(starCount * 3);
-            const starColors = new Float32Array(starCount * 3);
-
-            const cCyan = new THREE.Color(0x38bdf8);
-            const cBlue = new THREE.Color(0x2563eb);
-            const cViolet = new THREE.Color(0xa855f7);
-
-            for (let i = 0; i < starCount; i++) {
-                const i3 = i * 3;
-                starPositions[i3] = (Math.random() - 0.5) * 65;
-                starPositions[i3 + 1] = (Math.random() - 0.5) * 45;
-                starPositions[i3 + 2] = (Math.random() - 0.5) * 40 - 5;
-
-                const c = i % 3 === 0 ? cCyan : (i % 3 === 1 ? cBlue : cViolet);
-                starColors[i3] = c.r;
-                starColors[i3 + 1] = c.g;
-                starColors[i3 + 2] = c.b;
-            }
-
-            starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-            starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
-
-            starMaterial = new THREE.PointsMaterial({
-                size: isMobileDevice ? 0.13 : 0.16,
-                vertexColors: true,
-                transparent: true,
-                opacity: isDarkMode ? 0.8 : 0.55,
-                blending: THREE.AdditiveBlending
-            });
-
-            starField = new THREE.Points(starGeo, starMaterial);
-            scene.add(starField);
-
-            // Mouse & Touch listeners
+            // Mouse & Touch listeners (Soft celestial parallax)
             window.addEventListener('mousemove', (e) => {
                 pointerX = (e.clientX / window.innerWidth) - 0.5;
                 pointerY = (e.clientY / window.innerHeight) - 0.5;
-                targetRippleX = pointerX * 45;
-                targetRippleY = -pointerY * 30;
 
                 if (!isMobileDevice && currentView === 'landing') {
                     const card = document.getElementById('hero-demo-card');
                     if (card) {
-                        card.style.transform = `perspective(1000px) rotateX(${-pointerY * 5}deg) rotateY(${pointerX * 5}deg)`;
+                        card.style.transform = `perspective(1000px) rotateX(${-pointerY * 4}deg) rotateY(${pointerX * 4}deg)`;
                     }
                 }
             }, { passive: true });
@@ -1673,8 +1858,6 @@
                 if (e.touches.length > 0) {
                     pointerX = (e.touches[0].clientX / window.innerWidth) - 0.5;
                     pointerY = (e.touches[0].clientY / window.innerHeight) - 0.5;
-                    targetRippleX = pointerX * 45;
-                    targetRippleY = -pointerY * 30;
                 }
             }, { passive: true });
 
@@ -1686,98 +1869,69 @@
         }
 
         let clock = 0;
+        let nextShootingStarTime = 120;
+
         function animateScene() {
             requestAnimationFrame(animateScene);
 
             pulseBoost += (1 - pulseBoost) * 0.05;
             clock += 0.012 * pulseBoost;
 
-            // Interpolate ripple position towards pointer
-            currentRippleX += (targetRippleX - currentRippleX) * 0.08;
-            currentRippleY += (targetRippleY - currentRippleY) * 0.08;
+            // 1. Slow, majestic galactic rotation (Zero headache)
+            if (galaxyGroup) {
+                galaxyGroup.rotation.y += 0.00065 * pulseBoost;
+                galaxyGroup.rotation.x = 0.58 + pointerY * 0.12;
+                galaxyGroup.rotation.z = -0.32 + pointerX * 0.15;
+            }
 
-            // Animate wave geometry vertices
-            if (wavePosAttr && basePositions) {
-                const posArr = wavePosAttr.array;
-                const colArr = waveColAttr.array;
-                const vertCount = wavePosAttr.count;
+            // 2. Gentle celestial breathing of constellations
+            if (constellationsGroup) {
+                constellationsGroup.position.x = pointerX * 1.8;
+                constellationsGroup.position.y = -pointerY * 1.4;
+                constellationsGroup.rotation.y = Math.sin(clock * 0.2) * 0.03;
+            }
 
-                for (let i = 0; i < vertCount; i++) {
-                    const i3 = i * 3;
-                    const bx = basePositions[i3];
-                    const by = basePositions[i3 + 1];
-                    const bz = basePositions[i3 + 2];
+            // Twinkle major stars softly
+            if (majorStarsPoints && majorStarsPoints.material) {
+                majorStarsPoints.material.size = (isMobileDevice ? 0.65 : 0.85) * (1.0 + Math.sin(clock * 2.2) * 0.14);
+            }
 
-                    // Harmonic multi-frequency waves
-                    let waveH = Math.sin(bx * 0.12 + clock * 1.2) * Math.cos(bz * 0.14 + clock * 0.9) * 2.2
-                              + Math.sin((bx + bz) * 0.08 + clock * 1.3) * 1.4
-                              + Math.cos(bx * 0.06 - bz * 0.08 + clock * 0.7) * 0.9;
-
-                    // Interactive ripple from mouse/finger
-                    const dx = bx - currentRippleX;
-                    const dz = bz - currentRippleY;
-                    const dist = Math.sqrt(dx * dx + dz * dz);
-                    const ripple = (2.8 / (1.0 + dist * 0.28)) * Math.sin(dist * 0.65 - clock * 4.0);
-                    waveH += ripple;
-
-                    // Update Y displacement
-                    posArr[i3 + 1] = by + waveH;
-
-                    // Map height to vibrant vertex colors
-                    const normalizedH = Math.min(Math.max((waveH + 3.0) / 6.0, 0), 1);
-                    colArr[i3] = 0.12 + normalizedH * 0.15;        // R
-                    colArr[i3 + 1] = 0.35 + normalizedH * 0.60;    // G (peaks glow green-cyan)
-                    colArr[i3 + 2] = 0.85 + normalizedH * 0.15;    // B
+            // 3. Occasional Shooting Star
+            nextShootingStarTime--;
+            if (nextShootingStarTime <= 0) {
+                const idleStar = shootingStars.find(s => !s.active);
+                if (idleStar) {
+                    spawnShootingStar(idleStar);
                 }
-
-                wavePosAttr.needsUpdate = true;
-                waveColAttr.needsUpdate = true;
+                nextShootingStarTime = 160 + Math.floor(Math.random() * 200);
             }
 
-            // Animate Aurora Ribbons
-            if (ribbon1) {
-                ribbon1.rotation.y = Math.sin(clock * 0.4) * 0.15;
-                ribbon1.rotation.z = Math.cos(clock * 0.3) * 0.1;
-                ribbon1.position.y = Math.sin(clock * 0.6) * 0.5;
-            }
-            if (ribbon2) {
-                ribbon2.rotation.y = -Math.cos(clock * 0.35) * 0.15;
-                ribbon2.rotation.z = -Math.sin(clock * 0.25) * 0.1;
-                ribbon2.position.y = Math.cos(clock * 0.5) * 0.5;
-            }
+            shootingStars.forEach(s => {
+                if (s.active) {
+                    s.mesh.position.x += s.vx;
+                    s.mesh.position.y += s.vy;
+                    s.mesh.position.z += s.vz;
+                    s.life--;
 
-            // Animate Crystal Prism
-            if (prismGroup) {
-                prismGroup.rotation.y += 0.006 * pulseBoost;
-                prismGroup.rotation.x = Math.sin(clock * 0.5) * 0.2;
-                prismGroup.position.y = (isMobileDevice ? 3.0 : 2.5) + Math.sin(clock * 0.8) * 0.4;
-            }
-            if (wireCage) {
-                wireCage.rotation.y -= 0.009 * pulseBoost;
-                wireCage.rotation.z = Math.cos(clock * 0.6) * 0.2;
-            }
+                    const alpha = Math.sin((s.life / s.maxLife) * Math.PI);
+                    s.mesh.material.opacity = alpha * 0.85;
 
-            // Animate Star Field
-            if (starField) {
-                starField.rotation.y += 0.0006 * pulseBoost;
-                starField.position.y = scrollProgressRatio * 2.5;
-            }
+                    if (s.life <= 0) {
+                        s.active = false;
+                        s.mesh.visible = false;
+                    }
+                }
+            });
 
-            // Camera waypoint & smooth perspective interpolation
+            // 4. Smooth camera navigation across sections
             const wp = getInterpolatedWaypoint(scrollProgressRatio);
 
-            camera.position.x += (wp.camX + pointerX * 1.5 - camera.position.x) * 0.05;
-            camera.position.y += (wp.camY - pointerY * 1.2 - camera.position.y) * 0.05;
-            camera.position.z += (wp.camZ - camera.position.z) * 0.05;
+            camera.position.x += (wp.camX + pointerX * 1.2 - camera.position.x) * 0.04;
+            camera.position.y += (wp.camY - pointerY * 1.0 - camera.position.y) * 0.04;
+            camera.position.z += (wp.camZ - camera.position.z) * 0.04;
 
-            if (worldGroup) {
-                worldGroup.position.x += (wp.grpX - worldGroup.position.x) * 0.05;
-                worldGroup.position.y += (wp.grpY - worldGroup.position.y) * 0.05;
-                worldGroup.position.z += (wp.grpZ - worldGroup.position.z) * 0.05;
-
-                worldGroup.rotation.x += (wp.rotX + pointerY * 0.2 - worldGroup.rotation.x) * 0.05;
-                worldGroup.rotation.y += (wp.rotY + pointerX * 0.35 - worldGroup.rotation.y) * 0.05;
-            }
+            camera.rotation.x += (wp.rotX + pointerY * 0.08 - camera.rotation.x) * 0.04;
+            camera.rotation.y += (wp.rotY + pointerX * 0.1 - camera.rotation.y) * 0.04;
 
             if (renderer && scene && camera) {
                 renderer.render(scene, camera);
