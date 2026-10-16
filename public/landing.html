@@ -208,18 +208,57 @@
         .book-spine-3 { background: linear-gradient(90deg, #fde68a, #fef3c7); }
         .book-spine-4 { background: linear-gradient(90deg, #60a5fa, #bfdbfe); }
 
-        /* Smooth View Fade */
+        /* Smooth View & Tab Animations */
         .view-fade-enter {
-            animation: viewFadeIn 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation: viewFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         @keyframes viewFadeIn {
             from {
                 opacity: 0;
-                transform: scale(0.97) translateY(12px);
+                transform: scale(0.97) translateY(14px);
             }
             to {
                 opacity: 1;
                 transform: scale(1) translateY(0);
+            }
+        }
+        .tab-content-enter {
+            animation: tabFadeSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes tabFadeSlide {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        .tab-slide-left {
+            animation: tabSlideLeft 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes tabSlideLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-18px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+        .tab-slide-right {
+            animation: tabSlideRight 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes tabSlideRight {
+            from {
+                opacity: 0;
+                transform: translateX(18px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
             }
         }
     </style>
@@ -1033,8 +1072,8 @@
         // -----------------------------------------------------------------
         function switchMiniDemo(tab) {
             const tabs = ['exam', 'bank', 'class'];
-            const activeClass = 'px-2 py-1 rounded-lg bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-sm transition cursor-pointer';
-            const inactiveClass = 'px-2 py-1 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 transition cursor-pointer';
+            const activeClass = 'px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-sm transition-all duration-200 scale-[1.02] font-extrabold cursor-pointer';
+            const inactiveClass = 'px-2.5 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition cursor-pointer font-semibold';
 
             tabs.forEach(t => {
                 const panel = document.getElementById(`mini-panel-${t}`);
@@ -1042,13 +1081,20 @@
                 if (panel && btn) {
                     if (t === tab) {
                         panel.classList.remove('hidden');
+                        panel.classList.remove('tab-content-enter');
+                        void panel.offsetWidth; // Force reflow để kích hoạt lại animation mượt mà
+                        panel.classList.add('tab-content-enter');
                         btn.className = activeClass;
                     } else {
                         panel.classList.add('hidden');
+                        panel.classList.remove('tab-content-enter');
                         btn.className = inactiveClass;
                     }
                 }
             });
+
+            // Gió nhẹ thổi bay tinh thể tuyết khi chuyển tab
+            triggerTransitionPulse();
         }
 
         // -----------------------------------------------------------------
@@ -1074,7 +1120,10 @@
         let currentView = 'landing';
         let pulseBoost = 1;
         function triggerTransitionPulse() {
-            pulseBoost = 2.5;
+            pulseBoost = 3.4;
+            if (typeof triggerFrostRipple === 'function') {
+                triggerFrostRipple(0, 0);
+            }
         }
 
         function switchView(targetView, loginTab = null, pushHistory = true) {
@@ -1090,11 +1139,21 @@
 
             // Hide all views first
             if (landingEl) landingEl.classList.add('hidden');
-            if (loginEl) loginEl.classList.add('hidden');
-            if (dashboardEl) dashboardEl.classList.add('hidden');
+            if (loginEl) {
+                loginEl.classList.add('hidden');
+                loginEl.classList.remove('view-fade-enter');
+            }
+            if (dashboardEl) {
+                dashboardEl.classList.add('hidden');
+                dashboardEl.classList.remove('view-fade-enter');
+            }
 
             if (targetView === 'login') {
-                if (loginEl) loginEl.classList.remove('hidden');
+                if (loginEl) {
+                    loginEl.classList.remove('hidden');
+                    void loginEl.offsetWidth;
+                    loginEl.classList.add('view-fade-enter');
+                }
                 if (desktopNav) desktopNav.classList.add('opacity-0', 'pointer-events-none');
                 if (authText) authText.textContent = 'Trang chủ';
                 if (authBtn) authBtn.setAttribute('onclick', "switchView('landing')");
@@ -1104,7 +1163,11 @@
                     try { window.history.pushState({ view: 'login' }, '', '/login'); } catch (e) {}
                 }
             } else if (targetView === 'dashboard') {
-                if (dashboardEl) dashboardEl.classList.remove('hidden');
+                if (dashboardEl) {
+                    dashboardEl.classList.remove('hidden');
+                    void dashboardEl.offsetWidth;
+                    dashboardEl.classList.add('view-fade-enter');
+                }
                 if (desktopNav) desktopNav.classList.add('opacity-0', 'pointer-events-none');
                 if (authText) authText.textContent = 'Trang chủ';
                 if (authBtn) authBtn.setAttribute('onclick', "switchView('landing')");
@@ -1113,7 +1176,11 @@
                     try { window.history.pushState({ view: 'dashboard' }, '', '/'); } catch (e) {}
                 }
             } else {
-                if (landingEl) landingEl.classList.remove('hidden');
+                if (landingEl) {
+                    landingEl.classList.remove('hidden');
+                    void landingEl.offsetWidth;
+                    landingEl.classList.add('view-fade-enter');
+                }
                 if (desktopNav) desktopNav.classList.remove('opacity-0', 'pointer-events-none');
                 
                 // If user is logged in, show 'Vào Dashboard'
@@ -1152,7 +1219,7 @@
         });
 
         // -----------------------------------------------------------------
-        // 4. LOGIN TABS & PASSWORD VISIBILITY
+        // 4. LOGIN TABS & PASSWORD VISIBILITY (ANIMATED SLIDE TRANSITION)
         // -----------------------------------------------------------------
         function switchLoginTab(tab) {
             const btnGoogle = document.getElementById('tab-btn-google');
@@ -1160,24 +1227,38 @@
             const panelGoogle = document.getElementById('panel-google');
             const panelAccount = document.getElementById('panel-account');
 
-            const activeClasses = ['bg-white', 'dark:bg-slate-800', 'text-blue-700', 'dark:text-blue-400', 'shadow-sm'];
-            const inactiveClasses = ['text-slate-700', 'dark:text-slate-300', 'hover:bg-white/40', 'dark:hover:bg-slate-800/40'];
+            const activeClasses = ['bg-white', 'dark:bg-slate-800', 'text-blue-700', 'dark:text-blue-400', 'shadow-md', 'scale-[1.02]'];
+            const inactiveClasses = ['text-slate-700', 'dark:text-slate-300', 'hover:bg-white/40', 'dark:hover:bg-slate-800/40', 'scale-100'];
 
             if (tab === 'google') {
-                panelGoogle?.classList.remove('hidden');
-                panelAccount?.classList.add('hidden');
+                if (panelGoogle) {
+                    panelGoogle.classList.remove('hidden');
+                    panelGoogle.classList.remove('tab-slide-left', 'tab-slide-right');
+                    void panelGoogle.offsetWidth;
+                    panelGoogle.classList.add('tab-slide-left');
+                }
+                if (panelAccount) panelAccount.classList.add('hidden');
+
                 btnGoogle?.classList.add(...activeClasses);
                 btnGoogle?.classList.remove(...inactiveClasses);
                 btnAccount?.classList.remove(...activeClasses);
                 btnAccount?.classList.add(...inactiveClasses);
             } else {
-                panelAccount?.classList.remove('hidden');
-                panelGoogle?.classList.add('hidden');
+                if (panelAccount) {
+                    panelAccount.classList.remove('hidden');
+                    panelAccount.classList.remove('tab-slide-left', 'tab-slide-right');
+                    void panelAccount.offsetWidth;
+                    panelAccount.classList.add('tab-slide-right');
+                }
+                if (panelGoogle) panelGoogle.classList.add('hidden');
+
                 btnAccount?.classList.add(...activeClasses);
                 btnAccount?.classList.remove(...inactiveClasses);
                 btnGoogle?.classList.remove(...activeClasses);
                 btnGoogle?.classList.add(...inactiveClasses);
             }
+
+            triggerTransitionPulse();
 
             setTimeout(() => {
                 lucide.createIcons();
@@ -1887,10 +1968,10 @@
                 c.y += c.vy;
                 c.z += c.vz;
 
-                // Cập nhật góc xoay 3D (3D Tumbling)
-                c.rotX += c.vRotX;
-                c.rotY += c.vRotY;
-                c.rotZ += c.vRotZ;
+                // Cập nhật góc xoay 3D (Xoay tít nhẹ tạo cảm giác chuyển động lướt khi đổi tab với pulseBoost)
+                c.rotX += c.vRotX * pulseBoost;
+                c.rotY += c.vRotY * pulseBoost;
+                c.rotZ += c.vRotZ * pulseBoost;
 
                 // Giảm dần tốc độ xoay về mức xoay tự nhiên ban đầu
                 c.vRotX *= 0.95;
@@ -1902,20 +1983,32 @@
                 c.mesh.rotation.set(c.rotX, c.rotY, c.rotZ);
             }
 
-            // Tiêu hao dần vận tốc gió
+            // Tiêu hao dần vận tốc gió và xung lực chuyển tab
             windVx *= 0.90;
             windVy *= 0.90;
+            pulseBoost += (1.0 - pulseBoost) * 0.045;
 
             // Xoay nhẹ bụi sương nền
             if (backgroundFrost) {
                 backgroundFrost.rotation.y = clock * 0.015;
             }
 
-            // Hiệu ứng Parallax 3D camera theo chuột và cuộn trang
-            const targetCamY = (scrollProgressRatio - 0.5) * -6 - pointerY * 2.0;
+            // 3D Dolly Zoom & Camera Flight mượt mà theo từng View (Landing vs Login vs Dashboard)
+            let targetCamZ = isMobileDevice ? 28 : 22;
+            let targetCamY = (scrollProgressRatio - 0.5) * -6 - pointerY * 2.0;
+
+            if (currentView === 'login') {
+                targetCamZ = isMobileDevice ? 19 : 15.5; // Tiến lại gần khung đăng nhập tạo cảm giác chiều sâu điện ảnh
+                targetCamY = 0.5 - pointerY * 1.5;
+            } else if (currentView === 'dashboard') {
+                targetCamZ = isMobileDevice ? 22 : 18;
+                targetCamY = 0.8 - pointerY * 1.5;
+            }
+
             const targetCamX = pointerX * 2.6;
-            camera.position.y += (targetCamY - camera.position.y) * 0.04;
-            camera.position.x += (targetCamX - camera.position.x) * 0.04;
+            camera.position.z += (targetCamZ - camera.position.z) * 0.055;
+            camera.position.y += (targetCamY - camera.position.y) * 0.045;
+            camera.position.x += (targetCamX - camera.position.x) * 0.045;
 
             if (renderer && scene && camera) {
                 renderer.render(scene, camera);
