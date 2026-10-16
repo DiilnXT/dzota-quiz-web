@@ -1374,15 +1374,17 @@
             isDarkMode = !isDarkMode;
             document.documentElement.classList.toggle('dark', isDarkMode);
             try { localStorage.setItem('dzota_theme', isDarkMode ? 'dark' : 'light'); } catch (e) {}
-            if (galaxyMaterial) {
-                galaxyMaterial.opacity = isDarkMode ? 0.88 : 0.62;
+            if (atmosphereMesh && atmosphereMesh.material) {
+                atmosphereMesh.material.opacity = isDarkMode ? 0.35 : 0.22;
             }
-            if (constellationLines) {
-                constellationLines.material.color.setHex(isDarkMode ? 0x38bdf8 : 0x2563eb);
-                constellationLines.material.opacity = isDarkMode ? 0.42 : 0.32;
+            if (constellationLinesMesh && constellationLinesMesh.material) {
+                constellationLinesMesh.material.color.setHex(isDarkMode ? 0x38bdf8 : 0x2563eb);
+                constellationLinesMesh.material.opacity = isDarkMode ? 0.55 : 0.42;
             }
-            if (majorStarsPoints) {
-                majorStarsPoints.material.opacity = isDarkMode ? 0.95 : 0.78;
+            if (zodiacBadges && zodiacBadges.length) {
+                zodiacBadges.forEach(badge => {
+                    if (badge.material) badge.material.opacity = isDarkMode ? 0.95 : 0.85;
+                });
             }
         }
 
@@ -1411,31 +1413,36 @@
         document.querySelectorAll('.reveal-item').forEach(el => revealObserver.observe(el));
 
         // -----------------------------------------------------------------
-        // 8. BREATHTAKING 3D SPIRAL GALAXY & ZODIAC CONSTELLATIONS ENGINE
-        //    - Majestic Spiral Galaxy (Dải Ngân Hà 3D) with multi-arm stardust disk
-        //    - Authentic Zodiac Constellations (Leo, Scorpius, Taurus, Gemini, Sagittarius, Cassiopeia)
-        //    - Glowing Stellar Nodes & Delicate Starlight Line Networks
-        //    - Twinkling Major Stars & Cosmic Shooting Stars (Sao Băng)
-        //    - Smooth Celestial Parallax & Scroll Navigation (Tranquil, deeply soothing, zero headache)
+        // 8. 3D EARTH & 12 ZODIAC CONSTELLATIONS WITH DRAG & THROW PHYSICS
+        //    - Quả Địa Cầu Trái Đất 3D phát sáng khí quyển & lớp mây trôi
+        //    - 12 Chòm Sao Cung Hoàng Đạo chuẩn thiên văn kèm bảng tên phát quang
+        //    - Tương tác vật lý: Kéo, đẩy, xoay và "ĐÁ NÓ ĐI" (flick / fling) với quán tính
+        //    - Chuẩn 60fps trên cả Mobile & Laptop
         // -----------------------------------------------------------------
-        let scene, camera, renderer, galaxyGroup, constellationsGroup, shootingStarsGroup;
-        let galaxyPoints, galaxyMaterial;
-        let constellationLines, majorStarsPoints;
-        let shootingStars = [];
+        let scene, camera, renderer, celestialWorld, earthGroup, earthMesh, cloudsMesh, atmosphereMesh;
+        let constellationLinesMesh, majorStarsPoints;
+        let zodiacBadges = [];
         let pointerX = 0, pointerY = 0;
         let pulseBoost = 1;
         const isMobileDevice = window.innerWidth < 768;
 
-        // Camera Waypoints for smooth panoramic cosmic tour
+        // Vật lý quán tính Kéo & Đá (Drag & Fling / Throw Physics)
+        let isDragging = false;
+        let lastPointerX = 0, lastPointerY = 0;
+        let lastTime = 0;
+        let dragVelX = 0, dragVelY = 0;
+        let flingVelX = 0, flingVelY = 0;
+
+        // Camera Waypoints theo từng Section
         const waypoints = [
-            { camX: 0, camY: 0.6, camZ: isMobileDevice ? 26 : 21, rotX: 0.05, rotY: 0 },
-            { camX: -1.8, camY: -0.6, camZ: isMobileDevice ? 22 : 18, rotX: -0.04, rotY: 0.1 },
-            { camX: 2.0, camY: 0.4, camZ: isMobileDevice ? 23 : 19, rotX: 0.06, rotY: -0.08 },
-            { camX: 0, camY: 1.2, camZ: isMobileDevice ? 25 : 20, rotX: 0.1, rotY: 0 }
+            { camX: isMobileDevice ? 0 : -2.5, camY: 0.5, camZ: isMobileDevice ? 27 : 21, rotX: 0.04, rotY: 0.05 },
+            { camX: isMobileDevice ? 0 : -3.5, camY: -0.6, camZ: isMobileDevice ? 24 : 19, rotX: -0.04, rotY: 0.12 },
+            { camX: isMobileDevice ? 0 : -1.5, camY: 0.8, camZ: isMobileDevice ? 25 : 19.5, rotX: 0.06, rotY: -0.08 },
+            { camX: 0, camY: 1.4, camZ: isMobileDevice ? 26 : 21, rotX: 0.08, rotY: 0 }
         ];
 
         const loginWaypoint = {
-            camX: 0, camY: 0.2, camZ: isMobileDevice ? 19 : 15.5,
+            camX: 0, camY: 0.2, camZ: isMobileDevice ? 21 : 16.5,
             rotX: 0.02, rotY: 0
         };
 
@@ -1466,7 +1473,7 @@
             };
         }
 
-        // Procedural soft-glow circular star texture
+        // Tạo texture hình ngôi sao phát quang
         function createStarSprite() {
             const canvas = document.createElement('canvas');
             canvas.width = 64;
@@ -1474,223 +1481,294 @@
             const ctx = canvas.getContext('2d');
             const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
             gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-            gradient.addColorStop(0.2, 'rgba(224, 242, 254, 0.9)');
-            gradient.addColorStop(0.55, 'rgba(56, 189, 248, 0.32)');
+            gradient.addColorStop(0.25, 'rgba(224, 242, 254, 0.95)');
+            gradient.addColorStop(0.55, 'rgba(56, 189, 248, 0.4)');
             gradient.addColorStop(1, 'rgba(56, 189, 248, 0)');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, 64, 64);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        // Tạo texture Trái Đất chi tiết trong suốt không cần tải ảnh ngoài
+        function generateEarthTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 2048;
+            canvas.height = 1024;
+            const ctx = canvas.getContext('2d');
+
+            // Đại dương sâu thẳm
+            const oceanGrad = ctx.createLinearGradient(0, 0, 0, 1024);
+            oceanGrad.addColorStop(0, '#0c2340');
+            oceanGrad.addColorStop(0.5, '#102a4d');
+            oceanGrad.addColorStop(1, '#0c2340');
+            ctx.fillStyle = oceanGrad;
+            ctx.fillRect(0, 0, 2048, 1024);
+
+            // Lưới kinh vĩ tuyến công nghệ số (Latitude & Longitude)
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.12)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x <= 2048; x += 128) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, 1024);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= 1024; y += 128) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(2048, y);
+                ctx.stroke();
+            }
+
+            // Vẽ các mảng lục địa chính (Continents)
+            ctx.fillStyle = '#0f766e'; // Emerald-teal đất liền
+            ctx.strokeStyle = '#38bdf8'; // Viền biển phát sáng
+            ctx.lineWidth = 2.5;
+
+            function drawContinent(points) {
+                ctx.beginPath();
+                points.forEach(([px, py], idx) => {
+                    const x = (px / 360 + 0.5) * 2048;
+                    const y = (-py / 180 + 0.5) * 1024;
+                    if (idx === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            }
+
+            // Bắc Mỹ & Trung Mỹ
+            drawContinent([
+                [-165, 68], [-140, 70], [-100, 72], [-70, 60], [-55, 48],
+                [-75, 35], [-80, 25], [-95, 20], [-105, 23], [-120, 35],
+                [-125, 48], [-140, 58], [-165, 62]
+            ]);
+            // Nam Mỹ
+            drawContinent([
+                [-80, 10], [-60, 5], [-35, -5], [-40, -22], [-55, -35],
+                [-68, -55], [-75, -45], [-72, -20], [-80, -2]
+            ]);
+            // Châu Âu
+            drawContinent([
+                [-10, 36], [0, 44], [15, 38], [28, 42], [30, 60],
+                [10, 62], [-5, 58], [2, 50], [-8, 44]
+            ]);
+            // Châu Phi
+            drawContinent([
+                [-15, 32], [10, 36], [32, 30], [50, 12], [42, -5],
+                [32, -28], [20, -35], [12, -18], [0, 5], [-18, 15]
+            ]);
+            // Châu Á & Việt Nam / Đông Nam Á
+            drawContinent([
+                [35, 32], [55, 26], [70, 24], [78, 10], [85, 22],
+                [105, 22], [108, 12], [105, 10], [102, 18], // Bán đảo Đông Dương / Việt Nam
+                [118, 22], [122, 32], [130, 42], [140, 55], [110, 65],
+                [75, 70], [55, 60], [45, 40]
+            ]);
+            // Châu Úc
+            drawContinent([
+                [115, -22], [135, -12], [150, -22], [152, -35],
+                [138, -38], [118, -35]
+            ]);
+
+            // Hàng trăm điểm sáng đô thị ban đêm (Night City Lights)
+            ctx.fillStyle = '#fef08a';
+            for (let i = 0; i < 400; i++) {
+                const rx = Math.random() * 2048;
+                const ry = Math.random() * 1024;
+                const rSize = 1.2 + Math.random() * 2.2;
+                ctx.beginPath();
+                ctx.arc(rx, ry, rSize, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
             const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.ClampToEdgeWrapping;
             return texture;
         }
 
-        // 1. DẢI NGÂN HÀ XOẮN ỐC (SPIRAL GALAXY)
-        function buildSpiralGalaxy(starTexture) {
-            const count = isMobileDevice ? 2000 : 4200;
-            const geometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(count * 3);
-            const colors = new Float32Array(count * 3);
+        // Tạo texture mây trôi (Clouds)
+        function generateCloudsTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
 
-            const arms = 3;
-            const maxRadius = 32;
-            const coreRadius = 5.0;
+            ctx.clearRect(0, 0, 1024, 512);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
 
-            const colCoreWarm = new THREE.Color(0xfef08a); // Pale Gold
-            const colCoreWhite = new THREE.Color(0xffffff); // Star White
-            const colCyan = new THREE.Color(0x38bdf8);      // Electric Cyan
-            const colSapphire = new THREE.Color(0x2563eb);  // Deep Sapphire
-            const colViolet = new THREE.Color(0xa855f7);    // Cosmic Violet
-            const colEmerald = new THREE.Color(0x2dd4bf);   // Celestial Emerald
-
-            for (let i = 0; i < count; i++) {
-                const i3 = i * 3;
-                const isCore = Math.random() < 0.22;
-
-                let r, theta, spreadX, spreadY, spreadZ;
-                let c = new THREE.Color();
-
-                if (isCore) {
-                    // Concentrated around luminous core
-                    r = Math.pow(Math.random(), 1.6) * coreRadius;
-                    theta = Math.random() * Math.PI * 2;
-                    spreadX = (Math.random() - 0.5) * 1.5;
-                    spreadY = (Math.random() - 0.5) * 1.8;
-                    spreadZ = (Math.random() - 0.5) * 1.5;
-                    c.lerpColors(colCoreWarm, colCoreWhite, Math.random());
-                } else {
-                    // Curved spiral arms
-                    r = coreRadius + Math.pow(Math.random(), 0.88) * (maxRadius - coreRadius);
-                    const armIndex = i % arms;
-                    const armAngle = (armIndex / arms) * Math.PI * 2;
-                    const spiralAngle = r * 0.28;
-                    theta = armAngle + spiralAngle + (Math.random() - 0.5) * (0.42 + r * 0.02);
-
-                    const diskSpread = Math.max(0.35, 2.4 * Math.exp(-r / 18));
-                    spreadX = (Math.random() - 0.5) * 2.2;
-                    spreadY = (Math.random() - 0.5) * diskSpread;
-                    spreadZ = (Math.random() - 0.5) * 2.2;
-
-                    const colorPick = Math.random();
-                    if (colorPick < 0.4) {
-                        c.lerpColors(colCyan, colSapphire, Math.random());
-                    } else if (colorPick < 0.72) {
-                        c.lerpColors(colCyan, colEmerald, Math.random());
-                    } else {
-                        c.lerpColors(colSapphire, colViolet, Math.random());
-                    }
-                }
-
-                positions[i3] = Math.cos(theta) * r + spreadX;
-                positions[i3 + 1] = spreadY;
-                positions[i3 + 2] = Math.sin(theta) * r + spreadZ;
-
-                colors[i3] = c.r;
-                colors[i3 + 1] = c.g;
-                colors[i3 + 2] = c.b;
+            for (let i = 0; i < 90; i++) {
+                const cx = Math.random() * 1024;
+                const cy = 100 + Math.random() * 312;
+                const cr = 25 + Math.random() * 45;
+                ctx.beginPath();
+                ctx.ellipse(cx, cy, cr * 1.8, cr * 0.7, 0, 0, Math.PI * 2);
+                ctx.fill();
             }
 
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-            galaxyMaterial = new THREE.PointsMaterial({
-                size: isMobileDevice ? 0.42 : 0.54,
-                map: starTexture,
-                vertexColors: true,
-                transparent: true,
-                opacity: isDarkMode ? 0.88 : 0.62,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false
-            });
-
-            galaxyPoints = new THREE.Points(geometry, galaxyMaterial);
-            return galaxyPoints;
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            return texture;
         }
 
-        // 2. CÁC CHÒM SAO CUNG HOÀNG ĐẠO (ZODIAC CONSTELLATIONS)
-        function buildZodiacConstellations(starTexture) {
-            const group = new THREE.Group();
+        // Tạo bảng tên phát quang nổi 3D cho từng cung hoàng đạo (Billboard Badge)
+        function createConstellationBadge(symbol, name) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 120;
+            const ctx = canvas.getContext('2d');
 
-            const CONSTELLATIONS = [
-                // 1. Leo (Sư Tử - ♌)
+            // Viên nang viền phát sáng (Glowing Pill)
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 3.5;
+
+            const r = 24, x = 12, y = 14, w = 232, h = 92;
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Chữ tên cung hoàng đạo
+            ctx.font = 'bold 34px "Plus Jakarta Sans", sans-serif';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = '#38bdf8';
+            ctx.shadowBlur = 14;
+            ctx.fillText(`${symbol} ${name}`, 128, 60);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.SpriteMaterial({
+                map: texture,
+                transparent: true,
+                opacity: isDarkMode ? 0.95 : 0.85,
+                depthWrite: false
+            });
+            const sprite = new THREE.Sprite(material);
+            sprite.scale.set(3.4, 1.6, 1);
+            return sprite;
+        }
+
+        // Khởi tạo Quả Địa Cầu Trái Đất 3D
+        function buildEarth() {
+            earthGroup = new THREE.Group();
+            const earthRadius = isMobileDevice ? 5.2 : 6.8;
+
+            // 1. Quả cầu Trái Đất
+            const earthGeo = new THREE.SphereGeometry(earthRadius, 48, 48);
+            const earthMat = new THREE.MeshStandardMaterial({
+                map: generateEarthTexture(),
+                roughness: 0.45,
+                metalness: 0.15,
+                emissive: 0x051a30,
+                emissiveIntensity: 0.35
+            });
+            earthMesh = new THREE.Mesh(earthGeo, earthMat);
+            earthGroup.add(earthMesh);
+
+            // 2. Lớp khí quyển mây trôi (Clouds)
+            const cloudsGeo = new THREE.SphereGeometry(earthRadius * 1.018, 36, 36);
+            const cloudsMat = new THREE.MeshStandardMaterial({
+                map: generateCloudsTexture(),
+                transparent: true,
+                opacity: 0.42,
+                blending: THREE.AdditiveBlending
+            });
+            cloudsMesh = new THREE.Mesh(cloudsGeo, cloudsMat);
+            earthGroup.add(cloudsMesh);
+
+            // 3. Vành hào quang xanh lam khí quyển (Atmospheric Glow)
+            const atmoGeo = new THREE.SphereGeometry(earthRadius * 1.055, 32, 32);
+            const atmoMat = new THREE.MeshBasicMaterial({
+                color: 0x38bdf8,
+                transparent: true,
+                opacity: isDarkMode ? 0.32 : 0.22,
+                side: THREE.BackSide,
+                blending: THREE.AdditiveBlending
+            });
+            atmosphereMesh = new THREE.Mesh(atmoGeo, atmoMat);
+            earthGroup.add(atmosphereMesh);
+
+            return earthGroup;
+        }
+
+        // Khởi tạo trọn vẹn 12 CHÒM SAO CUNG HOÀNG ĐẠO bao quanh Trái Đất
+        function build12ZodiacConstellations(starTexture) {
+            const group = new THREE.Group();
+            zodiacBadges = [];
+
+            const ZODIAC_DATA = [
                 {
-                    name: 'Leo',
-                    center: [-13, 6, -9],
-                    scale: 1.05,
-                    stars: [
-                        [-2.0, 1.6, 0],   // Regulus (Bright Alpha)
-                        [-0.9, 2.0, 0.2], // Eta
-                        [-0.2, 2.9, -0.1],// Algieba
-                        [0.5, 3.5, 0.1],  // Adhafera
-                        [1.3, 3.0, 0],    // Rasalas
-                        [1.0, 2.1, -0.2], // Epsilon
-                        [-0.3, 0.7, 0.3], // Denebola
-                        [1.6, 0.4, -0.1], // Chertan
-                        [1.1, 1.6, 0.1]   // Zosma
-                    ],
-                    edges: [
-                        [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 2],
-                        [0, 6], [6, 7], [7, 8], [8, 2]
-                    ]
+                    symbol: '♈', name: 'Bạch Dương',
+                    stars: [[0, 0.8, 0], [1.2, 0.4, 0.2], [2.0, -0.4, -0.1], [2.6, -0.2, 0.1]],
+                    edges: [[0, 1], [1, 2], [2, 3]]
                 },
-                // 2. Scorpius (Bọ Cạp - ♏)
                 {
-                    name: 'Scorpius',
-                    center: [14, -3.5, -11],
-                    scale: 0.95,
-                    stars: [
-                        [-2.4, 2.2, 0],   // Graffias
-                        [-2.0, 1.2, 0.2], // Dschubba
-                        [-1.6, 0.1, -0.1],// Pi
-                        [-0.7, -0.5, 0],  // Antares (Glowing Heart of Scorpion)
-                        [0.2, -1.2, 0.1], // Tau
-                        [0.8, -2.1, -0.2],// Epsilon
-                        [1.2, -3.0, 0.1], // Mu
-                        [2.1, -3.3, 0.2], // Zeta
-                        [2.8, -2.6, -0.1],// Sargas
-                        [3.2, -1.6, 0.1], // Iota
-                        [2.8, -0.6, 0],   // Kappa
-                        [2.0, -0.2, -0.2] // Shaula (Stinger)
-                    ],
-                    edges: [
-                        [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6],
-                        [6, 7], [7, 8], [8, 9], [9, 10], [10, 11]
-                    ]
+                    symbol: '♉', name: 'Kim Ngưu',
+                    stars: [[-1.2, 1.2, 0], [-0.5, 0.3, 0.2], [0, 0, -0.1], [0.6, 0.3, 0.1], [1.2, 1.0, -0.2], [-2.2, 2.2, 0.3], [2.1, 2.4, 0]],
+                    edges: [[0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [4, 6]]
                 },
-                // 3. Taurus (Kim Ngưu - ♉)
                 {
-                    name: 'Taurus',
-                    center: [-15, -6, -11],
-                    scale: 1.0,
-                    stars: [
-                        [-1.4, 1.4, 0],   // Aldebaran (Eye of Bull)
-                        [-0.7, 0.5, 0.2], // Hyades 1
-                        [-0.2, 0.1, -0.1],// Hyades 2
-                        [0.5, 0.4, 0.1],  // Hyades 3
-                        [1.1, 1.1, -0.2], // Elnath
-                        [-2.5, 2.6, 0.3], // Horn 2
-                        [2.3, 2.9, 0]     // Pleiades
-                    ],
-                    edges: [
-                        [0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [4, 6]
-                    ]
+                    symbol: '♊', name: 'Song Tử',
+                    stars: [[-1.4, 2.2, 0], [-0.4, 2.0, 0.2], [-1.2, 0.6, -0.1], [-0.2, 0.4, 0.1], [-0.9, -0.6, 0], [-0.1, -0.8, 0.2], [-1.6, -1.4, -0.1], [0.4, -1.5, 0.1]],
+                    edges: [[0, 1], [0, 2], [1, 3], [2, 4], [3, 5], [4, 6], [5, 7], [2, 3]]
                 },
-                // 4. Gemini (Song Tử - ♊)
                 {
-                    name: 'Gemini',
-                    center: [12, 7.5, -9],
-                    scale: 1.0,
-                    stars: [
-                        [-1.6, 2.6, 0],   // Castor
-                        [-0.5, 2.4, 0.2], // Pollux
-                        [-1.4, 0.9, -0.1],// Body 1
-                        [-0.3, 0.7, 0.1], // Body 2
-                        [-1.1, -0.7, 0],  // Leg 1
-                        [-0.2, -0.9, 0.2],// Leg 2
-                        [-2.0, -1.6, -0.1],// Foot 1
-                        [0.4, -1.8, 0.1]  // Foot 2
-                    ],
-                    edges: [
-                        [0, 1], [0, 2], [1, 3], [2, 4], [3, 5], [4, 6], [5, 7], [2, 3]
-                    ]
+                    symbol: '♋', name: 'Cự Giải',
+                    stars: [[-0.8, 0.8, 0], [0, 0, 0.2], [0.8, 0.8, -0.1], [0, -1.2, 0.1], [0.6, -1.8, 0]],
+                    edges: [[0, 1], [2, 1], [1, 3], [3, 4]]
                 },
-                // 5. Sagittarius (Nhân Mã - ♐)
                 {
-                    name: 'Sagittarius',
-                    center: [0, -8.5, -13],
-                    scale: 1.1,
-                    stars: [
-                        [-1.6, 0.7, 0],   // Kaus Media
-                        [-1.1, 1.6, 0.2], // Kaus Borealis
-                        [-0.2, 0.5, -0.1],// Kaus Australis
-                        [-1.3, -0.5, 0],  // Alnasl (Spout)
-                        [0.7, 0.7, 0.2],  // Nunki
-                        [1.3, -0.2, -0.1],// Ascella
-                        [0.4, -0.7, 0],   // Tau
-                        [-0.5, -0.7, 0.1] // Zeta
-                    ],
-                    edges: [
-                        [0, 1], [1, 2], [2, 0],
-                        [0, 3], [2, 3],
-                        [2, 4], [4, 5], [5, 6], [6, 7], [7, 0], [2, 7]
-                    ]
+                    symbol: '♌', name: 'Sư Tử',
+                    stars: [[-1.8, 1.4, 0], [-0.8, 1.8, 0.2], [-0.2, 2.6, -0.1], [0.5, 3.1, 0.1], [1.2, 2.7, 0], [0.9, 1.9, -0.2], [-0.3, 0.6, 0.3], [1.4, 0.3, -0.1], [1.0, 1.4, 0.1]],
+                    edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 2], [0, 6], [6, 7], [7, 8], [8, 2]]
                 },
-                // 6. Cassiopeia (Thiên Hậu - 🌟)
                 {
-                    name: 'Cassiopeia',
-                    center: [3, 10, -11],
-                    scale: 0.9,
-                    stars: [
-                        [-2.5, 0.2, 0],
-                        [-1.2, -0.7, 0.2],
-                        [0.0, 0.3, -0.1],
-                        [1.2, -0.5, 0.1],
-                        [2.3, 0.2, 0]
-                    ],
-                    edges: [
-                        [0, 1], [1, 2], [2, 3], [3, 4]
-                    ]
+                    symbol: '♍', name: 'Xử Nữ',
+                    stars: [[-1.6, 2.0, 0], [-0.6, 1.2, 0.2], [0.4, 0.2, -0.1], [1.6, -0.6, 0], [0.2, -1.4, 0.1], [-1.0, -1.2, -0.1], [-1.8, -0.2, 0.2], [2.2, 0.4, -0.1]],
+                    edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 1], [2, 7]]
+                },
+                {
+                    symbol: '♎', name: 'Thiên Bình',
+                    stars: [[-1.2, 1.2, 0], [1.2, 1.2, 0.2], [0, 0, -0.1], [-0.8, -1.2, 0.1], [0.8, -1.2, -0.1]],
+                    edges: [[0, 1], [0, 2], [1, 2], [2, 3], [2, 4], [3, 4]]
+                },
+                {
+                    symbol: '♏', name: 'Bọ Cạp',
+                    stars: [[-2.0, 1.8, 0], [-1.6, 0.9, 0.2], [-1.2, 0, -0.1], [-0.4, -0.5, 0], [0.3, -1.0, 0.1], [0.8, -1.8, -0.2], [1.2, -2.5, 0.1], [2.0, -2.6, 0.2], [2.5, -2.0, -0.1], [2.8, -1.2, 0.1], [2.4, -0.4, 0], [1.8, -0.1, -0.2]],
+                    edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 10], [10, 11]]
+                },
+                {
+                    symbol: '♐', name: 'Nhân Mã',
+                    stars: [[-1.4, 0.6, 0], [-0.9, 1.4, 0.2], [-0.2, 0.4, -0.1], [-1.1, -0.4, 0], [0.6, 0.6, 0.2], [1.1, -0.1, -0.1], [0.3, -0.6, 0], [-0.4, -0.6, 0.1]],
+                    edges: [[0, 1], [1, 2], [2, 0], [0, 3], [2, 3], [2, 4], [4, 5], [5, 6], [6, 7], [7, 0], [2, 7]]
+                },
+                {
+                    symbol: '♑', name: 'Ma Kết',
+                    stars: [[-1.6, 1.0, 0], [0, 1.4, 0.2], [1.6, 0.8, -0.1], [1.2, -0.8, 0.1], [0, -1.2, 0], [-1.2, -0.6, -0.2]],
+                    edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0], [1, 4]]
+                },
+                {
+                    symbol: '♒', name: 'Bảo Bình',
+                    stars: [[-1.8, 1.2, 0], [-0.8, 1.6, 0.2], [0, 0.8, -0.1], [0.8, 1.2, 0.1], [1.6, 0.6, 0], [-0.6, -0.4, 0.2], [0.4, -0.6, -0.1], [1.4, -1.2, 0.1]],
+                    edges: [[0, 1], [1, 2], [2, 3], [3, 4], [2, 5], [5, 6], [6, 7]]
+                },
+                {
+                    symbol: '♓', name: 'Song Ngư',
+                    stars: [[-1.6, 1.4, 0], [-1.2, 0.6, 0.2], [-0.4, 0, -0.1], [0.4, -0.4, 0.1], [1.2, -0.2, 0], [1.8, 0.6, -0.2], [1.4, 1.4, 0.1]],
+                    edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6]]
                 }
             ];
 
+            const orbitRadius = isMobileDevice ? 15.5 : 19.5;
             const allStarPositions = [];
             const allStarColors = [];
             const allLinePositions = [];
@@ -1699,95 +1777,112 @@
             const colStarGold = new THREE.Color(0xfde047);
             const colStarCyan = new THREE.Color(0x38bdf8);
 
-            CONSTELLATIONS.forEach(c => {
-                const cx = c.center[0], cy = c.center[1], cz = c.center[2];
-                const s = c.scale || 1.0;
+            ZODIAC_DATA.forEach((z, idx) => {
+                const angle = (idx / ZODIAC_DATA.length) * Math.PI * 2;
+                // Vòng quỹ đạo nghiêng 23.5 độ giống hoàng đạo thực tế
+                const tiltAngle = 0.41;
+                const baseX = Math.cos(angle) * orbitRadius;
+                const baseZ = Math.sin(angle) * orbitRadius;
+                const cx = baseX;
+                const cy = Math.sin(angle) * orbitRadius * Math.sin(tiltAngle) + Math.cos(angle * 2) * 1.5;
+                const cz = baseZ * Math.cos(tiltAngle);
 
-                const worldStars = c.stars.map((pos, idx) => {
-                    const wx = cx + pos[0] * s;
-                    const wy = cy + pos[1] * s;
-                    const wz = cz + pos[2] * s;
+                // Chuyển đổi tọa độ sao
+                const constellationWorldStars = z.stars.map((pos, sIdx) => {
+                    const wx = cx + pos[0] * 1.1;
+                    const wy = cy + pos[1] * 1.1;
+                    const wz = cz + pos[2] * 1.1;
+
                     allStarPositions.push(wx, wy, wz);
-
-                    const col = idx === 0 ? colStarGold : (idx % 2 === 0 ? colStarBright : colStarCyan);
+                    const col = sIdx === 0 ? colStarGold : (sIdx % 2 === 0 ? colStarBright : colStarCyan);
                     allStarColors.push(col.r, col.g, col.b);
                     return [wx, wy, wz];
                 });
 
-                c.edges.forEach(([p1, p2]) => {
-                    allLinePositions.push(...worldStars[p1]);
-                    allLinePositions.push(...worldStars[p2]);
+                // Các đường nối chòm sao
+                z.edges.forEach(([p1, p2]) => {
+                    if (constellationWorldStars[p1] && constellationWorldStars[p2]) {
+                        allLinePositions.push(...constellationWorldStars[p1]);
+                        allLinePositions.push(...constellationWorldStars[p2]);
+                    }
                 });
+
+                // Bảng tên Hologram 3D bay trên chòm sao
+                const badge = createConstellationBadge(z.symbol, z.name);
+                badge.position.set(cx, cy + 2.8, cz);
+                group.add(badge);
+                zodiacBadges.push(badge);
             });
 
-            // 1. Constellation Connecting Lines
+            // Lưới đường nối sao
             const lineGeo = new THREE.BufferGeometry();
             lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(allLinePositions, 3));
             const lineMat = new THREE.LineBasicMaterial({
                 color: isDarkMode ? 0x38bdf8 : 0x2563eb,
                 transparent: true,
-                opacity: isDarkMode ? 0.42 : 0.32,
+                opacity: isDarkMode ? 0.55 : 0.42,
                 blending: THREE.AdditiveBlending
             });
-            const lines = new THREE.LineSegments(lineGeo, lineMat);
-            group.add(lines);
+            constellationLinesMesh = new THREE.LineSegments(lineGeo, lineMat);
+            group.add(constellationLinesMesh);
 
-            // 2. Constellation Major Stars (Luminous diamond points)
+            // Các ngôi sao chính phát sáng
             const starGeo = new THREE.BufferGeometry();
             starGeo.setAttribute('position', new THREE.Float32BufferAttribute(allStarPositions, 3));
             starGeo.setAttribute('color', new THREE.Float32BufferAttribute(allStarColors, 3));
 
-            const starsMat = new THREE.PointsMaterial({
-                size: isMobileDevice ? 0.65 : 0.85,
+            const starMat = new THREE.PointsMaterial({
+                size: isMobileDevice ? 0.7 : 0.9,
                 map: starTexture,
                 vertexColors: true,
                 transparent: true,
-                opacity: isDarkMode ? 0.95 : 0.78,
+                opacity: 0.95,
                 blending: THREE.AdditiveBlending,
                 depthWrite: false
             });
-            const points = new THREE.Points(starGeo, starsMat);
-            group.add(points);
+            majorStarsPoints = new THREE.Points(starGeo, starMat);
+            group.add(majorStarsPoints);
 
-            return { group, lines, points };
+            return group;
         }
 
-        // 3. SAO BĂNG LƯỚT QUA VŨ TRỤ (SHOOTING STARS)
-        function createShootingStar() {
-            const length = 5.5 + Math.random() * 3.5;
+        // Tạo dải hạt sao tinh tú hậu cảnh
+        function buildStarBackground(starTexture) {
+            const count = isMobileDevice ? 650 : 1200;
             const geo = new THREE.BufferGeometry();
-            const positions = new Float32Array([0, 0, 0, -length * 0.8, length * 0.6, -length * 0.5]);
-            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const pos = new Float32Array(count * 3);
+            const cols = new Float32Array(count * 3);
 
-            const mat = new THREE.LineBasicMaterial({
-                color: 0xe0f2fe,
+            const cCyan = new THREE.Color(0x38bdf8);
+            const cWhite = new THREE.Color(0xffffff);
+            const cGold = new THREE.Color(0xfef08a);
+
+            for (let i = 0; i < count; i++) {
+                const i3 = i * 3;
+                pos[i3] = (Math.random() - 0.5) * 80;
+                pos[i3 + 1] = (Math.random() - 0.5) * 60;
+                pos[i3 + 2] = (Math.random() - 0.5) * 50 - 10;
+
+                const c = i % 3 === 0 ? cCyan : (i % 3 === 1 ? cWhite : cGold);
+                cols[i3] = c.r;
+                cols[i3 + 1] = c.g;
+                cols[i3 + 2] = c.b;
+            }
+
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+
+            const mat = new THREE.PointsMaterial({
+                size: isMobileDevice ? 0.28 : 0.38,
+                map: starTexture,
+                vertexColors: true,
                 transparent: true,
-                opacity: 0,
-                blending: THREE.AdditiveBlending
+                opacity: 0.75,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
             });
 
-            const mesh = new THREE.Line(geo, mat);
-            mesh.visible = false;
-            return {
-                mesh,
-                active: false,
-                life: 0,
-                maxLife: 55,
-                vx: -0.7 - Math.random() * 0.3,
-                vy: -0.5 - Math.random() * 0.25,
-                vz: -0.2
-            };
-        }
-
-        function spawnShootingStar(star) {
-            star.active = true;
-            star.life = star.maxLife;
-            star.mesh.visible = true;
-            star.mesh.position.set(
-                (Math.random() - 0.2) * 35,
-                12 + Math.random() * 8,
-                -8 - Math.random() * 12
-            );
+            return new THREE.Points(geo, mat);
         }
 
         function initThreeJS() {
@@ -1796,8 +1891,8 @@
 
             scene = new THREE.Scene();
 
-            camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 0.6, isMobileDevice ? 26 : 21);
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(isMobileDevice ? 0 : -2.5, 0.5, isMobileDevice ? 27 : 21);
 
             renderer = new THREE.WebGLRenderer({
                 canvas: canvas,
@@ -1808,58 +1903,106 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileDevice ? 1.5 : 2));
 
-            // Ambient gentle celestial light
-            const ambientLight = new THREE.AmbientLight(0xffffff, isDarkMode ? 0.9 : 1.15);
+            // Ánh sáng vũ trụ
+            const ambientLight = new THREE.AmbientLight(0xffffff, isDarkMode ? 0.95 : 1.25);
             scene.add(ambientLight);
+
+            // Nguồn sáng mặt trời chiếu Trái Đất (Sun Directional Light)
+            const sunLight = new THREE.DirectionalLight(0xffffff, 2.2);
+            sunLight.position.set(20, 15, 25);
+            scene.add(sunLight);
+
+            const cyanGlow = new THREE.PointLight(0x0284c7, 1.8, 60);
+            cyanGlow.position.set(-20, -10, 10);
+            scene.add(cyanGlow);
 
             const starTexture = createStarSprite();
 
-            // 1. Spiral Galaxy Disk
-            galaxyGroup = new THREE.Group();
-            galaxyGroup.rotation.x = 0.58;
-            galaxyGroup.rotation.z = -0.32;
-            galaxyGroup.position.set(0, -1.5, -4);
+            // Nhóm đối tượng xoay thiên thể (Celestial World Group)
+            celestialWorld = new THREE.Group();
+            celestialWorld.position.set(isMobileDevice ? 0 : 5.0, isMobileDevice ? 0.5 : 0, 0);
 
-            const galaxyMeshObj = buildSpiralGalaxy(starTexture);
-            galaxyGroup.add(galaxyMeshObj);
-            scene.add(galaxyGroup);
+            // 1. Quả Địa Cầu Trái Đất 3D
+            const earth = buildEarth();
+            celestialWorld.add(earth);
 
-            // 2. Zodiac Constellations
-            const constellationData = buildZodiacConstellations(starTexture);
-            constellationsGroup = constellationData.group;
-            constellationLines = constellationData.lines;
-            majorStarsPoints = constellationData.points;
-            scene.add(constellationsGroup);
+            // 2. Vòng 12 Cung Hoàng Đạo
+            const zodiacs = build12ZodiacConstellations(starTexture);
+            celestialWorld.add(zodiacs);
 
-            // 3. Shooting Stars Pool
-            shootingStarsGroup = new THREE.Group();
-            shootingStars = [];
-            for (let i = 0; i < 3; i++) {
-                const s = createShootingStar();
-                shootingStars.push(s);
-                shootingStarsGroup.add(s.mesh);
-            }
-            scene.add(shootingStarsGroup);
+            scene.add(celestialWorld);
 
-            // Mouse & Touch listeners (Soft celestial parallax)
-            window.addEventListener('mousemove', (e) => {
-                pointerX = (e.clientX / window.innerWidth) - 0.5;
-                pointerY = (e.clientY / window.innerHeight) - 0.5;
+            // 3. Sao nền tinh tú
+            const backgroundStars = buildStarBackground(starTexture);
+            scene.add(backgroundStars);
 
+            // =================================================================
+            // TƯƠNG TÁC VẬT LÝ KÉO & "ĐÁ" TRÁI ĐẤT (DRAG & FLING / THROW)
+            // =================================================================
+            const onPointerDown = (e) => {
+                // Nếu click vào nút, link, input hoặc thẻ thì không chiếm quyền kéo
+                if (e.target && e.target.closest('button, a, input, select, textarea, form, .cursor-pointer')) {
+                    return;
+                }
+                isDragging = true;
+                lastPointerX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+                lastPointerY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+                lastTime = Date.now();
+                flingVelX = 0;
+                flingVelY = 0;
+                dragVelX = 0;
+                dragVelY = 0;
+            };
+
+            const onPointerMove = (e) => {
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+
+                pointerX = (clientX / window.innerWidth) - 0.5;
+                pointerY = (clientY / window.innerHeight) - 0.5;
+
+                if (isDragging && celestialWorld) {
+                    const dx = clientX - lastPointerX;
+                    const dy = clientY - lastPointerY;
+                    const dt = Math.max(Date.now() - lastTime, 14);
+
+                    // Xoay trực tiếp theo chuột
+                    celestialWorld.rotation.y += dx * 0.0055;
+                    celestialWorld.rotation.x = Math.max(-0.75, Math.min(0.75, celestialWorld.rotation.x + dy * 0.004));
+
+                    dragVelX = (dx / dt) * 16;
+                    dragVelY = (dy / dt) * 16;
+
+                    lastPointerX = clientX;
+                    lastPointerY = clientY;
+                    lastTime = Date.now();
+                }
+
+                // Nghiêng nhẹ thẻ Hero Demo Card
                 if (!isMobileDevice && currentView === 'landing') {
                     const card = document.getElementById('hero-demo-card');
-                    if (card) {
-                        card.style.transform = `perspective(1000px) rotateX(${-pointerY * 4}deg) rotateY(${pointerX * 4}deg)`;
+                    if (card && !isDragging) {
+                        card.style.transform = `perspective(1000px) rotateX(${-pointerY * 3.5}deg) rotateY(${pointerX * 3.5}deg)`;
                     }
                 }
-            }, { passive: true });
+            };
 
-            window.addEventListener('touchmove', (e) => {
-                if (e.touches.length > 0) {
-                    pointerX = (e.touches[0].clientX / window.innerWidth) - 0.5;
-                    pointerY = (e.touches[0].clientY / window.innerHeight) - 0.5;
+            const onPointerUp = () => {
+                if (isDragging) {
+                    isDragging = false;
+                    // "ĐÁ NÓ ĐI": Truyền lực đẩy quán tính nếu có vung chuột
+                    flingVelX = dragVelX * 0.004;
+                    flingVelY = dragVelY * 0.003;
                 }
-            }, { passive: true });
+            };
+
+            window.addEventListener('mousedown', onPointerDown, { passive: true });
+            window.addEventListener('mousemove', onPointerMove, { passive: true });
+            window.addEventListener('mouseup', onPointerUp, { passive: true });
+
+            window.addEventListener('touchstart', onPointerDown, { passive: true });
+            window.addEventListener('touchmove', onPointerMove, { passive: true });
+            window.addEventListener('touchend', onPointerUp, { passive: true });
 
             window.addEventListener('resize', () => {
                 camera.aspect = window.innerWidth / window.innerHeight;
@@ -1869,69 +2012,56 @@
         }
 
         let clock = 0;
-        let nextShootingStarTime = 120;
-
         function animateScene() {
             requestAnimationFrame(animateScene);
 
             pulseBoost += (1 - pulseBoost) * 0.05;
             clock += 0.012 * pulseBoost;
 
-            // 1. Slow, majestic galactic rotation (Zero headache)
-            if (galaxyGroup) {
-                galaxyGroup.rotation.y += 0.00065 * pulseBoost;
-                galaxyGroup.rotation.x = 0.58 + pointerY * 0.12;
-                galaxyGroup.rotation.z = -0.32 + pointerX * 0.15;
+            if (celestialWorld) {
+                if (!isDragging) {
+                    // Áp dụng lực quán tính từ cú "đá/ném"
+                    celestialWorld.rotation.y += flingVelX;
+                    celestialWorld.rotation.x = Math.max(-0.75, Math.min(0.75, celestialWorld.rotation.x + flingVelY));
+
+                    // Lực ma sát vũ trụ hãm tốc độ êm ái
+                    flingVelX *= 0.945;
+                    flingVelY *= 0.945;
+
+                    // Tự động xoay chậm nhẹ nhàng liên tục
+                    celestialWorld.rotation.y += 0.0012;
+                }
             }
 
-            // 2. Gentle celestial breathing of constellations
-            if (constellationsGroup) {
-                constellationsGroup.position.x = pointerX * 1.8;
-                constellationsGroup.position.y = -pointerY * 1.4;
-                constellationsGroup.rotation.y = Math.sin(clock * 0.2) * 0.03;
+            // Trái Đất & Mây tự xoay quanh trục riêng
+            if (earthMesh) {
+                earthMesh.rotation.y += 0.0018;
+            }
+            if (cloudsMesh) {
+                cloudsMesh.rotation.y += 0.0026;
             }
 
-            // Twinkle major stars softly
+            // Nhấp nháy nhẹ các ngôi sao cung hoàng đạo
             if (majorStarsPoints && majorStarsPoints.material) {
-                majorStarsPoints.material.size = (isMobileDevice ? 0.65 : 0.85) * (1.0 + Math.sin(clock * 2.2) * 0.14);
+                majorStarsPoints.material.size = (isMobileDevice ? 0.7 : 0.9) * (1.0 + Math.sin(clock * 2.2) * 0.12);
             }
 
-            // 3. Occasional Shooting Star
-            nextShootingStarTime--;
-            if (nextShootingStarTime <= 0) {
-                const idleStar = shootingStars.find(s => !s.active);
-                if (idleStar) {
-                    spawnShootingStar(idleStar);
-                }
-                nextShootingStarTime = 160 + Math.floor(Math.random() * 200);
+            // Hướng các bảng tên cung hoàng đạo về phía camera
+            if (zodiacBadges.length) {
+                zodiacBadges.forEach(badge => {
+                    badge.quaternion.copy(camera.quaternion);
+                });
             }
 
-            shootingStars.forEach(s => {
-                if (s.active) {
-                    s.mesh.position.x += s.vx;
-                    s.mesh.position.y += s.vy;
-                    s.mesh.position.z += s.vz;
-                    s.life--;
-
-                    const alpha = Math.sin((s.life / s.maxLife) * Math.PI);
-                    s.mesh.material.opacity = alpha * 0.85;
-
-                    if (s.life <= 0) {
-                        s.active = false;
-                        s.mesh.visible = false;
-                    }
-                }
-            });
-
-            // 4. Smooth camera navigation across sections
+            // Điều khiển góc máy camera theo Scroll
             const wp = getInterpolatedWaypoint(scrollProgressRatio);
 
-            camera.position.x += (wp.camX + pointerX * 1.2 - camera.position.x) * 0.04;
-            camera.position.y += (wp.camY - pointerY * 1.0 - camera.position.y) * 0.04;
+            camera.position.x += (wp.camX + (pointerX * 0.8) - camera.position.x) * 0.04;
+            camera.position.y += (wp.camY - (pointerY * 0.8) - camera.position.y) * 0.04;
             camera.position.z += (wp.camZ - camera.position.z) * 0.04;
 
-            camera.rotation.x += (wp.rotX + pointerY * 0.08 - camera.rotation.x) * 0.04;
-            camera.rotation.y += (wp.rotY + pointerX * 0.1 - camera.rotation.y) * 0.04;
+            camera.rotation.x += (wp.rotX + (pointerY * 0.05) - camera.rotation.x) * 0.04;
+            camera.rotation.y += (wp.rotY + (pointerX * 0.05) - camera.rotation.y) * 0.04;
 
             if (renderer && scene && camera) {
                 renderer.render(scene, camera);
