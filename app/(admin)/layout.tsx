@@ -57,7 +57,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="min-h-screen bg-[#F4F8FC] dark:bg-[#0B0F19] flex flex-col md:flex-row font-sans text-slate-800 dark:text-slate-100 transition-colors duration-200">
       <AdminNavClient session={enhancedSession} />
       {/* Main Content Area */}
-      <main className="flex-1 md:ml-72 p-3 sm:p-6 md:p-8 md:h-screen md:overflow-y-auto bg-transparent">
+      <main className="flex-1 md:ml-68 p-3 sm:p-6 md:p-8 md:h-screen md:overflow-y-auto bg-transparent pb-24 md:pb-8">
         {children}
       </main>
     </div>

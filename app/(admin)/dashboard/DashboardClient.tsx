@@ -1683,38 +1683,38 @@ export default function DashboardClient({
       {!isStudent && activeTab === 'dashboard' && (
         <div className="space-y-6">
           {/* Welcome Banner & Quick Action Shortcuts */}
-          <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-700 rounded-3xl p-6 sm:p-8 text-white shadow-lg shadow-indigo-500/20 relative overflow-hidden">
-            <div className="absolute -right-10 -bottom-10 w-60 h-60 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-7 border border-indigo-500/20 shadow-lg shadow-slate-950/10 relative overflow-hidden">
+            <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
               <div className="space-y-2 max-w-xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold text-white">
-                  <Sparkles size={14} className="text-amber-300" />
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-md text-[11px] font-bold text-indigo-200 border border-white/10">
+                  <Sparkles size={13} className="text-amber-300" />
                   <span>{isTeacher ? 'Bảng Điều Khiển Giáo Viên' : 'Trung Tâm Điều Hành Quản Trị'}</span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white">
                   Xin chào, {profileName || session.username}! 👋
                 </h2>
-                <p className="text-white/80 text-sm font-medium leading-relaxed">
+                <p className="text-white/70 text-xs sm:text-sm font-medium leading-relaxed">
                   {isTeacher
-                    ? `Bạn đã tạo ${quizzes.length}/${teacherLimit} đề thi được phân bổ. Dễ dàng quản lý bài test, phân quyền danh sách học sinh theo lớp và theo dõi kết quả.`
-                    : 'Toàn quyền kiểm soát hệ thống thi trắc nghiệm Dzota: quản lý đề thi, phê duyệt giáo viên, cấu hình trí tuệ nhân tạo Gemini và phân quyền lớp học.'}
+                    ? `Bạn đã tạo ${quizzes.length}/${teacherLimit} đề thi. Dễ dàng quản lý bài test, phân quyền lớp học và theo dõi kết quả.`
+                    : 'Toàn quyền kiểm soát hệ thống đề thi Dzota, quản lý tài khoản giáo viên/học sinh và cấu hình AI Gemini.'}
                 </p>
               </div>
 
               {/* Fast Actions in Banner */}
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
                 <Link
                   href="/creator"
-                  className="px-5 py-3 rounded-2xl bg-white text-indigo-700 hover:bg-slate-50 font-black text-sm shadow-md transition-all flex items-center gap-2 active:scale-95 no-underline cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm shadow-sm transition-all flex items-center gap-2 active:scale-95 no-underline cursor-pointer"
                 >
-                  <Plus size={18} />
+                  <Plus size={16} />
                   <span>Tạo Đề Mới</span>
                 </Link>
                 <button
                   onClick={() => switchTab('quizzes')}
-                  className="px-5 py-3 rounded-2xl bg-white/15 hover:bg-white/25 backdrop-blur-md text-white font-bold text-sm transition-all flex items-center gap-2 active:scale-95 cursor-pointer border border-white/20"
+                  className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-md text-white font-semibold text-xs sm:text-sm transition-all flex items-center gap-2 active:scale-95 cursor-pointer border border-white/15"
                 >
-                  <FileText size={18} />
+                  <FileText size={16} />
                   <span>{isTeacher ? 'Đề thi của tôi' : 'Quản lý Bài test'}</span>
                 </button>
               </div>
@@ -1722,24 +1722,24 @@ export default function DashboardClient({
           </div>
 
           {/* Stats Overview Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div
               onClick={() => switchTab('quizzes')}
-              className="bg-white dark:bg-[#1E293B] rounded-2xl p-4 sm:p-5 border border-slate-100 dark:border-slate-800 shadow-xs relative overflow-hidden group cursor-pointer hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-md transition-all"
+              className="bg-white dark:bg-[#1E293B]/80 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-2xs relative overflow-hidden group cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-sm transition-all duration-200"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  {isTeacher ? 'Đề thi của bạn' : 'Tổng Đề Thi'}
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  {isTeacher ? 'Đề thi đã tạo' : 'Tổng Đề Thi'}
                 </span>
-                <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-105 transition-transform">
                   <FileText size={16} />
                 </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100">
+              <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
                 {isTeacher ? `${quizzes.length}/${teacherLimit}` : quizzes.length}
               </div>
               {isTeacher && (
-                <div className="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full mt-3 overflow-hidden">
+                <div className="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full mt-2.5 overflow-hidden">
                   <div
                     className={`h-full rounded-full ${
                       quizzes.length >= teacherLimit ? 'bg-rose-500' : 'bg-indigo-600'
@@ -1749,41 +1749,41 @@ export default function DashboardClient({
                 </div>
               )}
               <div className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold mt-2 flex items-center gap-1 group-hover:underline">
-                <span>Xem chi tiết</span>
+                <span>Xem danh sách</span>
                 <ChevronRight size={12} />
               </div>
             </div>
 
             <div
               onClick={() => switchTab('quizzes')}
-              className="bg-white dark:bg-[#1E293B] rounded-2xl p-4 sm:p-5 border border-slate-100 dark:border-slate-800 shadow-xs relative overflow-hidden group cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-500 hover:shadow-md transition-all"
+              className="bg-white dark:bg-[#1E293B]/80 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-2xs relative overflow-hidden group cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-500 hover:shadow-sm transition-all duration-200"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Đang Mở</span>
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Đang Mở</span>
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:scale-105 transition-transform">
                   <CheckCircle2 size={16} />
                 </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100">
+              <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
                 {activeQuizzesCount}
               </div>
               <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-2 flex items-center gap-1 group-hover:underline">
-                <span>Học sinh có thể làm</span>
+                <span>Học sinh được làm</span>
                 <ChevronRight size={12} />
               </div>
             </div>
 
             <div
               onClick={() => switchTab('quizzes')}
-              className="bg-white dark:bg-[#1E293B] rounded-2xl p-4 sm:p-5 border border-slate-100 dark:border-slate-800 shadow-xs relative overflow-hidden group cursor-pointer hover:border-rose-300 dark:hover:border-rose-500 hover:shadow-md transition-all"
+              className="bg-white dark:bg-[#1E293B]/80 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-2xs relative overflow-hidden group cursor-pointer hover:border-rose-300 dark:hover:border-rose-500 hover:shadow-sm transition-all duration-200"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Đã Khóa</span>
-                <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Đã Khóa</span>
+                <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center group-hover:scale-105 transition-transform">
                   <Lock size={16} />
                 </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100">
+              <div className="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400 tracking-tight">
                 {inactiveQuizzesCount}
               </div>
               <div className="text-[11px] text-rose-600 dark:text-rose-400 font-semibold mt-2 flex items-center gap-1 group-hover:underline">
@@ -1794,21 +1794,21 @@ export default function DashboardClient({
 
             <div
               onClick={() => switchTab('classes')}
-              className="bg-white dark:bg-[#1E293B] rounded-2xl p-4 sm:p-5 border border-slate-100 dark:border-slate-800 shadow-xs relative overflow-hidden group cursor-pointer hover:border-purple-300 dark:hover:border-purple-500 hover:shadow-md transition-all"
+              className="bg-white dark:bg-[#1E293B]/80 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-2xs relative overflow-hidden group cursor-pointer hover:border-purple-300 dark:hover:border-purple-500 hover:shadow-sm transition-all duration-200"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   {isAdmin ? 'Lớp & Học Sinh' : 'Lớp Của Bạn'}
                 </span>
-                <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center group-hover:scale-105 transition-transform">
                   <School size={16} />
                 </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100">
+              <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
                 {classes.length}
               </div>
               <div className="text-[11px] text-purple-600 dark:text-purple-400 font-semibold mt-2 flex items-center gap-1 group-hover:underline">
-                <span>Quản lý phân quyền</span>
+                <span>Quản lý danh sách</span>
                 <ChevronRight size={12} />
               </div>
             </div>
@@ -1816,52 +1816,52 @@ export default function DashboardClient({
 
           {/* Quick Modules Shortcuts Grid */}
           <div>
-            <h3 className="text-base font-extrabold text-slate-800 dark:text-slate-100 tracking-tight mb-3 flex items-center gap-2">
-              <LayoutDashboard size={18} className="text-blue-600 dark:text-blue-400" />
+            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <LayoutDashboard size={16} className="text-indigo-600 dark:text-indigo-400" />
               <span>Phân Hệ Quản Lý Chính</span>
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
               {/* Card 1: Quản lý đề thi */}
               <div
                 onClick={() => switchTab('quizzes')}
-                className="bg-white dark:bg-[#1E293B] p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+                className="bg-white dark:bg-[#1E293B]/80 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xs transition-all cursor-pointer group flex flex-col justify-between"
               >
                 <div>
-                  <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <FileText size={24} />
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3.5 group-hover:scale-105 transition-transform">
+                    <FileText size={20} />
                   </div>
-                  <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-base group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                     {isTeacher ? 'Đề Thi Của Tôi' : 'Quản Lý Bài Test'}
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 leading-relaxed">
-                    Xem danh sách, tìm kiếm, lọc đề thi, khóa/mở bài test, xem mật khẩu, sao chép link và phân quyền học sinh.
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-1 leading-relaxed">
+                    Xem danh sách, tìm kiếm, lọc đề thi, khóa/mở bài test, xem mật khẩu và phân quyền học sinh.
                   </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-blue-600 dark:text-blue-400">
+                <div className="mt-3.5 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-blue-600 dark:text-blue-400">
                   <span>Mở Quản Lý Bài Test</span>
-                  <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
 
               {/* Card 2: Lớp học & Học sinh */}
               <div
                 onClick={() => switchTab('classes')}
-                className="bg-white dark:bg-[#1E293B] p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs hover:border-purple-400 dark:hover:border-purple-500 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+                className="bg-white dark:bg-[#1E293B]/80 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-purple-400 dark:hover:border-purple-500 hover:shadow-xs transition-all cursor-pointer group flex flex-col justify-between"
               >
                 <div>
-                  <div className="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <School size={24} />
+                  <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-3.5 group-hover:scale-105 transition-transform">
+                    <School size={20} />
                   </div>
-                  <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-base group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                  <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                     Lớp Học & Học Sinh
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 leading-relaxed">
-                    Tạo lớp học, quản lý danh sách học sinh theo Gmail, gán học sinh vào lớp và thiết lập quyền làm bài cho từng môn.
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-1 leading-relaxed">
+                    Tạo lớp học, quản lý danh sách học sinh theo Gmail, gán học sinh vào lớp và cấp quyền làm bài.
                   </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-purple-600 dark:text-purple-400">
+                <div className="mt-3.5 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-purple-600 dark:text-purple-400">
                   <span>Mở Quản Lý Lớp Học</span>
-                  <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
 
@@ -1869,22 +1869,22 @@ export default function DashboardClient({
               {isAdmin && (
                 <div
                   onClick={() => switchTab('teachers')}
-                  className="bg-white dark:bg-[#1E293B] p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs hover:border-amber-400 dark:hover:border-amber-500 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+                  className="bg-white dark:bg-[#1E293B]/80 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-amber-400 dark:hover:border-amber-500 hover:shadow-xs transition-all cursor-pointer group flex flex-col justify-between"
                 >
                   <div>
-                    <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                      <Shield size={24} />
+                    <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-3.5 group-hover:scale-105 transition-transform">
+                      <Shield size={20} />
                     </div>
-                    <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-base group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                    <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
                       Người Dùng & Phân Quyền
                     </h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 leading-relaxed">
-                      Phê duyệt quyền Giáo viên, chỉnh sửa hạn mức tạo đề, quản lý tài khoản Học sinh và gửi thông báo toàn hệ thống.
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-1 leading-relaxed">
+                      Phê duyệt quyền Giáo viên, chỉnh sửa hạn mức tạo đề và gửi thông báo toàn hệ thống.
                     </p>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-amber-600 dark:text-amber-400">
+                  <div className="mt-3.5 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-amber-600 dark:text-amber-400">
                     <span>Mở Phân Quyền</span>
-                    <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                    <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>
               )}
@@ -1893,22 +1893,22 @@ export default function DashboardClient({
               {isAdmin && (
                 <div
                   onClick={() => switchTab('settings')}
-                  className="bg-white dark:bg-[#1E293B] p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs hover:border-emerald-400 dark:hover:border-emerald-500 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+                  className="bg-white dark:bg-[#1E293B]/80 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-emerald-400 dark:hover:border-emerald-500 hover:shadow-xs transition-all cursor-pointer group flex flex-col justify-between"
                 >
                   <div>
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                      <Settings size={24} />
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3.5 group-hover:scale-105 transition-transform">
+                      <Settings size={20} />
                     </div>
-                    <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-base group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                    <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                       Cài Đặt Web & AI
                     </h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 leading-relaxed">
-                      Cấu hình Gemini API Keys đa tầng, chọn model Gemini 2.5 Flash / Pro, quản lý hiệu ứng và hình nền đăng nhập.
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-1 leading-relaxed">
+                      Cấu hình Gemini API Keys đa tầng, chọn model Gemini 2.5 Flash / Pro và hiệu ứng.
                     </p>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                  <div className="mt-3.5 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-emerald-600 dark:text-emerald-400">
                     <span>Mở Cài Đặt Hệ Thống</span>
-                    <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                    <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>
               )}
@@ -1916,44 +1916,44 @@ export default function DashboardClient({
               {/* Card 5: Kết bạn & Chat Giáo viên */}
               <div
                 onClick={() => switchTab('friends')}
-                className="bg-white dark:bg-[#1E293B] p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs hover:border-violet-400 dark:hover:border-violet-500 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+                className="bg-white dark:bg-[#1E293B]/80 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-violet-400 dark:hover:border-violet-500 hover:shadow-xs transition-all cursor-pointer group flex flex-col justify-between"
               >
                 <div>
-                  <div className="w-12 h-12 rounded-2xl bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <MessageSquare size={24} />
+                  <div className="w-10 h-10 rounded-xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 flex items-center justify-center mb-3.5 group-hover:scale-105 transition-transform">
+                    <MessageSquare size={20} />
                   </div>
-                  <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-base group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                  <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
                     Kết Bạn & Chat Giáo Viên
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 leading-relaxed">
-                    Kết nối với đồng nghiệp bằng ID/Gmail, nhắn tin trực tuyến thời gian thực, xem trạng thái online và chia sẻ kho đề thi chỉ xem.
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-1 leading-relaxed">
+                    Kết nối với đồng nghiệp bằng Gmail, nhắn tin thời gian thực và chia sẻ kho đề thi.
                   </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-violet-600 dark:text-violet-400">
+                <div className="mt-3.5 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-violet-600 dark:text-violet-400">
                   <span>Mở Chat Trực Tuyến</span>
-                  <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
 
               {/* Card 6: Cá nhân & Zalo */}
               <div
                 onClick={() => switchTab('profile')}
-                className="bg-white dark:bg-[#1E293B] p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+                className="bg-white dark:bg-[#1E293B]/80 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-xs transition-all cursor-pointer group flex flex-col justify-between"
               >
                 <div>
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <UserIcon size={24} />
+                  <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-3.5 group-hover:scale-105 transition-transform">
+                    <UserIcon size={20} />
                   </div>
-                  <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-base group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                  <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     Hồ Sơ & Zalo Liên Hệ
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 leading-relaxed">
-                    Cập nhật Tên hiển thị, Tải ảnh đại diện từ máy (&lt;5MB), và Số điện thoại Zalo để học sinh bấm liên hệ trực tiếp khi làm bài.
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-1 leading-relaxed">
+                    Cập nhật Tên hiển thị, Tải ảnh đại diện và Số điện thoại Zalo để học sinh liên hệ.
                   </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                <div className="mt-3.5 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-indigo-600 dark:text-indigo-400">
                   <span>Cập Nhật Thông Tin</span>
-                  <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             </div>

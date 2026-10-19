@@ -21,7 +21,9 @@ import {
   BarChart2,
   CheckCircle2,
   MessageCircle,
-  GraduationCap
+  GraduationCap,
+  Clock,
+  Plus
 } from 'lucide-react'
 import { useTheme } from '../ThemeContext'
 
@@ -60,7 +62,7 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
   const isTeacher = !isAdmin && !isStudent
 
   const roleName = isAdmin
-    ? 'Quản trị viên tối cao'
+    ? 'Quản trị viên'
     : isTeacher
     ? 'Giáo viên'
     : 'Học sinh'
@@ -111,91 +113,104 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
   const isProfileActive = isDashboardActive && activeTab === 'profile'
   const isNotebookNDActive = pathname.startsWith('/notebook') || (isDashboardActive && activeTab === 'notebook_nd')
 
+  // Helper cho style nav item
+  const getNavItemClass = (isActive: boolean) =>
+    `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-left cursor-pointer ${
+      isActive
+        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30 dark:bg-indigo-600 dark:text-white'
+        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/60'
+    }`
+
   return (
     <>
-      {/* Mobile Top Navigation Header */}
-      <header className="md:hidden bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-40 shadow-xs transition-colors">
-        <div className="flex items-center gap-3">
+      {/* ─── 1. MOBILE TOP NAVIGATION HEADER ─── */}
+      <header className="md:hidden bg-white/90 dark:bg-[#0F172A]/90 backdrop-blur-md border-b border-slate-200/70 dark:border-slate-800/80 px-4 py-2.5 flex items-center justify-between sticky top-0 z-30 shadow-2xs transition-colors">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             aria-label="Mở Menu"
           >
-            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           <button
-            onClick={() => handleNavigateTab(isStudent ? 'history' : 'dashboard')}
-            className="flex items-center gap-2.5 text-left cursor-pointer"
+            onClick={() => handleNavigateTab(isStudent ? 'study' : 'dashboard')}
+            className="flex items-center gap-2 text-left cursor-pointer"
           >
-            <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 p-1 flex items-center justify-center shadow-xs border border-slate-200/60 dark:border-slate-700/60">
+            <div className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 p-1 flex items-center justify-center shadow-2xs border border-slate-200/80 dark:border-slate-700/80">
               <img src="/logo-dzota.png" alt="Dzota Logo" className="w-full h-full object-contain" />
             </div>
             <div>
-              <span className="text-sm font-black text-slate-800 dark:text-slate-100 tracking-tight block leading-tight">
+              <span className="text-sm font-black text-slate-900 dark:text-slate-100 tracking-tight block leading-tight">
                 {isStudent ? 'Dzota Học Tập' : 'Dzota Admin'}
               </span>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium block leading-tight">
-                {isStudent ? 'Cổng học sinh' : 'Quản lý thi trắc nghiệm'}
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold block leading-tight">
+                {roleName}
               </span>
             </div>
           </button>
         </div>
 
         {/* Right tools (Theme switch, create, avatar) */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             title={isDark ? 'Chuyển sang giao diện Sáng' : 'Chuyển sang giao diện Tối'}
           >
-            {isDark ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} />}
+            {isDark ? <Sun size={17} className="text-amber-400" /> : <Moon size={17} />}
           </button>
 
           {!isStudent && (
             <Link
               href="/creator"
-              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center gap-1 shadow-xs active:scale-95 transition-all"
+              className="px-2.5 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs flex items-center gap-1 shadow-xs active:scale-95 transition-all"
             >
-              <Sparkles size={13} />
+              <Plus size={13} />
               <span>Tạo đề</span>
             </Link>
           )}
 
-          <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-bold text-xs flex items-center justify-center border border-blue-200 dark:border-blue-800">
+          <div className="w-7 h-7 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-black text-xs flex items-center justify-center border border-indigo-200 dark:border-indigo-800">
             {username.charAt(0).toUpperCase()}
           </div>
         </div>
       </header>
 
-      {/* Mobile Drawer Overlay */}
+      {/* ─── 2. MOBILE DRAWER OVERLAY ─── */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 md:hidden animate-fade-in"
+          className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-50 md:hidden animate-fade-in"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
-      {/* Sidebar (Desktop Fixed + Mobile Slide-over) */}
+      {/* ─── 3. SIDEBAR (DESKTOP FIXED + MOBILE SLIDE-OVER) ─── */}
       <aside
-        className={`w-72 bg-white dark:bg-[#111827] border-r border-slate-200/90 dark:border-slate-800 flex flex-col fixed inset-y-0 left-0 z-50 transition-all duration-300 md:translate-x-0 ${
+        className={`w-68 bg-white/95 dark:bg-[#0F172A]/95 backdrop-blur-xl border-r border-slate-200/80 dark:border-slate-800/80 flex flex-col fixed inset-y-0 left-0 z-50 transition-all duration-300 md:translate-x-0 ${
           mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
         }`}
       >
-        {/* Sidebar Header Brand */}
-        <div className="h-20 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800/80">
+        {/* Brand Header */}
+        <div className="h-18 flex items-center justify-between px-5 border-b border-slate-100 dark:border-slate-800/80 shrink-0">
           <button
-            onClick={() => handleNavigateTab(isStudent ? 'history' : 'dashboard')}
+            onClick={() => handleNavigateTab(isStudent ? 'study' : 'dashboard')}
             className="flex items-center gap-3 group text-left cursor-pointer"
           >
-            <div className="w-11 h-11 rounded-2xl bg-white dark:bg-slate-800 p-1.5 flex items-center justify-center shadow-sm border border-slate-200/70 dark:border-slate-700/70 transform transition-transform group-hover:scale-105">
+            <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 p-1 flex items-center justify-center shadow-xs border border-slate-200/70 dark:border-slate-700/70 group-hover:scale-105 transition-transform">
               <img src="/logo-dzota.png" alt="Dzota Logo" className="w-full h-full object-contain" />
             </div>
             <div>
-              <span className="text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight block leading-tight">
-                {isStudent ? 'Dzota Học Tập' : 'Dzota Admin'}
-              </span>
-              <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold block leading-tight">
-                {isStudent ? 'Cổng rèn luyện học sinh' : 'Hệ thống quản lý đề thi'}
+              <div className="flex items-center gap-1.5">
+                <span className="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight block leading-tight">
+                  Dzota Quiz
+                </span>
+                <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded-md bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/60 uppercase">
+                  {roleName}
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium block leading-tight mt-0.5">
+                {isStudent ? 'Góc Rèn Luyện Học Sinh' : 'Hệ Thống Quản Trị Đề Thi'}
               </span>
             </div>
           </button>
@@ -203,15 +218,15 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
             onClick={() => setMobileMenuOpen(false)}
             className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
         {/* Sidebar Navigation */}
-        <div className="flex-1 overflow-y-auto py-6 px-4 space-y-6">
-          {/* Section 1: TỔNG QUAN / HỌC TẬP */}
+        <div className="flex-1 overflow-y-auto py-5 px-3.5 space-y-5 custom-scrollbar">
+          {/* Section 1: HỌC TẬP HOẶC TỔNG QUAN */}
           <div>
-            <h3 className="px-3 text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+            <h3 className="px-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">
               {isStudent ? 'Góc học tập' : 'Tổng quan'}
             </h3>
             <div className="space-y-1">
@@ -219,43 +234,35 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                 <>
                   <button
                     onClick={() => handleNavigateTab('study')}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
-                      isStudyActive
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
-                    }`}
+                    className={getNavItemClass(isStudyActive)}
                   >
-                    <GraduationCap size={18} />
+                    <GraduationCap size={17} />
                     <span>Học tập & Đề thi</span>
                   </button>
 
                   <button
                     onClick={() => handleNavigateTab('mistakes')}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
-                      isMistakesActive
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
-                    }`}
+                    className={getNavItemClass(isMistakesActive)}
                   >
-                    <Sparkles size={18} />
+                    <Sparkles size={17} />
                     <span>Sổ tay lỗi sai</span>
                   </button>
 
                   <Link
                     href="/notebook"
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-left cursor-pointer ${
                       isNotebookNDActive
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/60'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <BookOpen size={18} />
+                      <BookOpen size={17} />
                       <span>NoteBook ND</span>
                     </div>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
-                      isNotebookNDActive ? 'bg-white/20 text-white' : 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300'
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-extrabold ${
+                      isNotebookNDActive ? 'bg-white/20 text-white' : 'bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400'
                     }`}>
                       AI LM
                     </span>
@@ -263,13 +270,9 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
 
                   <button
                     onClick={() => handleNavigateTab('history')}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
-                      isHistoryActive
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
-                    }`}
+                    className={getNavItemClass(isHistoryActive)}
                   >
-                    <LayoutDashboard size={18} />
+                    <Clock size={17} />
                     <span>Lịch sử làm bài</span>
                   </button>
                 </>
@@ -277,25 +280,17 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                 <>
                   <button
                     onClick={() => handleNavigateTab('dashboard')}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
-                      isDashboardItemActive
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
-                    }`}
+                    className={getNavItemClass(isDashboardItemActive)}
                   >
-                    <LayoutDashboard size={18} />
+                    <LayoutDashboard size={17} />
                     <span>Bảng điều khiển</span>
                   </button>
 
                   <button
                     onClick={() => handleNavigateTab('mistakes')}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
-                      isMistakesActive
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
-                    }`}
+                    className={getNavItemClass(isMistakesActive)}
                   >
-                    <Sparkles size={18} />
+                    <Sparkles size={17} />
                     <span>Sổ tay lỗi sai AI</span>
                   </button>
                 </>
@@ -303,78 +298,53 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
             </div>
           </div>
 
-          {/* Section 2: QUẢN LÝ HỆ THỐNG (CHỈ DÀNH CHO GIÁO VIÊN & ADMIN) */}
+          {/* Section 2: QUẢN LÝ HỆ THỐNG (GIÁO VIÊN & ADMIN) */}
           {!isStudent && (
             <div>
-              <h3 className="px-3 text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+              <h3 className="px-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">
                 Quản lý hệ thống
               </h3>
               <div className="space-y-1">
-                {/* Quản lý đề thi */}
                 <button
                   onClick={() => handleNavigateTab('quizzes')}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
-                    isQuizzesActive
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
-                  }`}
+                  className={getNavItemClass(isQuizzesActive)}
                 >
-                  <FileText size={18} />
+                  <FileText size={17} />
                   <span>{isTeacher ? 'Đề thi của tôi' : 'Quản lý Bài test'}</span>
                 </button>
 
-                {/* Quản lý Lớp học & Học sinh */}
                 <button
                   onClick={() => handleNavigateTab('classes')}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
-                    isClassesActive
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
-                  }`}
+                  className={getNavItemClass(isClassesActive)}
                 >
-                  <School size={18} />
+                  <School size={17} />
                   <span>Lớp học & Học sinh</span>
                 </button>
 
-                {/* Kết Bạn & Chat Giáo Viên */}
                 <button
                   onClick={() => handleNavigateTab('friends')}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
-                    isFriendsActive
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
-                  }`}
+                  className={getNavItemClass(isFriendsActive)}
                 >
-                  <MessageCircle size={18} />
-                  <span>Kết Bạn & Chat Giáo Viên</span>
+                  <MessageCircle size={17} />
+                  <span>Kết Bạn & Chat GV</span>
                 </button>
 
-                {/* Quản lý Người dùng & Phân quyền (Chỉ Admin) */}
                 {isAdmin && (
                   <button
                     onClick={() => handleNavigateTab('teachers')}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
-                      isTeachersActive
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
-                    }`}
+                    className={getNavItemClass(isTeachersActive)}
                   >
-                    <Shield size={18} />
+                    <Shield size={17} />
                     <span>Người dùng & Phân quyền</span>
                   </button>
                 )}
 
-                {/* Cài đặt Web & Hệ thống (Chỉ Admin) */}
                 {isAdmin && (
                   <button
                     onClick={() => handleNavigateTab('settings')}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
-                      isSettingsActive
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
-                    }`}
+                    className={getNavItemClass(isSettingsActive)}
                   >
-                    <Settings size={18} />
+                    <Settings size={17} />
                     <span>Cài đặt Web & AI</span>
                   </button>
                 )}
@@ -382,48 +352,48 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
             </div>
           )}
 
-          {/* Section 3: CÔNG CỤ GIÁO DỤC (CHỈ DÀNH CHO GIÁO VIÊN & ADMIN) */}
+          {/* Section 3: CÔNG CỤ GIÁO DỤC (GIÁO VIÊN & ADMIN) */}
           {!isStudent && (
             <div>
-              <h3 className="px-3 text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
-                Công cụ giáo dục
+              <h3 className="px-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">
+                Công cụ đề thi
               </h3>
               <div className="space-y-1">
                 <Link
                   href="/creator"
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 ${
                     isCreatorActive
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                      : 'text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                      ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/60'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Sparkles size={18} className={isCreatorActive ? 'text-white' : 'text-blue-500'} />
-                    <span>Tạo Đề Mới (Bản Gốc)</span>
+                    <Sparkles size={17} className={isCreatorActive ? 'text-white' : 'text-indigo-500'} />
+                    <span>Tạo Đề Mới (AI)</span>
                   </div>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold ${
-                    isCreatorActive ? 'bg-white/20 text-white' : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${
+                    isCreatorActive ? 'bg-white/20 text-white' : 'bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400'
                   }`}>
-                    Mới
+                    Pro
                   </span>
                 </Link>
 
                 <Link
                   href="/notebook"
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-left cursor-pointer ${
                     isNotebookNDActive
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25'
-                      : 'text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                      ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/60'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <BookOpen size={18} className={isNotebookNDActive ? 'text-white' : 'text-indigo-500'} />
+                    <BookOpen size={17} className={isNotebookNDActive ? 'text-white' : 'text-indigo-500'} />
                     <span>NoteBook ND</span>
                   </div>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
-                    isNotebookNDActive ? 'bg-white/20 text-white' : 'bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300'
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-extrabold ${
+                    isNotebookNDActive ? 'bg-white/20 text-white' : 'bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400'
                   }`}>
                     AI LM
                   </span>
@@ -432,89 +402,199 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                 <Link
                   href="/creator?view=bank"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all text-left cursor-pointer"
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition-all text-left cursor-pointer"
                 >
-                  <BookOpen size={18} className="text-slate-400 dark:text-slate-500" />
+                  <BookOpen size={17} className="text-slate-400 dark:text-slate-500" />
                   <span>Ngân hàng câu hỏi</span>
                 </Link>
               </div>
             </div>
           )}
 
-          {/* Section 4: TÀI KHOẢN & LIÊN HỆ */}
+          {/* Section 4: TÀI KHOẢN */}
           <div>
-            <h3 className="px-3 text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
-              Tài khoản
+            <h3 className="px-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">
+              Cá nhân
             </h3>
             <div className="space-y-1">
               <button
                 onClick={() => handleNavigateTab('profile')}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-sm transition-all text-left cursor-pointer ${
-                  isProfileActive
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
-                }`}
+                className={getNavItemClass(isProfileActive)}
               >
-                <UserIcon size={18} />
-                <span>Cá nhân & Zalo</span>
+                <UserIcon size={17} />
+                <span>Hồ sơ & Zalo</span>
               </button>
             </div>
           </div>
         </div>
 
         {/* Sidebar Footer User Info, Theme Switch & Logout */}
-        <div className="p-4 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-900/60 transition-colors">
-          {/* Light / Dark Mode Toggle Pill */}
-          <div className="mb-3 flex items-center justify-between p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80">
-            <span className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-2">
-              {isDark ? <Moon size={15} className="text-blue-400" /> : <Sun size={15} className="text-amber-500" />}
-              <span>{isDark ? 'Giao diện Tối' : 'Giao diện Sáng'}</span>
-            </span>
-            <button
-              onClick={toggleTheme}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-                isDark ? 'bg-blue-600' : 'bg-slate-300'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  isDark ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
-
-          <div className="bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-2xl p-3 shadow-2xs mb-2.5 flex items-center justify-between">
+        <div className="p-3.5 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/70 transition-colors shrink-0 space-y-2.5">
+          {/* User profile row with theme toggle */}
+          <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700/60 shadow-2xs">
             <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-xs shadow-sm flex-shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
                 {username.charAt(0).toUpperCase()}
               </div>
               <div className="overflow-hidden">
-                <div className="font-extrabold text-slate-800 dark:text-slate-100 text-xs truncate">{username}</div>
-                <div className="text-[10px] font-medium text-slate-400 dark:text-slate-400 truncate">{roleName}</div>
+                <div className="font-bold text-slate-800 dark:text-slate-100 text-xs truncate leading-tight">{username}</div>
+                <div className="text-[10px] font-medium text-slate-400 dark:text-slate-500 truncate leading-tight mt-0.5">{roleName}</div>
               </div>
             </div>
+
+            <button
+              onClick={toggleTheme}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors cursor-pointer shrink-0"
+              title={isDark ? 'Chuyển sang giao diện Sáng' : 'Chuyển sang giao diện Tối'}
+            >
+              {isDark ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} />}
+            </button>
           </div>
 
           <form action="/api/auth/logout" method="POST">
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-100 dark:border-rose-900/50 rounded-xl transition-all cursor-pointer"
+              className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50/70 dark:hover:bg-rose-950/30 rounded-lg transition-all cursor-pointer"
             >
-              <LogOut size={14} />
+              <LogOut size={13} />
               <span>Đăng xuất</span>
             </button>
           </form>
         </div>
       </aside>
 
-      {/* ─── MODAL NGÂN HÀNG CÂU HỎI ─── */}
+      {/* ─── 4. MOBILE BOTTOM NAVIGATION DOCK (SIÊU TIỆN LỢI TRÊN ĐIỆN THOẠI) ─── */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white/95 dark:bg-[#0F172A]/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800/80 z-40 px-2 py-1 flex items-center justify-around shadow-lg shadow-slate-950/10">
+        {isStudent ? (
+          <>
+            <button
+              onClick={() => handleNavigateTab('study')}
+              className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+                isStudyActive
+                  ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-slate-400 dark:text-slate-500 font-medium hover:text-slate-600'
+              }`}
+            >
+              <GraduationCap size={19} />
+              <span className="text-[10px] mt-0.5">Học tập</span>
+            </button>
+
+            <button
+              onClick={() => handleNavigateTab('mistakes')}
+              className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+                isMistakesActive
+                  ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-slate-400 dark:text-slate-500 font-medium hover:text-slate-600'
+              }`}
+            >
+              <Sparkles size={19} />
+              <span className="text-[10px] mt-0.5">Lỗi sai</span>
+            </button>
+
+            <Link
+              href="/notebook"
+              className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+                isNotebookNDActive
+                  ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-slate-400 dark:text-slate-500 font-medium hover:text-slate-600'
+              }`}
+            >
+              <BookOpen size={19} />
+              <span className="text-[10px] mt-0.5">NoteBook</span>
+            </Link>
+
+            <button
+              onClick={() => handleNavigateTab('history')}
+              className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+                isHistoryActive
+                  ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-slate-400 dark:text-slate-500 font-medium hover:text-slate-600'
+              }`}
+            >
+              <Clock size={19} />
+              <span className="text-[10px] mt-0.5">Lịch sử</span>
+            </button>
+
+            <button
+              onClick={() => handleNavigateTab('profile')}
+              className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+                isProfileActive
+                  ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-slate-400 dark:text-slate-500 font-medium hover:text-slate-600'
+              }`}
+            >
+              <UserIcon size={19} />
+              <span className="text-[10px] mt-0.5">Cá nhân</span>
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => handleNavigateTab('dashboard')}
+              className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+                isDashboardItemActive
+                  ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-slate-400 dark:text-slate-500 font-medium hover:text-slate-600'
+              }`}
+            >
+              <LayoutDashboard size={19} />
+              <span className="text-[10px] mt-0.5">Tổng quan</span>
+            </button>
+
+            <button
+              onClick={() => handleNavigateTab('quizzes')}
+              className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+                isQuizzesActive
+                  ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-slate-400 dark:text-slate-500 font-medium hover:text-slate-600'
+              }`}
+            >
+              <FileText size={19} />
+              <span className="text-[10px] mt-0.5">Đề thi</span>
+            </button>
+
+            <button
+              onClick={() => handleNavigateTab('classes')}
+              className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+                isClassesActive
+                  ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-slate-400 dark:text-slate-500 font-medium hover:text-slate-600'
+              }`}
+            >
+              <School size={19} />
+              <span className="text-[10px] mt-0.5">Lớp học</span>
+            </button>
+
+            <button
+              onClick={() => handleNavigateTab('friends')}
+              className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+                isFriendsActive
+                  ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-slate-400 dark:text-slate-500 font-medium hover:text-slate-600'
+              }`}
+            >
+              <MessageCircle size={19} />
+              <span className="text-[10px] mt-0.5">Chat GV</span>
+            </button>
+
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-slate-400 dark:text-slate-500 font-medium hover:text-slate-600 transition-all cursor-pointer"
+            >
+              <Menu size={19} />
+              <span className="text-[10px] mt-0.5">Thêm</span>
+            </button>
+          </>
+        )}
+      </nav>
+
+      {/* ─── 5. MODAL NGÂN HÀNG CÂU HỎI ─── */}
       {activeModal === 'bank' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
           <div className="bg-white dark:bg-[#1E293B] rounded-3xl max-w-lg w-full p-6 border border-slate-200 dark:border-slate-700 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
                   <BookOpen size={18} />
                 </div>
                 <div>
@@ -533,13 +613,13 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
             </div>
 
             <div className="py-4 text-sm text-slate-600 dark:text-slate-300 space-y-4">
-              <div className="p-3 bg-blue-50 dark:bg-blue-950/60 rounded-xl border border-blue-100 dark:border-blue-900 text-xs text-blue-700 dark:text-blue-300">
+              <div className="p-3 bg-indigo-50 dark:bg-indigo-950/60 rounded-xl border border-indigo-100 dark:border-indigo-900 text-xs text-indigo-700 dark:text-indigo-300">
                 Ngân hàng câu hỏi cho phép bạn import hàng trăm câu hỏi và tự động bốc ngẫu nhiên (random pick) theo từng lần thi!
               </div>
               <Link
                 href="/creator?view=bank"
                 onClick={() => setActiveModal(null)}
-                className="block text-center py-2.5 bg-blue-600 text-white font-bold text-xs rounded-xl hover:bg-blue-700 transition-colors"
+                className="block text-center py-2.5 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition-colors"
               >
                 Mở Thư Viện Ngân Hàng Đề Thi →
               </Link>
