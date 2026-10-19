@@ -26,6 +26,7 @@ import {
   Plus
 } from 'lucide-react'
 import { useTheme } from '../ThemeContext'
+import DzotaAnimatedLogo from '../components/DzotaAnimatedLogo'
 
 interface AdminNavClientProps {
   session: {
@@ -133,22 +134,20 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
           >
             {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          <button
-            onClick={() => handleNavigateTab(isStudent ? 'study' : 'dashboard')}
-            className="flex items-center gap-2 text-left cursor-pointer"
-          >
-            <div className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 p-1 flex items-center justify-center shadow-2xs border border-slate-200/80 dark:border-slate-700/80">
-              <img src="/logo-dzota.png" alt="Dzota Logo" className="w-full h-full object-contain" />
-            </div>
-            <div>
+          <div className="flex items-center gap-2 text-left">
+            <DzotaAnimatedLogo size="sm" allowPreviewModal={true} />
+            <button
+              onClick={() => handleNavigateTab(isStudent ? 'study' : 'dashboard')}
+              className="text-left cursor-pointer"
+            >
               <span className="text-sm font-black text-slate-900 dark:text-slate-100 tracking-tight block leading-tight">
                 {isStudent ? 'Dzota Học Tập' : 'Dzota Admin'}
               </span>
               <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold block leading-tight">
                 {roleName}
               </span>
-            </div>
-          </button>
+            </button>
+          </div>
         </div>
 
         {/* Right tools (Theme switch, create, avatar) */}
@@ -193,16 +192,14 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
       >
         {/* Brand Header */}
         <div className="h-18 flex items-center justify-between px-5 border-b border-slate-100 dark:border-slate-800/80 shrink-0">
-          <button
-            onClick={() => handleNavigateTab(isStudent ? 'study' : 'dashboard')}
-            className="flex items-center gap-3 group text-left cursor-pointer"
-          >
-            <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 p-1 flex items-center justify-center shadow-xs border border-slate-200/70 dark:border-slate-700/70 group-hover:scale-105 transition-transform">
-              <img src="/logo-dzota.png" alt="Dzota Logo" className="w-full h-full object-contain" />
-            </div>
-            <div>
+          <div className="flex items-center gap-3 group text-left">
+            <DzotaAnimatedLogo size="md" allowPreviewModal={true} />
+            <button
+              onClick={() => handleNavigateTab(isStudent ? 'study' : 'dashboard')}
+              className="text-left cursor-pointer"
+            >
               <div className="flex items-center gap-1.5">
-                <span className="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight block leading-tight">
+                <span className="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight block leading-tight group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
                   Dzota Quiz
                 </span>
                 <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded-md bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/60 uppercase">
@@ -212,8 +209,8 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
               <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium block leading-tight mt-0.5">
                 {isStudent ? 'Góc Rèn Luyện Học Sinh' : 'Hệ Thống Quản Trị Đề Thi'}
               </span>
-            </div>
-          </button>
+            </button>
+          </div>
           <button
             onClick={() => setMobileMenuOpen(false)}
             className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"

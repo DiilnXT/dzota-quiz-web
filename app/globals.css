@@ -88,10 +88,68 @@ body {
   animation: gradientShift 4s ease infinite, pulseGlow 3s ease-in-out infinite;
 }
 
+/* ========================================================
+   DZOTA DYNAMIC ANIMATED LOGO STYLES (MAGIC DRAW v2 THEME)
+   ======================================================== */
+@keyframes dzotaLogoRingRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 
+@keyframes dzotaLogoAmbientPulse {
+  0%, 100% { transform: scale(0.92); opacity: 0.5; }
+  50% { transform: scale(1.12); opacity: 0.95; }
+}
 
+@keyframes dzotaLogoShine {
+  0% { transform: translateX(-120%) rotate(25deg); opacity: 0; }
+  20% { opacity: 0.7; }
+  40%, 100% { transform: translateX(180%) rotate(25deg); opacity: 0; }
+}
 
+.dzota-logo-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 
+.dzota-logo-ambient {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(65, 223, 255, 0.55) 0%, rgba(21, 94, 255, 0.28) 45%, transparent 72%);
+  filter: blur(8px);
+  animation: dzotaLogoAmbientPulse 3.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.dzota-logo-ring-svg {
+  position: absolute;
+  inset: -3px;
+  width: calc(100% + 6px);
+  height: calc(100% + 6px);
+  pointer-events: none;
+  animation: dzotaLogoRingRotate 14s linear infinite;
+}
+
+.dzota-logo-shine-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.dzota-logo-shine-layer::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.6) 50%, transparent 60%);
+  animation: dzotaLogoShine 5s ease-in-out infinite;
+}
 
 /* ========================================================
    APPLE IPHONE 18 LIQUID GLASS - HIGH-PERFORMANCE EDITION
