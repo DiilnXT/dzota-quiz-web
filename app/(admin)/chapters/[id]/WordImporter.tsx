@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Editor } from '@tinymce/tinymce-react'
-import { Plus, Check, X, RefreshCw, FileText, Settings, Image as ImageIcon, Trash2, Sparkles, BookOpen, Copy } from 'lucide-react'
+import { Plus, Check, X, RefreshCw, FileText, Settings, Image as ImageIcon, Trash2, Sparkles, BookOpen, Copy, ChevronDown } from 'lucide-react'
 import { createQuestionGroup, addQuestionVariant } from '@/app/actions/question'
 import { useRouter } from 'next/navigation'
 
@@ -529,42 +529,71 @@ D. Argon (Ar)`;
           />
         </div>
 
-        {/* THANH LỰA CHỌN ĐỊNH DẠNG & HƯỚNG DẪN */}
-        <div className="mb-4 p-3 bg-indigo-50/70 border border-indigo-100 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2 flex-1">
-            <Sparkles className="text-indigo-600 shrink-0" size={18} />
-            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-              <span className="font-bold text-slate-700 shrink-0">Nhận diện đáp án đúng:</span>
-              <select
-                value={importFormatMode}
-                onChange={(e) => setImportFormatMode(e.target.value)}
-                className="bg-white border border-indigo-200 text-indigo-900 font-semibold rounded-lg px-2.5 py-1.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-xs"
-              >
-                <option value="auto">⚡ Tự động nhận diện (Tất cả định dạng)</option>
-                <option value="bold">Bôi đậm toàn bộ phương án (**A. ...**)</option>
-                <option value="bold_letter">Bôi đậm chữ cái đầu (**A.** B. C. D.)</option>
-                <option value="color">Màu chữ khác biệt (Đỏ / Xanh...)</option>
-                <option value="underline">Gạch chân phương án đúng (&lt;u&gt;...&lt;/u&gt;)</option>
-                <option value="asterisk">Dấu sao đằng trước (*A. hoặc *A))</option>
-                <option value="bracket">Câu hỏi trong ngoặc vuông ([Nội dung])</option>
-              </select>
+        {/* THANH ĐIỀU HƯỚNG NHẬN DIỆN & PHÂN TÍCH (TỐI GIẢN & ĐẸP) */}
+        <div className="mb-3 p-2.5 sm:p-3 rounded-2xl bg-slate-50/90 border border-slate-200/90 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 sm:gap-3 transition-all hover:border-slate-300">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-white text-indigo-600 border border-slate-200/80 shadow-xs flex items-center justify-center shrink-0">
+              <Sparkles size={16} />
             </div>
+            <div className="flex-1 min-w-0 flex items-center gap-2">
+              <span className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider shrink-0 hidden xs:inline">Nhận diện:</span>
+              <div className="relative flex-1 min-w-[170px] max-w-full sm:max-w-xs md:max-w-sm">
+                <select
+                  value={importFormatMode}
+                  onChange={(e) => setImportFormatMode(e.target.value)}
+                  className="w-full appearance-none bg-white hover:bg-slate-100/80 border border-slate-200 rounded-xl px-3 py-2 pr-8 text-xs sm:text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none shadow-xs transition cursor-pointer truncate"
+                >
+                  <option value="auto">⚡ Tự động nhận diện (Khuyên dùng)</option>
+                  <option value="bold">🔤 In đậm: A. hoặc cả phương án</option>
+                  <option value="bold_letter">🔤 In đậm chữ cái đầu: A. B. C. D.</option>
+                  <option value="color">🎨 Màu chữ: Đỏ / Xanh khác biệt</option>
+                  <option value="underline">✍️ Gạch chân: Đáp án đúng</option>
+                  <option value="asterisk">⭐ Dấu sao: *A, *B, *C, *D</option>
+                  <option value="bracket">🔲 Ngoặc vuông: [Nội dung câu]</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+                  <ChevronDown size={14} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowGuideModal(true)}
+              className="px-3 py-2 rounded-xl bg-white hover:bg-indigo-50/80 border border-slate-200 hover:border-indigo-200 text-slate-600 hover:text-indigo-600 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer shrink-0"
+              title="Xem hướng dẫn chi tiết quy tắc nhập đề & xem đề mẫu"
+            >
+              <BookOpen size={15} />
+              <span>Hướng dẫn</span>
+            </button>
+
+            <button
+              onClick={parseQuiz}
+              disabled={isParsing}
+              className="flex-1 sm:flex-initial px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-sm shadow-indigo-600/30 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              {isParsing ? <RefreshCw className="animate-spin" size={15} /> : <FileText size={15} />}
+              <span>{isParsing ? 'Đang phân tích...' : 'Phân tích đề thi'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Gợi ý 1 dòng tối giản */}
+        <div className="mb-4 px-1 flex flex-wrap items-center justify-between text-[11px] sm:text-xs text-slate-400 gap-1.5">
+          <div className="flex items-center gap-1.5 truncate">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+            <span className="truncate">Hỗ trợ nhận diện chữ in đậm, màu chữ đỏ/xanh, gạch chân & hình ảnh.</span>
           </div>
           <button
             type="button"
             onClick={() => setShowGuideModal(true)}
-            className="px-3.5 py-2 rounded-xl bg-white hover:bg-indigo-50 border border-indigo-200 text-indigo-700 hover:text-indigo-900 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-xs transition hover:scale-[1.02] active:scale-[0.98] cursor-pointer shrink-0"
-            title="Xem hướng dẫn chi tiết cách tạo đề thi & quy tắc nhận diện"
+            className="text-indigo-600 hover:text-indigo-700 font-semibold underline underline-offset-2 shrink-0 cursor-pointer"
           >
-            <BookOpen size={16} />
-            <span>Xem Hướng Dẫn</span>
+            Xem quy tắc & đề mẫu
           </button>
         </div>
-
-        <button onClick={parseQuiz} disabled={isParsing} className="w-full bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold text-lg hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2">
-          {isParsing ? <RefreshCw className="animate-spin" /> : <FileText />}
-          Phân Tích & Nhận Diện Đề
-        </button>
       </div>
 
       {parsedQuestions.length > 0 && (
