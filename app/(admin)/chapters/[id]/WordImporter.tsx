@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Editor } from '@tinymce/tinymce-react'
-import { Plus, Check, X, RefreshCw, FileText, Settings, Image as ImageIcon, Trash2 } from 'lucide-react'
+import { Plus, Check, X, RefreshCw, FileText, Settings, Image as ImageIcon, Trash2, Sparkles, BookOpen, Copy } from 'lucide-react'
 import { createQuestionGroup, addQuestionVariant } from '@/app/actions/question'
 import { useRouter } from 'next/navigation'
 
@@ -10,6 +10,8 @@ export default function WordImporter({ chapterId, onDone }: { chapterId: string,
   const [isParsing, setIsParsing] = useState(false)
   const [parsedQuestions, setParsedQuestions] = useState<any[]>([])
   const [isSaving, setIsSaving] = useState(false)
+  const [importFormatMode, setImportFormatMode] = useState('auto')
+  const [showGuideModal, setShowGuideModal] = useState(false)
   const editorRef = useRef<any>(null)
   
   const getDirectImageUrl = (url: string) => {
@@ -19,6 +21,12 @@ export default function WordImporter({ chapterId, onDone }: { chapterId: string,
         return `https://lh3.googleusercontent.com/d/${match[1]}`;
     }
     return url;
+  };
+
+  const isNonDefaultColor = (col: string) => {
+    if (!col) return false;
+    const c = col.trim().toLowerCase();
+    return !['inherit', 'initial', 'unset', 'black', '#000', '#000000', 'rgb(0, 0, 0)', 'rgb(0,0,0)', 'rgb(30, 41, 59)', 'rgb(51, 65, 85)', 'rgb(15, 23, 42)', '#334155', '#1e293b', '#0f172a', '#374151', '#475569'].includes(c);
   };
 
   const parseDomToLines = (rootNode: any) => {
@@ -45,18 +53,37 @@ export default function WordImporter({ chapterId, onDone }: { chapterId: string,
             if (text.length === 0) return;
             
             let isBold = false;
+            let isUnderline = false;
+            let detectedColor = '';
             let parent = node.parentElement;
             while(parent && parent !== rootNode) {
-                const style = parent.getAttribute('style') || '';
-                if (parent.tagName === 'B' || parent.tagName === 'STRONG' || style.includes('font-weight: bold') || style.includes('font-weight: 700') || style.includes('color: red') || style.includes('color: rgb(255, 0, 0)')) {
+                const style = (parent.getAttribute('style') || '').toLowerCase();
+                if (parent.tagName === 'B' || parent.tagName === 'STRONG' || 
+                    style.includes('font-weight: bold') || style.includes('font-weight: 700') || 
+                    style.includes('font-weight: 800') || style.includes('font-weight: 900')) {
                     isBold = true; 
-                    break;
+                }
+                if (parent.tagName === 'U' || style.includes('text-decoration: underline') || style.includes('text-decoration-line: underline')) {
+                    isUnderline = true;
+                }
+                if (!detectedColor) {
+                    const colorMatch = style.match(/(?:^|;\s*)color\s*:\s*([^;]+)/i);
+                    if (colorMatch && isNonDefaultColor(colorMatch[1])) {
+                        detectedColor = colorMatch[1].trim().toLowerCase();
+                    } else if (parent.getAttribute('color') && isNonDefaultColor(parent.getAttribute('color'))) {
+                        detectedColor = parent.getAttribute('color').trim().toLowerCase();
+                    }
                 }
                 parent = parent.parentElement;
             }
 
             currentLine.text += text;
-            currentLine.segments.push({ text: text, bold: isBold });
+            currentLine.segments.push({ 
+                text: text, 
+                bold: isBold, 
+                underline: isUnderline, 
+                color: detectedColor 
+            });
         } else if (node.nodeName === 'BR') {
             flushLine();
         } else {
@@ -70,6 +97,176 @@ export default function WordImporter({ chapterId, onDone }: { chapterId: string,
     walk(rootNode);
     flushLine();
     return lines;
+  };
+
+  const extractQuestionHeader = (lineText: string, optMatch: any, currentCounter: number) => {
+    if (optMatch) return null;
+    const trimmed = (lineText || '').trim();
+    if (!trimmed) return null;
+    if (/^[-*_]{3,}$/.test(trimmed)) return null;
+
+    let m = trimmed.match(/^(?:#{1,6}\s*)?(?:\*\*)?(?:\[\s*)?(?:Câu|Bài)\s*(\d+)[\s.:\]*-]+(.*)$/i);
+    if (m) {
+        let qNum = m[1];
+        let qText = (m[2] || '').trim().replace(/^\*\*/, '').replace(/\*\*$/, '').replace(/\]$/, '').trim();
+        if (/^\[(.*)\]$/.test(qText) && !qText.includes('][') && !qText.includes('],[')) {
+            qText = qText.replace(/^\[\s*/, '').replace(/\s*\]$/, '').trim();
+        }
+        return { number: qNum, text: qText };
+    }
+
+    m = trimmed.match(/^(?:#{1,6}\s*)?(?:\[\s*)?(\d+)[\s.:)\/*\]-]+(?!\s*[A-G][\s.):\/*])(.*)$/i);
+    if (m) {
+        let qNum = m[1];
+        let qText = (m[2] || '').trim().replace(/^\*\*/, '').replace(/\*\*$/, '').replace(/\]$/, '').trim();
+        if (/^\[(.*)\]$/.test(qText) && !qText.includes('][') && !qText.includes('],[')) {
+            qText = qText.replace(/^\[\s*/, '').replace(/\s*\]$/, '').trim();
+        }
+        return { number: qNum, text: qText };
+    }
+
+    m = trimmed.match(/^\[\s*(.*?)\s*\]$/);
+    if (m && m[1].length > 2) {
+        const inner = m[1].trim();
+        const numInBracket = inner.match(/(?:câu|bài)\s*(\d+)/i) || inner.match(/^(\d+)[\s.:]+/);
+        const qNum = numInBracket ? numInBracket[1] : String((currentCounter || 0) + 1);
+        let qText = inner;
+        if (numInBracket) {
+            qText = inner.replace(/(?:\[\s*)?(?:Câu|Bài)\s*\d+[\s.:\]*-]*/i, '').replace(/^\d+[\s.:\/*-]+/, '').trim();
+        }
+        return { number: qNum, text: qText || inner };
+    }
+
+    return null;
+  };
+
+  const extractOptionMatch = (lineText: string) => {
+    if (!lineText) return null;
+    return lineText.match(/^[-*•~]?\s*(?:\*\*)?(?:\[|\()?\s*([A-G])\s*(?:\]|\))?[\s.):\/*-]+(?:\*\*)?\s*(.*)$/i);
+  };
+
+  const checkOptionAttributes = (lineObj: any, label: string, optContent: string, formatMode: string) => {
+    const lineText = (lineObj.text || '').trim();
+    const segments = lineObj.segments || [];
+
+    const isLineWrappedInBold = (lineText.startsWith('**') && lineText.endsWith('**') && lineText.length > 4) ||
+                                (lineText.startsWith('__') && lineText.endsWith('__') && lineText.length > 4);
+    const isLetterBoldInText = /^\s*[*_]{2}\s*[A-G]/i.test(lineText) ||
+                               /^\s*[*_]{1,2}\s*[A-G]\s*[*_]{1,2}[\s.):\/*]+/i.test(lineText);
+    const hasBoldLetterSeg = segments.some((seg: any) => seg.bold && /^[A-G][\s.):\/*]*/i.test(seg.text.trim()));
+    const hasBoldContentSeg = segments.some((seg: any) => seg.bold && (
+        seg.text.replace(/^[A-G][\s.):\/*]*/i, '').trim().length > 0 ||
+        (optContent && optContent.includes(seg.text.trim()) && seg.text.trim().length > 0)
+    ));
+    const isContentBoldInText = /^\s*[-*•~]?\s*(?:\*\*)?[A-G][\s.):\/*]+(?:\*\*)?\s*[*_]{2}(.*?)[*_]{2}\s*$/i.test(lineText);
+
+    const isBold = isLineWrappedInBold || isLetterBoldInText || hasBoldLetterSeg || hasBoldContentSeg || isContentBoldInText;
+
+    let detectedColor = '';
+    for (let seg of segments) {
+        if (seg.color && isNonDefaultColor(seg.color)) {
+            detectedColor = seg.color;
+            break;
+        }
+    }
+    const hasColor = Boolean(detectedColor);
+    const isUnderline = segments.some((seg: any) => seg.underline) || /<u>/i.test(lineText);
+    const hasAsterisk = /^\s*\*+\s*[A-G]/i.test(lineText) || lineText.startsWith('*');
+    const hasExplicitTag = /\((?:đúng|đáp án đúng|chính xác|correct|true)\)|\[x\]/i.test(lineText);
+
+    return {
+        label,
+        isBold,
+        hasBoldLetter: isLetterBoldInText || hasBoldLetterSeg,
+        isLineWrappedInBold,
+        hasColor,
+        color: detectedColor,
+        isUnderline,
+        hasAsterisk,
+        hasExplicitTag
+    };
+  };
+
+  const finalizeQuestion = (q: any, optAttrsMap: Record<string, any>, formatMode: string, answerMap: Record<string, string>) => {
+    if (!q) return;
+    const qNum = String(q.number);
+    const optKeys = Object.keys(q.options).filter(k => q.options[k] && q.options[k].trim());
+    if (optKeys.length === 0) return;
+
+    if (formatMode === 'key_table') {
+        if (answerMap && answerMap[qNum]) q.correct = answerMap[qNum];
+        return;
+    }
+
+    if (formatMode === 'bold') {
+        const boldKey = optKeys.find(k => optAttrsMap[k]?.isBold);
+        if (boldKey) q.correct = boldKey;
+        else if (answerMap && answerMap[qNum]) q.correct = answerMap[qNum];
+        return;
+    }
+
+    if (formatMode === 'color') {
+        const coloredKey = optKeys.find(k => optAttrsMap[k]?.hasColor);
+        if (coloredKey) q.correct = coloredKey;
+        else if (answerMap && answerMap[qNum]) q.correct = answerMap[qNum];
+        return;
+    }
+
+    if (formatMode === 'underline') {
+        const uKey = optKeys.find(k => optAttrsMap[k]?.isUnderline);
+        if (uKey) q.correct = uKey;
+        else if (answerMap && answerMap[qNum]) q.correct = answerMap[qNum];
+        return;
+    }
+
+    if (formatMode === 'asterisk') {
+        const astKey = optKeys.find(k => optAttrsMap[k]?.hasAsterisk);
+        if (astKey) q.correct = astKey;
+        else if (answerMap && answerMap[qNum]) q.correct = answerMap[qNum];
+        return;
+    }
+
+    // Default 'auto'
+    const tagKey = optKeys.find(k => optAttrsMap[k]?.hasExplicitTag);
+    if (tagKey) { q.correct = tagKey; return; }
+
+    const astKey = optKeys.find(k => optAttrsMap[k]?.hasAsterisk);
+    if (astKey) { q.correct = astKey; return; }
+
+    const coloredKeys = optKeys.filter(k => optAttrsMap[k]?.hasColor);
+    if (coloredKeys.length === 1) {
+        q.correct = coloredKeys[0];
+        return;
+    } else if (coloredKeys.length > 1 && coloredKeys.length < optKeys.length) {
+        const colorCounts: Record<string, number> = {};
+        optKeys.forEach(k => {
+            const col = optAttrsMap[k]?.color || 'default';
+            colorCounts[col] = (colorCounts[col] || 0) + 1;
+        });
+        const majorityCol = Object.keys(colorCounts).sort((a, b) => colorCounts[b] - colorCounts[a])[0];
+        const minorityKey = optKeys.find(k => (optAttrsMap[k]?.color || 'default') !== majorityCol && optAttrsMap[k]?.hasColor);
+        if (minorityKey) {
+            q.correct = minorityKey;
+            return;
+        }
+    }
+
+    const uKeys = optKeys.filter(k => optAttrsMap[k]?.isUnderline);
+    if (uKeys.length === 1) {
+        q.correct = uKeys[0];
+        return;
+    }
+
+    const boldKeys = optKeys.filter(k => optAttrsMap[k]?.isBold);
+    if (boldKeys.length === 1) {
+        q.correct = boldKeys[0];
+        return;
+    }
+
+    if (answerMap && answerMap[qNum]) {
+        q.correct = answerMap[qNum];
+        return;
+    }
   };
 
   const parseQuiz = async () => {
@@ -88,92 +285,117 @@ export default function WordImporter({ chapterId, onDone }: { chapterId: string,
       const lines = parseDomToLines(editorBody)
       const questions: any[] = [];
       let currentQ: any = null;
+      let currentQOptAttrs: Record<string, any> = {};
+      let qCounter = 0;
       const fullText = lines.map(l => l.text).join('\n');
-      const keySplitRegex = /(?:^|\n)(?:Đáp án|Bảng đáp án|Answer Key)[:\s]*([\s\S]*)$/i;
-      const keyMatch = fullText.match(keySplitRegex);
       let answerMap: Record<string, string> = {};
       
-      if (keyMatch) {
-          const keyLines = keyMatch[1].split(/\n/);
-          keyLines.forEach(line => {
-              const matches = line.matchAll(/(?:Câu\s*)?(\d+)[\s.:-]+([A-G])/gi);
-              for (const match of matches) {
+      try {
+          const keyMatch = fullText.match(/(?:^|\n)(?:Đáp án|Bảng đáp án|Answer Key|Key|Đáp án đúng)[:\s]*([\s\S]*)$/i);
+          if (keyMatch) {
+              for (const match of keyMatch[1].matchAll(/(?:Câu\s*)?(\d+(?:\.\d+)?)[\s.:\/-]+([A-G])(?:\b|\.|\s|$)/gi)) {
                   answerMap[match[1]] = match[2].toUpperCase();
               }
-          });
-      }
+          }
+      } catch (e) {}
+
+      const flushCurrentQ = () => {
+          if (!currentQ) return;
+          finalizeQuestion(currentQ, currentQOptAttrs, importFormatMode, answerMap);
+          questions.push(currentQ);
+          currentQ = null;
+          currentQOptAttrs = {};
+      };
 
       lines.forEach((lineObj) => {
         const lineText = lineObj.text.trim();
         if (!lineText && lineObj.images.length === 0) return;
 
-        const qStartMatch = lineText.match(/^(?:Câu|Bài)\s*(\d+)[\s.:]+(.*)/i);
-        const optMatch = lineText.match(/^([A-G])[\s.)]+(.*)/i);
+        const optMatch = extractOptionMatch(lineText);
+        const qHeader = extractQuestionHeader(lineText, optMatch, qCounter);
 
-        if (qStartMatch && !optMatch) {
-          if (currentQ) questions.push(currentQ);
-          const qNum = qStartMatch[1];
+        if (qHeader && !optMatch) {
+          flushCurrentQ();
+          qCounter++;
+          const qNum = qHeader.number || String(qCounter);
           currentQ = {
             id: parseInt(qNum) || Date.now() + Math.random(),
             number: qNum,
-            text: qStartMatch[2].trim(),
+            text: qHeader.text,
             options: { A: "", B: "", C: "", D: "", E: "", F: "", G: "" },
-            correct: answerMap[qNum] || null,
+            correct: null,
             images: [...lineObj.images]
           };
+          currentQOptAttrs = {};
         } else if (optMatch && currentQ) {
           const label = optMatch[1].toUpperCase();
           let content = optMatch[2].trim();
           currentQ.options[label] = content;
-          
           if (lineObj.images.length > 0) currentQ.images.push(...lineObj.images);
-          
-          if (!currentQ.correct) {
-              let foundBoldInContent = false;
-              for (let seg of lineObj.segments) {
-                  if (seg.bold) {
-                      const cleanSeg = seg.text.replace(/^[A-G][\s.)]*/i, '').trim();
-                      if (cleanSeg.length > 0 || (seg.text.length > 3 && seg.text.includes(content))) {
-                          foundBoldInContent = true; 
-                          break;
-                      }
-                      if (content.includes(seg.text.trim()) && seg.text.trim().length > 0) {
-                          foundBoldInContent = true;
-                          break;
-                      }
-                  }
-              }
-              if (foundBoldInContent) {
-                  currentQ.correct = label;
-              }
-          }
+          currentQOptAttrs[label] = checkOptionAttributes(lineObj, label, content, importFormatMode);
         } else if (currentQ) {
-          const lastKey = ['G', 'F', 'E', 'D', 'C', 'B', 'A'].find(k => currentQ.options[k] !== "");
-          if (lastKey) {
-             if (lineText) currentQ.options[lastKey] += " " + lineText;
-             for(let seg of lineObj.segments) {
-                 if (seg.bold && seg.text.trim().length > 0) currentQ.correct = lastKey; 
-             }
+          const optLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+          const optIndices: any[] = [];
+          optLetters.forEach(ltr => {
+            const reg = new RegExp(`(?:^|\\s)(?:[*_]{0,2})(${ltr})[\\s.):/\\*-]+(?:[*_]{0,2})`, 'gi');
+            let m;
+            while ((m = reg.exec(lineText)) !== null) {
+              optIndices.push({ letter: ltr, index: m.index, matchLen: m[0].length });
+            }
+          });
+
+          if (optIndices.length >= 2) {
+            optIndices.sort((a, b) => a.index - b.index);
+            for (let idx = 0; idx < optIndices.length; idx++) {
+              const curr = optIndices[idx];
+              const startPos = curr.index + curr.matchLen;
+              const endPos = (idx + 1 < optIndices.length) ? optIndices[idx + 1].index : lineText.length;
+              const chunk = lineText.substring(curr.index, endPos).trim();
+              let content = lineText.substring(startPos, endPos).trim().replace(/^\*\*/, '').replace(/\*\*$/, '');
+              content = content.replace(/\s*\((?:đúng|đáp án đúng|chính xác|correct|true)\)/i, '').replace(/\s*\[x\]/i, '').trim();
+              currentQ.options[curr.letter] = content;
+              const isChunkBold = /^\s*[*_]{2}/.test(chunk) || chunk.endsWith('**') || /\((?:đúng|đáp án đúng|chính xác|correct|true)\)/i.test(chunk);
+              currentQOptAttrs[curr.letter] = {
+                label: curr.letter,
+                isBold: isChunkBold,
+                hasBoldLetter: isChunkBold,
+                hasColor: false,
+                color: '',
+                isUnderline: false,
+                hasAsterisk: chunk.startsWith('*'),
+                hasExplicitTag: /\((?:đúng|đáp án đúng|chính xác|correct|true)\)|\[x\]/i.test(chunk)
+              };
+            }
           } else {
-             if (lineText) currentQ.text += "\n" + lineText;
+            const lastKey = ['G', 'F', 'E', 'D', 'C', 'B', 'A'].find(k => currentQ.options[k] !== "");
+            if (lastKey) {
+               if (lineText) currentQ.options[lastKey] += " " + lineText;
+               const lineAttrs = checkOptionAttributes(lineObj, lastKey, lineText, importFormatMode);
+               if (lineAttrs.isBold) currentQOptAttrs[lastKey].isBold = true;
+               if (lineAttrs.hasColor) { currentQOptAttrs[lastKey].hasColor = true; currentQOptAttrs[lastKey].color = lineAttrs.color; }
+               if (lineAttrs.isUnderline) currentQOptAttrs[lastKey].isUnderline = true;
+            } else if (lineText) {
+               currentQ.text += "\n" + lineText;
+            }
+            if (lineObj.images.length > 0) currentQ.images.push(...lineObj.images);
           }
-          if (lineObj.images.length > 0) currentQ.images.push(...lineObj.images);
         }
       });
       
-      if (currentQ) questions.push(currentQ);
+      flushCurrentQ();
       setParsedQuestions(questions);
       
       if (questions.length === 0) {
-        alert("Không tìm thấy câu hỏi nào. Bạn nhớ dùng định dạng 'Câu 1: ...' nhé.")
+        alert("Không tìm thấy câu hỏi nào. Hãy kiểm tra lại định dạng đề hoặc bấm 'Xem Hướng Dẫn'!")
       } else {
-        alert(`Đã nhận diện ${questions.length} câu!`)
+        const withAns = questions.filter(q => q.correct).length;
+        alert(`Đã nhận diện thành công ${questions.length} câu hỏi (${withAns} câu có đáp án)!`)
       }
-    } catch (e: any) {
-      alert("Lỗi phân tích: " + e.message)
+    } catch(err: any) {
+      alert("Lỗi khi phân tích: " + err.message);
     }
-    setIsParsing(false)
-  }
+    setIsParsing(false);
+  };
 
   const handleSaveToDatabase = async () => {
     if (parsedQuestions.length === 0) return
@@ -221,6 +443,64 @@ export default function WordImporter({ chapterId, onDone }: { chapterId: string,
     setParsedQuestions(updated)
   }
 
+  const handlePasteSampleQuizToEditor = () => {
+    const sampleHtml = `<p><strong>[Câu 1]</strong> Thủ đô của Việt Nam là gì?</p>
+<p><strong>A.</strong> Hà Nội</p>
+<p>B. TP. Hồ Chí Minh</p>
+<p>C. Đà Nẵng</p>
+<p>D. Cần Thơ</p>
+<p>&nbsp;</p>
+<p>Câu 2: [Phương trình nào sau đây có nghiệm x = 2?]</p>
+<p>A. 2x - 3 = 0</p>
+<p><span style="color: #e02424;"><strong>B. x + 3 = 5</strong></span></p>
+<p>C. x - 5 = 0</p>
+<p>D. 3x = 9</p>
+<p>&nbsp;</p>
+<p>3. [Trong các chất sau, chất nào là kim loại dẫn điện tốt nhất?]</p>
+<p>A. Đồng</p>
+<p>B. Vàng</p>
+<p><u>C. Bạc</u></p>
+<p>D. Nhôm</p>
+<p>&nbsp;</p>
+<p>Câu 4. [Khí nào chiếm thể tích lớn nhất trong không khí?]</p>
+<p>*A. Nitơ (N2)</p>
+<p>B. Oxi (O2)</p>
+<p>C. Cacbonic (CO2)</p>
+<p>D. Argon (Ar)</p>`;
+    if (editorRef.current) {
+      editorRef.current.setContent(sampleHtml);
+    }
+    setShowGuideModal(false);
+  };
+
+  const handleCopySampleQuiz = () => {
+    const textSample = `[Câu 1] Thủ đô của Việt Nam là gì?
+A. Hà Nội (đúng)
+B. TP. Hồ Chí Minh
+C. Đà Nẵng
+D. Cần Thơ
+
+Câu 2: [Phương trình nào sau đây có nghiệm x = 2?]
+A. 2x - 3 = 0
+**B. x + 3 = 5**
+C. x - 5 = 0
+D. 3x = 9
+
+3. [Trong các chất sau, chất nào là kim loại dẫn điện tốt nhất?]
+A. Đồng
+B. Vàng
+*C. Bạc
+D. Nhôm
+
+Câu 4. [Khí nào chiếm thể tích lớn nhất trong không khí?]
+*A. Nitơ (N2)
+B. Oxi (O2)
+C. Cacbonic (CO2)
+D. Argon (Ar)`;
+    navigator.clipboard.writeText(textSample);
+    alert("Đã sao chép nội dung đề thi mẫu vào bộ nhớ tạm!");
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
@@ -247,6 +527,38 @@ export default function WordImporter({ chapterId, onDone }: { chapterId: string,
               })
             }}
           />
+        </div>
+
+        {/* THANH LỰA CHỌN ĐỊNH DẠNG & HƯỚNG DẪN */}
+        <div className="mb-4 p-3 bg-indigo-50/70 border border-indigo-100 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 flex-1">
+            <Sparkles className="text-indigo-600 shrink-0" size={18} />
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <span className="font-bold text-slate-700 shrink-0">Nhận diện đáp án đúng:</span>
+              <select
+                value={importFormatMode}
+                onChange={(e) => setImportFormatMode(e.target.value)}
+                className="bg-white border border-indigo-200 text-indigo-900 font-semibold rounded-lg px-2.5 py-1.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-xs"
+              >
+                <option value="auto">⚡ Tự động nhận diện (Tất cả định dạng)</option>
+                <option value="bold">Bôi đậm toàn bộ phương án (**A. ...**)</option>
+                <option value="bold_letter">Bôi đậm chữ cái đầu (**A.** B. C. D.)</option>
+                <option value="color">Màu chữ khác biệt (Đỏ / Xanh...)</option>
+                <option value="underline">Gạch chân phương án đúng (&lt;u&gt;...&lt;/u&gt;)</option>
+                <option value="asterisk">Dấu sao đằng trước (*A. hoặc *A))</option>
+                <option value="bracket">Câu hỏi trong ngoặc vuông ([Nội dung])</option>
+              </select>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowGuideModal(true)}
+            className="px-3.5 py-2 rounded-xl bg-white hover:bg-indigo-50 border border-indigo-200 text-indigo-700 hover:text-indigo-900 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-xs transition hover:scale-[1.02] active:scale-[0.98] cursor-pointer shrink-0"
+            title="Xem hướng dẫn chi tiết cách tạo đề thi & quy tắc nhận diện"
+          >
+            <BookOpen size={16} />
+            <span>Xem Hướng Dẫn</span>
+          </button>
         </div>
 
         <button onClick={parseQuiz} disabled={isParsing} className="w-full bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold text-lg hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2">
@@ -309,6 +621,165 @@ export default function WordImporter({ chapterId, onDone }: { chapterId: string,
                   </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL HƯỚNG DẪN TẠO ĐỀ THI & QUY TẮC NHẬN DIỆN */}
+      {showGuideModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
+          <div className="bg-slate-50 rounded-3xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95">
+            {/* Modal Header */}
+            <div className="px-6 py-4 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                  <BookOpen size={20} />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-800 text-lg">Hướng Dẫn Tạo Đề Thi & Quy Tắc Nhận Diện</h3>
+                  <p className="text-xs text-slate-500">Chuẩn hóa đề thi trắc nghiệm từ Word, Docs hoặc văn bản sao chép</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowGuideModal(false)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-6 text-slate-700 text-sm leading-relaxed custom-scrollbar">
+              {/* Mục 1: Định dạng câu hỏi */}
+              <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-black text-xs flex items-center justify-center">1</span>
+                  <h4 className="font-bold text-slate-800 text-base">Quy tắc nhận diện Câu Hỏi</h4>
+                </div>
+                <p className="text-xs text-slate-500 mb-3">Hệ thống AI & Regex nhận diện linh hoạt mọi định dạng câu hỏi phổ biến:</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <span className="text-emerald-700 font-bold block mb-1">✔ Dạng đóng khung ngoặc vuông:</span>
+                    <span className="text-slate-700 block">1. [Nội dung câu 1]</span>
+                    <span className="text-slate-700 block">[Nội dung câu hỏi]</span>
+                    <span className="text-slate-700 block">Câu 1. [Nội dung câu 1]</span>
+                    <span className="text-slate-700 block">Câu 1: [Nội dung câu 1]</span>
+                  </div>
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <span className="text-indigo-700 font-bold block mb-1">✔ Dạng tiêu chuẩn đề thi:</span>
+                    <span className="text-slate-700 block">Câu 1: Nội dung câu hỏi...</span>
+                    <span className="text-slate-700 block">Câu 1. Nội dung câu hỏi...</span>
+                    <span className="text-slate-700 block">1. Nội dung câu hỏi...</span>
+                    <span className="text-slate-700 block">Bài 1: / Question 1: ...</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mục 2: Nhận diện phương án & đáp án đúng */}
+              <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 font-black text-xs flex items-center justify-center">2</span>
+                  <h4 className="font-bold text-slate-800 text-base">Quy tắc nhận diện Phương Án & Đáp Án Đúng</h4>
+                </div>
+                <p className="text-xs text-slate-500 mb-3">Hỗ trợ 4 phương án A, B, C, D (hoặc đến G). Đáp án đúng được nhận diện tự động qua:</p>
+                
+                <div className="space-y-2.5 text-xs">
+                  <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-emerald-50/50 border border-emerald-100">
+                    <span className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center shrink-0">A</span>
+                    <div>
+                      <strong className="text-emerald-900">In đậm toàn bộ phương án hoặc in đậm chữ cái đầu:</strong>
+                      <p className="text-slate-600 mt-0.5 font-mono">Ví dụ: <strong>A. Hà Nội</strong> hoặc <strong>**A.**</strong> Hà Nội hoặc <strong>A.</strong> Hà Nội</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-rose-50/50 border border-rose-100">
+                    <span className="w-5 h-5 rounded-md bg-rose-100 text-rose-800 font-bold flex items-center justify-center shrink-0">B</span>
+                    <div>
+                      <strong className="text-rose-900">Màu chữ khác biệt so với các phương án còn lại:</strong>
+                      <p className="text-slate-600 mt-0.5">Tô màu chữ Đỏ, Xanh Dương, hoặc bất kỳ màu nổi bật nào trên Word/Google Docs.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-amber-50/50 border border-amber-100">
+                    <span className="w-5 h-5 rounded-md bg-amber-100 text-amber-800 font-bold flex items-center justify-center shrink-0">C</span>
+                    <div>
+                      <strong className="text-amber-900">Gạch chân phương án đúng:</strong>
+                      <p className="text-slate-600 mt-0.5 font-mono">Ví dụ: <u>A. Hà Nội</u> (dùng phím Ctrl + U trong Word)</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-blue-50/50 border border-blue-100">
+                    <span className="w-5 h-5 rounded-md bg-blue-100 text-blue-800 font-bold flex items-center justify-center shrink-0">D</span>
+                    <div>
+                      <strong className="text-blue-900">Dấu sao (*) hoặc nhãn (đúng):</strong>
+                      <p className="text-slate-600 mt-0.5 font-mono">Ví dụ: *A. Hà Nội hoặc A. Hà Nội (đúng)</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mục 3: Đề thi mẫu */}
+              <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full bg-purple-100 text-purple-700 font-black text-xs flex items-center justify-center">3</span>
+                    <h4 className="font-bold text-slate-800 text-base">Đề thi mẫu chuẩn hóa</h4>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCopySampleQuiz}
+                    className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-bold bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100 transition cursor-pointer"
+                  >
+                    <Copy size={13} />
+                    <span>Sao chép mẫu</span>
+                  </button>
+                </div>
+                <div className="bg-slate-900 text-slate-100 p-4 rounded-xl font-mono text-xs overflow-x-auto leading-relaxed border border-slate-800">
+                  <p className="text-amber-300 font-bold">[Câu 1] Thủ đô của Việt Nam là gì?</p>
+                  <p className="text-emerald-400 font-bold">A. Hà Nội (đúng)</p>
+                  <p>B. TP. Hồ Chí Minh</p>
+                  <p>C. Đà Nẵng</p>
+                  <p>D. Cần Thơ</p>
+                  <br />
+                  <p className="text-amber-300 font-bold">Câu 2: [Phương trình nào sau đây có nghiệm x = 2?]</p>
+                  <p>A. 2x - 3 = 0</p>
+                  <p className="text-emerald-400 font-bold">**B. x + 3 = 5**</p>
+                  <p>C. x - 5 = 0</p>
+                  <p>D. 3x = 9</p>
+                  <br />
+                  <p className="text-amber-300 font-bold">3. [Trong các chất sau, chất nào là kim loại dẫn điện tốt nhất?]</p>
+                  <p>A. Đồng</p>
+                  <p>B. Vàng</p>
+                  <p className="text-emerald-400 font-bold">*C. Bạc</p>
+                  <p>D. Nhôm</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 bg-white border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+              <span className="text-xs text-slate-400 text-center sm:text-left">
+                Mẹo: Bạn có thể chọn chế độ nhận diện ở thanh công cụ trước khi bấm Phân Tích!
+              </span>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={handlePasteSampleQuizToEditor}
+                  className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md shadow-indigo-500/20 transition cursor-pointer"
+                >
+                  <Sparkles size={16} />
+                  <span>Dán đề mẫu vào ô soạn thảo ngay</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowGuideModal(false)}
+                  className="px-4 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 text-xs sm:text-sm font-medium transition cursor-pointer"
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
