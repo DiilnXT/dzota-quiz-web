@@ -1,7 +1,7 @@
 // DYNEX Persistent Storage Service (LocalStorage)
 import { sampleAnatomyUrl, SAMPLE_ANATOMY_FALLBACK_MASKS } from './geminiService'
 
-const STORAGE_KEY_PROJECTS = 'dynex_projects_data_v2'
+const STORAGE_KEY_PROJECTS = 'dynex_projects_data_v3'
 const STORAGE_KEY_EXAM_HISTORY = 'dynex_exam_history_v2'
 const STORAGE_KEY_CLASSROOMS = 'dynex_classrooms_v1'
 
@@ -174,7 +174,12 @@ export const storageService = {
   getProjects(): Project[] {
     if (typeof window === 'undefined') return INITIAL_DATA
     try {
-      const raw = localStorage.getItem(STORAGE_KEY_PROJECTS)
+      let raw = localStorage.getItem(STORAGE_KEY_PROJECTS)
+      if (!raw) {
+        // Fallback check v2 storage for existing users
+        raw = localStorage.getItem('dynex_projects_data_v2')
+      }
+
       if (raw) {
         // Tự động phát hiện và dọn dẹp lỗi font mojibake từ bản cũ
         if (raw.includes('BÃ') || raw.includes('Ã') || raw.includes('Ä') || raw.includes('Æ') || raw.includes('áº')) {
@@ -183,28 +188,21 @@ export const storageService = {
         }
         const parsed = JSON.parse(raw)
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Tự động nâng cấp tọa độ mẫu sơ đồ gan nếu còn là tọa độ cũ (width < 32%)
-          let needsUpdate = false
+          // Luôn cập nhật sơ đồ mẫu gan mật sang bộ mask chuẩn 100% solid, không bao giờ lộ chữ
           parsed.forEach((p: any) => {
             p.categories?.forEach((c: any) => {
               c.subFolders?.forEach((s: any) => {
                 s.lessons?.forEach((l: any) => {
                   l.images?.forEach((img: any) => {
-                    if (img.masks && img.masks.length > 0) {
-                      const firstMask = img.masks[0]
-                      if (firstMask.id === 'mask_sample_1' && (firstMask.width < 32 || firstMask.height < 15)) {
-                        img.masks = SAMPLE_ANATOMY_FALLBACK_MASKS.map(m => ({ ...m }))
-                        needsUpdate = true
-                      }
+                    if (img.id === 'img_gan_1' || (img.url && img.url.includes('sample_anatomy'))) {
+                      img.masks = SAMPLE_ANATOMY_FALLBACK_MASKS.map(m => ({ ...m }))
                     }
                   })
                 })
               })
             })
           })
-          if (needsUpdate) {
-            this.saveProjects(parsed)
-          }
+          this.saveProjects(parsed)
           return parsed
         }
       }

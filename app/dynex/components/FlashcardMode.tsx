@@ -659,9 +659,7 @@ export default function FlashcardMode({
                       borderColor: showRevealed ? '#10b981' : '#f59e0b',
                       opacity: 1.0
                     }}
-                    className={`w-full h-full rounded-md border-2 flex items-center justify-center shadow-[0_0_25px_rgba(245,158,11,0.85)] relative overflow-hidden transition-colors ${
-                      !showRevealed ? 'animate-pulse' : ''
-                    }`}
+                    className="w-full h-full rounded-md border-2 flex items-center justify-center shadow-[0_0_25px_rgba(245,158,11,0.9)] relative overflow-hidden transition-colors"
                   >
                     {showRevealed ? (
                       <div className="px-2 py-0.5 text-center truncate">
