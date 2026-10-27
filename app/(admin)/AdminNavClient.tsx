@@ -113,7 +113,7 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
   const isSettingsActive = isDashboardActive && activeTab === 'settings'
   const isProfileActive = isDashboardActive && activeTab === 'profile'
   const isNotebookNDActive = pathname.startsWith('/notebook') || (isDashboardActive && activeTab === 'notebook_nd')
-  const isDynexActive = pathname.startsWith('/dynex')
+  const isDynexActive = pathname.startsWith('/dynex') || (isDashboardActive && activeTab === 'dynex')
 
   // Helper cho style nav item
   const getNavItemClass = (isActive: boolean) =>
@@ -270,9 +270,8 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                     </span>
                   </Link>
 
-                  <Link
-                    href="/dynex"
-                    onClick={() => setMobileMenuOpen(false)}
+                  <button
+                    onClick={() => handleNavigateTab('dynex')}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-left cursor-pointer ${
                       isDynexActive
                         ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
@@ -291,7 +290,7 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                     }`}>
                       OSCE
                     </span>
-                  </Link>
+                  </button>
 
                   <button
                     onClick={() => handleNavigateTab('history')}
@@ -424,9 +423,8 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                   </span>
                 </Link>
 
-                <Link
-                  href="/dynex"
-                  onClick={() => setMobileMenuOpen(false)}
+                <button
+                  onClick={() => handleNavigateTab('dynex')}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-left cursor-pointer ${
                     isDynexActive
                       ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
@@ -445,7 +443,7 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                   }`}>
                     Studio
                   </span>
-                </Link>
+                </button>
 
                 <Link
                   href="/creator?view=bank"

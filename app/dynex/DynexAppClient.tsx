@@ -23,9 +23,10 @@ interface DynexAppClientProps {
     name?: string;
     role?: string;
   } | null;
+  isEmbedded?: boolean;
 }
 
-function DynexInnerClient({ initialUser }: DynexAppClientProps) {
+function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientProps) {
   const searchParams = useSearchParams();
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentTab, setCurrentTab] = useState<'admin' | 'flashcard' | 'exam' | 'history'>('admin');
@@ -405,7 +406,7 @@ function DynexInnerClient({ initialUser }: DynexAppClientProps) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0B0F19] text-slate-100 selection:bg-indigo-500 selection:text-white">
+    <div className={`${isEmbedded ? 'min-h-[85vh] rounded-2xl' : 'min-h-screen'} flex flex-col bg-[#0B0F19] text-slate-100 selection:bg-indigo-500 selection:text-white`}>
       {/* Top Navbar */}
       <Header
         currentTab={currentTab}
@@ -415,6 +416,7 @@ function DynexInnerClient({ initialUser }: DynexAppClientProps) {
         hasApiKey={Boolean(apiKey)}
         currentUser={currentUser}
         onOpenLogin={() => setIsLoginOpen(true)}
+        isEmbedded={isEmbedded}
       />
 
       {/* Main App Container */}
@@ -534,22 +536,24 @@ function DynexInnerClient({ initialUser }: DynexAppClientProps) {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-[#0B0F19]/90 py-4 px-6 text-xs text-slate-400 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-          <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
-            <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-sky-400 to-emerald-400">
-              DYNEX x DZOTA QUIZ
-            </span>
-            <span>•</span>
-            <span>Hệ Thống Giải Phẫu & Thi Chạy Trạm Y Khoa AI</span>
-          </div>
+      {!isEmbedded && (
+        <footer className="border-t border-slate-800/80 bg-[#0B0F19]/90 py-4 px-6 text-xs text-slate-400 backdrop-blur-md">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+            <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+              <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-sky-400 to-emerald-400">
+                DYNEX x DZOTA QUIZ
+              </span>
+              <span>•</span>
+              <span>Hệ Thống Giải Phẫu & Thi Chạy Trạm Y Khoa AI</span>
+            </div>
 
-          <div className="flex items-center gap-2 font-semibold bg-slate-900/80 px-3 py-1.5 rounded-full border border-slate-800">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>Bản quyền: <span className="text-white font-bold">Nhật Duy</span></span>
+            <div className="flex items-center gap-2 font-semibold bg-slate-900/80 px-3 py-1.5 rounded-full border border-slate-800">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>Bản quyền: <span className="text-white font-bold">Nhật Duy</span></span>
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+      )}
 
       {/* Settings Modal (Gemini 3.6 Flash) */}
       <SettingsModal
@@ -584,11 +588,11 @@ function DynexInnerClient({ initialUser }: DynexAppClientProps) {
   );
 }
 
-export default function DynexAppClient({ initialUser }: DynexAppClientProps) {
+export default function DynexAppClient({ initialUser, isEmbedded = false }: DynexAppClientProps) {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#0B0F19] text-white flex items-center justify-center">
+        <div className={`${isEmbedded ? 'min-h-[500px]' : 'min-h-screen'} bg-[#0B0F19] text-white flex items-center justify-center`}>
           <div className="flex flex-col items-center gap-3">
             <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
             <p className="text-sm text-slate-400">Đang khởi tạo DYNEX Anatomy Studio...</p>
@@ -596,7 +600,7 @@ export default function DynexAppClient({ initialUser }: DynexAppClientProps) {
         </div>
       }
     >
-      <DynexInnerClient initialUser={initialUser} />
+      <DynexInnerClient initialUser={initialUser} isEmbedded={isEmbedded} />
     </Suspense>
   );
 }

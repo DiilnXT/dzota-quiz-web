@@ -61,6 +61,7 @@ import TeacherChatTab from './TeacherChatTab'
 import StudentStudyTab from './StudentStudyTab'
 import MistakeNotebookTab from './MistakeNotebookTab'
 import NoteBookNDTab from './NoteBookNDTab'
+import DynexTab from './DynexTab'
 
 interface TeacherQuiz {
   id: string
@@ -596,8 +597,8 @@ export default function DashboardClient({
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       const tab = params.get('tab')
-      if (tab && ['dashboard', 'overview', 'quizzes', 'classes', 'teachers', 'friends', 'settings', 'profile', 'history', 'notebook_nd', 'study', 'mistakes'].includes(tab)) {
-        if (isStudent && (tab === 'history' || tab === 'profile' || tab === 'study' || tab === 'mistakes' || tab === 'notebook_nd')) {
+      if (tab && ['dashboard', 'overview', 'quizzes', 'classes', 'teachers', 'friends', 'settings', 'profile', 'history', 'notebook_nd', 'study', 'mistakes', 'dynex'].includes(tab)) {
+        if (isStudent && (tab === 'history' || tab === 'profile' || tab === 'study' || tab === 'mistakes' || tab === 'notebook_nd' || tab === 'dynex')) {
           setActiveTab(tab)
         } else if (!isStudent) {
           setActiveTab(tab)
@@ -1551,6 +1552,13 @@ export default function DashboardClient({
       ───────────────────────────────────────────────────────────── */}
       {activeTab === 'notebook_nd' && (
         <NoteBookNDTab currentUser={currentUser} showToast={showToast} />
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          TAB: DYNEX Y KHOA (GIẢI PHẪU & THI CHẠY TRẠM AI - BẢN QUYỀN NHẬT DUY)
+      ───────────────────────────────────────────────────────────── */}
+      {activeTab === 'dynex' && (
+        <DynexTab currentUser={currentUser} />
       )}
 
       {/* ─────────────────────────────────────────────────────────────

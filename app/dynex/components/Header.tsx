@@ -15,7 +15,8 @@ import {
   Zap,
   LogIn,
   ArrowLeft,
-  LayoutDashboard
+  LayoutDashboard,
+  ExternalLink
 } from 'lucide-react'
 import { soundService } from '../services/soundService'
 
@@ -27,6 +28,7 @@ interface HeaderProps {
   hasApiKey?: boolean
   currentUser?: any
   onOpenLogin: () => void
+  isEmbedded?: boolean
 }
 
 export default function Header({ 
@@ -36,7 +38,8 @@ export default function Header({
   geminiModel,
   hasApiKey,
   currentUser,
-  onOpenLogin
+  onOpenLogin,
+  isEmbedded = false
 }: HeaderProps) {
   const [muted, setMuted] = useState(false)
 
@@ -53,13 +56,24 @@ export default function Header({
           
           {/* Logo Dzota + DYNEX Branding & Back to Dzota */}
           <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-            <Link
-              href="/dashboard"
-              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
-              title="Quay lại Bảng điều khiển Dzota"
-            >
-              <ArrowLeft size={18} />
-            </Link>
+            {isEmbedded ? (
+              <Link
+                href="/dynex"
+                target="_blank"
+                className="p-2 rounded-xl text-indigo-400 hover:text-white hover:bg-indigo-600/20 transition-colors shrink-0"
+                title="Mở DYNEX toàn màn hình (Tab riêng)"
+              >
+                <ExternalLink size={18} />
+              </Link>
+            ) : (
+              <Link
+                href="/dashboard"
+                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
+                title="Quay lại Bảng điều khiển Dzota"
+              >
+                <ArrowLeft size={18} />
+              </Link>
+            )}
 
             <div className="relative flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-sky-500 to-cyan-400 p-0.5 shadow-lg shadow-indigo-500/25">
               <div className="w-full h-full bg-[#0B0F19] rounded-[14px] flex items-center justify-center">
