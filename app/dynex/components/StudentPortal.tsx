@@ -42,6 +42,7 @@ interface StudentPortalProps {
   onOpenDeckSelector?: () => void
   onOpenCreateExamModal?: () => void
   onOpenExamManagement?: () => void
+  onOpenExplorer?: () => void
   onEditLesson?: (lessonId: string, projectId: string) => void
   onDeleteLesson?: (lessonId: string, projectId: string) => void
 }
@@ -58,6 +59,7 @@ export default function StudentPortal({
   onOpenDeckSelector,
   onOpenCreateExamModal,
   onOpenExamManagement,
+  onOpenExplorer,
   onEditLesson,
   onDeleteLesson
 }: StudentPortalProps) {
@@ -385,12 +387,27 @@ export default function StudentPortal({
 
       {/* ─── 3. LESSON MODULES GRID ─── */}
       {filteredLessons.length === 0 ? (
-        <div className="p-12 text-center bg-[#111827] border border-slate-800 rounded-3xl space-y-3">
-          <BookOpen className="w-12 h-12 text-slate-600 mx-auto" />
-          <h3 className="text-base font-bold text-white">Không tìm thấy bài học phù hợp</h3>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto">
-            Hãy thử tìm bằng từ khóa khác hoặc chuyển sang chế độ &quot;Tất cả mô-đun&quot;.
-          </p>
+        <div className="p-12 text-center bg-[#111827] border border-slate-800 rounded-3xl space-y-4 shadow-xl">
+          <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mx-auto text-cyan-400">
+            <BookOpen className="w-8 h-8" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-white mb-1">Chưa có bài học hoặc chương nào</h3>
+            <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+              Mọi chương mẫu cũ đã được dọn sạch theo yêu cầu. Hãy vào <strong>Quản Lý Thư Mục (This PC)</strong> để tạo Môn, Chương, Chủ Đề và Bài Học mới theo chuẩn của bạn!
+            </p>
+          </div>
+          {onOpenExplorer && (
+            <div className="pt-2">
+              <button
+                onClick={onOpenExplorer}
+                className="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-lg shadow-cyan-600/30 transition-all cursor-pointer inline-flex items-center gap-2"
+              >
+                <FolderOpen className="w-4 h-4" />
+                <span>Mở Trình Quản Lý Thư Mục (This PC)</span>
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

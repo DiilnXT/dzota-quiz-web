@@ -17,10 +17,11 @@ import CreateContentModal from './components/CreateContentModal';
 import DeckSelectorModal from './components/DeckSelectorModal';
 import CreateOsceExamModal from './components/CreateOsceExamModal';
 import ExamManagementTab from './components/ExamManagementTab';
+import MedicalFileExplorer from './components/MedicalFileExplorer';
 import { storageService, Project, Lesson, ImageItem, Mask, DynexExamPaper } from './services/storageService';
 import { authService, DynexUser } from './services/authService';
 import { getStoredApiKey, getStoredModel } from './services/geminiService';
-import { ShieldCheck, Layers, ShieldAlert } from 'lucide-react';
+import { ShieldCheck, Layers, ShieldAlert, Laptop, ArrowLeft } from 'lucide-react';
 
 interface DynexAppClientProps {
   initialUser?: {
@@ -38,6 +39,7 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
   const searchParams = useSearchParams();
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentTab, setCurrentTab] = useState<DynexTabType>('learn');
+  const [adminSubView, setAdminSubView] = useState<'explorer' | 'studio'>('explorer');
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [selectedLessonId, setSelectedLessonId] = useState<string>('');
   const [currentImageId, setCurrentImageId] = useState<string>('');
@@ -411,6 +413,7 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
       }
     }
     soundService.playSuccess();
+    setAdminSubView('studio');
     setCurrentTab('admin');
   };
 
@@ -600,6 +603,10 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
             onOpenDeckSelector={() => setIsDeckSelectorOpen(true)}
             onOpenCreateExamModal={() => setIsCreateExamModalOpen(true)}
             onOpenExamManagement={() => setCurrentTab('exams')}
+            onOpenExplorer={() => {
+              setAdminSubView('explorer');
+              setCurrentTab('admin');
+            }}
             onEditLesson={handleEditLessonFromPortal}
             onDeleteLesson={handleDeleteLessonFromPortal}
           />
@@ -644,96 +651,174 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col lg:flex-row gap-5 relative">
-              {/* Toggle Left Sidebar Button */}
-              <button
-                onClick={() => setIsTreeSidebarOpen(!isTreeSidebarOpen)}
-                className="hidden lg:flex absolute -left-3 top-4 z-20 items-center justify-center w-7 h-7 rounded-full bg-slate-800 border border-slate-600 text-slate-300 hover:text-white shadow-lg transition-transform hover:scale-110 cursor-pointer"
-                title={isTreeSidebarOpen ? 'Thu gọn danh mục bài học' : 'Mở rộng danh mục bài học'}
-              >
-                {isTreeSidebarOpen ? '◀' : '▶'}
-              </button>
+            <div className="flex-1 flex flex-col gap-4">
+              {/* Admin Mode Switcher: Laptop This PC Explorer vs Studio Mask Editor */}
+              <div className="bg-[#0e1424] border border-slate-800 rounded-2xl p-2.5 flex flex-wrap items-center justify-between gap-2 shadow-lg">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setAdminSubView('explorer')}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                      adminSubView === 'explorer'
+                        ? 'bg-cyan-600 text-white shadow-md shadow-cyan-600/30'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <Laptop className="w-4 h-4 text-cyan-300" />
+                    <span>Quản Lý Thư Mục (This PC)</span>
+                  </button>
 
-              {/* Sidebar Navigation Tree */}
-              {isTreeSidebarOpen && (
-                <AdminTreeNav
+                  <button
+                    onClick={() => setAdminSubView('studio')}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                      adminSubView === 'studio'
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <Layers className="w-4 h-4 text-indigo-300" />
+                    <span>Studio Soạn Ô Che</span>
+                  </button>
+                </div>
+
+                <div className="text-[11px] text-slate-400 flex items-center gap-2">
+                  <span className="hidden sm:inline">Quản trị viên:</span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-bold">
+                    lenhatduy.vietnam@gmail.com
+                  </span>
+                </div>
+              </div>
+
+              {/* Sub-view 1: Windows 11 This PC Explorer */}
+              {adminSubView === 'explorer' ? (
+                <MedicalFileExplorer
                   projects={projects}
                   selectedProjectId={selectedProjectId}
                   selectedLessonId={selectedLessonId}
-                  onSelectProject={(id) => {
-                    setSelectedProjectId(id);
-                    const proj = projects.find(p => p.id === id);
-                    const firstLes = proj?.categories?.[0]?.subFolders?.[0]?.lessons?.[0];
-                    if (firstLes) {
-                      setSelectedLessonId(firstLes.id);
-                      setCurrentImageId(firstLes.images?.[0]?.id || '');
-                    }
+                  onProjectsUpdated={(newProjects) => {
+                    updateProjectsState(newProjects);
                   }}
-                  onSelectLesson={(id) => {
-                    setSelectedLessonId(id);
-                    for (const cat of currentProject?.categories || []) {
-                      for (const sub of cat.subFolders || []) {
-                        const l = sub.lessons?.find(item => item.id === id);
-                        if (l && l.images && l.images.length > 0) {
-                          setCurrentImageId(l.images[0].id);
-                          return;
-                        }
-                      }
-                    }
-                    setCurrentImageId('');
+                  onOpenStudio={(lesId, projId, imgId) => {
+                    setSelectedProjectId(projId);
+                    setSelectedLessonId(lesId);
+                    if (imgId) setCurrentImageId(imgId);
+                    setAdminSubView('studio');
                   }}
-                  onAddProject={handleAddProject}
-                  onDeleteProject={handleDeleteProject}
-                  onRenameProject={handleRenameProject}
-                  onAddCategory={handleAddCategory}
-                  onDeleteCategory={handleDeleteCategory}
-                  onRenameCategory={handleRenameCategory}
-                  onAddSubFolder={handleAddSubFolder}
-                  onDeleteSubFolder={handleDeleteSubFolder}
-                  onRenameSubFolder={handleRenameSubFolder}
-                  onAddLesson={handleAddLesson}
-                  onDeleteLesson={handleDeleteLesson}
-                  onRenameLesson={handleRenameLesson}
+                  onSelectLessonForFlashcard={(lesId, projId) => {
+                    setSelectedProjectId(projId);
+                    setSelectedLessonId(lesId);
+                    setCurrentTab('flashcard');
+                  }}
+                  onSelectLessonForExam={(lesId) => {
+                    setSelectedLessonId(lesId);
+                    setCurrentTab('exam');
+                  }}
                   onOpenShare={(les) => {
                     setShareLessonTarget(les);
                     setIsShareOpen(true);
                   }}
-                  onPreviewLesson={(lesId) => {
-                    setSelectedLessonId(lesId);
-                    setCurrentTab('flashcard');
-                  }}
+                  isSuperAdmin={isSuperAdmin}
                 />
-              )}
+              ) : (
+                /* Sub-view 2: Mask Occlusion Studio */
+                <div className="flex-1 flex flex-col lg:flex-row gap-5 relative">
+                  {/* Toggle Left Sidebar Button */}
+                  <button
+                    onClick={() => setIsTreeSidebarOpen(!isTreeSidebarOpen)}
+                    className="hidden lg:flex absolute -left-3 top-4 z-20 items-center justify-center w-7 h-7 rounded-full bg-slate-800 border border-slate-600 text-slate-300 hover:text-white shadow-lg transition-transform hover:scale-110 cursor-pointer"
+                    title={isTreeSidebarOpen ? 'Thu gọn danh mục bài học' : 'Mở rộng danh mục bài học'}
+                  >
+                    {isTreeSidebarOpen ? '◀' : '▶'}
+                  </button>
 
-              {/* Right: Interactive Canvas Editor */}
-              <div className="flex-1 min-h-[620px] flex flex-col">
-                {currentLesson ? (
-                  <MaskEditor
-                    lesson={currentLesson}
-                    currentImage={currentImage}
-                    onUpdateImageMasks={handleUpdateImageMasks}
-                    onAddImage={handleAddImage}
-                    onSelectImage={(id) => setCurrentImageId(id)}
-                    onDeleteImage={handleDeleteImage}
-                    onOpenShare={(les) => {
-                      setShareLessonTarget(les);
-                      setIsShareOpen(true);
-                    }}
-                  />
-                ) : (
-                  <div className="flex-1 bg-slate-900/60 border border-slate-800 rounded-2xl flex flex-col items-center justify-center p-8 text-center backdrop-blur-sm">
-                    <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4">
-                      <Layers className="w-8 h-8 text-indigo-400" />
-                    </div>
-                    <h3 className="text-base font-bold text-white mb-1.5">
-                      Hãy chọn hoặc tạo một bài học từ danh mục bên trái
-                    </h3>
-                    <p className="text-xs text-slate-400 max-w-md leading-relaxed">
-                      Bạn có thể tạo các thư mục lớn theo hệ cơ quan (Tuần hoàn, Thần kinh, Tiêu hoá...), chia thành các chương và bài học giải phẫu để quản lý sơ đồ và ô che thông minh.
-                    </p>
+                  {/* Sidebar Navigation Tree */}
+                  {isTreeSidebarOpen && (
+                    <AdminTreeNav
+                      projects={projects}
+                      selectedProjectId={selectedProjectId}
+                      selectedLessonId={selectedLessonId}
+                      onSelectProject={(id) => {
+                        setSelectedProjectId(id);
+                        const proj = projects.find(p => p.id === id);
+                        const firstLes = proj?.categories?.[0]?.subFolders?.[0]?.lessons?.[0];
+                        if (firstLes) {
+                          setSelectedLessonId(firstLes.id);
+                          setCurrentImageId(firstLes.images?.[0]?.id || '');
+                        }
+                      }}
+                      onSelectLesson={(id) => {
+                        setSelectedLessonId(id);
+                        for (const cat of currentProject?.categories || []) {
+                          for (const sub of cat.subFolders || []) {
+                            const l = sub.lessons?.find(item => item.id === id);
+                            if (l && l.images && l.images.length > 0) {
+                              setCurrentImageId(l.images[0].id);
+                              return;
+                            }
+                          }
+                        }
+                        setCurrentImageId('');
+                      }}
+                      onAddProject={handleAddProject}
+                      onDeleteProject={handleDeleteProject}
+                      onRenameProject={handleRenameProject}
+                      onAddCategory={handleAddCategory}
+                      onDeleteCategory={handleDeleteCategory}
+                      onRenameCategory={handleRenameCategory}
+                      onAddSubFolder={handleAddSubFolder}
+                      onDeleteSubFolder={handleDeleteSubFolder}
+                      onRenameSubFolder={handleRenameSubFolder}
+                      onAddLesson={handleAddLesson}
+                      onDeleteLesson={handleDeleteLesson}
+                      onRenameLesson={handleRenameLesson}
+                      onOpenShare={(les) => {
+                        setShareLessonTarget(les);
+                        setIsShareOpen(true);
+                      }}
+                      onPreviewLesson={(lesId) => {
+                        setSelectedLessonId(lesId);
+                        setCurrentTab('flashcard');
+                      }}
+                    />
+                  )}
+
+                  {/* Right: Interactive Canvas Editor */}
+                  <div className="flex-1 min-h-[620px] flex flex-col">
+                    {currentLesson ? (
+                      <MaskEditor
+                        lesson={currentLesson}
+                        currentImage={currentImage}
+                        onUpdateImageMasks={handleUpdateImageMasks}
+                        onAddImage={handleAddImage}
+                        onSelectImage={(id) => setCurrentImageId(id)}
+                        onDeleteImage={handleDeleteImage}
+                        onOpenShare={(les) => {
+                          setShareLessonTarget(les);
+                          setIsShareOpen(true);
+                        }}
+                      />
+                    ) : (
+                      <div className="flex-1 bg-slate-900/60 border border-slate-800 rounded-2xl flex flex-col items-center justify-center p-8 text-center backdrop-blur-sm">
+                        <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4">
+                          <Layers className="w-8 h-8 text-indigo-400" />
+                        </div>
+                        <h3 className="text-base font-bold text-white mb-1.5">
+                          Hãy chọn hoặc tạo một bài học từ danh mục bên trái
+                        </h3>
+                        <p className="text-xs text-slate-400 max-w-md leading-relaxed mb-4">
+                          Bạn có thể dùng thanh công cụ bên trái hoặc chuyển sang chế độ &quot;Quản Lý Thư Mục (This PC)&quot; để tạo cấu trúc môn học bằng chuột phải.
+                        </p>
+                        <button
+                          onClick={() => setAdminSubView('explorer')}
+                          className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-lg shadow-cyan-600/30"
+                        >
+                          <Laptop className="w-4 h-4" />
+                          <span>Mở Quản Lý Thư Mục This PC</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           )
         )}

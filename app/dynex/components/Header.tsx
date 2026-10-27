@@ -231,8 +231,8 @@ export default function Header({
                 }`}
               >
                 <Layers className="w-3.5 h-3.5" />
-                <span className="hidden lg:inline">Studio Soạn Đề</span>
-                <span className="lg:hidden">Soạn Đề</span>
+                <span className="hidden lg:inline">Thư Mục & Soạn Đề</span>
+                <span className="lg:hidden">Thư Mục</span>
               </button>
 
               <button
