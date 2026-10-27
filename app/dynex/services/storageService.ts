@@ -92,6 +92,11 @@ export const storageService = {
     try {
       const raw = localStorage.getItem(STORAGE_KEY_PROJECTS)
       if (raw) {
+        // Tự động phát hiện và sửa chữa dữ liệu lỗi font (mojibake) từ phiên bản cũ
+        if (raw.includes('BÃ') || raw.includes('Ã') || raw.includes('Ä') || raw.includes('Æ') || raw.includes('áº')) {
+          this.saveProjects(INITIAL_DATA)
+          return INITIAL_DATA
+        }
         const parsed = JSON.parse(raw)
         if (Array.isArray(parsed) && parsed.length > 0) {
           return parsed

@@ -1,4 +1,4 @@
-﻿'use client'
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { 
@@ -68,7 +68,7 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
   const [examStatus, setExamStatus] = useState('setup'); // 'setup' | 'running' | 'finished'
   const [totalStationsCount, setTotalStationsCount] = useState(20);
   const [secondsPerStation, setSecondsPerStation] = useState(25);
-  const [candidateName, setCandidateName] = useState('BÃ¡c SÄ© / Sinh ViÃªn Y Khoa');
+  const [candidateName, setCandidateName] = useState('Bác Sĩ / Sinh Viên Y Khoa');
 
   // Exam runtime state
   const [stations, setStations] = useState([]);
@@ -99,7 +99,7 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
   const handleStartExam = () => {
     const allAvailable = storageService.collectAllStations(projects);
     if (!allAvailable || allAvailable.length === 0) {
-      alert('KhÃ´ng tÃ¬m tháº¥y dá»¯ liá»‡u Ã´ che nÃ o trong cÃ¡c bÃ i há»c! Vui lÃ²ng vÃ o Quáº£n Trá»‹ Ä‘á»ƒ thÃªm áº£nh vÃ  Ã´ che trÆ°á»›c.');
+      alert('Không tìm thấy dữ liệu ô che nào trong các bài học! Vui lòng vào Quản Trị để thêm ảnh và ô che trước.');
       return;
     }
 
@@ -201,11 +201,11 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
     });
 
     const scorePercentage = Math.round((correctCount / stations.length) * 100);
-    let grade = 'Cáº§n Ã´n luyá»‡n thÃªm';
-    if (scorePercentage >= 90) grade = 'Xuáº¥t Sáº¯c (Thá»§ Khoa Y Khoa)';
-    else if (scorePercentage >= 80) grade = 'Giá»i (Äáº¡t chuáº©n lÃ¢m sÃ ng)';
-    else if (scorePercentage >= 65) grade = 'KhÃ¡ (Äáº¡t yÃªu cáº§u ká»³ thi)';
-    else if (scorePercentage >= 50) grade = 'Trung BÃ¬nh';
+    let grade = 'Cần ôn luyện thêm';
+    if (scorePercentage >= 90) grade = 'Xuất Sắc (Thủ Khoa Y Khoa)';
+    else if (scorePercentage >= 80) grade = 'Giỏi (Đạt chuẩn lâm sàng)';
+    else if (scorePercentage >= 65) grade = 'Khá (Đạt yêu cầu kỳ thi)';
+    else if (scorePercentage >= 50) grade = 'Trung Bình';
 
     const summary = {
       candidateName,
@@ -255,18 +255,18 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
             {/* Header Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-rose-950/70 border border-rose-500/50 text-rose-300 text-xs font-bold uppercase tracking-widest shadow-lg shadow-rose-950/50">
               <Activity className="w-4 h-4 text-rose-400 animate-pulse" />
-              <span>Há»‡ Thá»‘ng Kháº£o ThÃ­ Y Khoa OSCE â€¢ DYNEX</span>
+              <span>Hệ Thống Khảo Thí Y Khoa OSCE • DYNEX</span>
             </div>
 
             <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
-              PhÃ²ng Thi Cháº¡y Tráº¡m Giáº£i Pháº«u
+              Phòng Thi Chạy Trạm Giải Phẫu
             </h1>
 
             <p className="text-sm text-slate-300 leading-relaxed">
-              MÃ´ phá»ng Ã¡p lá»±c thá»±c táº¿ cá»§a ká»³ thi cháº¡y tráº¡m táº¡i cÃ¡c giáº£ng Ä‘Æ°á»ng Y DÆ°á»£c danh tiáº¿ng.
-              Má»—i tráº¡m thi hiá»ƒn thá»‹ má»™t chá»‰ Ä‘iá»ƒm bÃ­ máº­t Ä‘Æ°á»£c <strong>che kÃ­n 100%</strong>. ThÃ­ sinh quan sÃ¡t sÆ¡ Ä‘á»“ vÃ  gÃµ tÃªn giáº£i pháº«u trÆ°á»›c khi chuÃ´ng háº¿t giá»!
+              Mô phỏng áp lực thực tế của kỳ thi chạy trạm tại các giảng đường Y Dược danh tiếng.
+              Mỗi trạm thi hiển thị một chỉ điểm bí mật được <strong>che kín 100%</strong>. Thí sinh quan sát sơ đồ và gõ tên giải phẫu trước khi chuông hết giờ!
               <br />
-              <strong className="text-rose-400">ðŸ›¡ï¸ Cam káº¿t báº£o máº­t: ÄÃ¡p Ã¡n tuyá»‡t Ä‘á»‘i KHÃ”NG hiá»ƒn thá»‹ trÆ°á»›c, chá»‰ cÃ´ng bá»‘ báº£ng Ä‘iá»ƒm khi hoÃ n thÃ nh Ä‘á»§ cÃ¡c tráº¡m!</strong>
+              <strong className="text-rose-400">🛡️ Cam kết bảo mật: Đáp án tuyệt đối KHÔNG hiển thị trước, chỉ công bố bảng điểm khi hoàn thành đủ các trạm!</strong>
             </p>
 
             {/* Exam Config Box */}
@@ -275,13 +275,13 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
                 {/* Candidate Name */}
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                    TÃªn ThÃ­ Sinh / MÃ£ Sinh ViÃªn:
+                    Tên Thí Sinh / Mã Sinh Viên:
                   </label>
                   <input
                     type="text"
                     value={candidateName}
                     onChange={(e) => setCandidateName(e.target.value)}
-                    placeholder="BÃ¡c sÄ© / Sinh viÃªn..."
+                    placeholder="Bác sĩ / Sinh viên..."
                     className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-2xl text-xs font-bold text-white focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
                   />
                 </div>
@@ -289,17 +289,17 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
                 {/* Total Stations */}
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                    Sá»‘ LÆ°á»£ng Tráº¡m Thi:
+                    Số Lượng Trạm Thi:
                   </label>
                   <select
                     value={totalStationsCount}
                     onChange={(e) => setTotalStationsCount(Number(e.target.value))}
                     className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-2xl text-xs font-bold text-white focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
                   >
-                    <option value={10}>10 Tráº¡m (Khá»Ÿi Ä‘á»™ng pháº£n xáº¡)</option>
-                    <option value={15}>15 Tráº¡m (TÄƒng tá»‘c ghi nhá»›)</option>
-                    <option value={20}>20 Tráº¡m (Chuáº©n Äá» Thi Y DÆ°á»£c Quá»‘c Gia)</option>
-                    <option value={30}>30 Tráº¡m (Thá»­ thÃ¡ch chuyÃªn khoa)</option>
+                    <option value={10}>10 Trạm (Khởi động phản xạ)</option>
+                    <option value={15}>15 Trạm (Tăng tốc ghi nhớ)</option>
+                    <option value={20}>20 Trạm (Chuẩn Đề Thi Y Dược Quốc Gia)</option>
+                    <option value={30}>30 Trạm (Thử thách chuyên khoa)</option>
                   </select>
                 </div>
               </div>
@@ -307,7 +307,7 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
               {/* Time per station */}
               <div>
                 <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                  Thá»i Gian Má»—i Tráº¡m (TÃ­nh báº±ng giÃ¢y):
+                  Thời Gian Mỗi Trạm (Tính bằng giây):
                 </label>
                 <div className="grid grid-cols-4 gap-2.5">
                   {[15, 20, 25, 30].map((sec) => (
@@ -321,7 +321,7 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
                           : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
                       }`}
                     >
-                      {sec} GiÃ¢y
+                      {sec} Giây
                     </button>
                   ))}
                 </div>
@@ -330,7 +330,7 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
               <div className="p-4 bg-rose-950/30 border border-rose-800/40 rounded-2xl text-xs text-rose-200 flex items-start gap-3">
                 <ShieldCheck className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
                 <span className="leading-relaxed">
-                  Tráº¡m thi sá»­ dá»¥ng Ã´ che Ä‘en Ä‘áº·c <strong>100% Opaque Solid Mask</strong>, hoÃ n toÃ n kÃ­n mÃ­t, ngÄƒn cháº·n má»i hÃ¬nh thá»©c nhÃ¬n xuyÃªn. Há»‡ thá»‘ng tá»± Ä‘á»™ng cháº¥m Ä‘iá»ƒm thÃ´ng minh sau tráº¡m cuá»‘i cÃ¹ng!
+                  Trạm thi sử dụng ô che đen đặc <strong>100% Opaque Solid Mask</strong>, hoàn toàn kín mít, ngăn chặn mọi hình thức nhìn xuyên. Hệ thống tự động chấm điểm thông minh sau trạm cuối cùng!
                 </span>
               </div>
             </div>
@@ -341,11 +341,11 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
               className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-gradient-to-r from-rose-500 via-red-600 to-rose-600 hover:from-rose-400 hover:to-red-500 text-white font-black text-sm shadow-2xl shadow-rose-600/40 active:scale-95 transition-all flex items-center justify-center gap-2.5 mx-auto"
             >
               <Play className="w-5 h-5 fill-current" />
-              <span>Báº®T Äáº¦U VÃ€O PHÃ’NG THI CHáº Y TRáº M ({totalStationsCount} TRáº M)</span>
+              <span>BẮT ĐẦU VÀO PHÒNG THI CHẠY TRẠM ({totalStationsCount} TRẠM)</span>
             </button>
 
             <div className="text-xs text-slate-500 font-semibold pt-1">
-              Báº£n quyá»n pháº§n má»m y khoa: <strong className="text-cyan-400">Nháº­t Duy</strong>
+              Bản quyền phần mềm y khoa: <strong className="text-cyan-400">Nhật Duy</strong>
             </div>
           </div>
         </div>
@@ -364,10 +364,10 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
               <div>
                 <div className="text-[11px] font-extrabold text-rose-400 uppercase tracking-widest flex items-center gap-1.5">
                   <Flame className="w-3.5 h-3.5 fill-current" />
-                  Äang Thi Cháº¡y Tráº¡m
+                  Đang Thi Chạy Trạm
                 </div>
                 <div className="text-lg font-black text-white font-mono">
-                  Tráº¡m {currentStationIndex + 1} / {stations.length}
+                  Trạm {currentStationIndex + 1} / {stations.length}
                 </div>
               </div>
             </div>
@@ -399,7 +399,7 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
                         ? 'bg-emerald-950/70 text-emerald-300 border-emerald-500/50'
                         : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
                     }`}
-                    title={`Äáº¿n tráº¡m ${idx + 1}`}
+                    title={`Đến trạm ${idx + 1}`}
                   >
                     <span>{idx + 1}</span>
                     {isFlagged && <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>}
@@ -419,10 +419,10 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
                     ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/30'
                     : 'bg-slate-900 text-slate-400 hover:text-amber-300 border-slate-800'
                 }`}
-                title="Cáº¯m cá» nghi váº¥n tráº¡m nÃ y"
+                title="Cắm cờ nghi vấn trạm này"
               >
                 <Flag className="w-4 h-4 fill-current" />
-                <span className="hidden sm:inline">Äáº·t cá»</span>
+                <span className="hidden sm:inline">Đặt cờ</span>
               </button>
 
               <div className="flex items-center gap-2.5 bg-[#0B0F19] px-3.5 py-1.5 rounded-2xl border border-slate-800 shadow-inner">
@@ -463,13 +463,13 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
               <button
                 type="button"
                 onClick={() => {
-                  if (confirm('Báº¡n cÃ³ cháº¯c cháº¯n muá»‘n ná»™p bÃ i thi ngay bÃ¢y giá»? CÃ¡c tráº¡m chÆ°a lÃ m sáº½ bá»‹ tÃ­nh 0 Ä‘iá»ƒm.')) {
+                  if (confirm('Bạn có chắc chắn muốn nộp bài thi ngay bây giờ? Các trạm chưa làm sẽ bị tính 0 điểm.')) {
                     finishExam(userAnswers);
                   }
                 }}
                 className="px-3 py-2 rounded-2xl text-xs font-bold bg-slate-800/80 hover:bg-slate-750 text-slate-300 hover:text-white border border-slate-700/80 transition-colors"
               >
-                Ná»™p bÃ i
+                Nộp bài
               </button>
             </div>
           </div>
@@ -479,7 +479,7 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
             {/* Breadcrumb Info */}
             <div className="w-full text-center mb-3">
               <span className="text-xs font-semibold text-slate-400">
-                ChuyÃªn khoa: <span className="text-cyan-400">{currentStation.categoryName}</span> â€¢ {currentStation.lessonTitle}
+                Chuyên khoa: <span className="text-cyan-400">{currentStation.categoryName}</span> • {currentStation.lessonTitle}
               </span>
             </div>
 
@@ -518,7 +518,7 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
                         {/* Solid Badge */}
                         <div className="px-2.5 py-1 rounded-full bg-rose-600 text-white font-black text-[11px] shadow-lg flex items-center gap-1.5 border border-rose-400 z-10 font-mono">
                           <Flag className="w-3.5 h-3.5 fill-current" />
-                          <span>TRáº M {currentStationIndex + 1}</span>
+                          <span>TRẠM {currentStationIndex + 1}</span>
                         </div>
                       </div>
 
@@ -572,7 +572,7 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
                     type="text"
                     value={currentInput}
                     onChange={(e) => setCurrentInput(e.target.value)}
-                    placeholder="Nháº­p tÃªn cÆ¡ quan / cáº¥u táº¡o táº¡i Ã´ tráº¡m Ä‘ang phÃ¡t sÃ¡ng..."
+                    placeholder="Nhập tên cơ quan / cấu tạo tại ô trạm đang phát sáng..."
                     className="w-full pl-5 pr-10 py-3.5 bg-slate-950 border-2 border-rose-500/70 focus:border-rose-400 rounded-2xl text-sm font-bold text-white placeholder-slate-500 focus:outline-none focus:ring-4 focus:ring-rose-500/20 shadow-2xl transition-all"
                   />
                   {currentInput && (
@@ -581,7 +581,7 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
                       onClick={() => setCurrentInput('')}
                       className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white text-xs p-1"
                     >
-                      âœ•
+                      ✕
                     </button>
                   )}
                 </div>
@@ -591,17 +591,17 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
                   className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-400 hover:to-red-500 text-white font-extrabold text-xs shadow-xl shadow-rose-600/30 hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 shrink-0 font-mono"
                 >
                   <span>
-                    {currentStationIndex === stations.length - 1 ? 'Ná»™p bÃ i thi' : 'Tráº¡m tiáº¿p theo'}
+                    {currentStationIndex === stations.length - 1 ? 'Nộp bài thi' : 'Trạm tiếp theo'}
                   </span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </form>
 
               <div className="flex items-center justify-between text-[11px] text-slate-400 mt-2.5 px-1 font-medium">
-                <span>Nháº¥n <strong>Enter</strong> Ä‘á»ƒ xÃ¡c nháº­n vÃ  chuyá»ƒn tráº¡m</span>
+                <span>Nhấn <strong>Enter</strong> để xác nhận và chuyển trạm</span>
                 <span className="text-rose-400 flex items-center gap-1">
                   <ShieldCheck className="w-3.5 h-3.5" />
-                  ÄÃ¡p Ã¡n Ä‘Æ°á»£c khÃ³a kÃ­n tuyá»‡t Ä‘á»‘i
+                  Đáp án được khóa kín tuyệt đối
                 </span>
               </div>
             </div>
@@ -620,11 +620,11 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
               </div>
 
               <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-                Báº¢NG Tá»”NG Káº¾T Káº¾T QUáº¢ THI CHáº Y TRáº M
+                BẢNG TỔNG KẾT KẾT QUẢ THI CHẠY TRẠM
               </h2>
 
               <p className="text-xs text-slate-300">
-                ThÃ­ sinh: <strong className="text-white font-bold">{examSummary.candidateName}</strong> â€¢ HoÃ n thÃ nh ngÃ y: {examSummary.date}
+                Thí sinh: <strong className="text-white font-bold">{examSummary.candidateName}</strong> • Hoàn thành ngày: {examSummary.date}
               </p>
 
               {/* Big Score Card */}
@@ -634,7 +634,7 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
                     {examSummary.correctCount}/{examSummary.totalStations}
                   </div>
                   <div className="text-[11px] text-slate-400 font-bold uppercase mt-1">
-                    Tráº¡m ChÃ­nh XÃ¡c
+                    Trạm Chính Xác
                   </div>
                 </div>
 
@@ -643,7 +643,7 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
                     {examSummary.scorePercentage}%
                   </div>
                   <div className="text-[11px] text-slate-400 font-bold uppercase mt-1">
-                    Tá»· Lá»‡ Äáº¡t
+                    Tỷ Lệ Đạt
                   </div>
                 </div>
 
@@ -652,7 +652,7 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
                     {examSummary.grade}
                   </div>
                   <div className="text-[11px] text-slate-400 font-bold uppercase mt-1">
-                    Xáº¿p Loáº¡i
+                    Xếp Loại
                   </div>
                 </div>
               </div>
@@ -664,7 +664,7 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
                   className="px-6 py-3 rounded-2xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-bold text-xs shadow-lg shadow-rose-500/30 hover:brightness-110 flex items-center gap-2"
                 >
                   <RotateCcw className="w-4 h-4" />
-                  <span>Thi láº¡i vÃ²ng má»›i (Random 20 tráº¡m)</span>
+                  <span>Thi lại vòng mới (Random 20 trạm)</span>
                 </button>
 
                 <button
@@ -672,19 +672,19 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
                   className="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 flex items-center gap-2"
                 >
                   <FileCheck className="w-4 h-4 text-cyan-400" />
-                  <span>In Báº£ng Äiá»ƒm</span>
+                  <span>In Bảng Điểm</span>
                 </button>
 
                 <button
                   onClick={() => setExamStatus('setup')}
                   className="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs border border-slate-700"
                 >
-                  Cáº¥u hÃ¬nh bÃ i thi khÃ¡c
+                  Cấu hình bài thi khác
                 </button>
               </div>
 
               <div className="text-xs text-slate-500 pt-2 font-medium">
-                Báº£n quyá»n pháº§n má»m y khoa: <strong className="text-cyan-400">Nháº­t Duy</strong>
+                Bản quyền phần mềm y khoa: <strong className="text-cyan-400">Nhật Duy</strong>
               </div>
             </div>
           </div>
@@ -694,10 +694,10 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
             <div className="flex items-center justify-between pb-4 border-b border-slate-800">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 <FileCheck className="w-5 h-5 text-cyan-400" />
-                Báº£ng Äá»‘i Chiáº¿u Chi Tiáº¿t ÄÃ¡p Ãn Tá»«ng Tráº¡m
+                Bảng Đối Chiếu Chi Tiết Đáp Án Từng Trạm
               </h3>
               <span className="text-xs text-slate-400 font-mono">
-                {examSummary.details.length} Tráº¡m Thi
+                {examSummary.details.length} Trạm Thi
               </span>
             </div>
 
@@ -705,13 +705,13 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-950/70">
-                    <th className="py-3 px-3">Tráº¡m</th>
-                    <th className="py-3 px-3">SÆ¡ Äá»“ Giáº£i Pháº«u</th>
-                    <th className="py-3 px-3">CÃ¢u Tráº£ Lá»i Cá»§a Báº¡n</th>
-                    <th className="py-3 px-3">ÄÃ¡p Ãn Chuáº©n Cá»§a Giáº£ng ViÃªn</th>
-                    <th className="py-3 px-3">Tá»« Äá»“ng NghÄ©a</th>
-                    <th className="py-3 px-3 text-center">Káº¿t Quáº£</th>
-                    <th className="py-3 px-3 text-center">Xem Láº¡i</th>
+                    <th className="py-3 px-3">Trạm</th>
+                    <th className="py-3 px-3">Sơ Đồ Giải Phẫu</th>
+                    <th className="py-3 px-3">Câu Trả Lời Của Bạn</th>
+                    <th className="py-3 px-3">Đáp Án Chuẩn Của Giảng Viên</th>
+                    <th className="py-3 px-3">Từ Đồng Nghĩa</th>
+                    <th className="py-3 px-3 text-center">Kết Quả</th>
+                    <th className="py-3 px-3 text-center">Xem Lại</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
@@ -741,19 +741,19 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
                         <span className={`font-semibold ${
                           st.userAnswer ? 'text-slate-100 font-bold' : 'text-slate-500 italic'
                         }`}>
-                          {st.userAnswer || '(Bá» trá»‘ng)'}
+                          {st.userAnswer || '(Bỏ trống)'}
                         </span>
                       </td>
                       <td className="py-3 px-3 font-black text-emerald-300">
                         {st.officialAnswer}
                       </td>
                       <td className="py-3 px-3 text-slate-400 font-medium">
-                        {st.synonyms?.length > 0 ? st.synonyms.join(', ') : 'â€”'}
+                        {st.synonyms?.length > 0 ? st.synonyms.join(', ') : '—'}
                       </td>
                       <td className="py-3 px-3 text-center">
                         {st.isCorrect ? (
                           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-[10px] font-black">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> ÄÃºng
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Đúng
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-rose-950/80 border border-rose-500/50 text-rose-300 text-[10px] font-black">
@@ -765,7 +765,7 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
                         <button
                           onClick={() => setReviewStation(st)}
                           className="p-1.5 rounded-lg text-cyan-400 hover:bg-cyan-950/60 transition-colors"
-                          title="Xem vá»‹ trÃ­ tráº¡m trÃªn sÆ¡ Ä‘á»“"
+                          title="Xem vị trí trạm trên sơ đồ"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
@@ -784,13 +784,13 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
                 <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
                   <h4 className="text-base font-bold text-white flex items-center gap-2">
                     <Flag className="w-4 h-4 text-rose-400" />
-                    Xem Láº¡i Tráº¡m #{reviewStation.stationNumber}: {reviewStation.officialAnswer}
+                    Xem Lại Trạm #{reviewStation.stationNumber}: {reviewStation.officialAnswer}
                   </h4>
                   <button
                     onClick={() => setReviewStation(null)}
                     className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
                   >
-                    âœ•
+                    ✕
                   </button>
                 </div>
 
@@ -817,13 +817,13 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
 
                 <div className="mt-4 p-4 rounded-2xl bg-slate-950 border border-slate-800 text-xs flex items-center justify-between">
                   <div>
-                    <span className="text-slate-400">CÃ¢u tráº£ lá»i cá»§a báº¡n:</span>{' '}
+                    <span className="text-slate-400">Câu trả lời của bạn:</span>{' '}
                     <strong className={reviewStation.isCorrect ? 'text-emerald-400' : 'text-rose-400 font-bold'}>
-                      {reviewStation.userAnswer || '(KhÃ´ng tráº£ lá»i)'}
+                      {reviewStation.userAnswer || '(Không trả lời)'}
                     </strong>
                   </div>
                   <div>
-                    <span className="text-slate-400">ÄÃ¡p Ã¡n chuáº©n:</span>{' '}
+                    <span className="text-slate-400">Đáp án chuẩn:</span>{' '}
                     <strong className="text-emerald-400 font-black">{reviewStation.officialAnswer}</strong>
                   </div>
                 </div>
@@ -835,4 +835,3 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
     </div>
   );
 }
-

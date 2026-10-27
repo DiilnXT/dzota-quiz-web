@@ -509,24 +509,67 @@ export async function detectAnatomyLabelsWithGemini(
   const rawModel = userModel || getStoredModel() || DEFAULT_MODEL
   const defStyle = getStoredDefaultMaskStyle()
 
-  if (!apiKey) {
-    if (isDefaultSampleImage(imageDataUrl)) {
-      await new Promise(r => setTimeout(r, 600))
-      return {
-        success: true,
-        usedSampleFallback: true,
-        masks: SAMPLE_ANATOMY_FALLBACK_MASKS.map(m => ({
-          ...m,
+  // 1. Thử gọi qua API backend của Dzota (sử dụng Gemini API Key cấu hình trong trang Admin của Dzota)
+  try {
+    const scanRes = await fetch('/api/dynex/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        imageBase64: imageDataUrl,
+        clientApiKey: apiKey,
+        clientModel: rawModel
+      })
+    })
+
+    if (scanRes.ok) {
+      const scanData = await scanRes.json()
+      if (scanData.success && Array.isArray(scanData.labels) && scanData.labels.length > 0) {
+        const masks = scanData.labels.map((item: any, idx: number) => ({
+          id: `mask_gemini_${Date.now()}_${idx + 1}`,
+          label: item.text || item.label || `Chi tiết giải phẫu #${idx + 1}`,
+          x: Math.max(0, Math.min(100, item.x ?? (item.box_2d ? item.box_2d[1] / 10 : 10))),
+          y: Math.max(0, Math.min(100, item.y ?? (item.box_2d ? item.box_2d[0] / 10 : 10))),
+          width: Math.max(3, Math.min(100, item.width ?? (item.box_2d ? (item.box_2d[3] - item.box_2d[1]) / 10 : 20))),
+          height: Math.max(2, Math.min(100, item.height ?? (item.box_2d ? (item.box_2d[2] - item.box_2d[0]) / 10 : 8))),
+          synonyms: Array.isArray(item.synonyms)
+            ? item.synonyms
+            : (typeof item.synonyms === 'string' ? item.synonyms.split(',').map((s: string) => s.trim()).filter(Boolean) : []),
+          hint: item.clinicalNote || item.hint || '',
           ...defStyle,
-          id: `mask_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`
+          isCovered: true
         }))
+
+        return {
+          success: true,
+          masks,
+          modelUsed: scanData.modelUsed || rawModel
+        }
       }
     }
+  } catch (backendErr) {
+    console.warn('Backend /api/dynex/scan failed, attempting fallback:', backendErr)
+  }
 
+  // 2. Fallback cho ảnh mẫu (nếu chưa có API key)
+  if (isDefaultSampleImage(imageDataUrl)) {
+    await new Promise(r => setTimeout(r, 400))
+    return {
+      success: true,
+      usedSampleFallback: true,
+      masks: SAMPLE_ANATOMY_FALLBACK_MASKS.map(m => ({
+        ...m,
+        ...defStyle,
+        id: `mask_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`
+      }))
+    }
+  }
+
+  // 3. Fallback trực tiếp bằng Client-side gọi Google API (nếu người dùng có key riêng)
+  if (!apiKey) {
     return {
       success: false,
       needsApiKey: true,
-      message: 'Hình ảnh mới của bạn cần Google Gemini Vision API để quét và nhận diện chính xác các nhãn giải phẫu. Vui lòng nhập Gemini API Key hoặc chọn Quét Bằng Canvas Vision!'
+      message: 'Hình ảnh mới của bạn cần Google Gemini Vision API. Bạn có thể chọn Quét Canvas Vision hoặc cấu hình Gemini API Key trong Cài đặt.'
     }
   }
 

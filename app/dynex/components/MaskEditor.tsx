@@ -1,4 +1,4 @@
-﻿'use client'
+'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
 import { 
@@ -8,48 +8,43 @@ import {
   Eye, 
   EyeOff, 
   Upload, 
-  Clipboard, 
   Maximize, 
-  Minimize, 
   ZoomIn, 
   ZoomOut, 
   RotateCcw, 
-  Settings, 
   Palette, 
   X, 
   Check, 
-  Tag, 
-  Sliders, 
   Edit3, 
   ChevronRight, 
   ChevronLeft,
-  HelpCircle,
-  Layers,
+  Layers, 
+  Save, 
+  Zap, 
+  Share2,
+  Sliders,
   CheckCircle2,
-  Save,
-  CheckCheck,
-  Zap,
-  Key,
-  ExternalLink,
-  ShieldAlert,
-  ArrowRight,
-  ChevronDown,
-  Share2
+  AlertCircle
 } from 'lucide-react';
 import { 
   detectAnatomyLabelsWithGemini, 
   detectTextRegionsFromCanvas,
-  isDefaultSampleImage,
   MASK_COLOR_PRESETS,
   DEFAULT_MASK_STYLE,
   getStoredDefaultMaskStyle,
-  setStoredDefaultMaskStyle,
-  getStoredApiKey,
-  setStoredApiKey,
-  getStoredModel,
-  setStoredModel
+  setStoredDefaultMaskStyle
 } from '../services/geminiService';
 import { soundService } from '../services/soundService';
+
+interface MaskEditorProps {
+  lesson: any;
+  currentImage?: any;
+  onUpdateImageMasks: (imageId: string, masks: any[]) => void;
+  onAddImage: (newImage: any) => void;
+  onSelectImage: (imageId: string) => void;
+  onDeleteImage: (imageId: string) => void;
+  onOpenShare?: (lesson: any) => void;
+}
 
 export default function MaskEditor({
   lesson,
@@ -59,49 +54,43 @@ export default function MaskEditor({
   onSelectImage,
   onDeleteImage,
   onOpenShare
-}) {
-  const [selectedMaskId, setSelectedMaskId] = useState(null);
+}: MaskEditorProps) {
+  const [selectedMaskId, setSelectedMaskId] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanMessage, setScanMessage] = useState('');
   const [drawMode, setDrawMode] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawStart, setDrawStart] = useState({ x: 0, y: 0 });
-  const [tempBox, setTempBox] = useState(null);
+  const [tempBox, setTempBox] = useState<any>(null);
 
   // Dragging and resizing
-  const [dragState, setDragState] = useState(null);
+  const [dragState, setDragState] = useState<any>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
 
-  // Dzota UI Modals & Drawers
+  // Modals & Panels
   const [showStyleModal, setShowStyleModal] = useState(false);
-  const [showAiModal, setShowAiModal] = useState(false);
   const [showInspector, setShowInspector] = useState(true);
-  const [showFullList, setShowFullList] = useState(false); // Collapsed by default ("cÃ²n k thÃ¬ k hiá»ƒn thá»‹ full")
-  const [showDropdownSelect, setShowDropdownSelect] = useState(false); // Dropdown popover toggle
+  const [showFullList, setShowFullList] = useState(false);
 
-  // API Key input inside modal
-  const [inputApiKey, setInputApiKey] = useState('');
-  const [aiModalNotice, setAiModalNotice] = useState('');
-
-  // Explicit Save states
-  const [lastSavedTime, setLastSavedTime] = useState('Vá»«a xong');
+  // Save feedback
+  const [lastSavedTime, setLastSavedTime] = useState('Vừa xong');
   const [showSaveToast, setShowSaveToast] = useState(false);
 
   // Active styles
-  const [activeColor, setActiveColor] = useState('#070b14');
-  const [activeBorderColor, setActiveBorderColor] = useState('#6366f1');
-  const [activeTextColor, setActiveTextColor] = useState('#ffffff');
-  const [activeOpacity, setActiveOpacity] = useState(1.0);
-  const [activeTexture, setActiveTexture] = useState('solid');
-  const [activeDisplayMode, setActiveDisplayMode] = useState('number');
+  const [activeColor, setActiveColor] = useState(DEFAULT_MASK_STYLE.color);
+  const [activeBorderColor, setActiveBorderColor] = useState(DEFAULT_MASK_STYLE.borderColor);
+  const [activeTextColor, setActiveTextColor] = useState(DEFAULT_MASK_STYLE.textColor);
+  const [activeOpacity, setActiveOpacity] = useState(DEFAULT_MASK_STYLE.opacity);
+  const [activeTexture, setActiveTexture] = useState(DEFAULT_MASK_STYLE.texture);
+  const [activeDisplayMode, setActiveDisplayMode] = useState(DEFAULT_MASK_STYLE.displayMode);
 
-  const containerRef = useRef(null);
-  const imageRef = useRef(null);
-  const fileInputRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const masks = currentImage?.masks || [];
 
-  // Load defaults
+  // Load default styles
   useEffect(() => {
     const saved = getStoredDefaultMaskStyle();
     setActiveColor(saved.color || '#070b14');
@@ -110,13 +99,12 @@ export default function MaskEditor({
     setActiveOpacity(saved.opacity ?? 1.0);
     setActiveTexture(saved.texture || 'solid');
     setActiveDisplayMode(saved.displayMode || 'number');
-    setInputApiKey(getStoredApiKey());
   }, []);
 
   // Update styles when selecting a mask
   useEffect(() => {
     if (selectedMaskId) {
-      const target = masks.find(m => m.id === selectedMaskId);
+      const target = masks.find((m: any) => m.id === selectedMaskId);
       if (target) {
         if (target.color) setActiveColor(target.color);
         if (target.borderColor) setActiveBorderColor(target.borderColor);
@@ -128,52 +116,31 @@ export default function MaskEditor({
     }
   }, [selectedMaskId]);
 
-  // Keyboard Shortcuts: Ctrl+V paste and Ctrl+S save
+  // Shortcuts: Ctrl+S to save
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
         handleManualSave();
       }
     };
 
-    const handlePaste = (e) => {
-      const items = e.clipboardData?.items;
-      if (!items) return;
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf('image') !== -1) {
-          const blob = items[i].getAsFile();
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            handleCreateNewImageFromDataUrl(event.target.result, 'áº¢nh chá»¥p Clipboard');
-          };
-          reader.readAsDataURL(blob);
-          e.preventDefault();
-          break;
-        }
-      }
-    };
-
     window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('paste', handlePaste);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('paste', handlePaste);
-    };
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [lesson, masks, currentImage]);
 
   const handleManualSave = () => {
     if (currentImage) {
       onUpdateImageMasks(currentImage.id, masks);
     }
-    const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     setLastSavedTime(timeStr);
     setShowSaveToast(true);
     soundService.playSuccess();
-    setTimeout(() => setShowSaveToast(false), 3000);
+    setTimeout(() => setShowSaveToast(false), 2500);
   };
 
-  const handleCreateNewImageFromDataUrl = (dataUrl, defaultTitle = 'SÆ¡ Ä‘á»“ giáº£i pháº«u') => {
+  const handleCreateNewImageFromDataUrl = (dataUrl: string, defaultTitle = 'Sơ đồ giải phẫu') => {
     const newImage = {
       id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
       title: `${defaultTitle} #${(lesson?.images?.length || 0) + 1}`,
@@ -183,333 +150,222 @@ export default function MaskEditor({
     };
     onAddImage(newImage);
     soundService.playStationChime();
-    setScanMessage('ÄÃ£ táº£i áº£nh má»›i thÃ nh cÃ´ng! Báº¥m [QuÃ©t Gemini AI] hoáº·c [QuÃ©t Canvas Vision] Ä‘á»ƒ sinh Ã´ che tá»± Ä‘á»™ng.');
+    setScanMessage('Đã tải ảnh mới thành công! Bấm "Quét Gemini AI" để sinh ô che tự động.');
   };
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (event) => {
-      handleCreateNewImageFromDataUrl(event.target.result, file.name.replace(/\.[^/.]+$/, ''));
+      if (typeof event.target?.result === 'string') {
+        handleCreateNewImageFromDataUrl(event.target.result, file.name.replace(/\.[^/.]+$/, ''));
+      }
     };
     reader.readAsDataURL(file);
     e.target.value = '';
   };
 
-  const handleFileDrop = (e) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        handleCreateNewImageFromDataUrl(event.target.result, file.name.replace(/\.[^/.]+$/, ''));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // 1. GEMINI AI SCANNING
-  const handleAutoDetect = async (apiKeyOverride = '') => {
+  // AI Auto Detect using Dzota Gemini Settings
+  const handleAutoDetect = async () => {
     if (!currentImage?.url) return;
-    
-    const keyToUse = apiKeyOverride || getStoredApiKey();
-    const isSample = isDefaultSampleImage(currentImage.url);
-
-    // If no key and not sample image, open Dzota AI Setup Modal
-    if (!keyToUse && !isSample) {
-      setAiModalNotice(`SÆ¡ Ä‘á»“ "${currentImage.title || 'Má»›i'}" cáº§n káº¿t ná»‘i Gemini AI Vision Ä‘á»ƒ Ä‘á»c chá»¯ tiáº¿ng Viá»‡t vÃ  táº¡o Ä‘Ã¡p Ã¡n. Vui lÃ²ng dÃ¡n API Key hoáº·c báº¥m QuÃ©t Canvas Vision!`);
-      setShowAiModal(true);
-      return;
-    }
-
     setIsScanning(true);
-    setScanMessage('Google Gemini AI Ä‘ang quÃ©t Ä‘a phÆ°Æ¡ng thá»©c vÃ  Ä‘á»c nhÃ£n giáº£i pháº«u...');
-    soundService.playTick();
+    setScanMessage('Đang phân tích hình ảnh bằng Google Gemini AI...');
 
     try {
-      const result = await detectAnatomyLabelsWithGemini(currentImage.url, keyToUse);
-      if (result.success && result.masks?.length > 0) {
-        onUpdateImageMasks(currentImage.id, result.masks);
-        setSelectedMaskId(result.masks[0].id);
+      const res = await detectAnatomyLabelsWithGemini(currentImage.url);
+      if (res.success && res.masks && res.masks.length > 0) {
+        onUpdateImageMasks(currentImage.id, res.masks);
         soundService.playSuccess();
-        setScanMessage(`ðŸŽ‰ Gemini AI Ä‘Ã£ nháº­n diá»‡n thÃ nh cÃ´ng ${result.masks.length} cáº¥u táº¡o giáº£i pháº«u!`);
-        setShowAiModal(false);
-      } else if (result.needsApiKey) {
-        setShowAiModal(true);
-        setAiModalNotice(result.message);
+        setScanMessage(`Đã phát hiện và tạo ${res.masks.length} ô che giải phẫu thành công!`);
+        if (res.masks[0]) setSelectedMaskId(res.masks[0].id);
       } else {
-        alert(result.error || 'Gemini khÃ´ng nháº­n diá»‡n Ä‘Æ°á»£c chá»¯ nÃ o trÃªn áº£nh.');
-        setScanMessage('');
+        // Fallback to Canvas Vision if Gemini returned no masks
+        handleCanvasVisionDetect();
       }
-    } catch (err) {
-      alert(`Lá»—i Gemini AI: ${err.message}`);
-      setScanMessage('');
+    } catch (err: any) {
+      // Fallback to local canvas vision
+      handleCanvasVisionDetect();
     } finally {
       setIsScanning(false);
-      setTimeout(() => setScanMessage(''), 4500);
+      setTimeout(() => setScanMessage(''), 4000);
     }
   };
 
-  // 2. CLIENT-SIDE CANVAS VISION SCANNING (100% REAL LOCAL DETECTION ON ANY IMAGE)
+  // Canvas Vision Edge Detection (Local Fallback)
   const handleCanvasVisionDetect = async () => {
     if (!currentImage?.url) return;
     setIsScanning(true);
-    setScanMessage('Äang phÃ¢n tÃ­ch ma tráº­n Ä‘iá»ƒm áº£nh Canvas trÃªn sÆ¡ Ä‘á»“ cá»§a báº¡n...');
-    soundService.playTick();
+    setScanMessage('Đang quét đường viền và nhãn giải phẫu bằng Canvas Vision...');
 
     try {
       const detected = await detectTextRegionsFromCanvas(currentImage.url);
-      if (detected && detected.length > 0) {
+      if (detected.length > 0) {
         onUpdateImageMasks(currentImage.id, detected);
-        setSelectedMaskId(detected[0].id);
         soundService.playSuccess();
-        setScanMessage(`âš¡ Canvas Vision Ä‘Ã£ Ä‘á»‹nh vá»‹ chÃ­nh xÃ¡c ${detected.length} cá»¥m chá»¯ trÃªn sÆ¡ Ä‘á»“!`);
-        setShowAiModal(false);
+        setScanMessage(`Canvas Vision đã tìm thấy ${detected.length} vùng chú thích.`);
+        if (detected[0]) setSelectedMaskId(detected[0].id);
       } else {
-        alert('Canvas Vision khÃ´ng tÃ¬m tháº¥y nhÃ£n chá»¯ rÃµ rÃ ng. Báº¡n hÃ£y dÃ¹ng cÃ´ng cá»¥ [Váº½ Ã” Che] Ä‘á»ƒ khoanh vÃ¹ng thá»§ cÃ´ng!');
-        setScanMessage('');
+        setScanMessage('Không phát hiện thấy nhãn chú thích rõ ràng. Bạn có thể kéo chuột để vẽ ô che thủ công.');
       }
     } catch (err) {
-      alert(`Lá»—i quÃ©t Canvas: ${err.message}`);
-      setScanMessage('');
+      setScanMessage('Lỗi quét ảnh. Vui lòng thử lại hoặc vẽ ô che thủ công.');
     } finally {
       setIsScanning(false);
-      setTimeout(() => setScanMessage(''), 4500);
+      setTimeout(() => setScanMessage(''), 4000);
     }
   };
 
-  const handleSaveApiKeyAndScan = () => {
-    if (!inputApiKey.trim()) {
-      alert('Vui lÃ²ng nháº­p API Key trÆ°á»›c khi lÆ°u!');
-      return;
-    }
-    setStoredApiKey(inputApiKey.trim());
-    handleAutoDetect(inputApiKey.trim());
-  };
-
-  // Expand all masks to guarantee zero peek
-  const handleExpandAllMasks = (deltaPercent = 15) => {
-    const factor = 1 + deltaPercent / 100;
-    const updated = masks.map(m => {
-      const newWidth = Math.min(99, Number((m.width * factor).toFixed(2)));
-      const newHeight = Math.min(99, Number((m.height * factor).toFixed(2)));
-      const diffW = newWidth - m.width;
-      const diffH = newHeight - m.height;
-      const newX = Math.max(0, Number((m.x - diffW / 2).toFixed(2)));
-      const newY = Math.max(0, Number((m.y - diffH / 2).toFixed(2)));
-      return { ...m, x: newX, y: newY, width: newWidth, height: newHeight };
-    });
-    onUpdateImageMasks(currentImage.id, updated);
-    soundService.playTick();
-    setScanMessage(`ÄÃ£ ná»›i rá»™ng +${deltaPercent}% kÃ­ch thÆ°á»›c Ã´ che Ä‘á»ƒ phá»§ kÃ­n 100% chá»¯!`);
-    setTimeout(() => setScanMessage(''), 3000);
-  };
-
-  // Apply style updates
-  const applyStyleUpdate = (updates, applyToAll = false) => {
-    const updated = masks.map(m => {
-      if (applyToAll || m.id === selectedMaskId) {
-        return { ...m, ...updates };
-      }
-      return m;
-    });
-    onUpdateImageMasks(currentImage.id, updated);
-
-    if (applyToAll) {
-      const newDefault = {
-        color: updates.color ?? activeColor,
-        borderColor: updates.borderColor ?? activeBorderColor,
-        textColor: updates.textColor ?? activeTextColor,
-        opacity: updates.opacity ?? activeOpacity,
-        texture: updates.texture ?? activeTexture,
-        displayMode: updates.displayMode ?? activeDisplayMode
-      };
-      setStoredDefaultMaskStyle(newDefault);
-      soundService.playSuccess();
-      setScanMessage('ÄÃ£ Ä‘á»“ng bá»™ giao diá»‡n cho toÃ n bá»™ cÃ¡c Ã´ che!');
-      setTimeout(() => setScanMessage(''), 3000);
-    }
-  };
-
-  // Drawing a new box
-  const handleMouseDown = (e) => {
+  // Manual Drawing
+  const handleCanvasMouseDown = (e: React.MouseEvent) => {
     if (!drawMode || !imageRef.current) return;
     const rect = imageRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
-
     setIsDrawing(true);
     setDrawStart({ x, y });
     setTempBox({ x, y, width: 0, height: 0 });
   };
 
-  const handleMouseMove = (e) => {
-    if (isDrawing && imageRef.current) {
-      const rect = imageRef.current.getBoundingClientRect();
-      const currentX = ((e.clientX - rect.left) / rect.width) * 100;
-      const currentY = ((e.clientY - rect.top) / rect.height) * 100;
+  const handleCanvasMouseMove = (e: React.MouseEvent) => {
+    if (!isDrawing || !imageRef.current) return;
+    const rect = imageRef.current.getBoundingClientRect();
+    const currentX = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+    const currentY = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
 
-      const minX = Math.min(drawStart.x, currentX);
-      const minY = Math.min(drawStart.y, currentY);
-      const width = Math.abs(currentX - drawStart.x);
-      const height = Math.abs(currentY - drawStart.y);
+    const x = Math.min(drawStart.x, currentX);
+    const y = Math.min(drawStart.y, currentY);
+    const width = Math.abs(currentX - drawStart.x);
+    const height = Math.abs(currentY - drawStart.y);
 
-      setTempBox({
-        x: Math.max(0, Math.min(100, minX)),
-        y: Math.max(0, Math.min(100, minY)),
-        width: Math.min(100 - minX, width),
-        height: Math.min(100 - minY, height)
-      });
-      return;
-    }
-
-    if (dragState && imageRef.current) {
-      const rect = imageRef.current.getBoundingClientRect();
-      const deltaXPercent = ((e.clientX - dragState.startX) / rect.width) * 100;
-      const deltaYPercent = ((e.clientY - dragState.startY) / rect.height) * 100;
-
-      const mask = masks.find(m => m.id === dragState.maskId);
-      if (!mask) return;
-
-      if (dragState.type === 'move') {
-        const newX = Math.max(0, Math.min(100 - mask.width, dragState.initialX + deltaXPercent));
-        const newY = Math.max(0, Math.min(100 - mask.height, dragState.initialY + deltaYPercent));
-        const updated = masks.map(m => m.id === mask.id ? { ...m, x: Number(newX.toFixed(2)), y: Number(newY.toFixed(2)) } : m);
-        onUpdateImageMasks(currentImage.id, updated);
-      } else if (dragState.type === 'resize') {
-        let newX = dragState.initialX;
-        let newY = dragState.initialY;
-        let newW = dragState.initialWidth;
-        let newH = dragState.initialHeight;
-
-        if (dragState.handle.includes('e')) newW = Math.max(4, dragState.initialWidth + deltaXPercent);
-        if (dragState.handle.includes('s')) newH = Math.max(3, dragState.initialHeight + deltaYPercent);
-        if (dragState.handle.includes('w')) {
-          const possibleW = dragState.initialWidth - deltaXPercent;
-          if (possibleW > 4) {
-            newX = dragState.initialX + deltaXPercent;
-            newW = possibleW;
-          }
-        }
-        if (dragState.handle.includes('n')) {
-          const possibleH = dragState.initialHeight - deltaYPercent;
-          if (possibleH > 3) {
-            newY = dragState.initialY + deltaYPercent;
-            newH = possibleH;
-          }
-        }
-
-        const updated = masks.map(m => m.id === mask.id ? {
-          ...m,
-          x: Number(newX.toFixed(2)),
-          y: Number(newY.toFixed(2)),
-          width: Number(newW.toFixed(2)),
-          height: Number(newH.toFixed(2))
-        } : m);
-        onUpdateImageMasks(currentImage.id, updated);
-      }
-    }
+    setTempBox({ x, y, width, height });
   };
 
-  const handleMouseUp = () => {
-    if (isDrawing) {
-      setIsDrawing(false);
-      if (tempBox && tempBox.width > 3 && tempBox.height > 2) {
-        const newMask = {
-          id: `mask_manual_${Date.now()}`,
-          label: `Chi tiáº¿t #${masks.length + 1}`,
-          x: Number(tempBox.x.toFixed(2)),
-          y: Number(tempBox.y.toFixed(2)),
-          width: Number(tempBox.width.toFixed(2)),
-          height: Number(tempBox.height.toFixed(2)),
-          synonyms: [],
-          hint: 'Quan sÃ¡t vá»‹ trÃ­ giáº£i pháº«u trÃªn sÆ¡ Ä‘á»“',
-          color: activeColor,
-          borderColor: activeBorderColor,
-          textColor: activeTextColor,
-          opacity: activeOpacity,
-          texture: activeTexture,
-          displayMode: activeDisplayMode,
-          isCovered: true
-        };
-        const updated = [...masks, newMask];
-        onUpdateImageMasks(currentImage.id, updated);
-        setSelectedMaskId(newMask.id);
-        soundService.playTick();
-      }
-      setTempBox(null);
-      setDrawMode(false);
+  const handleCanvasMouseUp = () => {
+    if (!isDrawing) return;
+    setIsDrawing(false);
+    if (tempBox && tempBox.width > 1.5 && tempBox.height > 1.0) {
+      const newMask = {
+        id: `mask_${Date.now()}`,
+        label: `Chi tiết #${masks.length + 1}`,
+        x: Number(tempBox.x.toFixed(1)),
+        y: Number(tempBox.y.toFixed(1)),
+        width: Number(tempBox.width.toFixed(1)),
+        height: Number(tempBox.height.toFixed(1)),
+        synonyms: [],
+        hint: '',
+        color: activeColor,
+        borderColor: activeBorderColor,
+        textColor: activeTextColor,
+        opacity: activeOpacity,
+        texture: activeTexture,
+        displayMode: activeDisplayMode,
+        isCovered: true
+      };
+      const updated = [...masks, newMask];
+      onUpdateImageMasks(currentImage.id, updated);
+      setSelectedMaskId(newMask.id);
+      soundService.playTap();
     }
-    setDragState(null);
+    setTempBox(null);
   };
 
-  const handleDeleteMask = (id) => {
-    const updated = masks.filter(m => m.id !== id);
+  // Expand all masks by padding percent
+  const handleExpandAllMasks = (paddingPercent = 12) => {
+    const updated = masks.map((m: any) => {
+      const padW = (m.width * paddingPercent) / 100;
+      const padH = (m.height * paddingPercent) / 100;
+      const newX = Math.max(0, m.x - padW / 2);
+      const newY = Math.max(0, m.y - padH / 2);
+      const newW = Math.min(100 - newX, m.width + padW);
+      const newH = Math.min(100 - newY, m.height + padH);
+      return {
+        ...m,
+        x: Number(newX.toFixed(1)),
+        y: Number(newY.toFixed(1)),
+        width: Number(newW.toFixed(1)),
+        height: Number(newH.toFixed(1))
+      };
+    });
     onUpdateImageMasks(currentImage.id, updated);
-    if (selectedMaskId === id) setSelectedMaskId(null);
-    soundService.playTick();
+    soundService.playTap();
   };
 
-  const selectedMask = masks.find(m => m.id === selectedMaskId);
-  const selectedMaskIndex = masks.findIndex(m => m.id === selectedMaskId);
+  // Update selected mask properties
+  const handleUpdateSelectedMask = (field: string, val: any) => {
+    if (!selectedMaskId) return;
+    const updated = masks.map((m: any) => {
+      if (m.id !== selectedMaskId) return m;
+      return { ...m, [field]: val };
+    });
+    onUpdateImageMasks(currentImage.id, updated);
+  };
 
-  // Auto-select first mask if available
-  useEffect(() => {
-    if (!selectedMaskId && masks.length > 0) {
-      setSelectedMaskId(masks[0].id);
+  const handleDeleteMask = (id: string) => {
+    const updated = masks.filter((m: any) => m.id !== id);
+    onUpdateImageMasks(currentImage.id, updated);
+    if (selectedMaskId === id) {
+      setSelectedMaskId(updated[0]?.id || null);
     }
-  }, [masks, selectedMaskId]);
+    soundService.playTap();
+  };
+
+  const selectedMask = masks.find((m: any) => m.id === selectedMaskId) || null;
+  const selectedIndex = masks.findIndex((m: any) => m.id === selectedMaskId);
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#0B0F19] overflow-hidden relative">
-      {/* â”€â”€â”€ 1. TOP HEADER & MULTI-IMAGE CAROUSEL â”€â”€â”€ */}
-      <div className="p-4 bg-[#111827] border-b border-slate-800/80 shadow-md">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-950 text-indigo-400 border border-indigo-800/80">
-                BÃ i Há»c Hiá»‡n Táº¡i
+    <div className="flex-1 flex flex-col bg-slate-900/60 dark:bg-slate-950/80 rounded-2xl border border-slate-800/80 overflow-hidden backdrop-blur-sm relative">
+      {/* ─── 1. TOP HEADER & LESSON INFO ─── */}
+      <div className="p-3.5 sm:p-4 bg-slate-900/90 border-b border-slate-800/80 flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                Bài học hiện tại
               </span>
-              <h2 className="text-base sm:text-lg font-black text-white truncate max-w-xl">
-                {lesson?.title || 'ChÆ°a chá»n bÃ i há»c'}
+              <h2 className="text-sm sm:text-base font-extrabold text-white truncate">
+                {lesson?.title || 'Chưa chọn bài học'}
               </h2>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Táº¡o Ä‘á», táº£i áº£nh nhiá»u pháº§n, nháº­n diá»‡n AI OCR vÃ  cáº¥u hÃ¬nh Ã´ che chuáº©n y khoa.
+            <p className="text-xs text-slate-400 mt-0.5 truncate">
+              {lesson?.description || 'Hệ thống hỗ trợ quét AI, nhận diện nhãn giải phẫu và cấu hình ô che chuẩn y khoa.'}
             </p>
           </div>
 
-          {/* Action buttons & Save */}
-          <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-            {/* Last saved indicator */}
-            <span className="hidden sm:inline text-[11px] text-slate-400 font-medium mr-1">
-              {lastSavedTime ? `ÄÃ£ lÆ°u: ${lastSavedTime}` : ''}
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Last saved note */}
+            <span className="text-[11px] text-slate-400 hidden lg:inline">
+              {showSaveToast ? (
+                <span className="text-emerald-400 flex items-center gap-1 font-bold">
+                  <CheckCircle2 size={13} /> Đã lưu
+                </span>
+              ) : (
+                `Lưu: ${lastSavedTime}`
+              )}
             </span>
 
-            {/* SAVE BUTTON */}
+            {/* Lưu bài học */}
             <button
               onClick={handleManualSave}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-lg shadow-emerald-600/30 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
-              title="LÆ°u láº¡i toÃ n bá»™ bÃ i há»c (Ctrl + S)"
+              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm shadow-emerald-600/30 transition-all active:scale-95 cursor-pointer"
             >
-              <Save className="w-4 h-4" />
-              <span>LÆ¯U BÃ€I Há»ŒC</span>
+              <Save size={14} />
+              <span>Lưu bài học</span>
             </button>
 
-            {/* SHARE & ACCESS CONTROL BUTTON */}
+            {/* Phân quyền chia sẻ */}
             {onOpenShare && (
               <button
                 onClick={() => onOpenShare(lesson)}
-                className="bg-[#1E293B] hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl font-bold text-xs border border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer"
-                title="Chia sáº» link & PhÃ¢n quyá»n há»c sinh"
+                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
               >
-                <Share2 className="w-3.5 h-3.5 text-indigo-400" />
-                <span>PhÃ¢n Quyá»n</span>
+                <Share2 size={14} className="text-indigo-400" />
+                <span>Phân quyền</span>
               </button>
             )}
 
-            {/* File Upload Hidden */}
+            {/* Tải ảnh lên */}
             <input 
               type="file" 
               ref={fileInputRef} 
@@ -517,20 +373,19 @@ export default function MaskEditor({
               accept="image/*" 
               className="hidden" 
             />
-
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="bg-[#1F2937] hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl font-bold text-xs border border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
             >
-              <Upload className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Táº£i áº¢nh LÃªn</span>
+              <Upload size={14} className="text-sky-400" />
+              <span>Tải ảnh mới</span>
             </button>
           </div>
         </div>
 
-        {/* Multi-Image Tabs list inside the lesson */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 scrollbar-none">
-          {lesson?.images?.map((img, idx) => {
+        {/* Multi-Image tab strip */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {lesson?.images?.map((img: any, idx: number) => {
             const isCurrent = img.id === currentImage?.id;
             return (
               <div
@@ -538,33 +393,33 @@ export default function MaskEditor({
                 onClick={() => onSelectImage(img.id)}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold cursor-pointer transition-all shrink-0 ${
                   isCurrent
-                    ? 'bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-600/30'
-                    : 'bg-[#1F2937] text-slate-300 border-slate-700 hover:border-slate-500'
+                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/25'
+                    : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:border-slate-600'
                 }`}
               >
                 <div className="w-5 h-5 rounded-md overflow-hidden bg-black/40 shrink-0">
                   <img src={img.url} alt="" className="w-full h-full object-cover" />
                 </div>
-                <span className="truncate max-w-[120px]">
-                  {img.title || `SÆ¡ Ä‘á»“ #${idx + 1}`}
+                <span className="truncate max-w-[140px]">
+                  {img.title || `Sơ đồ #${idx + 1}`}
                 </span>
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                  isCurrent ? 'bg-indigo-900 text-indigo-200' : 'bg-slate-800 text-slate-400'
+                  isCurrent ? 'bg-indigo-950 text-indigo-300' : 'bg-slate-700 text-slate-400'
                 }`}>
-                  {img.masks?.length || 0} Ã´
+                  {img.masks?.length || 0} ô
                 </span>
 
                 {lesson?.images?.length > 1 && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (confirm(`Báº¡n cÃ³ cháº¯c muá»‘n xÃ³a áº£nh "${img.title}" nÃ y khÃ´ng?`)) {
+                      if (confirm(`Bạn có chắc muốn xóa sơ đồ "${img.title}" này không?`)) {
                         onDeleteImage(img.id);
                       }
                     }}
                     className="text-slate-400 hover:text-rose-400 p-0.5 rounded transition-colors"
                   >
-                    <X className="w-3 h-3" />
+                    <X size={12} />
                   </button>
                 )}
               </div>
@@ -573,755 +428,435 @@ export default function MaskEditor({
 
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-dashed border-slate-600 hover:border-indigo-400 text-slate-400 hover:text-indigo-300 text-xs font-semibold cursor-pointer transition-all shrink-0"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-dashed border-slate-700 hover:border-indigo-500 text-slate-400 hover:text-indigo-300 text-xs font-semibold cursor-pointer transition-all shrink-0"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span>ThÃªm áº£nh má»›i...</span>
+            <Plus size={13} />
+            <span>Thêm góc nhìn...</span>
           </button>
         </div>
       </div>
 
-      {/* â”€â”€â”€ 2. TOOLBAR (GEMINI AI + CANVAS VISION + DRAW + STYLES) â”€â”€â”€ */}
-      <div className="px-4 py-2.5 bg-[#0F172A] border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 shadow-sm">
+      {/* ─── 2. TOOLBAR (AI SCAN + DRAW + CUSTOMIZE) ─── */}
+      <div className="px-3.5 py-2 bg-slate-900/60 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          {/* GEMINI AI SCAN BUTTON */}
+          {/* QUÉT GEMINI AI (DÙNG SETTING CHÍNH DZOTA) */}
           <button
-            onClick={() => handleAutoDetect()}
+            onClick={handleAutoDetect}
             disabled={isScanning || !currentImage}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-xl font-bold text-xs shadow-md shadow-indigo-600/30 flex items-center gap-1.5 transition-all disabled:opacity-50 active:scale-95 cursor-pointer"
+            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm shadow-indigo-600/20 transition-all disabled:opacity-50 cursor-pointer"
+            title="Quét và nhận diện tự động bằng Gemini AI của Dzota"
           >
-            <Sparkles className="w-4 h-4 text-cyan-300 animate-pulse" />
-            <span>QuÃ©t Gemini AI</span>
+            <Sparkles size={14} className="text-amber-300" />
+            <span>Quét Gemini AI</span>
           </button>
 
-          {/* CANVAS VISION BUTTON (LOCAL BACKUP ON ANY IMAGE) */}
+          {/* QUÉT CANVAS VISION */}
           <button
             onClick={handleCanvasVisionDetect}
             disabled={isScanning || !currentImage}
-            className="bg-[#007AFF] hover:bg-blue-600 text-white px-3.5 py-1.5 rounded-xl font-bold text-xs shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all disabled:opacity-50 active:scale-95 cursor-pointer"
-            title="DÃ² tÃ¬m cÃ¡c vÃ¹ng chá»¯ trÃªn sÆ¡ Ä‘á»“ báº±ng Canvas Vision (KhÃ´ng cáº§n API Key)"
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs flex items-center gap-1.5 transition-all disabled:opacity-50 cursor-pointer"
+            title="Nhận diện tự động đường viền nhãn cục bộ"
           >
-            <Zap className="w-3.5 h-3.5 text-amber-300" />
-            <span>QuÃ©t Canvas Vision</span>
+            <Zap size={14} className="text-sky-400" />
+            <span>Quét Canvas Vision</span>
           </button>
 
-          {/* DRAW MANUAL MASK BUTTON */}
+          {/* VẼ Ô CHE THỦ CÔNG */}
           <button
             onClick={() => setDrawMode(!drawMode)}
             className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all border cursor-pointer ${
               drawMode
-                ? 'bg-amber-500 text-black border-amber-400 shadow-md shadow-amber-500/30 font-extrabold'
-                : 'bg-[#1E293B] text-slate-300 border-slate-700 hover:text-white'
+                ? 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-sm'
+                : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
             }`}
           >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span>{drawMode ? 'Äang Váº½: KÃ©o Chuá»™t' : '+ Váº½ Ã” Che Thá»§ CÃ´ng'}</span>
+            <Edit3 size={14} />
+            <span>{drawMode ? 'Đang vẽ: Kéo thả chuột' : '+ Vẽ ô che thủ công'}</span>
           </button>
 
-          {/* EXPAND ALL MASKS */}
+          {/* NỚI RỘNG CHE KÍN */}
           <button
-            onClick={() => handleExpandAllMasks(15)}
-            className="bg-[#1E293B] hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-xl font-bold text-xs border border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer"
-            title="Tá»± Ä‘á»™ng ná»›i rá»™ng thÃªm 15% viá»n bao Ä‘á»ƒ chá»¯ khÃ´ng bao giá» bá»‹ lá»™"
+            onClick={() => handleExpandAllMasks(12)}
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+            title="Tự động mở rộng viền ô che thêm 12% để che kín hoàn toàn chữ"
           >
-            <Maximize className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Ná»›i Rá»™ng Che KÃ­n</span>
+            <Maximize size={14} className="text-cyan-400" />
+            <span>Nới rộng che kín</span>
           </button>
 
-          {/* STYLE SETTINGS BUTTON */}
+          {/* TÙY CHỈNH Ô CHE */}
           <button
             onClick={() => setShowStyleModal(true)}
-            className="bg-[#1E293B] hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-xl font-bold text-xs border border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer"
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
           >
-            <Palette className="w-3.5 h-3.5 text-purple-400" />
-            <span>TÃ¹y Chá»‰nh Ã” Che</span>
+            <Palette size={14} className="text-purple-400" />
+            <span>Màu sắc & Kiểu dáng</span>
           </button>
         </div>
 
-        {/* Right Tools (Zoom, Inspector toggle) */}
+        {/* Zoom controls */}
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setZoomLevel(prev => Math.max(0.6, Number((prev - 0.15).toFixed(2))))}
-            className="p-1.5 rounded-lg bg-[#1E293B] text-slate-300 hover:text-white border border-slate-700"
-            title="Thu nhá»"
+            className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700"
+            title="Thu nhỏ"
           >
-            <ZoomOut className="w-4 h-4" />
+            <ZoomOut size={14} />
           </button>
-          <span className="text-xs font-mono text-slate-400 px-1 min-w-[45px] text-center">
+          <span className="text-xs font-mono text-slate-400 min-w-[40px] text-center">
             {Math.round(zoomLevel * 100)}%
           </span>
           <button
             onClick={() => setZoomLevel(prev => Math.min(2.5, Number((prev + 0.15).toFixed(2))))}
-            className="p-1.5 rounded-lg bg-[#1E293B] text-slate-300 hover:text-white border border-slate-700"
-            title="PhÃ³ng to"
+            className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700"
+            title="Phóng to"
           >
-            <ZoomIn className="w-4 h-4" />
+            <ZoomIn size={14} />
           </button>
           <button
             onClick={() => setZoomLevel(1)}
-            className="p-1.5 rounded-lg bg-[#1E293B] text-slate-300 hover:text-white border border-slate-700"
-            title="Vá»«a khung hÃ¬nh"
+            className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700"
+            title="Về 100%"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw size={14} />
           </button>
 
-          <div className="w-px h-5 bg-slate-700 mx-1"></div>
+          <div className="w-px h-4 bg-slate-800 mx-1"></div>
 
           <button
             onClick={() => setShowInspector(!showInspector)}
             className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
               showInspector
                 ? 'bg-indigo-950 text-indigo-300 border-indigo-700'
-                : 'bg-[#1E293B] text-slate-400 border-slate-700'
+                : 'bg-slate-800 text-slate-400 border-slate-700'
             }`}
           >
-            Danh SÃ¡ch ({masks.length})
+            Danh sách ({masks.length})
           </button>
         </div>
       </div>
 
-      {/* â”€â”€â”€ 3. STATUS BAR MESSAGE â”€â”€â”€ */}
+      {/* Scanning status banner */}
       {scanMessage && (
-        <div className="bg-indigo-950/90 border-b border-indigo-800/80 px-4 py-2 flex items-center justify-between text-xs text-indigo-200 animate-fadeIn">
+        <div className="px-4 py-2 bg-indigo-950/80 border-b border-indigo-800/80 text-xs text-indigo-300 flex items-center justify-between animate-fade-in">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-cyan-400 animate-spin" />
-            <span className="font-semibold">{scanMessage}</span>
+            <Sparkles size={14} className="text-amber-300 animate-spin" />
+            <span>{scanMessage}</span>
           </div>
-          <button onClick={() => setScanMessage('')} className="text-indigo-400 hover:text-white">
-            <X className="w-3.5 h-3.5" />
+          <button onClick={() => setScanMessage('')} className="text-slate-400 hover:text-white">
+            <X size={14} />
           </button>
         </div>
       )}
 
-      {/* â”€â”€â”€ 4. MAIN CANVAS WORKSPACE â”€â”€â”€ */}
-      <div className="flex-1 flex overflow-hidden relative">
-        <div
+      {/* ─── 3. WORKSPACE: CANVAS + RIGHT INSPECTOR ─── */}
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+        {/* Main Canvas view */}
+        <div 
           ref={containerRef}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={handleFileDrop}
-          className="flex-1 overflow-auto flex items-center justify-center p-4 sm:p-6 bg-[#070b14] relative select-none"
+          className="flex-1 overflow-auto p-4 flex items-center justify-center bg-[#070b14] relative select-none"
         >
           {currentImage ? (
-            <div
+            <div 
+              className="relative transition-transform duration-75 inline-block"
               style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'center center' }}
-              className="relative inline-block transition-transform duration-150 shadow-2xl rounded-2xl overflow-hidden border border-slate-800"
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
             >
               <img
                 ref={imageRef}
                 src={currentImage.url}
-                alt={currentImage.title}
-                className="max-h-[75vh] w-auto object-contain block pointer-events-none rounded-xl"
+                alt="Sơ đồ giải phẫu"
+                className={`max-w-full max-h-[70vh] rounded-xl object-contain shadow-2xl ${
+                  drawMode ? 'cursor-crosshair' : 'cursor-default'
+                }`}
+                onMouseDown={handleCanvasMouseDown}
+                onMouseMove={handleCanvasMouseMove}
+                onMouseUp={handleCanvasMouseUp}
               />
 
               {/* Temp drawing box preview */}
               {isDrawing && tempBox && (
                 <div
+                  className="absolute border-2 border-dashed border-amber-400 bg-amber-500/30 rounded-lg pointer-events-none"
                   style={{
                     left: `${tempBox.x}%`,
                     top: `${tempBox.y}%`,
                     width: `${tempBox.width}%`,
                     height: `${tempBox.height}%`
                   }}
-                  className="absolute border-2 border-dashed border-amber-400 bg-amber-500/30 rounded pointer-events-none z-30"
                 />
               )}
 
-              {/* RENDER OCCLUSION MASKS */}
-              {masks.map((mask, idx) => {
+              {/* Existing masks overlay */}
+              {masks.map((mask: any, idx: number) => {
                 const isSelected = mask.id === selectedMaskId;
-                const maskOpacity = mask.opacity !== undefined ? mask.opacity : 1.0;
-
                 return (
                   <div
                     key={mask.id}
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelectedMaskId(mask.id);
-                      soundService.playTick();
+                      soundService.playTap();
                     }}
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                      setSelectedMaskId(mask.id);
-                      setDragState({
-                        type: 'move',
-                        maskId: mask.id,
-                        startX: e.clientX,
-                        startY: e.clientY,
-                        initialX: mask.x,
-                        initialY: mask.y
-                      });
-                    }}
+                    className={`absolute rounded-md transition-all flex items-center justify-center font-bold text-xs select-none cursor-pointer ${
+                      isSelected
+                        ? 'ring-2 ring-sky-400 ring-offset-2 ring-offset-black z-20 shadow-xl'
+                        : 'z-10 hover:opacity-90'
+                    }`}
                     style={{
                       left: `${mask.x}%`,
                       top: `${mask.y}%`,
                       width: `${mask.width}%`,
                       height: `${mask.height}%`,
-                      backgroundColor: mask.color || '#070b14',
-                      borderColor: isSelected ? '#38bdf8' : (mask.borderColor || '#6366f1'),
-                      color: mask.textColor || '#ffffff',
-                      opacity: maskOpacity,
-                      borderRadius: '6px'
+                      backgroundColor: mask.color || activeColor,
+                      border: `1.5px solid ${mask.borderColor || activeBorderColor}`,
+                      color: mask.textColor || activeTextColor,
+                      opacity: mask.opacity ?? activeOpacity
                     }}
-                    className={`absolute border-2 flex items-center justify-center font-bold text-xs select-none transition-shadow cursor-move z-20 ${
-                      isSelected 
-                        ? 'ring-2 ring-sky-400 ring-offset-2 ring-offset-black shadow-2xl scale-[1.01]' 
-                        : 'shadow-lg hover:border-sky-300'
-                    }`}
                   >
-                    {/* Badge / Display mode */}
-                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded pointer-events-none">
-                      {mask.displayMode === 'question' ? (
-                        <span className="text-amber-400 font-black">?</span>
-                      ) : mask.displayMode === 'blank' ? null : (
-                        <span className="font-extrabold text-[11px] tracking-tight">#{idx + 1}</span>
-                      )}
-                    </div>
+                    <span>#{idx + 1}</span>
 
-                    {/* Resize handles when selected */}
+                    {/* Resize handle if selected */}
                     {isSelected && (
-                      <>
-                        {['nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'].map((handle) => (
-                          <div
-                            key={handle}
-                            onMouseDown={(e) => {
-                              e.stopPropagation();
-                              setDragState({
-                                type: 'resize',
-                                handle,
-                                maskId: mask.id,
-                                startX: e.clientX,
-                                startY: e.clientY,
-                                initialX: mask.x,
-                                initialY: mask.y,
-                                initialWidth: mask.width,
-                                initialHeight: mask.height
-                              });
-                            }}
-                            className={`absolute w-3 h-3 bg-sky-400 border border-black rounded-full z-40 ${
-                              handle === 'nw' ? '-top-1.5 -left-1.5 cursor-nwse-resize' :
-                              handle === 'ne' ? '-top-1.5 -right-1.5 cursor-nesw-resize' :
-                              handle === 'sw' ? '-bottom-1.5 -left-1.5 cursor-nesw-resize' :
-                              handle === 'se' ? '-bottom-1.5 -right-1.5 cursor-nwse-resize' :
-                              handle === 'n' ? '-top-1.5 left-1/2 -translate-x-1/2 cursor-ns-resize' :
-                              handle === 's' ? '-bottom-1.5 left-1/2 -translate-x-1/2 cursor-ns-resize' :
-                              handle === 'w' ? '-left-1.5 top-1/2 -translate-y-1/2 cursor-ew-resize' :
-                              '-right-1.5 top-1/2 -translate-y-1/2 cursor-ew-resize'
-                            }`}
-                          />
-                        ))}
-                      </>
+                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-sky-400 border border-black rounded-full pointer-events-none" />
                     )}
                   </div>
                 );
               })}
             </div>
           ) : (
-            <div className="text-center p-8 max-w-md">
-              <Upload className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-              <h3 className="text-base font-bold text-white mb-1">ChÆ°a cÃ³ sÆ¡ Ä‘á»“ giáº£i pháº«u nÃ o</h3>
-              <p className="text-xs text-slate-400 mb-4">
-                KÃ©o tháº£ áº£nh vÃ o Ä‘Ã¢y, chá»¥p mÃ n hÃ¬nh rá»“i báº¥m <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono">Ctrl + V</kbd>, hoáº·c báº¥m nÃºt bÃªn dÆ°á»›i.
-              </p>
+            <div className="flex flex-col items-center justify-center p-8 text-center text-slate-500">
+              <Upload size={36} className="mb-2 text-slate-600" />
+              <p className="text-sm font-semibold">Chưa có sơ đồ nào trong bài học này</p>
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-bold"
+                className="mt-3 px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold"
               >
-                Táº£i áº£nh sÆ¡ Ä‘á»“ lÃªn ngay
+                Tải ảnh sơ đồ lên
               </button>
             </div>
           )}
         </div>
 
-        {/* â”€â”€â”€ 5. RIGHT INSPECTOR / MASK MANAGER DRAWER â”€â”€â”€ */}
+        {/* Right Inspector & Mask Editor */}
         {showInspector && (
-          <aside className="w-80 bg-[#111827] border-l border-slate-800 flex flex-col h-full shadow-2xl z-30 shrink-0">
-            {/* Header */}
-            <div className="p-3.5 border-b border-slate-800 bg-[#0B0F19] flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-2">
-                <Tag className="w-4 h-4 text-indigo-400" />
-                <span className="text-xs font-black text-white uppercase tracking-wider">
-                  Cáº¥u Táº¡o ({masks.length})
-                </span>
+          <aside className="w-full lg:w-80 bg-slate-900 border-t lg:border-t-0 lg:border-l border-slate-800 flex flex-col shrink-0 overflow-y-auto custom-scrollbar p-3.5 space-y-3.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Layers size={15} className="text-indigo-400" />
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-200">
+                  Cấu tạo ({masks.length})
+                </h3>
               </div>
               {masks.length > 0 && (
                 <button
                   onClick={() => {
-                    if (confirm('Báº¡n cÃ³ cháº¯c muá»‘n xÃ³a Táº¤T Cáº¢ cÃ¡c Ã´ che trÃªn áº£nh nÃ y khÃ´ng?')) {
+                    if (confirm('Bạn có chắc muốn xóa tất cả các ô che trên sơ đồ này?')) {
                       onUpdateImageMasks(currentImage.id, []);
                       setSelectedMaskId(null);
                     }
                   }}
-                  className="text-[11px] font-bold text-rose-400 hover:text-rose-300 transition-colors cursor-pointer"
+                  className="text-[11px] text-rose-400 hover:text-rose-300 font-bold"
                 >
-                  XÃ³a táº¥t cáº£
+                  Xóa tất cả
                 </button>
               )}
             </div>
 
-            {/* Dropdown Selector: Click Ä‘á»ƒ sá»• xuá»‘ng full danh sÃ¡ch chá»n nhanh */}
+            {/* Quick navigator */}
             {masks.length > 0 && (
-              <div className="p-3 border-b border-slate-800 bg-[#0E1526] relative shrink-0">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Ã” Che Äang Chá»n:
-                  </span>
-                  <span className="text-indigo-400 font-mono text-[11px] font-bold">
-                    {selectedMaskIndex >= 0 ? `${selectedMaskIndex + 1} / ${masks.length}` : ''}
-                  </span>
-                </div>
-
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowDropdownSelect(!showDropdownSelect)}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-[#070b14] border border-slate-700 hover:border-indigo-400 text-xs font-bold text-white transition-all shadow-inner cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <span className="w-5 h-5 rounded-md bg-indigo-600 text-white flex items-center justify-center text-[10px] font-black shrink-0 shadow-sm">
-                        #{selectedMaskIndex >= 0 ? selectedMaskIndex + 1 : 1}
-                      </span>
-                      <span className="truncate">{selectedMask?.label || 'Chá»n Ã´ giáº£i pháº«u...'}</span>
-                    </div>
-                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ${showDropdownSelect ? 'rotate-180 text-cyan-400' : ''}`} />
-                  </button>
-
-                  {/* Dropdown Menu (Chá»‰ hiá»ƒn thá»‹ khi báº¥m trá» sá»• xuá»‘ng) */}
-                  {showDropdownSelect && (
-                    <div className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-[#111827] border border-indigo-500/70 rounded-2xl shadow-2xl max-h-64 overflow-y-auto p-1.5 space-y-1 animate-fadeIn backdrop-blur-md">
-                      <div className="px-2 py-1 text-[10px] font-black uppercase text-indigo-400 tracking-wider flex justify-between items-center border-b border-slate-800 pb-1 mb-1">
-                        <span>Danh SÃ¡ch {masks.length} Cáº¥u Táº¡o</span>
-                        <span className="text-slate-500 text-[9px] font-normal">Click Ä‘á»ƒ chá»n</span>
-                      </div>
-                      {masks.map((mask, idx) => {
-                        const isSelected = mask.id === selectedMaskId;
-                        return (
-                          <button
-                            key={mask.id}
-                            type="button"
-                            onClick={() => {
-                              setSelectedMaskId(mask.id);
-                              setShowDropdownSelect(false);
-                              soundService.playTick();
-                            }}
-                            className={`w-full flex items-center justify-between p-2 rounded-xl text-xs text-left transition-all cursor-pointer ${
-                              isSelected
-                                ? 'bg-indigo-600 text-white font-bold shadow-md shadow-indigo-600/30'
-                                : 'text-slate-300 hover:bg-[#1F2937] hover:text-white'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 truncate">
-                              <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black shrink-0 ${
-                                isSelected ? 'bg-indigo-900 text-white' : 'bg-black/40 text-slate-400'
-                              }`}>
-                                #{idx + 1}
-                              </span>
-                              <span className="truncate">{mask.label || 'ChÆ°a Ä‘áº·t tÃªn'}</span>
-                            </div>
-                            {isSelected && <Check className="w-3.5 h-3.5 text-cyan-300 shrink-0" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                {/* Quick Step Buttons: Ã” trÆ°á»›c / Ã” tiáº¿p theo */}
-                <div className="flex items-center justify-between mt-2 pt-1 gap-2">
-                  <button
-                    type="button"
-                    disabled={selectedMaskIndex <= 0}
-                    onClick={() => {
-                      if (selectedMaskIndex > 0) {
-                        setSelectedMaskId(masks[selectedMaskIndex - 1].id);
-                        soundService.playTick();
-                      }
-                    }}
-                    className="flex-1 flex items-center justify-center gap-1 py-1 rounded-lg bg-[#1F2937] hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-semibold border border-slate-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                    <span>Ã” trÆ°á»›c</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={selectedMaskIndex >= masks.length - 1}
-                    onClick={() => {
-                      if (selectedMaskIndex < masks.length - 1) {
-                        setSelectedMaskId(masks[selectedMaskIndex + 1].id);
-                        soundService.playTick();
-                      }
-                    }}
-                    className="flex-1 flex items-center justify-center gap-1 py-1 rounded-lg bg-[#1F2937] hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-semibold border border-slate-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
-                  >
-                    <span>Ã” tiáº¿p theo</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+              <div className="flex items-center justify-between bg-slate-950/60 p-2 rounded-xl border border-slate-800 text-xs">
+                <button
+                  onClick={() => {
+                    const prevIdx = selectedIndex > 0 ? selectedIndex - 1 : masks.length - 1;
+                    if (masks[prevIdx]) setSelectedMaskId(masks[prevIdx].id);
+                  }}
+                  className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white"
+                  title="Ô trước"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="font-bold text-slate-300">
+                  Ô #{selectedIndex >= 0 ? selectedIndex + 1 : 1} / {masks.length}
+                </span>
+                <button
+                  onClick={() => {
+                    const nextIdx = selectedIndex < masks.length - 1 ? selectedIndex + 1 : 0;
+                    if (masks[nextIdx]) setSelectedMaskId(masks[nextIdx].id);
+                  }}
+                  className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white"
+                  title="Ô tiếp theo"
+                >
+                  <ChevronRight size={16} />
+                </button>
               </div>
             )}
 
-            {/* Chi tiáº¿t Ã´ Ä‘ang chá»n (Chá»‰ hiá»ƒn thá»‹ Ã´ Ä‘Ã³ táº¡i Ä‘Ã¢y - khÃ´ng trÃ n mÃ n hÃ¬nh) */}
-            <div className="flex-1 overflow-y-auto">
-              {selectedMask ? (
-                <div className="p-3.5 space-y-3 bg-[#162032]">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-700/60">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/40 font-black text-xs flex items-center justify-center">
-                        #{selectedMaskIndex + 1}
-                      </span>
-                      <span className="text-xs font-black uppercase text-sky-400">
-                        Chi Tiáº¿t Ã” Che
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteMask(selectedMask.id)}
-                      className="text-slate-400 hover:text-rose-400 p-1 rounded cursor-pointer transition-colors"
-                      title="XÃ³a Ã´ nÃ y"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-300 mb-1">
-                      TÃªn cÆ¡ quan / ÄÃ¡p Ã¡n Ä‘Ãºng (Official Key):
-                    </label>
-                    <input
-                      type="text"
-                      value={selectedMask.label || ''}
-                      onChange={(e) => {
-                        const updated = masks.map(m => m.id === selectedMask.id ? { ...m, label: e.target.value } : m);
-                        onUpdateImageMasks(currentImage.id, updated);
-                      }}
-                      className="w-full px-3 py-2 bg-[#0B0F19] border border-slate-700 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-sky-400 shadow-inner"
-                      placeholder="VD: Thá»ƒ chai, ThÃ¹y trÃ¡n..."
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-300 mb-1">
-                      ÄÃ¡p Ã¡n Ä‘á»“ng nghÄ©a / TÃªn Latinh (cÃ¡ch nhau bá»Ÿi dáº¥u pháº©y):
-                    </label>
-                    <input
-                      type="text"
-                      value={(selectedMask.synonyms || []).join(', ')}
-                      onChange={(e) => {
-                        const syns = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
-                        const updated = masks.map(m => m.id === selectedMask.id ? { ...m, synonyms: syns } : m);
-                        onUpdateImageMasks(currentImage.id, updated);
-                      }}
-                      className="w-full px-3 py-2 bg-[#0B0F19] border border-slate-700 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-sky-400 shadow-inner"
-                      placeholder="VD: Corpus callosum, Thá»ƒ trai..."
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-300 mb-1">
-                      Gá»£i Ã½ lÃ¢m sÃ ng / Vá»‹ trÃ­ liÃªn quan:
-                    </label>
-                    <input
-                      type="text"
-                      value={selectedMask.hint || ''}
-                      onChange={(e) => {
-                        const updated = masks.map(m => m.id === selectedMask.id ? { ...m, hint: e.target.value } : m);
-                        onUpdateImageMasks(currentImage.id, updated);
-                      }}
-                      className="w-full px-3 py-2 bg-[#0B0F19] border border-slate-700 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-sky-400 shadow-inner"
-                      placeholder="Gá»£i Ã½ ngáº¯n khi Ã´n táº­p"
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="p-6 text-center text-xs text-slate-400 italic">
-                  Nháº¥p vÃ o má»™t Ã´ che trÃªn sÆ¡ Ä‘á»“ Ä‘á»ƒ xem vÃ  chá»‰nh sá»­a thÃ´ng tin táº¡i Ä‘Ã¢y
-                </div>
-              )}
-
-              {/* Collapsible Accordion: Xem toÃ n bá»™ danh sÃ¡ch (Máº·c Ä‘á»‹nh KHÃ”NG hiá»ƒn thá»‹ full, chá»‰ má»Ÿ khi báº¥m sá»• xuá»‘ng) */}
-              {masks.length > 0 && (
-                <div className="p-3 border-t border-slate-800 bg-[#0E1526]">
+            {/* Selected mask detail form */}
+            {selectedMask ? (
+              <div className="space-y-3 bg-slate-950/40 p-3 rounded-2xl border border-slate-800/80">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-indigo-400">
+                    Chi tiết #{selectedIndex + 1}
+                  </span>
                   <button
-                    type="button"
-                    onClick={() => setShowFullList(!showFullList)}
-                    className="w-full py-2 px-3 rounded-xl bg-[#1E293B] hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold border border-slate-700 flex items-center justify-between transition-all cursor-pointer"
+                    onClick={() => handleDeleteMask(selectedMask.id)}
+                    className="p-1 text-slate-500 hover:text-rose-400 rounded"
+                    title="Xóa ô này"
                   >
-                    <span className="flex items-center gap-1.5">
-                      <Layers className="w-3.5 h-3.5 text-indigo-400" />
-                      <span>{showFullList ? 'Thu gá»n danh sÃ¡ch Ä‘áº§y Ä‘á»§' : `Xem danh sÃ¡ch Ä‘áº§y Ä‘á»§ (${masks.length} Ã´)`}</span>
-                    </span>
-                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showFullList ? 'rotate-180' : ''}`} />
+                    <Trash2 size={14} />
                   </button>
-
-                  {/* Danh sÃ¡ch má»Ÿ rá»™ng cÃ³ cuá»™n gá»n gÃ ng */}
-                  {showFullList && (
-                    <div className="mt-2 space-y-1 max-h-56 overflow-y-auto pr-1 animate-fadeIn">
-                      {masks.map((mask, idx) => {
-                        const isSelected = mask.id === selectedMaskId;
-                        return (
-                          <div
-                            key={mask.id}
-                            onClick={() => {
-                              setSelectedMaskId(mask.id);
-                              soundService.playTick();
-                            }}
-                            className={`flex items-center justify-between p-2 rounded-xl border text-xs cursor-pointer transition-all ${
-                              isSelected
-                                ? 'bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-600/30'
-                                : 'bg-[#0B0F19]/80 text-slate-300 border-slate-800 hover:border-slate-700 hover:bg-[#1F2937]'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 truncate">
-                              <span className={`w-5 h-5 rounded-md flex items-center justify-center font-black text-[10px] shrink-0 ${
-                                isSelected ? 'bg-indigo-900 text-white' : 'bg-black/40 text-slate-400'
-                              }`}>
-                                #{idx + 1}
-                              </span>
-                              <span className="font-semibold truncate">
-                                {mask.label || 'ChÆ°a Ä‘áº·t tÃªn'}
-                              </span>
-                            </div>
-
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteMask(mask.id);
-                              }}
-                              className="text-slate-400 hover:text-rose-400 p-1 transition-colors"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
                 </div>
-              )}
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-1">
+                    Tên cơ quan / Đáp án đúng:
+                  </label>
+                  <input
+                    type="text"
+                    value={selectedMask.label || ''}
+                    onChange={(e) => handleUpdateSelectedMask('label', e.target.value)}
+                    placeholder="VD: Thùy gan phải"
+                    className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-1">
+                    Đáp án đồng nghĩa / Latinh (cách nhau dấu phẩy):
+                  </label>
+                  <input
+                    type="text"
+                    value={Array.isArray(selectedMask.synonyms) ? selectedMask.synonyms.join(', ') : (selectedMask.synonyms || '')}
+                    onChange={(e) => {
+                      const arr = e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean);
+                      handleUpdateSelectedMask('synonyms', arr);
+                    }}
+                    placeholder="VD: Gan phải, Thùy phải gan"
+                    className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-1">
+                    Gợi ý lâm sàng / Vị trí liên quan:
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={selectedMask.hint || ''}
+                    onChange={(e) => handleUpdateSelectedMask('hint', e.target.value)}
+                    placeholder="VD: Nằm ở hạ sườn phải, liên quan môn vị và tá tràng..."
+                    className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 bg-slate-950/40 rounded-xl border border-slate-800 text-center text-xs text-slate-500">
+                Bấm vào một ô che trên sơ đồ để chỉnh sửa tên và đáp án
+              </div>
+            )}
+
+            {/* List of all masks */}
+            <div className="space-y-1.5 pt-2 border-t border-slate-800">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide block mb-1">
+                Tất cả ô che ({masks.length})
+              </span>
+              <div className="max-h-56 overflow-y-auto space-y-1 custom-scrollbar">
+                {masks.map((m: any, idx: number) => {
+                  const isSel = m.id === selectedMaskId;
+                  return (
+                    <div
+                      key={m.id}
+                      onClick={() => setSelectedMaskId(m.id)}
+                      className={`flex items-center justify-between p-2 rounded-xl text-xs font-medium cursor-pointer transition-colors ${
+                        isSel
+                          ? 'bg-indigo-600 text-white font-bold'
+                          : 'bg-slate-950/40 text-slate-300 hover:bg-slate-800'
+                      }`}
+                    >
+                      <span className="truncate">
+                        #{idx + 1} {m.label || 'Chưa đặt tên'}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteMask(m.id);
+                        }}
+                        className="text-slate-400 hover:text-rose-400 ml-2"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </aside>
         )}
       </div>
 
-      {/* â”€â”€â”€ 6. DZOTA AI SETUP MODAL (EXPLICIT ON NEW DIAGRAMS) â”€â”€â”€ */}
-      {showAiModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="relative w-full max-w-lg bg-[#111827] border border-indigo-500/40 rounded-3xl shadow-2xl overflow-hidden">
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-slate-800 bg-[#0B0F19] flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-indigo-950 border border-indigo-600/50 flex items-center justify-center text-cyan-400">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-white">Káº¿t Ná»‘i Gemini AI QuÃ©t NhÃ£n</h3>
-                  <p className="text-[11px] text-slate-400">Nháº­n diá»‡n cáº¥u táº¡o giáº£i pháº«u trÃªn áº£nh má»›i cá»§a báº¡n</p>
-                </div>
-              </div>
-              <button onClick={() => setShowAiModal(false)} className="text-slate-400 hover:text-white p-1">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="p-6 space-y-4">
-              <div className="p-3.5 rounded-2xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-200">
-                {aiModalNotice || 'Äá»ƒ AI Ä‘á»c chá»¯ Tiáº¿ng Viá»‡t y khoa vÃ  tá»± Ä‘á»™ng sinh Ä‘Ã¡p Ã¡n trÃªn sÆ¡ Ä‘á»“ má»›i, báº¡n cáº§n káº¿t ná»‘i Gemini API.'}
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                  Google Gemini API Key
-                </label>
-                <div className="relative">
-                  <Key className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="password"
-                    value={inputApiKey}
-                    onChange={(e) => setInputApiKey(e.target.value)}
-                    placeholder="DÃ¡n mÃ£ khÃ³a AIzaSy... cá»§a báº¡n vÃ o Ä‘Ã¢y"
-                    className="w-full pl-9 pr-3 py-2.5 bg-[#0B0F19] border border-slate-700 rounded-xl text-xs font-mono text-white focus:outline-none focus:border-indigo-400"
-                  />
-                </div>
-                <div className="flex items-center justify-between mt-2 text-[11px]">
-                  <span className="text-slate-400 flex items-center gap-1">
-                    <ShieldAlert className="w-3 h-3 text-cyan-400" />
-                    LÆ°u báº£o máº­t táº¡i trÃ¬nh duyá»‡t cá»§a báº¡n
-                  </span>
-                  <a
-                    href="https://aistudio.google.com/app/apikey"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-bold"
-                  >
-                    Láº¥y API Key Miá»…n PhÃ­ <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-              </div>
-
-              {/* Action buttons */}
-              <div className="pt-2 flex flex-col sm:flex-row gap-2">
-                <button
-                  onClick={handleSaveApiKeyAndScan}
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-xl font-bold text-xs shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Sparkles className="w-4 h-4 text-cyan-300" />
-                  <span>LÆ°u & QuÃ©t Báº±ng Gemini AI</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setShowAiModal(false);
-                    handleCanvasVisionDetect();
-                  }}
-                  className="bg-[#007AFF] hover:bg-blue-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-blue-500/20"
-                >
-                  <Zap className="w-3.5 h-3.5 text-amber-300" />
-                  <span>QuÃ©t Canvas Vision (KhÃ´ng cáº§n Key)</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* â”€â”€â”€ 7. DZOTA MASK STYLE & OPACITY MODAL â”€â”€â”€ */}
+      {/* Style customization modal */}
       {showStyleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
-          <div className="relative w-full max-w-lg bg-[#111827] border border-purple-500/30 rounded-3xl shadow-2xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-800 bg-[#0B0F19] flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <Palette className="w-5 h-5 text-purple-400" />
-                <h3 className="text-base font-black text-white">TÃ¹y Chá»‰nh Giao Diá»‡n Ã” Che</h3>
-              </div>
-              <button onClick={() => setShowStyleModal(false)} className="text-slate-400 hover:text-white p-1">
-                <X className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
+                <Palette size={16} className="text-purple-400" />
+                <span>Màu Sắc & Kiểu Dáng Ô Che</span>
+              </h3>
+              <button onClick={() => setShowStyleModal(false)} className="text-slate-400 hover:text-white">
+                <X size={16} />
               </button>
             </div>
 
-            <div className="p-6 space-y-5">
-              {/* Opacity slider */}
+            <div className="space-y-3">
               <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="text-xs font-bold text-slate-300">
-                    Äá»™ Äáº­m Äáº·c Cá»§a Ã” Che (Che KÃ­n Tuyá»‡t Äá»‘i):
-                  </label>
-                  <span className="text-xs font-black text-indigo-400">
-                    {Math.round(activeOpacity * 100)}%
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min="0.5"
-                  max="1.0"
-                  step="0.02"
-                  value={activeOpacity}
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value);
-                    setActiveOpacity(val);
-                    applyStyleUpdate({ opacity: val });
-                  }}
-                  className="w-full accent-indigo-500 cursor-pointer"
-                />
-                <div className="flex justify-between text-[10px] text-slate-500 mt-1">
-                  <span>50% (BÃ¡n trong suá»‘t)</span>
-                  <span className="text-emerald-400 font-bold">100% Äáº­m Ä‘áº·c tuyá»‡t Ä‘á»‘i (KhuyÃªn dÃ¹ng)</span>
-                </div>
-              </div>
-
-              {/* Color Presets */}
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-2">
-                  Bá»™ MÃ u Y Khoa Chuáº©n Dzota:
+                <label className="block text-[11px] font-bold text-slate-400 mb-1.5 uppercase">
+                  Bảng màu y khoa
                 </label>
                 <div className="grid grid-cols-4 gap-2">
-                  {MASK_COLOR_PRESETS.map((preset) => (
+                  {MASK_COLOR_PRESETS.map((p: any) => (
                     <button
-                      key={preset.id}
+                      key={p.id}
                       onClick={() => {
-                        setActiveColor(preset.hex);
-                        setActiveBorderColor(preset.border);
-                        setActiveTextColor(preset.textColor);
-                        applyStyleUpdate({
-                          color: preset.hex,
-                          borderColor: preset.border,
-                          textColor: preset.textColor
+                        setActiveColor(p.hex);
+                        setActiveBorderColor(p.border);
+                        setActiveTextColor(p.textColor);
+                        setStoredDefaultMaskStyle({
+                          color: p.hex,
+                          borderColor: p.border,
+                          textColor: p.textColor
                         });
+                        if (selectedMaskId) {
+                          handleUpdateSelectedMask('color', p.hex);
+                          handleUpdateSelectedMask('borderColor', p.border);
+                          handleUpdateSelectedMask('textColor', p.textColor);
+                        }
                       }}
-                      style={{ backgroundColor: preset.hex, borderColor: preset.border }}
-                      className="p-2.5 rounded-xl border-2 text-[11px] font-bold text-center truncate cursor-pointer transition-transform hover:scale-105"
+                      className="p-2 rounded-xl flex flex-col items-center gap-1 border transition-all text-[10px] font-bold"
+                      style={{
+                        backgroundColor: p.hex,
+                        borderColor: p.border,
+                        color: p.textColor
+                      }}
                     >
-                      <span style={{ color: preset.textColor }}>{preset.name.split(' ')[0]}</span>
+                      <span>{p.name.split(' ')[0]}</span>
                     </button>
                   ))}
                 </div>
-              </div>
-
-              {/* Display mode */}
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-2">
-                  Kiá»ƒu Hiá»ƒn Thá»‹ TrÃªn Ã” Che:
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { id: 'number', label: 'Sá»‘ Thá»© Tá»± (#1, #2)' },
-                    { id: 'question', label: 'Dáº¥u Cháº¥m Há»i (?)' },
-                    { id: 'blank', label: 'Ã” Che Trá»‘ng' }
-                  ].map((mode) => (
-                    <button
-                      key={mode.id}
-                      onClick={() => {
-                        setActiveDisplayMode(mode.id);
-                        applyStyleUpdate({ displayMode: mode.id });
-                      }}
-                      className={`p-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                        activeDisplayMode === mode.id
-                          ? 'bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-600/30'
-                          : 'bg-[#1F2937] text-slate-300 border-slate-700 hover:text-white'
-                      }`}
-                    >
-                      {mode.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Apply to all button */}
-              <div className="pt-2 flex gap-3">
-                <button
-                  onClick={() => {
-                    applyStyleUpdate({
-                      color: activeColor,
-                      borderColor: activeBorderColor,
-                      textColor: activeTextColor,
-                      opacity: activeOpacity,
-                      displayMode: activeDisplayMode
-                    }, true);
-                    setShowStyleModal(false);
-                  }}
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white py-2.5 rounded-xl font-bold text-xs shadow-lg shadow-indigo-600/30 cursor-pointer"
-                >
-                  Ãp Dá»¥ng Cho ToÃ n Bá»™ Ã” Che & Äáº·t Máº·c Äá»‹nh
-                </button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* â”€â”€â”€ 8. SAVE TOAST NOTIFICATION â”€â”€â”€ */}
-      {showSaveToast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-bounce">
-          <CheckCheck className="w-5 h-5 text-emerald-200" />
-          <div>
-            <div className="text-xs font-black uppercase tracking-wider">ÄÃ£ lÆ°u bÃ i há»c thÃ nh cÃ´ng!</div>
-            <div className="text-[11px] text-emerald-100">ToÃ n bá»™ sÆ¡ Ä‘á»“ vÃ  cÃ¡c Ã´ che Ä‘Ã£ Ä‘Æ°á»£c lÆ°u vÃ o há»‡ thá»‘ng.</div>
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => setShowStyleModal(false)}
+                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl"
+              >
+                Hoàn tất
+              </button>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
 }
-
