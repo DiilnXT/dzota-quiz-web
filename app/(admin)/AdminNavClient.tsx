@@ -114,7 +114,7 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
   const isSettingsActive = isDashboardActive && activeTab === 'settings'
   const isProfileActive = isDashboardActive && activeTab === 'profile'
   const isNotebookNDActive = pathname.startsWith('/notebook') || (isDashboardActive && activeTab === 'notebook_nd')
-  const isDynexActive = pathname.startsWith('/dynex') || (isDashboardActive && activeTab === 'dynex')
+  const isDynexActive = pathname.startsWith('/dynex')
 
   // Helper cho style nav item
   const getNavItemClass = (isActive: boolean) =>

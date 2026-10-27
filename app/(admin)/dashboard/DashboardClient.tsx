@@ -596,8 +596,12 @@ export default function DashboardClient({
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       const tab = params.get('tab')
-      if (tab && ['dashboard', 'overview', 'quizzes', 'classes', 'teachers', 'friends', 'settings', 'profile', 'history', 'notebook_nd', 'study', 'mistakes', 'dynex'].includes(tab)) {
-        if (isStudent && (tab === 'history' || tab === 'profile' || tab === 'study' || tab === 'mistakes' || tab === 'notebook_nd' || tab === 'dynex')) {
+      if (tab === 'dynex') {
+        window.location.href = '/dynex'
+        return
+      }
+      if (tab && ['dashboard', 'overview', 'quizzes', 'classes', 'teachers', 'friends', 'settings', 'profile', 'history', 'notebook_nd', 'study', 'mistakes'].includes(tab)) {
+        if (isStudent && (tab === 'history' || tab === 'profile' || tab === 'study' || tab === 'mistakes' || tab === 'notebook_nd')) {
           setActiveTab(tab)
         } else if (!isStudent) {
           setActiveTab(tab)
