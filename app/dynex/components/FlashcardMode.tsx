@@ -782,12 +782,16 @@ export default function FlashcardMode({
                       )}
                     </div>
 
-                    {/* Bouncing Direction Pointer when card is face down */}
+                    {/* Bouncing Direction Pointer Arrow when card is face down */}
                     {!showRevealed && (
-                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex flex-col items-center animate-bounce z-40">
-                        <div className="w-4 h-4 bg-amber-400 rotate-45 border-2 border-black shadow-[0_0_15px_#f59e0b] flex items-center justify-center">
-                          <div className="w-1.5 h-1.5 bg-black rounded-full" />
+                      <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex flex-col items-center animate-bounce z-40 pointer-events-none filter drop-shadow-[0_2px_8px_rgba(245,158,11,0.9)]">
+                        <div className="px-2 py-0.5 rounded-full bg-amber-400 border border-amber-300 text-slate-950 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md">
+                          <span>Chỉ điểm</span>
                         </div>
+                        {/* SVG Downward Pointer Arrow */}
+                        <svg className="w-5 h-5 text-amber-400 -mt-1 drop-shadow" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 21L4 11H9V3H15V11H20L12 21Z" stroke="#000" strokeWidth="1.5" strokeLinejoin="round" />
+                        </svg>
                       </div>
                     )}
                   </div>

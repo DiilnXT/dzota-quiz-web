@@ -4,6 +4,41 @@ import { sampleAnatomyUrl, SAMPLE_ANATOMY_FALLBACK_MASKS } from './geminiService
 const STORAGE_KEY_PROJECTS = 'dynex_projects_data_v3'
 const STORAGE_KEY_EXAM_HISTORY = 'dynex_exam_history_v2'
 const STORAGE_KEY_CLASSROOMS = 'dynex_classrooms_v1'
+const STORAGE_KEY_SAVED_EXAMS = 'dynex_saved_exams_v1'
+
+export interface DynexExamStation {
+  stationIndex: number
+  stationId: string
+  lessonId: string
+  lessonTitle: string
+  categoryName: string
+  subFolderName: string
+  imageId: string
+  imageTitle: string
+  imageUrl: string
+  maskId: string
+  officialAnswer: string
+  synonyms?: string[]
+  hint?: string
+  targetMask: Mask
+  allImageMasks: Mask[]
+}
+
+export interface DynexExamPaper {
+  id: string
+  title: string
+  subject: string
+  timePerStation: number // giây mỗi trạm (vd: 20)
+  totalStations: number // số trạm (vd: 20)
+  notes?: string
+  generationStrategy: 'random_pool' | 'balanced_distribution'
+  avoidConsecutiveSameImage: boolean
+  selectedLessonIds: string[]
+  stations: DynexExamStation[]
+  createdAt: string
+  author: string
+  accessPassword?: string
+}
 
 export interface Mask {
   id: string
@@ -373,6 +408,215 @@ export const storageService = {
     } catch (e) {
       console.error('Error saving exam result:', e)
     }
+  },
+
+  // ─── SAVED OSCE EXAM PAPERS MANAGEMENT ───
+  getSavedExams(): DynexExamPaper[] {
+    if (typeof window === 'undefined') return []
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_SAVED_EXAMS)
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) return parsed
+      }
+    } catch (e) {
+      console.error('Error reading saved exams from storage:', e)
+    }
+    return []
+  },
+
+  saveExam(exam: DynexExamPaper): void {
+    if (typeof window === 'undefined') return
+    try {
+      const list = this.getSavedExams()
+      const existingIdx = list.findIndex(e => e.id === exam.id)
+      if (existingIdx >= 0) {
+        list[existingIdx] = exam
+      } else {
+        list.unshift(exam)
+      }
+      localStorage.setItem(STORAGE_KEY_SAVED_EXAMS, JSON.stringify(list))
+    } catch (e) {
+      console.error('Error saving exam to storage:', e)
+    }
+  },
+
+  deleteExam(examId: string): void {
+    if (typeof window === 'undefined') return
+    try {
+      const list = this.getSavedExams()
+      const filtered = list.filter(e => e.id !== examId)
+      localStorage.setItem(STORAGE_KEY_SAVED_EXAMS, JSON.stringify(filtered))
+    } catch (e) {
+      console.error('Error deleting exam:', e)
+    }
+  },
+
+  getExamById(examId: string): DynexExamPaper | null {
+    const list = this.getSavedExams()
+    return list.find(e => e.id === examId) || null
+  },
+
+  // ─── SMART OSCE EXAM STATION GENERATOR ───
+  generateOsceExamStations(params: {
+    projects: Project[]
+    selectedLessonIds: string[]
+    totalStations: number
+    strategy?: 'random_pool' | 'balanced_distribution'
+    avoidConsecutiveSameImage?: boolean
+  }): DynexExamStation[] {
+    const {
+      projects,
+      selectedLessonIds,
+      totalStations = 20,
+      strategy = 'random_pool',
+      avoidConsecutiveSameImage = true
+    } = params
+
+    // 1. Gather all available lessons matching selectedLessonIds
+    const lessonsMap = new Map<string, { lesson: Lesson; category: Category; subFolder: SubFolder; project: Project }>()
+    projects.forEach(project => {
+      project.categories?.forEach(category => {
+        category.subFolders?.forEach(sub => {
+          sub.lessons?.forEach(lesson => {
+            if (selectedLessonIds.includes(lesson.id)) {
+              lessonsMap.set(lesson.id, { lesson, category, subFolder: sub, project })
+            }
+          })
+        })
+      })
+    })
+
+    // 2. Collect atomic candidate pool grouped by lesson and image
+    const candidateList: Array<{
+      lesson: Lesson
+      category: Category
+      subFolder: SubFolder
+      image: ImageItem
+      mask: Mask
+    }> = []
+
+    const lessonItemsMap = new Map<string, Array<{
+      lesson: Lesson
+      category: Category
+      subFolder: SubFolder
+      image: ImageItem
+      mask: Mask
+    }>>()
+
+    lessonsMap.forEach(({ lesson, category, subFolder }) => {
+      const list: typeof candidateList = []
+      lesson.images?.forEach(img => {
+        img.masks?.forEach(mask => {
+          const item = { lesson, category, subFolder, image: img, mask }
+          candidateList.push(item)
+          list.push(item)
+        })
+      })
+      if (list.length > 0) {
+        lessonItemsMap.set(lesson.id, list)
+      }
+    })
+
+    if (candidateList.length === 0) {
+      return []
+    }
+
+    let selectedItems: typeof candidateList = []
+
+    // Strategy A: Balanced Distribution among selected lessons
+    if (strategy === 'balanced_distribution' && lessonItemsMap.size > 1) {
+      const activeLessonIds = Array.from(lessonItemsMap.keys())
+      const quotaPerLesson = Math.max(1, Math.floor(totalStations / activeLessonIds.length))
+      const remainder = totalStations % activeLessonIds.length
+
+      const pools: Record<string, typeof candidateList> = {}
+      activeLessonIds.forEach(lId => {
+        pools[lId] = [...(lessonItemsMap.get(lId) || [])].sort(() => 0.5 - Math.random())
+      })
+
+      activeLessonIds.forEach((lId, idx) => {
+        const takeCount = quotaPerLesson + (idx < remainder ? 1 : 0)
+        const pool = pools[lId]
+        for (let i = 0; i < takeCount; i++) {
+          if (pool && pool.length > 0) {
+            selectedItems.push(pool.pop()!)
+          } else {
+            selectedItems.push(candidateList[Math.floor(Math.random() * candidateList.length)])
+          }
+        }
+      })
+    } else {
+      // Strategy B: Random Pool
+      const shuffled = [...candidateList].sort(() => 0.5 - Math.random())
+      let i = 0
+      while (selectedItems.length < totalStations) {
+        selectedItems.push(shuffled[i % shuffled.length])
+        i++
+      }
+    }
+
+    // 3. Apply Anti-Consecutive Image Sorter (tỉ lệ các trạm liên tiếp chung 1 hình là thấp)
+    if (avoidConsecutiveSameImage && selectedItems.length > 2) {
+      const imageBuckets = new Map<string, typeof candidateList>()
+      selectedItems.forEach(item => {
+        const arr = imageBuckets.get(item.image.id) || []
+        arr.push(item)
+        imageBuckets.set(item.image.id, arr)
+      })
+
+      const arranged: typeof candidateList = []
+      let lastImageId = ''
+
+      while (arranged.length < selectedItems.length) {
+        let bestImageId = ''
+        let maxCount = -1
+
+        for (const [imgId, bucket] of imageBuckets.entries()) {
+          if (bucket.length > 0 && imgId !== lastImageId && bucket.length > maxCount) {
+            maxCount = bucket.length
+            bestImageId = imgId
+          }
+        }
+
+        if (!bestImageId) {
+          for (const [imgId, bucket] of imageBuckets.entries()) {
+            if (bucket.length > 0) {
+              bestImageId = imgId
+              break
+            }
+          }
+        }
+
+        if (!bestImageId) break
+
+        const bucket = imageBuckets.get(bestImageId)!
+        const item = bucket.pop()!
+        arranged.push(item)
+        lastImageId = bestImageId
+      }
+
+      selectedItems = arranged
+    }
+
+    // 4. Transform to DynexExamStation
+    return selectedItems.map((item, idx) => ({
+      stationIndex: idx + 1,
+      stationId: `st_${idx + 1}_${item.mask.id}`,
+      lessonId: item.lesson.id,
+      lessonTitle: item.lesson.title,
+      categoryName: item.category.name,
+      subFolderName: item.subFolder.name,
+      imageId: item.image.id,
+      imageTitle: item.image.title,
+      imageUrl: item.image.url,
+      maskId: item.mask.id,
+      officialAnswer: item.mask.label,
+      synonyms: item.mask.synonyms || [],
+      hint: item.mask.hint || `Chi tiết trọng tâm của ${item.lesson.title}`,
+      targetMask: item.mask,
+      allImageMasks: item.image.masks || []
+    }))
   },
 
   // Collect all available test stations (masks) across all or specific lessons

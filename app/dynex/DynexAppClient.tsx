@@ -15,7 +15,8 @@ import ShareAccessModal from './components/ShareAccessModal';
 import LoginModal from './components/LoginModal';
 import CreateContentModal from './components/CreateContentModal';
 import DeckSelectorModal from './components/DeckSelectorModal';
-import { storageService, Project, Lesson, ImageItem, Mask } from './services/storageService';
+import CreateOsceExamModal from './components/CreateOsceExamModal';
+import { storageService, Project, Lesson, ImageItem, Mask, DynexExamPaper } from './services/storageService';
 import { authService, DynexUser } from './services/authService';
 import { getStoredApiKey, getStoredModel } from './services/geminiService';
 import { ShieldCheck, Layers } from 'lucide-react';
@@ -59,6 +60,11 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
   // Multi-deck selector modal (Ôn luyện đa chương / đa bài)
   const [isDeckSelectorOpen, setIsDeckSelectorOpen] = useState(false);
 
+  // Exam Candidate Focus Mode & Active Exam Paper
+  const [isExamCandidateMode, setIsExamCandidateMode] = useState(false);
+  const [selectedExamPaper, setSelectedExamPaper] = useState<DynexExamPaper | null>(null);
+  const [isCreateExamModalOpen, setIsCreateExamModalOpen] = useState(false);
+
   // Exam history
   const [examHistory, setExamHistory] = useState<any[]>([]);
 
@@ -88,11 +94,22 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
     setApiKey(getStoredApiKey());
     setGeminiModel(getStoredModel());
 
-    // Check shared URL query params (e.g. ?lessonId=les_nao&tab=flashcard or &mode=flashcard)
+    // Check shared URL query params (e.g. ?lessonId=les_nao&tab=flashcard or &mode=flashcard, or &mode=exam&examId=...)
     const lessonParam = searchParams.get('lessonId');
     const tabParam = searchParams.get('tab') || searchParams.get('mode');
+    const examIdParam = searchParams.get('examId');
 
-    if (tabParam && ['learn', 'admin', 'flashcard', 'exam', 'classes', 'history'].includes(tabParam)) {
+    if (examIdParam) {
+      const foundExam = storageService.getExamById(examIdParam);
+      if (foundExam) {
+        setSelectedExamPaper(foundExam);
+      }
+      setIsExamCandidateMode(true);
+      setCurrentTab('exam');
+    } else if (tabParam === 'exam' || searchParams.get('mode') === 'exam') {
+      setIsExamCandidateMode(true);
+      setCurrentTab('exam');
+    } else if (tabParam && ['learn', 'admin', 'flashcard', 'exam', 'classes', 'history'].includes(tabParam)) {
       setCurrentTab(tabParam as DynexTabType);
     }
 
@@ -445,6 +462,13 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
         currentUser={currentUser}
         onOpenLogin={() => setIsLoginOpen(true)}
         isEmbedded={isEmbedded}
+        isExamCandidateMode={isExamCandidateMode}
+        examTitle={selectedExamPaper?.title}
+        onExitExam={() => {
+          setIsExamCandidateMode(false);
+          setSelectedExamPaper(null);
+          setCurrentTab('learn');
+        }}
       />
 
       {/* Main App Container */}
@@ -471,6 +495,7 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
               setIsShareOpen(true);
             }}
             onOpenDeckSelector={() => setIsDeckSelectorOpen(true)}
+            onOpenCreateExamModal={() => setIsCreateExamModalOpen(true)}
           />
         )}
 
@@ -576,6 +601,13 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
           <MedicalSpottingExam
             projects={projects}
             onSaveExamResult={handleSaveExamResult}
+            initialExamPaper={selectedExamPaper}
+            isExamCandidateMode={isExamCandidateMode}
+            onExitExam={() => {
+              setIsExamCandidateMode(false);
+              setSelectedExamPaper(null);
+              setCurrentTab('learn');
+            }}
           />
         )}
 
@@ -680,6 +712,21 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
           } else {
             setCurrentTab('exam');
           }
+        }}
+      />
+
+      {/* Create OSCE Exam Paper Modal */}
+      <CreateOsceExamModal
+        isOpen={isCreateExamModalOpen}
+        onClose={() => setIsCreateExamModalOpen(false)}
+        projects={projects}
+        onExamCreated={(newExam) => {
+          setSelectedExamPaper(newExam);
+        }}
+        onLaunchExam={(newExam) => {
+          setSelectedExamPaper(newExam);
+          setIsExamCandidateMode(true);
+          setCurrentTab('exam');
         }}
       />
     </div>

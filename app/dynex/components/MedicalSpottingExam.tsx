@@ -20,12 +20,26 @@ import {
   Activity,
   Flame,
   ArrowRight,
-  Layers
+  Layers,
+  Plus,
+  FileText,
+  Share2,
+  ArrowLeft
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { soundService } from '../services/soundService';
-import { storageService } from '../services/storageService';
+import { storageService, DynexExamPaper, DynexExamStation } from '../services/storageService';
 import DeckSelectorModal from './DeckSelectorModal';
+import CreateOsceExamModal from './CreateOsceExamModal';
+import SavedExamsModal from './SavedExamsModal';
+
+interface MedicalSpottingExamProps {
+  projects: any[]
+  onSaveExamResult?: (result: any) => void
+  initialExamPaper?: DynexExamPaper | null
+  isExamCandidateMode?: boolean
+  onExitExam?: () => void
+}
 
 /**
  * Intelligent text matching for medical anatomy answers:
@@ -34,7 +48,7 @@ import DeckSelectorModal from './DeckSelectorModal';
  * - Synonym checking
  * - Minor typo tolerance
  */
-function normalizeText(str) {
+function normalizeText(str: string) {
   if (!str) return '';
   return str
     .toLowerCase()
@@ -44,7 +58,7 @@ function normalizeText(str) {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
-function checkAnswerCorrectness(userAnswer, officialLabel, synonyms = []) {
+function checkAnswerCorrectness(userAnswer: string, officialLabel: string, synonyms: string[] = []) {
   if (!userAnswer || !userAnswer.trim()) return false;
 
   const cleanUser = normalizeText(userAnswer);
@@ -65,14 +79,37 @@ function checkAnswerCorrectness(userAnswer, officialLabel, synonyms = []) {
   return false;
 }
 
-export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
+export default function MedicalSpottingExam({ 
+  projects, 
+  onSaveExamResult,
+  initialExamPaper = null,
+  isExamCandidateMode = false,
+  onExitExam
+}: MedicalSpottingExamProps) {
+  // Active custom exam paper (if running a pre-generated exam)
+  const [activeExamPaper, setActiveExamPaper] = useState<DynexExamPaper | null>(initialExamPaper);
+
+  // Modals
+  const [isCreateExamModalOpen, setIsCreateExamModalOpen] = useState(false);
+  const [isSavedExamsModalOpen, setIsSavedExamsModalOpen] = useState(false);
+
   // Setup configuration state
-  const [examStatus, setExamStatus] = useState('setup'); // 'setup' | 'running' | 'finished'
-  const [totalStationsCount, setTotalStationsCount] = useState(20);
-  const [secondsPerStation, setSecondsPerStation] = useState(25);
+  const [examStatus, setExamStatus] = useState<'setup' | 'running' | 'finished'>('setup');
+  const [totalStationsCount, setTotalStationsCount] = useState(activeExamPaper?.totalStations || 20);
+  const [secondsPerStation, setSecondsPerStation] = useState(activeExamPaper?.timePerStation || 20);
   const [candidateName, setCandidateName] = useState('Bác Sĩ / Sinh Viên Y Khoa');
-  const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([]);
+  const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>(activeExamPaper?.selectedLessonIds || []);
   const [isDeckSelectorOpen, setIsDeckSelectorOpen] = useState(false);
+
+  // Synchronize when initialExamPaper changes
+  useEffect(() => {
+    if (initialExamPaper) {
+      setActiveExamPaper(initialExamPaper);
+      setTotalStationsCount(initialExamPaper.totalStations);
+      setSecondsPerStation(initialExamPaper.timePerStation);
+      setSelectedLessonIds(initialExamPaper.selectedLessonIds || []);
+    }
+  }, [initialExamPaper]);
 
   // Exam runtime state
   const [stations, setStations] = useState([]);
@@ -101,25 +138,31 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
 
   // Start Exam
   const handleStartExam = () => {
-    const allAvailable = storageService.collectAllStations(
-      projects,
-      selectedLessonIds.length > 0 ? selectedLessonIds : null
-    );
-    if (!allAvailable || allAvailable.length === 0) {
-      alert('Không tìm thấy dữ liệu ô che nào trong phạm vi bài học đã chọn! Vui lòng chọn bài học khác hoặc vào Quản Trị để vẽ thêm ô che.');
-      return;
-    }
-
-    // Shuffle and pick requested number of stations
-    const shuffled = [...allAvailable].sort(() => 0.5 - Math.random());
     let selected = [];
-    while (selected.length < totalStationsCount) {
-      for (const item of shuffled) {
-        selected.push({
-          ...item,
-          stationId: `station_${selected.length + 1}`
-        });
-        if (selected.length >= totalStationsCount) break;
+
+    // If a pre-generated exam paper is chosen, use its exact stations
+    if (activeExamPaper && activeExamPaper.stations && activeExamPaper.stations.length > 0) {
+      selected = activeExamPaper.stations;
+    } else {
+      const allAvailable = storageService.collectAllStations(
+        projects,
+        selectedLessonIds.length > 0 ? selectedLessonIds : null
+      );
+      if (!allAvailable || allAvailable.length === 0) {
+        alert('Không tìm thấy dữ liệu ô che nào trong phạm vi bài học đã chọn! Vui lòng chọn bài học khác hoặc vào Quản Trị để vẽ thêm ô che.');
+        return;
+      }
+
+      // Shuffle and pick requested number of stations
+      const shuffled = [...allAvailable].sort(() => 0.5 - Math.random());
+      while (selected.length < totalStationsCount) {
+        for (const item of shuffled) {
+          selected.push({
+            ...item,
+            stationId: `station_${selected.length + 1}`
+          });
+          if (selected.length >= totalStationsCount) break;
+        }
       }
     }
 
@@ -259,10 +302,24 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
           <div className="max-w-2xl mx-auto text-center space-y-6 relative z-10">
-            {/* Header Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-rose-950/70 border border-rose-500/50 text-rose-300 text-xs font-bold uppercase tracking-widest shadow-lg shadow-rose-950/50">
-              <Activity className="w-4 h-4 text-rose-400 animate-pulse" />
-              <span>Hệ Thống Khảo Thí Y Khoa OSCE • DYNEX</span>
+            {/* Header Badge & Candidate Exit Button */}
+            <div className="flex items-center justify-between gap-2">
+              {onExitExam && (
+                <button
+                  type="button"
+                  onClick={onExitExam}
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700/80 text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Quay lại Dzota"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Thoát Phòng Thi</span>
+                </button>
+              )}
+
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-rose-950/70 border border-rose-500/50 text-rose-300 text-xs font-bold uppercase tracking-widest shadow-lg shadow-rose-950/50 mx-auto">
+                <Activity className="w-4 h-4 text-rose-400 animate-pulse" />
+                <span>Hệ Thống Khảo Thí Y Khoa OSCE • DYNEX</span>
+              </div>
             </div>
 
             <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
@@ -275,6 +332,75 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
               <br />
               <strong className="text-rose-400">🛡️ Cam kết bảo mật: Đáp án tuyệt đối KHÔNG hiển thị trước, chỉ công bố bảng điểm khi hoàn thành đủ các trạm!</strong>
             </p>
+
+            {/* Quick Action Buttons for Teachers / Creators (Hidden in Candidate Link Mode) */}
+            {!isExamCandidateMode && (
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateExamModalOpen(true)}
+                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 via-red-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-black text-xs shadow-lg shadow-rose-600/30 flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4 text-white" />
+                  <span>+ Tạo Đề Thi Chạy Trạm Mới (AI)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsSavedExamsModalOpen(true)}
+                  className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-bold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-sm"
+                >
+                  <FileText className="w-4 h-4 text-cyan-400" />
+                  <span>Kho Đề Đã Tạo</span>
+                </button>
+              </div>
+            )}
+
+            {/* Active Exam Paper Loaded Banner */}
+            {activeExamPaper && (
+              <div className="p-4 bg-gradient-to-r from-rose-950/70 via-indigo-950/70 to-slate-900 border border-rose-500/50 rounded-2xl text-left space-y-2 shadow-xl animate-fadeIn">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase text-rose-400 tracking-wider flex items-center gap-1.5">
+                    <Flame className="w-3.5 h-3.5 fill-current" />
+                    ĐỀ THI CHÍNH THỨC ĐÃ CHỌN
+                  </span>
+                  {!isExamCandidateMode && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveExamPaper(null);
+                        setSelectedLessonIds([]);
+                      }}
+                      className="text-[11px] text-slate-400 hover:text-rose-300 underline cursor-pointer"
+                    >
+                      Đổi đề khác
+                    </button>
+                  )}
+                </div>
+
+                <h3 className="text-base sm:text-lg font-black text-white">{activeExamPaper.title}</h3>
+
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="px-2.5 py-0.5 rounded-full bg-rose-600/30 text-rose-300 font-bold border border-rose-500/40">
+                    Môn: {activeExamPaper.subject}
+                  </span>
+                  <span className="text-slate-300 font-mono">
+                    • {activeExamPaper.totalStations} Trạm • {activeExamPaper.timePerStation} Giây/Trạm
+                  </span>
+                  {activeExamPaper.generationStrategy === 'balanced_distribution' ? (
+                    <span className="text-emerald-400 text-[11px] font-semibold">⚖️ Phân bổ đều</span>
+                  ) : (
+                    <span className="text-amber-400 text-[11px] font-semibold">🎲 Ngẫu nhiên</span>
+                  )}
+                </div>
+
+                {activeExamPaper.notes && (
+                  <p className="text-xs text-slate-400 italic bg-black/40 p-2 rounded-xl border border-slate-800">
+                    {activeExamPaper.notes}
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Exam Config Box */}
             <div className="bg-slate-950/90 border border-slate-800 rounded-3xl p-6 sm:p-8 text-left space-y-5 shadow-2xl">
@@ -567,10 +693,14 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
                       </div>
 
                       {/* Direction Pointer Arrow Pin on Top */}
-                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex flex-col items-center animate-bounce z-40">
-                        <div className="w-4 h-4 bg-rose-500 rotate-45 border-2 border-white shadow-[0_0_15px_#f43f5e] flex items-center justify-center">
-                          <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                      <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex flex-col items-center animate-bounce z-40 pointer-events-none filter drop-shadow-[0_2px_10px_rgba(244,63,94,0.9)]">
+                        <div className="px-2 py-0.5 rounded-full bg-rose-500 border border-rose-300 text-white text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md">
+                          <span>Chỉ điểm</span>
                         </div>
+                        {/* SVG Downward Pointer Arrow */}
+                        <svg className="w-5 h-5 text-rose-500 -mt-1 drop-shadow" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 21L4 11H9V3H15V11H20L12 21Z" stroke="#000" strokeWidth="1.5" strokeLinejoin="round" />
+                        </svg>
                       </div>
                     </div>
                   );
@@ -888,6 +1018,40 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
           setIsDeckSelectorOpen(false);
           soundService.playTick();
         }}
+      />
+
+      {/* Create OSCE Exam Modal */}
+      <CreateOsceExamModal
+        isOpen={isCreateExamModalOpen}
+        onClose={() => setIsCreateExamModalOpen(false)}
+        projects={projects}
+        onExamCreated={(newExam) => {
+          setActiveExamPaper(newExam);
+          setTotalStationsCount(newExam.totalStations);
+          setSecondsPerStation(newExam.timePerStation);
+          setSelectedLessonIds(newExam.selectedLessonIds || []);
+        }}
+        onLaunchExam={(newExam) => {
+          setActiveExamPaper(newExam);
+          setTotalStationsCount(newExam.totalStations);
+          setSecondsPerStation(newExam.timePerStation);
+          setSelectedLessonIds(newExam.selectedLessonIds || []);
+          handleStartExam();
+        }}
+      />
+
+      {/* Saved Exams Bank Modal */}
+      <SavedExamsModal
+        isOpen={isSavedExamsModalOpen}
+        onClose={() => setIsSavedExamsModalOpen(false)}
+        onSelectExam={(chosenExam) => {
+          setActiveExamPaper(chosenExam);
+          setTotalStationsCount(chosenExam.totalStations);
+          setSecondsPerStation(chosenExam.timePerStation);
+          setSelectedLessonIds(chosenExam.selectedLessonIds || []);
+          soundService.playSuccess();
+        }}
+        onOpenCreateExam={() => setIsCreateExamModalOpen(true)}
       />
     </div>
   );

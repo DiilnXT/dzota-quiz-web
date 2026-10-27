@@ -37,6 +37,7 @@ interface StudentPortalProps {
   onOpenCreateModal?: () => void
   onOpenShare?: (lesson: Lesson) => void
   onOpenDeckSelector?: () => void
+  onOpenCreateExamModal?: () => void
 }
 
 export default function StudentPortal({
@@ -48,7 +49,8 @@ export default function StudentPortal({
   onOpenClassroomManager,
   onOpenCreateModal,
   onOpenShare,
-  onOpenDeckSelector
+  onOpenDeckSelector,
+  onOpenCreateExamModal
 }: StudentPortalProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
@@ -223,6 +225,16 @@ export default function StudentPortal({
                 >
                   <PlusCircle className="w-4 h-4 text-emerald-200" />
                   <span>+ Tạo Bài Học / Chương Mới</span>
+                </button>
+              )}
+
+              {onOpenCreateExamModal && (
+                <button
+                  onClick={onOpenCreateExamModal}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 via-red-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-black text-xs shadow-lg shadow-rose-600/30 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+                >
+                  <Flame className="w-4 h-4 text-white" />
+                  <span>+ Tạo Đề Thi Chạy Trạm (OSCE)</span>
                 </button>
               )}
 
