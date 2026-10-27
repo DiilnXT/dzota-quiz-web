@@ -23,7 +23,8 @@ import {
   MessageCircle,
   GraduationCap,
   Clock,
-  Plus
+  Plus,
+  Activity
 } from 'lucide-react'
 import { useTheme } from '../ThemeContext'
 
@@ -112,6 +113,7 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
   const isSettingsActive = isDashboardActive && activeTab === 'settings'
   const isProfileActive = isDashboardActive && activeTab === 'profile'
   const isNotebookNDActive = pathname.startsWith('/notebook') || (isDashboardActive && activeTab === 'notebook_nd')
+  const isDynexActive = pathname.startsWith('/dynex')
 
   // Helper cho style nav item
   const getNavItemClass = (isActive: boolean) =>
@@ -268,6 +270,29 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                     </span>
                   </Link>
 
+                  <Link
+                    href="/dynex"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-left cursor-pointer ${
+                      isDynexActive
+                        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Activity size={17} className={isDynexActive ? 'text-white' : 'text-emerald-500'} />
+                      <div>
+                        <span className="block leading-tight">Giải Phẫu Y Khoa (DYNEX)</span>
+                        <span className="block text-[10px] opacity-75 font-normal">Bản quyền: Nhật Duy</span>
+                      </div>
+                    </div>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-extrabold ${
+                      isDynexActive ? 'bg-white/20 text-white' : 'bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400'
+                    }`}>
+                      OSCE
+                    </span>
+                  </Link>
+
                   <button
                     onClick={() => handleNavigateTab('history')}
                     className={getNavItemClass(isHistoryActive)}
@@ -396,6 +421,29 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                     isNotebookNDActive ? 'bg-white/20 text-white' : 'bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400'
                   }`}>
                     AI LM
+                  </span>
+                </Link>
+
+                <Link
+                  href="/dynex"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-left cursor-pointer ${
+                    isDynexActive
+                      ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Activity size={17} className={isDynexActive ? 'text-white' : 'text-emerald-500'} />
+                    <div>
+                      <span className="block leading-tight">Giải Phẫu Y Khoa (DYNEX)</span>
+                      <span className="block text-[10px] opacity-75 font-normal">Bản quyền: Nhật Duy</span>
+                    </div>
+                  </div>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-extrabold ${
+                    isDynexActive ? 'bg-white/20 text-white' : 'bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400'
+                  }`}>
+                    Studio
                   </span>
                 </Link>
 
