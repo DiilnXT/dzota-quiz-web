@@ -24,7 +24,8 @@ import {
   GraduationCap,
   Clock,
   Plus,
-  Activity
+  Activity,
+  ExternalLink
 } from 'lucide-react'
 import { useTheme } from '../ThemeContext'
 
@@ -270,27 +271,26 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                     </span>
                   </Link>
 
-                  <button
-                    onClick={() => handleNavigateTab('dynex')}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-left cursor-pointer ${
-                      isDynexActive
-                        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/60'
-                    }`}
+                  <Link
+                    href="/dynex"
+                    target="_blank"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition-all text-left cursor-pointer group"
                   >
                     <div className="flex items-center gap-3">
-                      <Activity size={17} className={isDynexActive ? 'text-white' : 'text-emerald-500'} />
+                      <Activity size={17} className="text-emerald-500 group-hover:scale-110 transition-transform" />
                       <div>
                         <span className="block leading-tight">Giải Phẫu Y Khoa (DYNEX)</span>
                         <span className="block text-[10px] opacity-75 font-normal">Bản quyền: Nhật Duy</span>
                       </div>
                     </div>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-extrabold ${
-                      isDynexActive ? 'bg-white/20 text-white' : 'bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400'
-                    }`}>
-                      OSCE
-                    </span>
-                  </button>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-md font-extrabold bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400">
+                        OSCE
+                      </span>
+                      <ExternalLink size={13} className="text-slate-400 group-hover:text-emerald-500" />
+                    </div>
+                  </Link>
 
                   <button
                     onClick={() => handleNavigateTab('history')}
@@ -423,27 +423,26 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                   </span>
                 </Link>
 
-                <button
-                  onClick={() => handleNavigateTab('dynex')}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-left cursor-pointer ${
-                    isDynexActive
-                      ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/60'
-                  }`}
+                <Link
+                  href="/dynex"
+                  target="_blank"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition-all text-left cursor-pointer group"
                 >
                   <div className="flex items-center gap-3">
-                    <Activity size={17} className={isDynexActive ? 'text-white' : 'text-emerald-500'} />
+                    <Activity size={17} className="text-emerald-500 group-hover:scale-110 transition-transform" />
                     <div>
                       <span className="block leading-tight">Giải Phẫu Y Khoa (DYNEX)</span>
                       <span className="block text-[10px] opacity-75 font-normal">Bản quyền: Nhật Duy</span>
                     </div>
                   </div>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-extrabold ${
-                    isDynexActive ? 'bg-white/20 text-white' : 'bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400'
-                  }`}>
-                    Studio
-                  </span>
-                </button>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-md font-extrabold bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400">
+                      Studio
+                    </span>
+                    <ExternalLink size={13} className="text-slate-400 group-hover:text-emerald-500" />
+                  </div>
+                </Link>
 
                 <Link
                   href="/creator?view=bank"

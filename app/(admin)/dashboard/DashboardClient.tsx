@@ -61,7 +61,6 @@ import TeacherChatTab from './TeacherChatTab'
 import StudentStudyTab from './StudentStudyTab'
 import MistakeNotebookTab from './MistakeNotebookTab'
 import NoteBookNDTab from './NoteBookNDTab'
-import DynexTab from './DynexTab'
 
 interface TeacherQuiz {
   id: string
@@ -1552,13 +1551,6 @@ export default function DashboardClient({
       ───────────────────────────────────────────────────────────── */}
       {activeTab === 'notebook_nd' && (
         <NoteBookNDTab currentUser={currentUser} showToast={showToast} />
-      )}
-
-      {/* ─────────────────────────────────────────────────────────────
-          TAB: DYNEX Y KHOA (GIẢI PHẪU & THI CHẠY TRẠM AI - BẢN QUYỀN NHẬT DUY)
-      ───────────────────────────────────────────────────────────── */}
-      {activeTab === 'dynex' && (
-        <DynexTab currentUser={currentUser} />
       )}
 
       {/* ─────────────────────────────────────────────────────────────
