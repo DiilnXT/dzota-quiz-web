@@ -100,6 +100,8 @@ export default function MedicalSpottingExam({
   const [candidateName, setCandidateName] = useState('Bác Sĩ / Sinh Viên Y Khoa');
   const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>(activeExamPaper?.selectedLessonIds || []);
   const [isDeckSelectorOpen, setIsDeckSelectorOpen] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   // Synchronize when initialExamPaper changes
   useEffect(() => {
@@ -138,6 +140,16 @@ export default function MedicalSpottingExam({
 
   // Start Exam
   const handleStartExam = () => {
+    // If exam has password protection, verify it
+    if (activeExamPaper?.accessPassword) {
+      if (passwordInput.trim() !== activeExamPaper.accessPassword.trim()) {
+        setPasswordError('Mật khẩu phòng thi không chính xác! Vui lòng kiểm tra lại.');
+        soundService.playWarning();
+        return;
+      }
+    }
+    setPasswordError('');
+
     let selected = [];
 
     // If a pre-generated exam paper is chosen, use its exact stations
@@ -294,47 +306,170 @@ export default function MedicalSpottingExam({
 
   return (
     <div className="max-w-7xl mx-auto space-y-4">
-      {/* 1. SETUP SCREEN */}
+      {/* 1. SETUP / CANDIDATE LOBBY SCREEN */}
       {examStatus === 'setup' && (
-        <div className="relative rounded-3xl p-8 sm:p-12 shadow-2xl overflow-hidden border border-rose-500/30 bg-slate-900/90 backdrop-blur-2xl">
-          {/* Ambient Lighting Orbs */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-rose-500/10 rounded-full blur-3xl pointer-events-none"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        (isExamCandidateMode || activeExamPaper) ? (
+          /* ─── THÍ SINH VÀO PHÒNG THI (DZOTA CANDIDATE WAITING LOBBY) ─── */
+          <div className="relative rounded-3xl p-6 sm:p-10 shadow-2xl overflow-hidden border border-rose-500/40 bg-slate-900/95 backdrop-blur-2xl max-w-2xl mx-auto animate-fadeIn">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="max-w-2xl mx-auto text-center space-y-6 relative z-10">
-            {/* Header Badge & Candidate Exit Button */}
-            <div className="flex items-center justify-between gap-2">
-              {onExitExam && (
-                <button
-                  type="button"
-                  onClick={onExitExam}
-                  className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700/80 text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
-                  title="Quay lại Dzota"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Thoát Phòng Thi</span>
-                </button>
+            <div className="space-y-6 relative z-10 text-center">
+              {/* Top Navigation */}
+              <div className="flex items-center justify-between gap-2">
+                {onExitExam && (
+                  <button
+                    type="button"
+                    onClick={onExitExam}
+                    className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Thoát Phòng Thi</span>
+                  </button>
+                )}
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-950/70 border border-rose-500/50 text-rose-300 text-[11px] font-black uppercase tracking-wider mx-auto">
+                  <Activity className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+                  <span>Sảnh Chờ Thí Sinh OSCE • DYNEX</span>
+                </div>
+              </div>
+
+              {/* Title & Subject */}
+              <div className="space-y-2">
+                <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/10 text-indigo-300 border border-indigo-500/30">
+                  Môn Học: {activeExamPaper?.subject || 'Giải Phẫu Y Khoa'}
+                </span>
+                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-snug">
+                  {activeExamPaper?.title || 'Kỳ Thi Chạy Trạm Giải Phẫu OSCE'}
+                </h1>
+                <p className="text-xs text-slate-400">
+                  Giảng viên ra đề: <strong className="text-white font-bold">{activeExamPaper?.author || 'Nhật Duy (Dzota Y Khoa)'}</strong>
+                </p>
+              </div>
+
+              {/* Specs Card */}
+              <div className="grid grid-cols-3 gap-3 bg-[#0B0F19]/90 border border-slate-800 rounded-2xl p-4 text-center">
+                <div>
+                  <div className="text-[10px] uppercase font-bold text-slate-400">Số Lượng Trạm</div>
+                  <div className="text-xl sm:text-2xl font-black text-rose-400 font-mono mt-0.5">
+                    {activeExamPaper?.totalStations || totalStationsCount}
+                  </div>
+                  <div className="text-[10px] text-slate-500">Chỉ điểm che kín</div>
+                </div>
+
+                <div>
+                  <div className="text-[10px] uppercase font-bold text-slate-400">Thời Gian</div>
+                  <div className="text-xl sm:text-2xl font-black text-cyan-400 font-mono mt-0.5">
+                    {activeExamPaper?.timePerStation || secondsPerStation}s
+                  </div>
+                  <div className="text-[10px] text-slate-500">Mỗi trạm thi</div>
+                </div>
+
+                <div>
+                  <div className="text-[10px] uppercase font-bold text-slate-400">Quy Chế</div>
+                  <div className="text-xl sm:text-2xl font-black text-emerald-400 font-mono mt-0.5">
+                    100%
+                  </div>
+                  <div className="text-[10px] text-slate-500">Bảo mật đáp án</div>
+                </div>
+              </div>
+
+              {/* Exam Notes */}
+              {activeExamPaper?.notes && (
+                <div className="p-3 bg-black/40 border border-slate-800 rounded-2xl text-xs text-slate-300 italic text-left">
+                  {activeExamPaper.notes}
+                </div>
               )}
 
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-rose-950/70 border border-rose-500/50 text-rose-300 text-xs font-bold uppercase tracking-widest shadow-lg shadow-rose-950/50 mx-auto">
-                <Activity className="w-4 h-4 text-rose-400 animate-pulse" />
-                <span>Hệ Thống Khảo Thí Y Khoa OSCE • DYNEX</span>
+              {/* Candidate Info Input Box */}
+              <div className="bg-[#0B0F19] border border-slate-800 rounded-2xl p-4 sm:p-5 text-left space-y-3.5 shadow-inner">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                    Họ Và Tên Thí Sinh / Mã Số Sinh Viên: *
+                  </label>
+                  <input
+                    type="text"
+                    value={candidateName}
+                    onChange={(e) => setCandidateName(e.target.value)}
+                    placeholder="vd: Nguyễn Văn A - Y47..."
+                    className="w-full px-4 py-2.5 bg-[#111827] border border-slate-700 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-rose-500"
+                  />
+                </div>
+
+                {activeExamPaper?.accessPassword && (
+                  <div>
+                    <label className="block text-xs font-bold text-amber-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>Mật Khẩu Phòng Thi (PIN): *</span>
+                    </label>
+                    <input
+                      type="password"
+                      value={passwordInput}
+                      onChange={(e) => {
+                        setPasswordInput(e.target.value);
+                        setPasswordError('');
+                      }}
+                      placeholder="Nhập mã PIN đề thi..."
+                      className="w-full px-4 py-2.5 bg-[#111827] border border-amber-500/60 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-amber-400"
+                    />
+                    {passwordError && (
+                      <p className="text-xs text-rose-400 font-bold mt-1.5">{passwordError}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Launch Exam Button */}
+              <button
+                type="button"
+                onClick={handleStartExam}
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-rose-600 via-red-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-black text-sm shadow-xl shadow-rose-600/40 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Play className="w-5 h-5 fill-current" />
+                <span>BẮT ĐẦU VÀO PHÒNG THI LÀM BÀI ({activeExamPaper?.totalStations || totalStationsCount} TRẠM)</span>
+              </button>
+
+              <div className="text-[11px] text-slate-500">
+                Hệ thống tự động lưu kết quả và chấm điểm thông minh sau khi hoàn thành
               </div>
             </div>
+          </div>
+        ) : (
+          /* ─── TỰ DO LUYỆN TẬP KHÔNG THEO ĐỀ (PRACTICE SANDBOX) ─── */
+          <div className="relative rounded-3xl p-6 sm:p-10 shadow-2xl overflow-hidden border border-rose-500/30 bg-slate-900/90 backdrop-blur-2xl">
+            {/* Ambient Lighting Orbs */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-rose-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-            <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
-              Phòng Thi Chạy Trạm Giải Phẫu
-            </h1>
+            <div className="max-w-2xl mx-auto text-center space-y-6 relative z-10">
+              <div className="flex items-center justify-between gap-2">
+                {onExitExam && (
+                  <button
+                    type="button"
+                    onClick={onExitExam}
+                    className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700/80 text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                    title="Quay lại Dzota"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Thoát Phòng Thi</span>
+                  </button>
+                )}
 
-            <p className="text-sm text-slate-300 leading-relaxed">
-              Mô phỏng áp lực thực tế của kỳ thi chạy trạm tại các giảng đường Y Dược danh tiếng.
-              Mỗi trạm thi hiển thị một chỉ điểm bí mật được <strong>che kín 100%</strong>. Thí sinh quan sát sơ đồ và gõ tên giải phẫu trước khi chuông hết giờ!
-              <br />
-              <strong className="text-rose-400">🛡️ Cam kết bảo mật: Đáp án tuyệt đối KHÔNG hiển thị trước, chỉ công bố bảng điểm khi hoàn thành đủ các trạm!</strong>
-            </p>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-rose-950/70 border border-rose-500/50 text-rose-300 text-xs font-bold uppercase tracking-widest shadow-lg shadow-rose-950/50 mx-auto">
+                  <Activity className="w-4 h-4 text-rose-400 animate-pulse" />
+                  <span>Hệ Thống Khảo Thí Y Khoa OSCE • DYNEX</span>
+                </div>
+              </div>
 
-            {/* Quick Action Buttons for Teachers / Creators (Hidden in Candidate Link Mode) */}
-            {!isExamCandidateMode && (
+              <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+                Phòng Thi Chạy Trạm Giải Phẫu
+              </h1>
+
+              <p className="text-sm text-slate-300 leading-relaxed">
+                Mô phỏng áp lực thực tế của kỳ thi chạy trạm tại các giảng đường Y Dược danh tiếng.
+                Mỗi trạm thi hiển thị một chỉ điểm bí mật được <strong>che kín 100%</strong>. Thí sinh quan sát sơ đồ và gõ tên giải phẫu trước khi chuông hết giờ!
+              </p>
+
+              {/* Quick Action Buttons */}
               <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
                 <button
                   type="button"
@@ -354,171 +489,113 @@ export default function MedicalSpottingExam({
                   <span>Kho Đề Đã Tạo</span>
                 </button>
               </div>
-            )}
 
-            {/* Active Exam Paper Loaded Banner */}
-            {activeExamPaper && (
-              <div className="p-4 bg-gradient-to-r from-rose-950/70 via-indigo-950/70 to-slate-900 border border-rose-500/50 rounded-2xl text-left space-y-2 shadow-xl animate-fadeIn">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase text-rose-400 tracking-wider flex items-center gap-1.5">
-                    <Flame className="w-3.5 h-3.5 fill-current" />
-                    ĐỀ THI CHÍNH THỨC ĐÃ CHỌN
-                  </span>
-                  {!isExamCandidateMode && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveExamPaper(null);
-                        setSelectedLessonIds([]);
-                      }}
-                      className="text-[11px] text-slate-400 hover:text-rose-300 underline cursor-pointer"
+              {/* Exam Config Box */}
+              <div className="bg-slate-950/90 border border-slate-800 rounded-3xl p-6 sm:p-8 text-left space-y-5 shadow-2xl">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                      Tên Thí Sinh / Mã Sinh Viên:
+                    </label>
+                    <input
+                      type="text"
+                      value={candidateName}
+                      onChange={(e) => setCandidateName(e.target.value)}
+                      placeholder="Bác sĩ / Sinh viên..."
+                      className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-2xl text-xs font-bold text-white focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                      Số Lượng Trạm Thi:
+                    </label>
+                    <select
+                      value={totalStationsCount}
+                      onChange={(e) => setTotalStationsCount(Number(e.target.value))}
+                      className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-2xl text-xs font-bold text-white focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
                     >
-                      Đổi đề khác
-                    </button>
-                  )}
-                </div>
-
-                <h3 className="text-base sm:text-lg font-black text-white">{activeExamPaper.title}</h3>
-
-                <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <span className="px-2.5 py-0.5 rounded-full bg-rose-600/30 text-rose-300 font-bold border border-rose-500/40">
-                    Môn: {activeExamPaper.subject}
-                  </span>
-                  <span className="text-slate-300 font-mono">
-                    • {activeExamPaper.totalStations} Trạm • {activeExamPaper.timePerStation} Giây/Trạm
-                  </span>
-                  {activeExamPaper.generationStrategy === 'balanced_distribution' ? (
-                    <span className="text-emerald-400 text-[11px] font-semibold">⚖️ Phân bổ đều</span>
-                  ) : (
-                    <span className="text-amber-400 text-[11px] font-semibold">🎲 Ngẫu nhiên</span>
-                  )}
-                </div>
-
-                {activeExamPaper.notes && (
-                  <p className="text-xs text-slate-400 italic bg-black/40 p-2 rounded-xl border border-slate-800">
-                    {activeExamPaper.notes}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Exam Config Box */}
-            <div className="bg-slate-950/90 border border-slate-800 rounded-3xl p-6 sm:p-8 text-left space-y-5 shadow-2xl">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Candidate Name */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                    Tên Thí Sinh / Mã Sinh Viên:
-                  </label>
-                  <input
-                    type="text"
-                    value={candidateName}
-                    onChange={(e) => setCandidateName(e.target.value)}
-                    placeholder="Bác sĩ / Sinh viên..."
-                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-2xl text-xs font-bold text-white focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
-                  />
-                </div>
-
-                {/* Total Stations */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                    Số Lượng Trạm Thi:
-                  </label>
-                  <select
-                    value={totalStationsCount}
-                    onChange={(e) => setTotalStationsCount(Number(e.target.value))}
-                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-2xl text-xs font-bold text-white focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
-                  >
-                    <option value={10}>10 Trạm (Khởi động phản xạ)</option>
-                    <option value={15}>15 Trạm (Tăng tốc ghi nhớ)</option>
-                    <option value={20}>20 Trạm (Chuẩn Đề Thi Y Dược Quốc Gia)</option>
-                    <option value={30}>30 Trạm (Thử thách chuyên khoa)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Scope Selection Box */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 bg-slate-900/90 border border-slate-700/80 rounded-2xl">
-                <div>
-                  <span className="text-[10px] font-bold uppercase text-slate-400 block tracking-wider">
-                    Phạm vi đề thi chạy trạm OSCE
-                  </span>
-                  <div className="text-xs font-bold text-white mt-0.5 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                    <span>
-                      {selectedLessonIds.length === 0
-                        ? 'Toàn bộ tất cả hệ cơ quan & bài học'
-                        : `Đã chọn ${selectedLessonIds.length} bài học thực hành`}
-                    </span>
+                      <option value={10}>10 Trạm (Khởi động phản xạ)</option>
+                      <option value={15}>15 Trạm (Tăng tốc ghi nhớ)</option>
+                      <option value={20}>20 Trạm (Chuẩn Đề Thi Y Dược Quốc Gia)</option>
+                      <option value={30}>30 Trạm (Thử thách chuyên khoa)</option>
+                    </select>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {selectedLessonIds.length > 0 && (
+                {/* Scope Selection Box */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 bg-slate-900/90 border border-slate-700/80 rounded-2xl">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-slate-400 block tracking-wider">
+                      Phạm vi đề thi chạy trạm OSCE
+                    </span>
+                    <div className="text-xs font-bold text-white mt-0.5 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                      <span>
+                        {selectedLessonIds.length === 0
+                          ? 'Toàn bộ tất cả hệ cơ quan & bài học'
+                          : `Đã chọn ${selectedLessonIds.length} bài học thực hành`}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {selectedLessonIds.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedLessonIds([])}
+                        className="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                      >
+                        Bỏ lọc
+                      </button>
+                    )}
                     <button
                       type="button"
-                      onClick={() => setSelectedLessonIds([])}
-                      className="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                      onClick={() => setIsDeckSelectorOpen(true)}
+                      className="px-3.5 py-2 rounded-xl bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95"
                     >
-                      Bỏ lọc
+                      <Layers className="w-4 h-4 text-cyan-300" />
+                      <span>Chọn Đa Chương / Đa Bài</span>
                     </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setIsDeckSelectorOpen(true)}
-                    className="px-3.5 py-2 rounded-xl bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95"
-                  >
-                    <Layers className="w-4 h-4 text-cyan-300" />
-                    <span>Chọn Đa Chương / Đa Bài</span>
-                  </button>
+                  </div>
+                </div>
+
+                {/* Time per station */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                    Thời Gian Mỗi Trạm (Tính bằng giây):
+                  </label>
+                  <div className="grid grid-cols-4 gap-2.5">
+                    {[15, 20, 25, 30].map((sec) => (
+                      <button
+                        key={sec}
+                        type="button"
+                        onClick={() => setSecondsPerStation(sec)}
+                        className={`py-2.5 rounded-2xl text-xs font-bold transition-all ${
+                          secondsPerStation === sec
+                            ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/40 scale-105 border border-rose-400'
+                            : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                        }`}
+                      >
+                        {sec} Giây
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              {/* Time per station */}
-              <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                  Thời Gian Mỗi Trạm (Tính bằng giây):
-                </label>
-                <div className="grid grid-cols-4 gap-2.5">
-                  {[15, 20, 25, 30].map((sec) => (
-                    <button
-                      key={sec}
-                      type="button"
-                      onClick={() => setSecondsPerStation(sec)}
-                      className={`py-2.5 rounded-2xl text-xs font-bold transition-all ${
-                        secondsPerStation === sec
-                          ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/40 scale-105 border border-rose-400'
-                          : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
-                      }`}
-                    >
-                      {sec} Giây
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="p-4 bg-rose-950/30 border border-rose-800/40 rounded-2xl text-xs text-rose-200 flex items-start gap-3">
-                <ShieldCheck className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-                <span className="leading-relaxed">
-                  Trạm thi sử dụng ô che đen đặc <strong>100% Opaque Solid Mask</strong>, hoàn toàn kín mít, ngăn chặn mọi hình thức nhìn xuyên. Hệ thống tự động chấm điểm thông minh sau trạm cuối cùng!
-                </span>
-              </div>
-            </div>
-
-            {/* Launch Button */}
-            <button
-              onClick={handleStartExam}
-              className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-gradient-to-r from-rose-500 via-red-600 to-rose-600 hover:from-rose-400 hover:to-red-500 text-white font-black text-sm shadow-2xl shadow-rose-600/40 active:scale-95 transition-all flex items-center justify-center gap-2.5 mx-auto"
-            >
-              <Play className="w-5 h-5 fill-current" />
-              <span>BẮT ĐẦU VÀO PHÒNG THI CHẠY TRẠM ({totalStationsCount} TRẠM)</span>
-            </button>
-
-            <div className="text-xs text-slate-500 font-semibold pt-1">
-              Bản quyền phần mềm y khoa: <strong className="text-cyan-400">Nhật Duy</strong>
+              {/* Launch Button */}
+              <button
+                type="button"
+                onClick={handleStartExam}
+                className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-gradient-to-r from-rose-500 via-red-600 to-rose-600 hover:from-rose-400 hover:to-red-500 text-white font-black text-sm shadow-2xl shadow-rose-600/40 active:scale-95 transition-all flex items-center justify-center gap-2.5 mx-auto cursor-pointer"
+              >
+                <Play className="w-5 h-5 fill-current" />
+                <span>BẮT ĐẦU VÀO PHÒNG THI CHẠY TRẠM ({totalStationsCount} TRẠM)</span>
+              </button>
             </div>
           </div>
-        </div>
+        )
       )}
 
       {/* 2. EXAM RUNNING SCREEN */}

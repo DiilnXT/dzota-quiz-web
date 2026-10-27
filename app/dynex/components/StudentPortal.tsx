@@ -21,7 +21,8 @@ import {
   AlertCircle,
   PlusCircle,
   Share2,
-  Layers
+  Layers,
+  FileText
 } from 'lucide-react'
 import { Project, Lesson, storageService } from '../services/storageService'
 import { authService, DynexUser } from '../services/authService'
@@ -38,6 +39,7 @@ interface StudentPortalProps {
   onOpenShare?: (lesson: Lesson) => void
   onOpenDeckSelector?: () => void
   onOpenCreateExamModal?: () => void
+  onOpenExamManagement?: () => void
 }
 
 export default function StudentPortal({
@@ -50,7 +52,8 @@ export default function StudentPortal({
   onOpenCreateModal,
   onOpenShare,
   onOpenDeckSelector,
-  onOpenCreateExamModal
+  onOpenCreateExamModal,
+  onOpenExamManagement
 }: StudentPortalProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
@@ -235,6 +238,16 @@ export default function StudentPortal({
                 >
                   <Flame className="w-4 h-4 text-white" />
                   <span>+ Tạo Đề Thi Chạy Trạm (OSCE)</span>
+                </button>
+              )}
+
+              {onOpenExamManagement && (
+                <button
+                  onClick={onOpenExamManagement}
+                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-300 hover:text-white border border-slate-700 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                >
+                  <FileText className="w-4 h-4 text-cyan-400" />
+                  <span>Kho Đề Thi Đã Tạo</span>
                 </button>
               )}
 

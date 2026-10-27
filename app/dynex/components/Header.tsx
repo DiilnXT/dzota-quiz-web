@@ -19,7 +19,8 @@ import {
   ExternalLink,
   GraduationCap,
   Users,
-  PlusCircle
+  PlusCircle,
+  FileText
 } from 'lucide-react'
 import { soundService } from '../services/soundService'
 
@@ -152,6 +153,19 @@ export default function Header({
               >
                 <Flame className="w-3.5 h-3.5 fill-current" />
                 <span>Thi Chạy Trạm</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentTab('exams')}
+                className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap ${
+                  currentTab === 'exams'
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="hidden lg:inline">Quản Lý Đề Thi</span>
+                <span className="lg:hidden">Kho Đề</span>
               </button>
 
               <button

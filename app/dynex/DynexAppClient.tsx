@@ -16,6 +16,7 @@ import LoginModal from './components/LoginModal';
 import CreateContentModal from './components/CreateContentModal';
 import DeckSelectorModal from './components/DeckSelectorModal';
 import CreateOsceExamModal from './components/CreateOsceExamModal';
+import ExamManagementTab from './components/ExamManagementTab';
 import { storageService, Project, Lesson, ImageItem, Mask, DynexExamPaper } from './services/storageService';
 import { authService, DynexUser } from './services/authService';
 import { getStoredApiKey, getStoredModel } from './services/geminiService';
@@ -31,7 +32,7 @@ interface DynexAppClientProps {
   isEmbedded?: boolean;
 }
 
-export type DynexTabType = 'learn' | 'flashcard' | 'exam' | 'admin' | 'classes' | 'history';
+export type DynexTabType = 'learn' | 'flashcard' | 'exam' | 'exams' | 'admin' | 'classes' | 'history';
 
 function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientProps) {
   const searchParams = useSearchParams();
@@ -100,16 +101,17 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
     const examIdParam = searchParams.get('examId');
 
     if (examIdParam) {
-      const foundExam = storageService.getExamById(examIdParam);
-      if (foundExam) {
-        setSelectedExamPaper(foundExam);
-      }
+      storageService.getExamByIdAsync(examIdParam).then((foundExam) => {
+        if (foundExam) {
+          setSelectedExamPaper(foundExam);
+        }
+      });
       setIsExamCandidateMode(true);
       setCurrentTab('exam');
     } else if (tabParam === 'exam' || searchParams.get('mode') === 'exam') {
       setIsExamCandidateMode(true);
       setCurrentTab('exam');
-    } else if (tabParam && ['learn', 'admin', 'flashcard', 'exam', 'classes', 'history'].includes(tabParam)) {
+    } else if (tabParam && ['learn', 'admin', 'flashcard', 'exam', 'exams', 'classes', 'history'].includes(tabParam)) {
       setCurrentTab(tabParam as DynexTabType);
     }
 
@@ -555,6 +557,7 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
             }}
             onOpenDeckSelector={() => setIsDeckSelectorOpen(true)}
             onOpenCreateExamModal={() => setIsCreateExamModalOpen(true)}
+            onOpenExamManagement={() => setCurrentTab('exams')}
           />
         )}
 
@@ -720,6 +723,19 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
           />
         )}
 
+        {/* Tab 4: Exam Management & OSCE Paper Bank (Tư duy Dzota Tests) */}
+        {currentTab === 'exams' && (
+          <ExamManagementTab
+            projects={projects}
+            onOpenCreateExam={() => setIsCreateExamModalOpen(true)}
+            onLaunchExam={(exam) => {
+              setSelectedExamPaper(exam);
+              setIsExamCandidateMode(true);
+              setCurrentTab('exam');
+            }}
+          />
+        )}
+
         {/* Tab 5: Classroom & Permission Whitelist Manager */}
         {currentTab === 'classes' && (
           <ClassroomManager
@@ -836,6 +852,9 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
           setSelectedExamPaper(newExam);
           setIsExamCandidateMode(true);
           setCurrentTab('exam');
+        }}
+        onGoToExamManagement={() => {
+          setCurrentTab('exams');
         }}
       />
     </div>

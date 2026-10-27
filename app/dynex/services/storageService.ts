@@ -123,6 +123,34 @@ export const INITIAL_CLASSROOMS: DynexClassroom[] = [
   }
 ]
 
+export const INITIAL_SAVED_EXAMS: DynexExamPaper[] = [
+  {
+    id: 'exam_osce_mau_tieu_hoa',
+    title: 'Đề Thi Chạy Trạm OSCE Chuẩn: Hệ Tiêu Hóa, Gan Mật & Tụy (Đề Mẫu K47)',
+    subject: 'Giải Phẫu Học 1',
+    timePerStation: 20,
+    totalStations: 8,
+    notes: 'Đề thi chuẩn 8 trạm giải phẫu mặt trước gan, môn vị, tá tràng và tụy. Ô che 100% đặc kín, âm thanh chuông chuyển trạm.',
+    generationStrategy: 'balanced_distribution',
+    avoidConsecutiveSameImage: true,
+    selectedLessonIds: ['les_gan_tuy_da_day'],
+    createdAt: new Date().toISOString(),
+    author: 'Nhật Duy (Dzota Y Khoa)',
+    stations: SAMPLE_ANATOMY_FALLBACK_MASKS.map((m, idx) => ({
+      stationIndex: idx,
+      lessonId: 'les_gan_tuy_da_day',
+      lessonTitle: 'Bài 1: Giải phẫu Gan, Đường Mật, Môn Vị, Tá Tràng & Tuyến Tụy',
+      categoryName: 'Hệ Tiêu Hóa (Digestive System)',
+      subFolderName: 'Chương 1: Các Tạng Dưới Hoành & Đường Mật',
+      imageId: 'img_gan_1',
+      imageTitle: 'Sơ đồ Giải Phẫu Gan - Đường Mật - Dạ Dày - Tụy (Chuẩn Giáo Trình)',
+      imageUrl: sampleAnatomyUrl,
+      targetMask: { ...m },
+      allImageMasks: SAMPLE_ANATOMY_FALLBACK_MASKS.map(item => ({ ...item }))
+    }))
+  }
+]
+
 export const INITIAL_DATA: Project[] = [
   {
     id: 'proj_med_1',
@@ -412,17 +440,18 @@ export const storageService = {
 
   // ─── SAVED OSCE EXAM PAPERS MANAGEMENT ───
   getSavedExams(): DynexExamPaper[] {
-    if (typeof window === 'undefined') return []
+    if (typeof window === 'undefined') return INITIAL_SAVED_EXAMS
     try {
       const raw = localStorage.getItem(STORAGE_KEY_SAVED_EXAMS)
       if (raw) {
         const parsed = JSON.parse(raw)
-        if (Array.isArray(parsed)) return parsed
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed
       }
     } catch (e) {
       console.error('Error reading saved exams from storage:', e)
     }
-    return []
+    this.saveExam(INITIAL_SAVED_EXAMS[0])
+    return INITIAL_SAVED_EXAMS
   },
 
   saveExam(exam: DynexExamPaper): void {
@@ -436,6 +465,13 @@ export const storageService = {
         list.unshift(exam)
       }
       localStorage.setItem(STORAGE_KEY_SAVED_EXAMS, JSON.stringify(list))
+
+      // Sync to API in background so links work across devices/browsers
+      fetch('/api/dynex/exams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(exam)
+      }).catch(err => console.warn('Background sync exam to API error:', err))
     } catch (e) {
       console.error('Error saving exam to storage:', e)
     }
@@ -447,6 +483,11 @@ export const storageService = {
       const list = this.getSavedExams()
       const filtered = list.filter(e => e.id !== examId)
       localStorage.setItem(STORAGE_KEY_SAVED_EXAMS, JSON.stringify(filtered))
+
+      // Delete from API in background
+      fetch(`/api/dynex/exams?id=${encodeURIComponent(examId)}`, {
+        method: 'DELETE'
+      }).catch(err => console.warn('Background delete exam from API error:', err))
     } catch (e) {
       console.error('Error deleting exam:', e)
     }
@@ -454,7 +495,31 @@ export const storageService = {
 
   getExamById(examId: string): DynexExamPaper | null {
     const list = this.getSavedExams()
-    return list.find(e => e.id === examId) || null
+    const found = list.find(e => e.id === examId)
+    if (found) return found
+    const fallbackDefault = INITIAL_SAVED_EXAMS.find(e => e.id === examId)
+    return fallbackDefault || null
+  },
+
+  async getExamByIdAsync(examId: string): Promise<DynexExamPaper | null> {
+    const local = this.getExamById(examId)
+    if (local) return local
+
+    try {
+      const res = await fetch(`/api/dynex/exams?id=${encodeURIComponent(examId)}`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.exam) {
+          // Cache to local storage
+          this.saveExam(data.exam)
+          return data.exam
+        }
+      }
+    } catch (e) {
+      console.warn('Error fetching exam by ID from API:', e)
+    }
+
+    return null
   },
 
   // ─── SMART OSCE EXAM STATION GENERATOR ───
