@@ -1,5 +1,6 @@
 // DYNEX Google Auth & User Session Service
-// Seamlessly integrated with Dzota Quiz Authentication System
+// Seamlessly integrated with Dzota Quiz Authentication System & Classroom Whitelist
+import { storageService, DynexClassroom } from './storageService'
 
 const STORAGE_KEY_USER = 'dynex_current_user_v2'
 
@@ -96,57 +97,115 @@ export const authService = {
 
   checkAccess(lesson: any, user: DynexUser | null = null): {
     allowed: boolean
-    reason?: string
+    reason?: 'admin' | 'public' | 'classroom' | 'whitelist' | 'pin_unlocked' | 'restricted'
+    classroomName?: string
     message?: string
     requiredEmails?: string[]
   } {
     const currentUser = user || this.getCurrentUser()
     if (!lesson) return { allowed: true }
 
-    const accessMode = lesson.accessMode || 'public' // 'public' | 'vip_emails' | 'password'
+    const cleanEmail = (currentUser?.email || '').trim().toLowerCase()
 
-    // Admin always has full access
+    // 1. Admin & Creator always have complete access
     if (
       currentUser?.role === 'ADMIN' ||
-      currentUser?.email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com'
+      cleanEmail === 'lenhatduy.vietnam@gmail.com'
     ) {
       return { allowed: true, reason: 'admin' }
     }
 
+    // 2. Check if already unlocked via PIN in sessionStorage
+    if (typeof window !== 'undefined') {
+      const unlockedKey = `dynex_unlocked_${lesson.id}`
+      if (sessionStorage.getItem(unlockedKey) === 'true') {
+        return { allowed: true, reason: 'pin_unlocked' }
+      }
+    }
+
+    // 3. Check Classroom membership (Highest priority for student management)
+    if (currentUser?.isLoggedIn && cleanEmail) {
+      try {
+        const classrooms = storageService.getClassrooms()
+        const assignedClass = classrooms.find(cls => 
+          cls.assignedLessonIds?.includes(lesson.id) &&
+          cls.studentEmails?.some(e => e.toLowerCase() === cleanEmail)
+        )
+        if (assignedClass) {
+          return { 
+            allowed: true, 
+            reason: 'classroom', 
+            classroomName: assignedClass.name 
+          }
+        }
+      } catch (err) {
+        console.error('Error verifying classroom access:', err)
+      }
+    }
+
+    // 4. Public access mode
+    const accessMode = lesson.accessMode || 'public' // 'public' | 'vip_emails' | 'password'
     if (accessMode === 'public') {
       return { allowed: true, reason: 'public' }
     }
 
+    // 5. Individual email whitelist
     if (accessMode === 'vip_emails') {
       const allowedList = (lesson.allowedEmails || []).map((e: string) => (e || '').trim().toLowerCase())
-      if (
-        currentUser?.isLoggedIn &&
-        currentUser?.email &&
-        allowedList.includes(currentUser.email.toLowerCase())
-      ) {
-        return { allowed: true, reason: 'whitelisted' }
+      if (currentUser?.isLoggedIn && cleanEmail && allowedList.includes(cleanEmail)) {
+        return { allowed: true, reason: 'whitelist' }
       }
       return {
         allowed: false,
-        reason: 'vip_required',
-        message: 'Mô-đun Y Khoa Độc Quyền. Tài khoản của bạn chưa được cấp quyền học bài này.',
+        reason: 'restricted',
+        message: 'Mô-đun Y Khoa Độc Quyền. Tài khoản Gmail của bạn chưa được cấp phép hoặc chưa tham gia lớp học có bài này.',
         requiredEmails: allowedList
       }
     }
 
+    // 6. Password / PIN mode
     if (accessMode === 'password') {
-      if (typeof window !== 'undefined') {
-        const unlockedKey = `dynex_unlocked_${lesson.id}`
-        const isUnlocked = sessionStorage.getItem(unlockedKey) === 'true'
-        if (isUnlocked) return { allowed: true, reason: 'password_unlocked' }
-      }
       return {
         allowed: false,
-        reason: 'password_required',
-        message: 'Mô-đun yêu cầu mã PIN hoặc mật khẩu truy cập từ giảng viên.'
+        reason: 'restricted',
+        message: 'Mô-đun yêu cầu nhập mã PIN Lớp học hoặc mật khẩu truy cập từ giảng viên.'
       }
     }
 
     return { allowed: true }
+  },
+
+  // Try unlocking lesson with a PIN (either lesson password or classroom PIN)
+  unlockWithPin(lessonId: string, enteredPin: string, lessonPassword?: string): boolean {
+    if (!enteredPin) return false
+    const cleanPin = enteredPin.trim().toUpperCase()
+
+    // Check lesson password
+    if (lessonPassword && lessonPassword.trim().toUpperCase() === cleanPin) {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(`dynex_unlocked_${lessonId}`, 'true')
+      }
+      return true
+    }
+
+    // Check all classrooms assigned to this lesson
+    try {
+      const classrooms = storageService.getClassrooms()
+      const matchingClass = classrooms.find(cls => 
+        cls.assignedLessonIds?.includes(lessonId) &&
+        cls.pinCode?.trim().toUpperCase() === cleanPin
+      )
+      if (matchingClass) {
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem(`dynex_unlocked_${lessonId}`, 'true')
+        }
+        return true
+      }
+    } catch (e) {
+      console.error('Error unlocking with classroom pin:', e)
+    }
+
+    return false
   }
 }
+

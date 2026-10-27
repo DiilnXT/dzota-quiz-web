@@ -16,13 +16,15 @@ import {
   LogIn,
   ArrowLeft,
   LayoutDashboard,
-  ExternalLink
+  ExternalLink,
+  GraduationCap,
+  Users
 } from 'lucide-react'
 import { soundService } from '../services/soundService'
 
 interface HeaderProps {
   currentTab: string
-  setCurrentTab: (tab: string) => void
+  setCurrentTab: (tab: any) => void
   onOpenSettings: () => void
   geminiModel?: string
   hasApiKey?: boolean
@@ -98,57 +100,79 @@ export default function Header({
           </div>
 
           {/* Dzota-Style Navigation Pills */}
-          <nav className="flex items-center gap-1 bg-[#111827]/90 p-1 sm:p-1.5 rounded-2xl border border-slate-800 shadow-inner overflow-x-auto max-w-[50vw] sm:max-w-none">
+          <nav className="flex items-center gap-1 bg-[#111827]/90 p-1 sm:p-1.5 rounded-2xl border border-slate-800 shadow-inner overflow-x-auto max-w-[55vw] sm:max-w-none scrollbar-none">
             <button
-              onClick={() => setCurrentTab('admin')}
-              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap ${
-                currentTab === 'admin'
+              onClick={() => setCurrentTab('learn')}
+              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap ${
+                currentTab === 'learn'
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
               }`}
             >
-              <Layers className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Soạn Đề & Ngân Hàng</span>
-              <span className="lg:hidden">Soạn Đề</span>
+              <GraduationCap className="w-3.5 h-3.5" />
+              <span>Góc Học Tập</span>
             </button>
 
             <button
               onClick={() => setCurrentTab('flashcard')}
-              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap ${
                 currentTab === 'flashcard'
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
               }`}
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Học Flashcard (Anki)</span>
-              <span className="lg:hidden">Flashcard</span>
+              <span>Flashcard Anki</span>
             </button>
 
             <button
               onClick={() => setCurrentTab('exam')}
-              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all duration-150 cursor-pointer whitespace-nowrap ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all duration-150 cursor-pointer whitespace-nowrap ${
                 currentTab === 'exam'
                   ? 'bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-lg shadow-rose-600/40 animate-pulse'
                   : 'text-rose-400 hover:text-rose-200 hover:bg-rose-950/40'
               }`}
             >
               <Flame className="w-3.5 h-3.5 fill-current" />
-              <span className="hidden sm:inline">Thi Chạy Trạm (20 Trạm)</span>
-              <span className="sm:hidden">Thi OSCE</span>
+              <span>Thi Chạy Trạm</span>
+            </button>
+
+            <button
+              onClick={() => setCurrentTab('classes')}
+              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap ${
+                currentTab === 'classes'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Quản Lý Lớp & Phân Quyền</span>
+              <span className="lg:hidden">Quản Lý Lớp</span>
+            </button>
+
+            <button
+              onClick={() => setCurrentTab('admin')}
+              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap ${
+                currentTab === 'admin'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Studio Soạn Đề</span>
+              <span className="lg:hidden">Soạn Đề</span>
             </button>
 
             <button
               onClick={() => setCurrentTab('history')}
-              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap ${
                 currentTab === 'history'
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
               }`}
             >
               <Award className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Bảng Điểm & Thành Tích</span>
-              <span className="lg:hidden">Bảng Điểm</span>
+              <span>Bảng Điểm</span>
             </button>
           </nav>
 

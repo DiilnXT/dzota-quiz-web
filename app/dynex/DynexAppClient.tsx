@@ -8,6 +8,8 @@ import MaskEditor from './components/MaskEditor';
 import FlashcardMode from './components/FlashcardMode';
 import MedicalSpottingExam from './components/MedicalSpottingExam';
 import ExamHistory from './components/ExamHistory';
+import StudentPortal from './components/StudentPortal';
+import ClassroomManager from './components/ClassroomManager';
 import SettingsModal from './components/SettingsModal';
 import ShareAccessModal from './components/ShareAccessModal';
 import LoginModal from './components/LoginModal';
@@ -26,10 +28,12 @@ interface DynexAppClientProps {
   isEmbedded?: boolean;
 }
 
+export type DynexTabType = 'learn' | 'flashcard' | 'exam' | 'admin' | 'classes' | 'history';
+
 function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientProps) {
   const searchParams = useSearchParams();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [currentTab, setCurrentTab] = useState<'admin' | 'flashcard' | 'exam' | 'history'>('admin');
+  const [currentTab, setCurrentTab] = useState<DynexTabType>('learn');
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [selectedLessonId, setSelectedLessonId] = useState<string>('');
   const [currentImageId, setCurrentImageId] = useState<string>('');
@@ -80,8 +84,8 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
     const lessonParam = searchParams.get('lessonId');
     const tabParam = searchParams.get('tab') || searchParams.get('mode');
 
-    if (tabParam && ['admin', 'flashcard', 'exam', 'history'].includes(tabParam)) {
-      setCurrentTab(tabParam as any);
+    if (tabParam && ['learn', 'admin', 'flashcard', 'exam', 'classes', 'history'].includes(tabParam)) {
+      setCurrentTab(tabParam as DynexTabType);
     }
 
     if (loadedProjects.length > 0) {
@@ -421,6 +425,25 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
 
       {/* Main App Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 lg:p-7 flex flex-col">
+        {/* Tab 0: Student Learning Portal (Góc Học Tập Y Khoa) */}
+        {currentTab === 'learn' && (
+          <StudentPortal
+            projects={projects}
+            currentUser={currentUser}
+            onSelectLessonForFlashcard={(lessonId, projId) => {
+              setSelectedProjectId(projId);
+              setSelectedLessonId(lessonId);
+              setCurrentTab('flashcard');
+            }}
+            onSelectLessonForExam={(lessonId) => {
+              setSelectedLessonId(lessonId);
+              setCurrentTab('exam');
+            }}
+            onOpenLogin={() => setIsLoginOpen(true)}
+            onOpenClassroomManager={() => setCurrentTab('classes')}
+          />
+        )}
+
         {/* Tab 1: Admin & Structure / Mask Occlusion Studio */}
         {currentTab === 'admin' && (
           <div className="flex-1 flex flex-col lg:flex-row gap-5 relative">
@@ -526,7 +549,17 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
           />
         )}
 
-        {/* Tab 4: Exam History & Analytics */}
+        {/* Tab 5: Classroom & Permission Whitelist Manager */}
+        {currentTab === 'classes' && (
+          <ClassroomManager
+            projects={projects}
+            onProjectsUpdated={(newProjects) => {
+              updateProjectsState(newProjects);
+            }}
+          />
+        )}
+
+        {/* Tab 6: Exam History & Analytics */}
         {currentTab === 'history' && (
           <ExamHistory
             history={examHistory}
