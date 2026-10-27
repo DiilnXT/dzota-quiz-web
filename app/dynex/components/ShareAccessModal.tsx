@@ -14,7 +14,11 @@ import {
   Check, 
   ShieldCheck, 
   Users, 
-  ExternalLink 
+  ExternalLink,
+  QrCode,
+  Brain,
+  Flame,
+  Smartphone
 } from 'lucide-react'
 import { soundService } from '../services/soundService'
 
@@ -33,11 +37,23 @@ export default function ShareAccessModal({ isOpen, onClose, lesson, onUpdateLess
   const [accessPassword, setAccessPassword] = useState(lesson.accessPassword || '')
   const [newEmailInput, setNewEmailInput] = useState('')
   const [copiedLink, setCopiedLink] = useState(false)
+  const [copiedType, setCopiedType] = useState<string | null>(null)
+  const [showQrCode, setShowQrCode] = useState(false)
   const [selectedShareMode, setSelectedShareMode] = useState('flashcard') // 'flashcard' | 'exam' | 'admin'
 
-  const shareUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/dynex?lessonId=${lesson.id}&tab=${selectedShareMode}`
-    : `/dynex?lessonId=${lesson.id}&tab=${selectedShareMode}`
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://dzota.vercel.app'
+  const shareUrl = `${baseUrl}/dynex?lessonId=${lesson.id}&tab=${selectedShareMode}`
+  const flashcardUrl = `${baseUrl}/dynex?lessonId=${lesson.id}&tab=flashcard`
+  const examUrl = `${baseUrl}/dynex?lessonId=${lesson.id}&tab=exam`
+
+  const handleCopyCustomLink = (url: string, type: string) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(url)
+      setCopiedType(type)
+      soundService.playStationChime()
+      setTimeout(() => setCopiedType(null), 3000)
+    }
+  }
 
   const handleAddEmail = (e: React.FormEvent) => {
     e.preventDefault()
@@ -119,10 +135,25 @@ export default function ShareAccessModal({ isOpen, onClose, lesson, onUpdateLess
           </div>
 
           {/* Share Link Generation */}
-          <div>
-            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-              Liên kết học trực tiếp (Share URL):
-            </label>
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                Liên kết học trực tiếp (Share URL):
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowQrCode(!showQrCode)}
+                className={`text-xs font-bold flex items-center gap-1 px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
+                  showQrCode
+                    ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300'
+                    : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-white'
+                }`}
+              >
+                <QrCode className="w-3.5 h-3.5 text-cyan-400" />
+                <span>{showQrCode ? 'Ẩn mã QR' : 'Mã QR điện thoại'}</span>
+              </button>
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-2">
               <select
                 value={selectedShareMode}
@@ -143,9 +174,59 @@ export default function ShareAccessModal({ isOpen, onClose, lesson, onUpdateLess
                 className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-indigo-600/30 shrink-0 cursor-pointer active:scale-95"
               >
                 {copiedLink ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
-                <span>{copiedLink ? 'Đã sao chép!' : 'Sao chép link'}</span>
+                <span>{copiedLink ? 'Đã sao chép!' : 'Sao chép'}</span>
               </button>
             </div>
+
+            {/* Quick Share Buttons like Dzota Quiz */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => handleCopyCustomLink(flashcardUrl, 'flashcard')}
+                className="py-2 px-3 rounded-xl bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-700/60 text-indigo-200 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
+              >
+                <Brain className="w-4 h-4 text-cyan-400" />
+                <span>
+                  {copiedType === 'flashcard' ? '✓ Đã sao chép link Anki!' : '📋 Sao Chép Link Học Flashcard'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleCopyCustomLink(examUrl, 'exam')}
+                className="py-2 px-3 rounded-xl bg-rose-950/60 hover:bg-rose-900/60 border border-rose-700/60 text-rose-200 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
+              >
+                <Flame className="w-4 h-4 text-rose-400" />
+                <span>
+                  {copiedType === 'exam' ? '✓ Đã sao chép link OSCE!' : '🔥 Sao Chép Link Thi Chạy Trạm'}
+                </span>
+              </button>
+            </div>
+
+            {/* QR Code Card */}
+            {showQrCode && (
+              <div className="p-4 rounded-2xl bg-[#070b14] border border-indigo-500/30 flex flex-col sm:flex-row items-center gap-4 animate-fadeIn">
+                <div className="p-2 bg-white rounded-xl shadow-lg shrink-0">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(shareUrl)}`}
+                    alt="QR Code"
+                    className="w-32 h-32 block"
+                  />
+                </div>
+                <div className="space-y-1.5 text-center sm:text-left">
+                  <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs font-bold text-indigo-400">
+                    <Smartphone className="w-4 h-4 text-cyan-400" />
+                    <span>Quét mã QR để mở học trên điện thoại</span>
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Học sinh chỉ cần bật Camera điện thoại hoặc Zalo quét mã này để vào thẳng phòng học mà không cần gõ link.
+                  </p>
+                  <p className="text-[11px] text-slate-500 font-mono">
+                    Đang tạo mã cho: {selectedShareMode === 'flashcard' ? 'Học Flashcard' : selectedShareMode === 'exam' ? 'Thi Chạy Trạm' : 'Soạn Đề'}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Access Control Modes */}

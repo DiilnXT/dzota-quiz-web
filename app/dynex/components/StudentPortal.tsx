@@ -18,7 +18,10 @@ import {
   ChevronRight,
   FolderOpen,
   Eye,
-  AlertCircle
+  AlertCircle,
+  PlusCircle,
+  Share2,
+  Layers
 } from 'lucide-react'
 import { Project, Lesson, storageService } from '../services/storageService'
 import { authService, DynexUser } from '../services/authService'
@@ -31,6 +34,9 @@ interface StudentPortalProps {
   onSelectLessonForExam: (lessonId: string) => void
   onOpenLogin: () => void
   onOpenClassroomManager?: () => void
+  onOpenCreateModal?: () => void
+  onOpenShare?: (lesson: Lesson) => void
+  onOpenDeckSelector?: () => void
 }
 
 export default function StudentPortal({
@@ -39,7 +45,10 @@ export default function StudentPortal({
   onSelectLessonForFlashcard,
   onSelectLessonForExam,
   onOpenLogin,
-  onOpenClassroomManager
+  onOpenClassroomManager,
+  onOpenCreateModal,
+  onOpenShare,
+  onOpenDeckSelector
 }: StudentPortalProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
@@ -204,6 +213,29 @@ export default function StudentPortal({
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
               Phương pháp học thuộc ngắt quãng Spaced Repetition (Anki SM-2) kết hợp che ảnh giải phẫu 100% không lộ chữ và mô phỏng 20 trạm chạy trạm OSCE 20 giây chuẩn thi y khoa.
             </p>
+
+            {/* Quick Action Buttons on Hero */}
+            <div className="flex flex-wrap items-center gap-2.5 pt-2">
+              {onOpenCreateModal && (
+                <button
+                  onClick={onOpenCreateModal}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-600/30 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+                >
+                  <PlusCircle className="w-4 h-4 text-emerald-200" />
+                  <span>+ Tạo Bài Học / Chương Mới</span>
+                </button>
+              )}
+
+              {onOpenDeckSelector && (
+                <button
+                  onClick={onOpenDeckSelector}
+                  className="px-4 py-2 rounded-xl bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/50 font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-sm"
+                >
+                  <Layers className="w-4 h-4 text-cyan-300" />
+                  <span>📚 Ôn Đa Chương / Đa Bài (Tổng Hợp)</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Quick Metrics */}
@@ -430,6 +462,17 @@ export default function StudentPortal({
                           <Flame className="w-3.5 h-3.5 text-rose-400" />
                           <span>Thi Chạy Trạm (OSCE 20 Giây)</span>
                         </button>
+
+                        {onOpenShare && (
+                          <button
+                            onClick={() => onOpenShare(lesson)}
+                            className="w-full py-1.5 px-3 rounded-xl bg-slate-900 hover:bg-indigo-950/50 text-slate-400 hover:text-indigo-300 border border-slate-800 hover:border-indigo-500/40 font-semibold text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                            title="Tạo link chia sẻ hoặc mã QR cho học viên"
+                          >
+                            <Share2 className="w-3 h-3 text-indigo-400" />
+                            <span>Chia Sẻ & Cấp Quyền (Link / QR)</span>
+                          </button>
+                        )}
                       </>
                     ) : (
                       <div className="space-y-2">

@@ -19,11 +19,13 @@ import {
   FileCheck,
   Activity,
   Flame,
-  ArrowRight
+  ArrowRight,
+  Layers
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { soundService } from '../services/soundService';
 import { storageService } from '../services/storageService';
+import DeckSelectorModal from './DeckSelectorModal';
 
 /**
  * Intelligent text matching for medical anatomy answers:
@@ -69,6 +71,8 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
   const [totalStationsCount, setTotalStationsCount] = useState(20);
   const [secondsPerStation, setSecondsPerStation] = useState(25);
   const [candidateName, setCandidateName] = useState('Bác Sĩ / Sinh Viên Y Khoa');
+  const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([]);
+  const [isDeckSelectorOpen, setIsDeckSelectorOpen] = useState(false);
 
   // Exam runtime state
   const [stations, setStations] = useState([]);
@@ -97,9 +101,12 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
 
   // Start Exam
   const handleStartExam = () => {
-    const allAvailable = storageService.collectAllStations(projects);
+    const allAvailable = storageService.collectAllStations(
+      projects,
+      selectedLessonIds.length > 0 ? selectedLessonIds : null
+    );
     if (!allAvailable || allAvailable.length === 0) {
-      alert('Không tìm thấy dữ liệu ô che nào trong các bài học! Vui lòng vào Quản Trị để thêm ảnh và ô che trước.');
+      alert('Không tìm thấy dữ liệu ô che nào trong phạm vi bài học đã chọn! Vui lòng chọn bài học khác hoặc vào Quản Trị để vẽ thêm ô che.');
       return;
     }
 
@@ -301,6 +308,43 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
                     <option value={20}>20 Trạm (Chuẩn Đề Thi Y Dược Quốc Gia)</option>
                     <option value={30}>30 Trạm (Thử thách chuyên khoa)</option>
                   </select>
+                </div>
+              </div>
+
+              {/* Scope Selection Box */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 bg-slate-900/90 border border-slate-700/80 rounded-2xl">
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-slate-400 block tracking-wider">
+                    Phạm vi đề thi chạy trạm OSCE
+                  </span>
+                  <div className="text-xs font-bold text-white mt-0.5 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span>
+                      {selectedLessonIds.length === 0
+                        ? 'Toàn bộ tất cả hệ cơ quan & bài học'
+                        : `Đã chọn ${selectedLessonIds.length} bài học thực hành`}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {selectedLessonIds.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedLessonIds([])}
+                      className="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                    >
+                      Bỏ lọc
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setIsDeckSelectorOpen(true)}
+                    className="px-3.5 py-2 rounded-xl bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95"
+                  >
+                    <Layers className="w-4 h-4 text-cyan-300" />
+                    <span>Chọn Đa Chương / Đa Bài</span>
+                  </button>
                 </div>
               </div>
 
@@ -832,6 +876,19 @@ export default function MedicalSpottingExam({ projects, onSaveExamResult }) {
           )}
         </div>
       )}
+      {/* Multi-chapter & Multi-lesson Deck Selector Modal */}
+      <DeckSelectorModal
+        isOpen={isDeckSelectorOpen}
+        onClose={() => setIsDeckSelectorOpen(false)}
+        projects={projects}
+        initialSelectedLessonIds={selectedLessonIds}
+        defaultMode="exam"
+        onStartSession={({ selectedLessonIds: chosenIds }) => {
+          setSelectedLessonIds(chosenIds);
+          setIsDeckSelectorOpen(false);
+          soundService.playTick();
+        }}
+      />
     </div>
   );
 }

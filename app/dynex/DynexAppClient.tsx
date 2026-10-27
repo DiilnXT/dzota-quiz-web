@@ -13,6 +13,8 @@ import ClassroomManager from './components/ClassroomManager';
 import SettingsModal from './components/SettingsModal';
 import ShareAccessModal from './components/ShareAccessModal';
 import LoginModal from './components/LoginModal';
+import CreateContentModal from './components/CreateContentModal';
+import DeckSelectorModal from './components/DeckSelectorModal';
 import { storageService, Project, Lesson, ImageItem, Mask } from './services/storageService';
 import { authService, DynexUser } from './services/authService';
 import { getStoredApiKey, getStoredModel } from './services/geminiService';
@@ -50,6 +52,12 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
   // User Auth & Login modal
   const [currentUser, setCurrentUser] = useState<DynexUser | null>(null);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+
+  // Create Content modal (+ Tạo mới Bài học, Chương, Hệ cơ quan)
+  const [isCreateContentOpen, setIsCreateContentOpen] = useState(false);
+
+  // Multi-deck selector modal (Ôn luyện đa chương / đa bài)
+  const [isDeckSelectorOpen, setIsDeckSelectorOpen] = useState(false);
 
   // Exam history
   const [examHistory, setExamHistory] = useState<any[]>([]);
@@ -237,16 +245,28 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
   };
 
   // 4. Lesson CRUD (Bài học)
-  const handleAddLesson = (subFolderId: string, title: string) => {
+  const handleAddLesson = (
+    subFolderId: string, 
+    title: string, 
+    options?: { description?: string; imageUrl?: string; accessMode?: string; accessPassword?: string }
+  ) => {
+    const newImageId = options?.imageUrl ? `img_${Date.now()}` : undefined;
     const newLesson: Lesson = {
       id: `les_${Date.now()}`,
       title,
-      description: 'Nội dung thực hành giải phẫu chi tiết',
+      description: options?.description || 'Nội dung thực hành giải phẫu chi tiết',
       createdAt: new Date().toISOString(),
-      accessMode: 'public',
+      accessMode: options?.accessMode || 'public',
       allowedEmails: [],
-      accessPassword: '',
-      images: []
+      accessPassword: options?.accessPassword || '',
+      images: options?.imageUrl ? [
+        {
+          id: newImageId!,
+          title: title,
+          url: options.imageUrl,
+          masks: []
+        }
+      ] : []
     };
 
     const updated = projects.map(proj => {
@@ -264,6 +284,9 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
     });
     updateProjectsState(updated);
     setSelectedLessonId(newLesson.id);
+    if (newImageId) {
+      setCurrentImageId(newImageId);
+    }
   };
 
   const handleDeleteLesson = (catId: string, subId: string, lessonId: string) => {
@@ -416,6 +439,7 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenCreateModal={() => setIsCreateContentOpen(true)}
         geminiModel={geminiModel}
         hasApiKey={Boolean(apiKey)}
         currentUser={currentUser}
@@ -441,6 +465,12 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
             }}
             onOpenLogin={() => setIsLoginOpen(true)}
             onOpenClassroomManager={() => setCurrentTab('classes')}
+            onOpenCreateModal={() => setIsCreateContentOpen(true)}
+            onOpenShare={(les) => {
+              setShareLessonTarget(les);
+              setIsShareOpen(true);
+            }}
+            onOpenDeckSelector={() => setIsDeckSelectorOpen(true)}
           />
         )}
 
@@ -616,6 +646,41 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
         isOpen={isLoginOpen}
         onClose={() => setIsLoginOpen(false)}
         onLoginSuccess={(user) => setCurrentUser(user)}
+      />
+
+      {/* Create Content Modal (+ Bài Học, Chương, Hệ Cơ Quan) */}
+      <CreateContentModal
+        isOpen={isCreateContentOpen}
+        onClose={() => setIsCreateContentOpen(false)}
+        projects={projects}
+        selectedProjectId={selectedProjectId || projects[0]?.id || ''}
+        onAddProject={handleAddProject}
+        onAddCategory={handleAddCategory}
+        onAddSubFolder={handleAddSubFolder}
+        onAddLesson={handleAddLesson}
+        onSelectCreatedLesson={(id) => {
+          setSelectedLessonId(id);
+          setCurrentTab('admin');
+        }}
+      />
+
+      {/* Multi-chapter & Multi-lesson Deck Selector Modal */}
+      <DeckSelectorModal
+        isOpen={isDeckSelectorOpen}
+        onClose={() => setIsDeckSelectorOpen(false)}
+        projects={projects}
+        initialSelectedLessonIds={selectedLessonId ? [selectedLessonId] : []}
+        onStartSession={({ selectedLessonIds: chosenIds, studyMode }) => {
+          setIsDeckSelectorOpen(false);
+          if (chosenIds.length > 0) {
+            setSelectedLessonId(chosenIds[0]);
+          }
+          if (studyMode === 'anki') {
+            setCurrentTab('flashcard');
+          } else {
+            setCurrentTab('exam');
+          }
+        }}
       />
     </div>
   );
