@@ -111,11 +111,52 @@ export default function Header({
 
           {/* Center: Dzota-Style Navigation Pills OR Exam Candidate Mode Banner */}
           {isExamCandidateMode ? (
-            <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-2xl bg-rose-950/80 border border-rose-500/60 shadow-lg shadow-rose-950/40 max-w-[55vw] sm:max-w-none">
-              <Flame className="w-4 h-4 text-rose-400 fill-current animate-pulse shrink-0" />
-              <span className="text-xs font-black text-rose-200 uppercase tracking-wider truncate max-w-[200px] sm:max-w-md">
-                {examTitle || 'Phòng Thi Chạy Trạm Y Khoa OSCE'}
-              </span>
+            <div className="flex items-center gap-2 overflow-x-auto max-w-[65vw] sm:max-w-none scrollbar-none py-1">
+              <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-2xl bg-rose-950/80 border border-rose-500/60 shadow-lg shadow-rose-950/40 shrink-0">
+                <Flame className="w-4 h-4 text-rose-400 fill-current animate-pulse shrink-0" />
+                <span className="text-xs font-black text-rose-200 uppercase tracking-wider truncate max-w-[150px] sm:max-w-sm">
+                  {examTitle || 'Phòng Thi Chạy Trạm Y Khoa OSCE'}
+                </span>
+              </div>
+
+              {/* Navigation Back & Switch Tabs Even in Candidate Mode */}
+              <button
+                type="button"
+                onClick={onExitExam}
+                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-bold flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
+                title="Quay lại Góc Học Tập"
+              >
+                <GraduationCap className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Về Góc Học Tập</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  onExitExam?.();
+                  setCurrentTab('exams');
+                }}
+                className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 text-xs font-bold flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
+                title="Xem danh sách đề thi"
+              >
+                <FileText className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Kho Đề Thi</span>
+              </button>
+
+              {(currentUser?.role === 'ADMIN' || currentUser?.email === 'lenhatduy.vietnam@gmail.com') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onExitExam?.();
+                    setCurrentTab('admin');
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-indigo-950/60 hover:bg-indigo-900 text-indigo-300 hover:text-white border border-indigo-700/60 text-xs font-bold flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
+                  title="Mở Studio Soạn Đề Giải Phẫu"
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>Studio Soạn Đề</span>
+                </button>
+              )}
             </div>
           ) : (
             <nav className="flex items-center gap-1 bg-[#111827]/90 p-1 sm:p-1.5 rounded-2xl border border-slate-800 shadow-inner overflow-x-auto max-w-[55vw] sm:max-w-none scrollbar-none">

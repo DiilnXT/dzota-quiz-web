@@ -24,7 +24,9 @@ import {
   RefreshCw,
   Eye,
   SlidersHorizontal,
-  X
+  X,
+  Edit3,
+  Save
 } from 'lucide-react'
 import { storageService, DynexExamPaper, Project } from '../services/storageService'
 import { soundService } from '../services/soundService'
@@ -46,6 +48,41 @@ export default function ExamManagementTab({
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [qrModalExam, setQrModalExam] = useState<DynexExamPaper | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+
+  // Edit Exam State
+  const [editingExam, setEditingExam] = useState<DynexExamPaper | null>(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editSubject, setEditSubject] = useState('')
+  const [editTimePerStation, setEditTimePerStation] = useState(20)
+  const [editPassword, setEditPassword] = useState('')
+  const [editNotes, setEditNotes] = useState('')
+
+  const handleOpenEdit = (exam: DynexExamPaper, e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    setEditingExam(exam)
+    setEditTitle(exam.title)
+    setEditSubject(exam.subject)
+    setEditTimePerStation(exam.timePerStation)
+    setEditPassword(exam.accessPassword || '')
+    setEditNotes(exam.notes || '')
+  }
+
+  const handleSaveEditExam = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingExam) return
+    const updated: DynexExamPaper = {
+      ...editingExam,
+      title: editTitle.trim() || editingExam.title,
+      subject: editSubject.trim() || editingExam.subject,
+      timePerStation: Number(editTimePerStation) || 20,
+      accessPassword: editPassword.trim() || undefined,
+      notes: editNotes.trim()
+    }
+    storageService.saveExam(updated)
+    reloadExams()
+    setEditingExam(null)
+    soundService.playSuccess()
+  }
 
   const reloadExams = () => {
     setIsLoading(true)
@@ -270,6 +307,15 @@ export default function ExamManagementTab({
                         </span>
                       )}
 
+                      {/* Edit Exam Button */}
+                      <button
+                        onClick={(e) => handleOpenEdit(exam, e)}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-cyan-400 hover:bg-cyan-950/40 transition-colors cursor-pointer"
+                        title="Chỉnh sửa thông số đề thi"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+
                       <button
                         onClick={(e) => handleDelete(exam.id, e)}
                         className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 transition-colors cursor-pointer"
@@ -331,6 +377,16 @@ export default function ExamManagementTab({
                     >
                       {isCopied ? <Check className="w-3.5 h-3.5 text-white" /> : <Copy className="w-3.5 h-3.5 text-indigo-400" />}
                       <span>{isCopied ? 'Đã chép link!' : 'Chép Link'}</span>
+                    </button>
+
+                    {/* Edit Exam Button */}
+                    <button
+                      onClick={(e) => handleOpenEdit(exam, e)}
+                      className="py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-300 hover:text-cyan-300 border border-slate-700 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                      title="Chỉnh sửa thông số đề thi"
+                    >
+                      <Edit3 className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Sửa Đề</span>
                     </button>
 
                     {/* QR Code Modal Button */}
@@ -406,6 +462,105 @@ export default function ExamManagementTab({
             >
               Đóng Cửa Sổ
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL CHỈNH SỬA ĐỀ THI ĐÃ TẠO ─── */}
+      {editingExam && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-fadeIn">
+          <div className="w-full max-w-lg bg-[#111827] border border-cyan-500/40 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
+                <Edit3 className="w-4 h-4 text-cyan-400" />
+                <span>Chỉnh Sửa Thông Số Đề Thi</span>
+              </h3>
+              <button onClick={() => setEditingExam(null)} className="text-slate-400 hover:text-white p-1">✕</button>
+            </div>
+
+            <form onSubmit={handleSaveEditExam} className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">Tên Đề Thi Chạy Trạm: *</label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  required
+                  className="w-full px-3.5 py-2.5 bg-[#070b14] border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-400"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Môn Học Y Khoa:</label>
+                  <input
+                    type="text"
+                    value={editSubject}
+                    onChange={(e) => setEditSubject(e.target.value)}
+                    className="w-full px-3 py-2 bg-[#070b14] border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Giây / Trạm:</label>
+                  <select
+                    value={editTimePerStation}
+                    onChange={(e) => setEditTimePerStation(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-[#070b14] border border-slate-700 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-cyan-400"
+                  >
+                    <option value={15}>15 Giây</option>
+                    <option value={20}>20 Giây (Chuẩn)</option>
+                    <option value={25}>25 Giây</option>
+                    <option value={30}>30 Giây</option>
+                    <option value={40}>40 Giây</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">Mật Khẩu PIN (Để trống nếu mở tự do):</label>
+                <input
+                  type="text"
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value)}
+                  placeholder="Không cài mật khẩu..."
+                  className="w-full px-3.5 py-2 bg-[#070b14] border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">Ghi Chú Quy Chế Phòng Thi:</label>
+                <textarea
+                  rows={2}
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  placeholder="Quy chế làm bài..."
+                  className="w-full px-3.5 py-2 bg-[#070b14] border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-400 resize-none"
+                />
+              </div>
+
+              <div className="p-3 bg-[#070b14] rounded-xl border border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+                <span>Số trạm: <strong className="text-white font-mono">{editingExam.stations?.length || editingExam.totalStations} Trạm</strong></span>
+                <span className="text-[11px] text-emerald-400 font-semibold">Tác giả: {editingExam.author || 'Nhật Duy'}</span>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingExam(null)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition-colors cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-lg transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Lưu Thay Đổi Đề</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

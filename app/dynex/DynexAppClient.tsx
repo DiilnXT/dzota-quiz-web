@@ -393,6 +393,48 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
     }
   };
 
+  // Quick 1-click Edit & Delete directly from StudentPortal Lesson Cards
+  const handleEditLessonFromPortal = (lessonId: string, projectId: string) => {
+    setSelectedProjectId(projectId);
+    setSelectedLessonId(lessonId);
+    // Auto-select first image of the target lesson
+    const proj = projects.find(p => p.id === projectId);
+    if (proj) {
+      for (const cat of proj.categories || []) {
+        for (const sub of cat.subFolders || []) {
+          const les = sub.lessons?.find(l => l.id === lessonId);
+          if (les && les.images && les.images.length > 0) {
+            setCurrentImageId(les.images[0].id);
+            break;
+          }
+        }
+      }
+    }
+    soundService.playSuccess();
+    setCurrentTab('admin');
+  };
+
+  const handleDeleteLessonFromPortal = (lessonId: string, projectId: string) => {
+    const updated = projects.map(proj => {
+      if (proj.id !== projectId) return proj;
+      return {
+        ...proj,
+        categories: (proj.categories || []).map(cat => ({
+          ...cat,
+          subFolders: (cat.subFolders || []).map(sub => ({
+            ...sub,
+            lessons: (sub.lessons || []).filter(les => les.id !== lessonId)
+          }))
+        }))
+      };
+    });
+    updateProjectsState(updated);
+    if (selectedLessonId === lessonId) {
+      setSelectedLessonId('');
+    }
+    soundService.playComplete();
+  };
+
   // 5. Image & Mask Handling inside Lesson
   const handleAddImage = (newImage: ImageItem) => {
     if (!currentLesson) return;
@@ -558,6 +600,8 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
             onOpenDeckSelector={() => setIsDeckSelectorOpen(true)}
             onOpenCreateExamModal={() => setIsCreateExamModalOpen(true)}
             onOpenExamManagement={() => setCurrentTab('exams')}
+            onEditLesson={handleEditLessonFromPortal}
+            onDeleteLesson={handleDeleteLessonFromPortal}
           />
         )}
 
@@ -719,6 +763,16 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
               setIsExamCandidateMode(false);
               setSelectedExamPaper(null);
               setCurrentTab('learn');
+            }}
+            onGoToExamManagement={() => {
+              setIsExamCandidateMode(false);
+              setSelectedExamPaper(null);
+              setCurrentTab('exams');
+            }}
+            onEditExamPaper={(exam) => {
+              setIsExamCandidateMode(false);
+              setSelectedExamPaper(null);
+              setCurrentTab('exams');
             }}
           />
         )}

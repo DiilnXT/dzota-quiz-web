@@ -24,7 +24,11 @@ import {
   Plus,
   FileText,
   Share2,
-  ArrowLeft
+  ArrowLeft,
+  Edit3,
+  Lock,
+  Unlock,
+  GraduationCap
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { soundService } from '../services/soundService';
@@ -39,6 +43,8 @@ interface MedicalSpottingExamProps {
   initialExamPaper?: DynexExamPaper | null
   isExamCandidateMode?: boolean
   onExitExam?: () => void
+  onGoToExamManagement?: () => void
+  onEditExamPaper?: (exam: DynexExamPaper) => void
 }
 
 /**
@@ -84,7 +90,9 @@ export default function MedicalSpottingExam({
   onSaveExamResult,
   initialExamPaper = null,
   isExamCandidateMode = false,
-  onExitExam
+  onExitExam,
+  onGoToExamManagement,
+  onEditExamPaper
 }: MedicalSpottingExamProps) {
   // Active custom exam paper (if running a pre-generated exam)
   const [activeExamPaper, setActiveExamPaper] = useState<DynexExamPaper | null>(initialExamPaper);
@@ -316,21 +324,47 @@ export default function MedicalSpottingExam({
 
             <div className="space-y-6 relative z-10 text-center">
               {/* Top Navigation */}
-              <div className="flex items-center justify-between gap-2">
-                {onExitExam && (
-                  <button
-                    type="button"
-                    onClick={onExitExam}
-                    className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    <span>Thoát Phòng Thi</span>
-                  </button>
-                )}
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-950/70 border border-rose-500/50 text-rose-300 text-[11px] font-black uppercase tracking-wider mx-auto">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  {onExitExam && (
+                    <button
+                      type="button"
+                      onClick={onExitExam}
+                      className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                      <span>Góc Học Tập</span>
+                    </button>
+                  )}
+
+                  {onGoToExamManagement && (
+                    <button
+                      type="button"
+                      onClick={onGoToExamManagement}
+                      className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Kho Đề Thi</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-950/70 border border-rose-500/50 text-rose-300 text-[11px] font-black uppercase tracking-wider">
                   <Activity className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
                   <span>Sảnh Chờ Thí Sinh OSCE • DYNEX</span>
                 </div>
+
+                {onEditExamPaper && activeExamPaper && (
+                  <button
+                    type="button"
+                    onClick={() => onEditExamPaper(activeExamPaper)}
+                    className="px-3.5 py-1.5 rounded-xl bg-cyan-950/70 hover:bg-cyan-900 border border-cyan-500/50 text-xs font-bold text-cyan-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                    title="Chỉnh sửa đề thi này"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Sửa Đề Này</span>
+                  </button>
+                )}
               </div>
 
               {/* Title & Subject */}
@@ -912,25 +946,38 @@ export default function MedicalSpottingExam({
               <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
                 <button
                   onClick={handleStartExam}
-                  className="px-6 py-3 rounded-2xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-bold text-xs shadow-lg shadow-rose-500/30 hover:brightness-110 flex items-center gap-2"
+                  className="px-6 py-3 rounded-2xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-bold text-xs shadow-lg shadow-rose-500/30 hover:brightness-110 flex items-center gap-2 cursor-pointer active:scale-95"
                 >
                   <RotateCcw className="w-4 h-4" />
-                  <span>Thi lại vòng mới (Random 20 trạm)</span>
+                  <span>Thi lại vòng này ({activeExamPaper?.totalStations || stations.length} trạm)</span>
                 </button>
+
+                {onGoToExamManagement && (
+                  <button
+                    onClick={onGoToExamManagement}
+                    className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md flex items-center gap-2 cursor-pointer transition-colors"
+                  >
+                    <FileText className="w-4 h-4 text-cyan-200" />
+                    <span>Kho Đề Thi Khác</span>
+                  </button>
+                )}
+
+                {onExitExam && (
+                  <button
+                    onClick={onExitExam}
+                    className="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 flex items-center gap-2 cursor-pointer transition-colors"
+                  >
+                    <GraduationCap className="w-4 h-4 text-indigo-400" />
+                    <span>Về Góc Học Tập</span>
+                  </button>
+                )}
 
                 <button
                   onClick={() => window.print()}
-                  className="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 flex items-center gap-2"
+                  className="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs border border-slate-700 flex items-center gap-2 cursor-pointer"
                 >
                   <FileCheck className="w-4 h-4 text-cyan-400" />
                   <span>In Bảng Điểm</span>
-                </button>
-
-                <button
-                  onClick={() => setExamStatus('setup')}
-                  className="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs border border-slate-700"
-                >
-                  Cấu hình bài thi khác
                 </button>
               </div>
 
