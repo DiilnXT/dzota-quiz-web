@@ -393,3 +393,26 @@ body.focus-medical-locked iframe[src*="zalo" i] {
   pointer-events: none !important;
 }
 
+/* Khóa chống vuốt thoát / Edge swipe / Pull to refresh / Overscroll trên điện thoại */
+html.focus-medical-locked,
+body.focus-medical-locked {
+  overscroll-behavior: none !important;
+  overscroll-behavior-x: none !important;
+  overscroll-behavior-y: none !important;
+  touch-action: pan-y !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+/* Toast biến mất siêu tốc, tinh tế, không chắn màn hình */
+@keyframes focusFastToastFade {
+  0% { opacity: 0; transform: translate(-50%, -8px) scale(0.96); }
+  15% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  80% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -8px) scale(0.96); }
+}
+
+.focus-fast-toast {
+  animation: focusFastToastFade 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+

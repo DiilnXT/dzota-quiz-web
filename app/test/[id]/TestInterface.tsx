@@ -36,7 +36,9 @@ import {
   LayoutList,
   SlidersHorizontal,
   ShieldAlert,
-  Flame
+  Flame,
+  Lock,
+  Unlock
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -110,7 +112,8 @@ export default function TestInterface({ test }: { test: any }) {
         } else {
           setFocusSecondsLeft(prev => {
             if (prev <= 1) {
-              setFocusWarningToast('⏰ Hoàn thành chu kỳ tập trung y khoa! Bạn có thể tiếp tục hoặc giải lao ngắn.')
+              setFocusWarningToast('🎉 Đã hoàn thành chu kỳ tập trung y khoa! Khóa đã mở, bạn có thể giải lao hoặc làm tiếp.')
+              setTimeout(() => setFocusWarningToast(null), 1500)
               return 0
             }
             return prev - 1
@@ -123,54 +126,92 @@ export default function TestInterface({ test }: { test: any }) {
     }
   }, [focusMode, focusIsUnlimited])
 
-  // Cơ chế chống xao nhãng, chặn back, chặn thoát khi đang bật Chế độ tập trung
+  // Cơ chế KHÓA CHỐNG THOÁT CỰC HẠN & Chống xao nhãng khi bật Chế độ tập trung
   useEffect(() => {
     if (!focusMode) return
 
-    // 1. Chặn Back Button trên điện thoại & laptop bằng pushState
-    try {
-      window.history.pushState({ focusLock: true }, '')
-    } catch (e) {}
+    // 1. Trap history sâu bằng 40 state liên tiếp để triệt tiêu cử chỉ vuốt back của điện thoại
+    for (let i = 0; i < 40; i++) {
+      try {
+        window.history.pushState({ focusLock: true, s: i }, '', window.location.href)
+      } catch (e) {}
+    }
+
+    let toastTimer: any = null
+    const triggerFastToast = (msg: string) => {
+      setFocusWarningToast(msg)
+      if (toastTimer) clearTimeout(toastTimer)
+      toastTimer = setTimeout(() => setFocusWarningToast(null), 1200)
+    }
 
     const handlePopState = (e: PopStateEvent) => {
       e.preventDefault()
+      // Liên tục bơm thêm state để chặn hoàn toàn mọi nỗ lực vuốt back hoặc phím back cứng
       try {
-        window.history.pushState({ focusLock: true }, '')
+        for (let i = 0; i < 10; i++) {
+          window.history.pushState({ focusLock: true, s: Date.now() + i }, '', window.location.href)
+        }
       } catch (err) {}
-      setFocusWarningToast('🛡️ Chế độ tập trung đang bật! Vui lòng nhấn nút "Thoát tập trung" ở góc trên nếu bạn muốn dừng.')
-      setTimeout(() => setFocusWarningToast(null), 4500)
+
+      if (!focusIsUnlimited && focusSecondsLeft > 0) {
+        triggerFastToast('🔒 Đang khóa tập trung! Không thể thoát bằng nút lùi.')
+      } else {
+        triggerFastToast('🎯 Nhấn nút "Mở khóa / Thoát" ở góc trên nếu bạn muốn dừng.')
+      }
     }
     window.addEventListener('popstate', handlePopState)
 
-    // 2. Chặn reload / đóng tab ngoài ý muốn (beforeunload)
+    // 2. Chặn cử chỉ vuốt mép màn hình (Edge Swipe Back) trên Android & iOS Safari/Chrome
+    const handleEdgeTouch = (e: TouchEvent) => {
+      const touch = e.touches[0]
+      if (!touch) return
+      // Chạm sát mép trái (< 48px) hoặc mép phải (> innerWidth - 48px) sẽ kích hoạt swipe gesture của trình duyệt
+      if (touch.clientX < 48 || touch.clientX > window.innerWidth - 48) {
+        if (e.cancelable) {
+          e.preventDefault()
+        }
+      }
+    }
+    window.addEventListener('touchstart', handleEdgeTouch, { passive: false })
+    window.addEventListener('touchmove', handleEdgeTouch, { passive: false })
+
+    // 3. Tự động phục hồi Toàn màn hình khi người dùng chạm vào màn hình
+    const handlePointerReenter = () => {
+      if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
+        try {
+          if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(() => {})
+          } else if ((document.documentElement as any).webkitRequestFullscreen) {
+            (document.documentElement as any).webkitRequestFullscreen()
+          }
+        } catch (err) {}
+      }
+    }
+    window.addEventListener('pointerdown', handlePointerReenter)
+
+    // 4. Chặn reload / đóng tab ngoài ý muốn (beforeunload)
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault()
-      e.returnValue = 'Bạn đang trong Chế độ Tập Trung Y Khoa Focus Medical Pro. Bạn có chắc muốn rời đi?'
+      e.returnValue = 'Bạn đang trong Chế độ Tập Trung Y Khoa Focus Medical Pro.'
       return e.returnValue
     }
     window.addEventListener('beforeunload', handleBeforeUnload)
 
-    // 3. Cảnh báo khi người dùng vô tình thoát fullscreen
-    const handleFullscreenChange = () => {
-      if (!document.fullscreenElement && !(document as any).webkitFullscreenElement && focusMode) {
-        setFocusWarningToast('⚠️ Đã thu nhỏ toàn màn hình. Bạn có thể nhấn lại nút Toàn màn hình để giữ độ tập trung tối đa.')
-        setTimeout(() => setFocusWarningToast(null), 4000)
-      }
-    }
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
-
-    // 4. Thêm class lên body để ẩn triệt để toàn bộ mini-chat zalo/mess/widget
+    // 5. Thêm class lên html & body để chặn overscroll & ẩn toàn bộ widget mini-chat
+    document.documentElement.classList.add('focus-medical-locked')
     document.body.classList.add('focus-medical-locked')
 
     return () => {
       window.removeEventListener('popstate', handlePopState)
+      window.removeEventListener('touchstart', handleEdgeTouch)
+      window.removeEventListener('touchmove', handleEdgeTouch)
+      window.removeEventListener('pointerdown', handlePointerReenter)
       window.removeEventListener('beforeunload', handleBeforeUnload)
-      document.removeEventListener('fullscreenchange', handleFullscreenChange)
-      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+      document.documentElement.classList.remove('focus-medical-locked')
       document.body.classList.remove('focus-medical-locked')
+      if (toastTimer) clearTimeout(toastTimer)
     }
-  }, [focusMode])
+  }, [focusMode, focusIsUnlimited, focusSecondsLeft])
 
   // Phím tắt điều hướng nhanh trên máy tính: Mũi tên trái / phải để đổi câu, số 1-7 hoặc A-G để chọn đáp án
   useEffect(() => {
@@ -213,6 +254,11 @@ export default function TestInterface({ test }: { test: any }) {
   // Kích hoạt Chế độ tập trung y khoa
   const handleStartFocusMode = () => {
     setShowFocusModal(false)
+    // Tức tốc dọn sạch các toast cũ để màn hình tinh khiết
+    setFocusWarningToast(null)
+    setRestoredToast(null)
+    setOfflineToast(null)
+
     let minutes = 25
     if (focusPreset === 'unlimited') {
       setFocusIsUnlimited(true)
@@ -240,6 +286,13 @@ export default function TestInterface({ test }: { test: any }) {
 
   // Tắt / Thoát Chế độ tập trung y khoa
   const handleExitFocusMode = () => {
+    // Nếu đang trong thời gian đếm ngược có định giờ và chưa hết giờ: Khóa cứng không cho thoát
+    if (!focusIsUnlimited && focusSecondsLeft > 0) {
+      setFocusWarningToast(`🔒 Khóa tập trung! Tự động mở sau ${formatTime(focusSecondsLeft)}.`)
+      setTimeout(() => setFocusWarningToast(null), 1200)
+      return
+    }
+
     setFocusMode(false)
     try {
       if (document.fullscreenElement) {
@@ -1945,16 +1998,16 @@ export default function TestInterface({ test }: { test: any }) {
   return (
     <div className={`focus-medical-root focus-medical-bg flex flex-col min-h-screen relative overflow-y-auto ${focusMode ? 'focus-medical-fullscreen' : ''}`}>
       
-      {/* Toast thông báo cảnh báo Focus Mode */}
+      {/* Toast thông báo cảnh báo Focus Mode siêu tốc, tinh tế, không chắn màn hình */}
       {focusWarningToast && (
-        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 bg-[#17324D] text-white px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold shadow-2xl flex items-center gap-2 border border-cyan-400/30 animate-bounce max-w-[90vw] text-center">
-          <ShieldAlert size={16} className="text-cyan-400 flex-shrink-0" />
-          <span>{focusWarningToast}</span>
+        <div className="fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-50 bg-[#17324D]/95 backdrop-blur-md text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-2xl flex items-center gap-1.5 border border-cyan-400/40 max-w-[90vw] text-center pointer-events-none focus-fast-toast">
+          <ShieldAlert size={14} className="text-cyan-400 flex-shrink-0" />
+          <span className="truncate">{focusWarningToast}</span>
         </div>
       )}
 
-      {/* Toast khôi phục phiên thi */}
-      {restoredToast && !focusWarningToast && (
+      {/* Toast khôi phục phiên thi (chỉ hiện khi KHÔNG bật Focus Mode để tránh phiền) */}
+      {!focusMode && restoredToast && !focusWarningToast && (
         <div className="fixed top-14 left-1/2 -translate-x-1/2 z-40 bg-[#087F8C] text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg flex items-center gap-2 animate-fade-in">
           <Sparkles size={14} />
           <span>{restoredToast}</span>
@@ -1983,17 +2036,33 @@ export default function TestInterface({ test }: { test: any }) {
         {/* Ở giữa / Bên phải: Bộ điều khiển, Đếm giờ, Bảng câu hỏi, Chế độ tập trung & Nộp bài */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
           
-          {/* Nút kích hoạt / thoát Chế độ Tập Trung Focus Medical Pro */}
+          {/* Nút kích hoạt / Khóa / Mở khóa Chế độ Tập Trung Focus Medical Pro */}
           {focusMode ? (
-            <button
-              type="button"
-              onClick={handleExitFocusMode}
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-all cursor-pointer shadow-xs active:scale-95"
-              title="Thoát chế độ tập trung"
-            >
-              <Minimize2 size={14} />
-              <span className="hidden sm:inline">Thoát tập trung</span>
-            </button>
+            !focusIsUnlimited && focusSecondsLeft > 0 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setFocusWarningToast(`🔒 Đang khóa tập trung! Tự mở sau ${formatTime(focusSecondsLeft)}.`)
+                  setTimeout(() => setFocusWarningToast(null), 1200)
+                }}
+                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-900 border border-amber-300 shadow-xs cursor-pointer active:scale-95 transition-all"
+                title="Chế độ tập trung đang khóa cứng. Không thể thoát cho đến khi hết giờ!"
+              >
+                <Lock size={13} className="text-amber-600 animate-pulse flex-shrink-0" />
+                <span className="hidden sm:inline">Khóa tập trung</span>
+                <span className="font-mono text-amber-900 font-black">{formatTime(focusSecondsLeft)}</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleExitFocusMode}
+                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 transition-all cursor-pointer shadow-xs active:scale-95"
+                title="Đã xong thời gian tập trung! Bấm để mở khóa"
+              >
+                <Unlock size={14} className="text-emerald-600 flex-shrink-0" />
+                <span>Mở khóa / Thoát</span>
+              </button>
+            )
           ) : (
             <button
               type="button"
@@ -2006,13 +2075,11 @@ export default function TestInterface({ test }: { test: any }) {
             </button>
           )}
 
-          {/* Đồng hồ mini đếm ngược Chế độ tập trung (khi đang bật Focus Mode) */}
-          {focusMode && (
+          {/* Đồng hồ đếm thời gian tập trung tự do (khi không cài đặt giới hạn phút) */}
+          {focusMode && focusIsUnlimited && (
             <div className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-full bg-[#17324D] text-white text-xs font-mono font-bold shadow-xs">
               <Clock size={13} className="text-cyan-300 animate-pulse" />
-              <span className="text-cyan-300">
-                {focusIsUnlimited ? formatTime(focusUnlimitedElapsed) : formatTime(focusSecondsLeft)}
-              </span>
+              <span className="text-cyan-300">{formatTime(focusUnlimitedElapsed)}</span>
             </div>
           )}
 
