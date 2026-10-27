@@ -216,3 +216,180 @@ body {
     inset 0 1px 0 #ffffff !important;
   color: #7f1d1d !important;
 }
+
+/* ========================================================
+   FOCUS MEDICAL PRO — DESIGN SYSTEM
+   Academic & Clinical Test-Taking Precision
+   Palette: Background #F7F9FC | Navy #17324D | Teal #087F8C | Success #E7F5EE
+   Font: Times New Roman | Radius: 12-18px | Transitions: 150-200ms
+   ======================================================== */
+.font-times,
+.focus-medical-font {
+  font-family: 'Times New Roman', Times, Baskerville, Georgia, serif !important;
+}
+
+.focus-medical-bg {
+  background-color: #F7F9FC !important;
+}
+
+.focus-medical-navy {
+  color: #17324D !important;
+}
+
+.focus-medical-card {
+  font-family: 'Times New Roman', Times, Baskerville, Georgia, serif !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 20px -4px rgba(23, 50, 77, 0.06), 0 1px 3px rgba(23, 50, 77, 0.04) !important;
+  transition: all 180ms ease-out !important;
+}
+
+.focus-medical-card:hover {
+  border-color: #CBD5E1 !important;
+  box-shadow: 0 8px 24px -6px rgba(23, 50, 77, 0.08) !important;
+}
+
+.focus-medical-card-flagged {
+  border: 2px solid #F59E0B !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2), 0 8px 24px -6px rgba(245, 158, 11, 0.2) !important;
+  background: #FFFDF7 !important;
+}
+
+/* Đáp án chuẩn Focus Medical Pro: chiều cao 54-64px trên PC, 44-48px trên mobile, cả hàng bấm được */
+.focus-medical-option {
+  font-family: 'Times New Roman', Times, Baskerville, Georgia, serif !important;
+  display: flex !important;
+  align-items: center !important;
+  min-height: 46px !important;
+  padding: 10px 16px !important;
+  border-radius: 14px !important;
+  border: 1.5px solid #E2E8F0 !important;
+  background: #FFFFFF !important;
+  color: #17324D !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  width: 100% !important;
+  text-align: left !important;
+}
+
+@media (min-width: 640px) {
+  .focus-medical-option {
+    min-height: 52px !important;
+    padding: 12px 18px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .focus-medical-option {
+    min-height: 58px !important;
+    max-height: 68px !important;
+    padding: 14px 20px !important;
+    border-radius: 16px !important;
+  }
+}
+
+.focus-medical-option:hover {
+  border-color: #087F8C !important;
+  background: #F0FAFA !important;
+  transform: translateY(-1px) !important;
+}
+
+.focus-medical-option:active {
+  transform: scale(0.995) !important;
+}
+
+/* Đang chọn */
+.focus-medical-option-selected {
+  border: 2px solid #087F8C !important;
+  background: #F0FAFA !important;
+  box-shadow: 0 0 0 3px rgba(8, 127, 140, 0.18), 0 4px 12px rgba(8, 127, 140, 0.1) !important;
+  color: #17324D !important;
+}
+
+/* Đánh dấu xem lại đang chọn */
+.focus-medical-option-flagged-selected {
+  border: 2px solid #F59E0B !important;
+  background: #FEF9EE !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2) !important;
+  color: #78350F !important;
+}
+
+/* Phản hồi đúng: #E7F5EE */
+.focus-medical-option-correct {
+  border: 2px solid #087F8C !important;
+  background: #E7F5EE !important;
+  box-shadow: 0 0 0 3px rgba(8, 127, 140, 0.18) !important;
+  color: #0E6245 !important;
+}
+
+/* Phản hồi sai */
+.focus-medical-option-incorrect {
+  border: 2px solid #E53E3E !important;
+  background: #FDF2F2 !important;
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.18) !important;
+  color: #9B2C2C !important;
+}
+
+/* Badge A, B, C, D */
+.focus-medical-letter {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  border: 1px solid #CBD5E1 !important;
+  background: #F8FAFC !important;
+  color: #17324D !important;
+  flex-shrink: 0 !important;
+  margin-right: 12px !important;
+  transition: all 180ms ease !important;
+}
+
+@media (min-width: 640px) {
+  .focus-medical-letter {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 14px !important;
+    margin-right: 16px !important;
+  }
+}
+
+.focus-medical-letter-selected {
+  background: #087F8C !important;
+  border-color: #087F8C !important;
+  color: #FFFFFF !important;
+}
+
+.focus-medical-letter-correct {
+  background: #087F8C !important;
+  border-color: #087F8C !important;
+  color: #FFFFFF !important;
+}
+
+.focus-medical-letter-incorrect {
+  background: #E53E3E !important;
+  border-color: #E53E3E !important;
+  color: #FFFFFF !important;
+}
+
+/* Ẩn hoàn toàn tất cả widget mini chat, mạng xã hội, notification khi bật chế độ tập trung */
+body.focus-medical-locked #zalo-chat-widget,
+body.focus-medical-locked .zalo-chat-widget,
+body.focus-medical-locked #fb-root,
+body.focus-medical-locked .fb_dialog,
+body.focus-medical-locked .fb-customerchat,
+body.focus-medical-locked .chat-widget,
+body.focus-medical-locked iframe[title*="chat" i],
+body.focus-medical-locked iframe[title*="messenger" i],
+body.focus-medical-locked iframe[src*="zalo" i] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+

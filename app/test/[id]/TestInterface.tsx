@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import {
   Clock,
   CheckCircle,
+  CheckCircle2,
   XCircle,
   Play,
   ArrowRight,
@@ -26,7 +27,16 @@ import {
   Trash2,
   WifiOff,
   Download,
-  Bookmark
+  Bookmark,
+  Target,
+  Maximize2,
+  Minimize2,
+  ChevronLeft,
+  ChevronRight,
+  LayoutList,
+  SlidersHorizontal,
+  ShieldAlert,
+  Flame
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -76,6 +86,169 @@ export default function TestInterface({ test }: { test: any }) {
   const [isAnalyzingMistakes, setIsAnalyzingMistakes] = useState(false)
   const [mistakeAnalysisText, setMistakeAnalysisText] = useState<string | null>(null)
   const [mistakeAnalysisSaved, setMistakeAnalysisSaved] = useState(false)
+
+  // ─── FOCUS MEDICAL PRO & FOCUS MODE STATES ──────────────────────────────
+  const [focusMode, setFocusMode] = useState(false)
+  const [showFocusModal, setShowFocusModal] = useState(false)
+  const [focusPreset, setFocusPreset] = useState<number | 'custom' | 'unlimited'>(25) // 25p Pomodoro chuẩn y khoa
+  const [customFocusMinutes, setCustomFocusMinutes] = useState(25)
+  const [focusSecondsLeft, setFocusSecondsLeft] = useState(25 * 60)
+  const [focusUnlimitedElapsed, setFocusUnlimitedElapsed] = useState(0)
+  const [focusIsUnlimited, setFocusIsUnlimited] = useState(false)
+  const [focusWarningToast, setFocusWarningToast] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'single' | 'list'>('single') // Mặc định: Một câu hỏi làm trung tâm
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
+  const [showPaletteModal, setShowPaletteModal] = useState(false)
+
+  // Timer cho chế độ tập trung Focus Medical Pro
+  useEffect(() => {
+    let timer: any = null
+    if (focusMode) {
+      timer = setInterval(() => {
+        if (focusIsUnlimited) {
+          setFocusUnlimitedElapsed(prev => prev + 1)
+        } else {
+          setFocusSecondsLeft(prev => {
+            if (prev <= 1) {
+              setFocusWarningToast('⏰ Hoàn thành chu kỳ tập trung y khoa! Bạn có thể tiếp tục hoặc giải lao ngắn.')
+              return 0
+            }
+            return prev - 1
+          })
+        }
+      }, 1000)
+    }
+    return () => {
+      if (timer) clearInterval(timer)
+    }
+  }, [focusMode, focusIsUnlimited])
+
+  // Cơ chế chống xao nhãng, chặn back, chặn thoát khi đang bật Chế độ tập trung
+  useEffect(() => {
+    if (!focusMode) return
+
+    // 1. Chặn Back Button trên điện thoại & laptop bằng pushState
+    try {
+      window.history.pushState({ focusLock: true }, '')
+    } catch (e) {}
+
+    const handlePopState = (e: PopStateEvent) => {
+      e.preventDefault()
+      try {
+        window.history.pushState({ focusLock: true }, '')
+      } catch (err) {}
+      setFocusWarningToast('🛡️ Chế độ tập trung đang bật! Vui lòng nhấn nút "Thoát tập trung" ở góc trên nếu bạn muốn dừng.')
+      setTimeout(() => setFocusWarningToast(null), 4500)
+    }
+    window.addEventListener('popstate', handlePopState)
+
+    // 2. Chặn reload / đóng tab ngoài ý muốn (beforeunload)
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = 'Bạn đang trong Chế độ Tập Trung Y Khoa Focus Medical Pro. Bạn có chắc muốn rời đi?'
+      return e.returnValue
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    // 3. Cảnh báo khi người dùng vô tình thoát fullscreen
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement && !(document as any).webkitFullscreenElement && focusMode) {
+        setFocusWarningToast('⚠️ Đã thu nhỏ toàn màn hình. Bạn có thể nhấn lại nút Toàn màn hình để giữ độ tập trung tối đa.')
+        setTimeout(() => setFocusWarningToast(null), 4000)
+      }
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+
+    // 4. Thêm class lên body để ẩn triệt để toàn bộ mini-chat zalo/mess/widget
+    document.body.classList.add('focus-medical-locked')
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+      document.body.classList.remove('focus-medical-locked')
+    }
+  }, [focusMode])
+
+  // Phím tắt điều hướng nhanh trên máy tính: Mũi tên trái / phải để đổi câu, số 1-7 hoặc A-G để chọn đáp án
+  useEffect(() => {
+    if (!isStarted || submitted) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeList = isWrongReviewMode ? reviewQuestions : test.questions
+      if (!activeList || activeList.length === 0) return
+
+      // Tránh bắt phím khi đang nhập liệu trong ô input / textarea
+      const target = e.target as HTMLElement
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        setCurrentQuestionIndex(prev => Math.max(0, prev - 1))
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        setCurrentQuestionIndex(prev => Math.min(activeList.length - 1, prev + 1))
+      } else if (['1', '2', '3', '4', '5', '6', '7'].includes(e.key)) {
+        const keyMap: Record<string, string> = { '1': 'A', '2': 'B', '3': 'C', '4': 'D', '5': 'E', '6': 'F', '7': 'G' }
+        const optKey = keyMap[e.key]
+        const currentQ = activeList[currentQuestionIndex]?.question || activeList[currentQuestionIndex]
+        if (currentQ && optKey) {
+          handleSelectAnswer(currentQ.id, optKey)
+        }
+      } else if (['a', 'b', 'c', 'd', 'e', 'f', 'g', 'A', 'B', 'C', 'D', 'E', 'F', 'G'].includes(e.key)) {
+        const optKey = e.key.toUpperCase()
+        const currentQ = activeList[currentQuestionIndex]?.question || activeList[currentQuestionIndex]
+        if (currentQ && optKey) {
+          handleSelectAnswer(currentQ.id, optKey)
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isStarted, submitted, isWrongReviewMode, reviewQuestions, test.questions, currentQuestionIndex])
+
+  // Kích hoạt Chế độ tập trung y khoa
+  const handleStartFocusMode = () => {
+    setShowFocusModal(false)
+    let minutes = 25
+    if (focusPreset === 'unlimited') {
+      setFocusIsUnlimited(true)
+      setFocusUnlimitedElapsed(0)
+    } else if (focusPreset === 'custom') {
+      minutes = Math.max(1, Number(customFocusMinutes) || 25)
+      setFocusIsUnlimited(false)
+      setFocusSecondsLeft(minutes * 60)
+    } else {
+      minutes = Number(focusPreset) || 25
+      setFocusIsUnlimited(false)
+      setFocusSecondsLeft(minutes * 60)
+    }
+    setFocusMode(true)
+
+    // Bật Fullscreen nếu trình duyệt hỗ trợ
+    try {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {})
+      } else if ((document.documentElement as any).webkitRequestFullscreen) {
+        (document.documentElement as any).webkitRequestFullscreen()
+      }
+    } catch (e) {}
+  }
+
+  // Tắt / Thoát Chế độ tập trung y khoa
+  const handleExitFocusMode = () => {
+    setFocusMode(false)
+    try {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {})
+      } else if ((document as any).webkitFullscreenElement) {
+        (document as any).webkitExitFullscreen()
+      }
+    } catch (e) {}
+  }
 
   // Check offline storage on mount
   useEffect(() => {
@@ -1625,188 +1798,575 @@ export default function TestInterface({ test }: { test: any }) {
     )
   }
 
-  // ─── Active test-taking view ──────────────────────────────────────────────────
+  // ─── Active test-taking view (Focus Medical Pro) ──────────────────────────────
   const activeQuestions = isWrongReviewMode ? reviewQuestions : test.questions
+  const currentQ = activeQuestions[currentQuestionIndex]?.question || activeQuestions[currentQuestionIndex]
 
-  return (
-    <div className={`flex flex-col min-h-screen font-sans relative overflow-y-auto ${activeBgEnabled ? 'dzota-active-bg' : 'bg-[#F8F9FA]'}`}>
-      {/* Subtle ambient overlay only when background is enabled */}
-      {activeBgEnabled && <div className="absolute inset-0 bg-slate-900/[0.03] pointer-events-none" />}
-      
+  // Render một thẻ câu hỏi chuẩn Focus Medical Pro
+  const renderFocusMedicalQuestionCard = (qItem: any, idx: number, isSingleView: boolean = true) => {
+    if (!qItem) return null
+    const q = qItem.question || qItem
+    const qId = q.id
+    const isSelected = answers[qId]
+    const status = showExplanation[qId]
+    let opts: any = {}
+    try {
+      opts = typeof q.options === 'string' ? JSON.parse(q.options) : (q.options || {})
+    } catch (e) {
+      opts = {}
+    }
+    const isFlagged = !!flaggedQuestions[qId]
 
-      {restoredToast && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-30 bg-blue-600 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg flex items-center gap-2 animate-bounce">
-          <span>✨</span>
-          <span>{restoredToast}</span>
-        </div>
-      )}
-      <header className="bg-white/90 backdrop-blur-md border-b border-white/80 px-3 sm:px-6 py-2.5 flex justify-between items-center fixed top-0 w-full z-20 shadow-xs">
-        {/* Khung tên bài thi nổi bật thay vì màu trắng */}
-        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1 mr-2 sm:mr-3 px-2.5 sm:px-3.5 py-1.5 rounded-2xl bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 border border-blue-400/30 shadow-[0_4px_16px_rgba(26,115,232,0.25)]">
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-cyan-400 via-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold flex-shrink-0 shadow-md">
-            <Sparkles size={16} />
+    return (
+      <div
+        key={qId}
+        id={`test-question-card-${idx}`}
+        className={`focus-medical-card p-4 sm:p-6 mb-4 relative select-none ${
+          isFlagged ? 'focus-medical-card-flagged' : ''
+        }`}
+      >
+        {/* Banner đánh dấu xem lại nếu được flag */}
+        {isFlagged && (
+          <div className="mb-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
+            <Bookmark size={13} fill="currentColor" className="text-amber-600" />
+            <span>⭐ Câu hỏi đang được lưu ý xem lại</span>
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="font-black text-white text-xs sm:text-sm leading-tight truncate drop-shadow-xs">{test.title}</div>
-            <div className="text-[9px] sm:text-[10px] font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
-              <span>{isWrongReviewMode ? 'Ôn lại các câu từng làm sai' : (test.mode === 'exam' ? 'Bài thi trắc nghiệm' : 'Chế độ luyện tập')}</span>
-            </div>
-          </div>
-        </div>
+        )}
 
-        {/* Khung số câu đã làm trên n câu & Controls */}
-        {test.mode === 'exam' ? (
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-black shadow-[0_4px_14px_rgba(13,148,136,0.35)] border border-white/20 whitespace-nowrap">
-              <CheckCircle size={14} className="text-cyan-200 hidden xs:inline" />
-              <span>Đã làm <strong className="text-yellow-300 font-extrabold">{Object.keys(answers).length}</strong>/{activeQuestions.length}</span>
+        {/* Khung nội dung câu hỏi: Font Times New Roman, chữ Navy #17324D */}
+        <div className="mb-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              <span className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-xs sm:text-sm font-bold flex-shrink-0 transition-all ${
+                isFlagged 
+                  ? 'bg-amber-500 text-white shadow-xs ring-2 ring-amber-300' 
+                  : 'bg-[#17324D] text-white shadow-xs'
+              }`}>
+                {idx + 1}
+              </span>
+              <div className="flex-1">
+                <div
+                  className="font-times text-[#17324D] text-[15.5px] sm:text-[17px] leading-relaxed font-semibold"
+                  dangerouslySetInnerHTML={{ __html: q.content }}
+                />
+              </div>
             </div>
-            <div className={`font-mono text-xs sm:text-sm font-bold flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full ${timeLeft < 60 ? 'bg-[#fce8e6] text-[#c5221f] animate-pulse' : 'bg-white/90 border border-slate-200/80 text-slate-800'}`}>
-              <Clock size={15}/> {formatTime(timeLeft)}
-            </div>
-            <button onClick={handleSubmit} className="bg-[#007AFF] text-white px-3 sm:px-4 py-1.5 rounded-full font-bold text-xs sm:text-sm hover:bg-blue-600 transition-colors cursor-pointer shadow-xs active:scale-95">Nộp Bài</button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-            {/* Khung số câu đã làm trên n câu */}
-            <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white text-xs font-black shadow-[0_4px_14px_rgba(79,70,229,0.35)] border border-white/25 whitespace-nowrap">
-              <span className="text-cyan-200 hidden sm:inline">Đã làm</span>
-              <span className="text-yellow-300 font-extrabold">{Object.keys(answers).length}</span>
-              <span className="text-white font-extrabold">/{activeQuestions.length}</span>
-              <span className="text-cyan-200 text-[10px] hidden xs:inline">câu</span>
-            </div>
+
+            {/* Nút Đánh dấu xem lại */}
             <button
-              onClick={handleRestartPractice}
-              className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-bold bg-white/90 hover:bg-slate-100 border border-slate-300 text-slate-700 shadow-xs active:scale-95 transition-all cursor-pointer"
-              title="Xóa làm lại từ đầu"
+              type="button"
+              onClick={() => handleToggleFlag(qId)}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                isFlagged
+                  ? 'bg-amber-100 text-amber-900 border border-amber-300 ring-2 ring-amber-200'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
+              }`}
+              title={isFlagged ? 'Bỏ đánh dấu xem lại câu này' : 'Đánh dấu để xem lại câu này'}
             >
-              <RotateCcw size={13} />
-              <span className="hidden sm:inline">Làm lại</span>
+              <Bookmark size={13} fill={isFlagged ? 'currentColor' : 'none'} className={isFlagged ? 'text-amber-600' : 'text-slate-500'} />
+              <span className="hidden xs:inline">{isFlagged ? 'Đã lưu ý' : 'Xem lại'}</span>
             </button>
+          </div>
+        </div>
+
+        {/* Danh sách phương án: Chuẩn Focus Medical Pro - Toàn bộ hàng bấm được, cao 54-64px PC, 44-48px mobile */}
+        <div className="space-y-2.5 sm:space-y-3 pt-1">
+          {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(k => {
+            if (!opts[k]) return null
+            const isUserPick = isSelected === k
+            const isRightOpt = q.correctOption === k
+            const isPractice = test.mode === 'practice'
+
+            let optionClass = 'focus-medical-option'
+            let letterClass = 'focus-medical-letter'
+
+            if (isPractice && status === 'correct' && (isUserPick || isRightOpt)) {
+              optionClass += ' focus-medical-option-correct'
+              letterClass += ' focus-medical-letter-correct'
+            } else if (isPractice && status === 'incorrect' && isUserPick) {
+              optionClass += ' focus-medical-option-incorrect'
+              letterClass += ' focus-medical-letter-incorrect'
+            } else if (isUserPick) {
+              optionClass += isFlagged ? ' focus-medical-option-flagged-selected' : ' focus-medical-option-selected'
+              letterClass += ' focus-medical-letter-selected'
+            }
+
+            return (
+              <div
+                key={k}
+                onClick={() => handleSelectAnswer(qId, k)}
+                className={optionClass}
+              >
+                <span className={letterClass}>{k}</span>
+                <span className="font-times text-[15px] sm:text-[16px] leading-snug flex-1 text-[#17324D] font-normal">
+                  {opts[k]}
+                </span>
+                {isPractice && status === 'correct' && (isUserPick || isRightOpt) && (
+                  <CheckCircle size={20} className="text-[#087F8C] ml-2 flex-shrink-0" />
+                )}
+                {isPractice && status === 'incorrect' && isUserPick && (
+                  <XCircle size={20} className="text-[#E53E3E] ml-2 flex-shrink-0" />
+                )}
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Chế độ Luyện tập: Phản hồi đúng/sai và nút Giảng viên AI */}
+        {test.mode === 'practice' && isSelected && (
+          <div className="mt-4 pt-3.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+            <div className="text-xs font-semibold">
+              {status === 'correct' ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E7F5EE] text-[#0E6245] font-bold border border-[#087F8C]/30">
+                  <Check size={14} /> Chính xác!
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FDF2F2] text-[#9B2C2C] font-bold border border-[#E53E3E]/30">
+                  <X size={14} /> Chưa đúng. Đáp án chuẩn: <strong className="font-bold underline">{q.correctOption}</strong>
+                </span>
+              )}
+            </div>
+
             <button
-              onClick={handlePracticeSubmit}
-              className="inline-flex items-center gap-1 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-xs font-bold bg-[#007AFF] hover:bg-blue-600 text-white shadow-xs active:scale-95 transition-all cursor-pointer"
-              title="Nộp bài và xem điểm ngay"
+              type="button"
+              onClick={() => handleAskTeacher(q)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#087F8C] hover:bg-[#066772] text-white font-bold text-xs shadow-xs active:scale-95 transition-all cursor-pointer"
+              title="Hỏi giảng viên AI phân tích chi tiết"
             >
-              <CheckSquare size={14} />
-              <span>Nộp Bài</span>
+              <HelpCircle size={14} />
+              <span>Giảng viên AI giải thích (?)</span>
             </button>
           </div>
         )}
+      </div>
+    )
+  }
+
+  return (
+    <div className={`focus-medical-root focus-medical-bg flex flex-col min-h-screen relative overflow-y-auto ${focusMode ? 'focus-medical-fullscreen' : ''}`}>
+      
+      {/* Toast thông báo cảnh báo Focus Mode */}
+      {focusWarningToast && (
+        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 bg-[#17324D] text-white px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold shadow-2xl flex items-center gap-2 border border-cyan-400/30 animate-bounce max-w-[90vw] text-center">
+          <ShieldAlert size={16} className="text-cyan-400 flex-shrink-0" />
+          <span>{focusWarningToast}</span>
+        </div>
+      )}
+
+      {/* Toast khôi phục phiên thi */}
+      {restoredToast && !focusWarningToast && (
+        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-40 bg-[#087F8C] text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg flex items-center gap-2 animate-fade-in">
+          <Sparkles size={14} />
+          <span>{restoredToast}</span>
+        </div>
+      )}
+
+      {/* ─── HEADER: FOCUS MEDICAL PRO ────────────────────────────────────────── */}
+      <header className="bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-3 sm:px-6 py-2.5 flex justify-between items-center fixed top-0 w-full z-30 shadow-xs h-14 sm:h-16">
+        
+        {/* Bên trái: Tên bài thi & Chế độ */}
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 mr-2">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#17324D] text-white flex items-center justify-center font-bold flex-shrink-0 shadow-xs">
+            <Target size={18} className="text-[#087F8C]" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="font-times font-bold text-[#17324D] text-xs sm:text-sm leading-tight truncate">
+              {test.title}
+            </div>
+            <div className="text-[10px] sm:text-[11px] font-semibold text-[#087F8C] flex items-center gap-1.5 truncate">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#087F8C] animate-pulse"></span>
+              <span>{focusMode ? '🎯 CHẾ ĐỘ TẬP TRUNG Y KHOA' : (test.mode === 'exam' ? 'Thi trắc nghiệm chính thức' : 'Luyện tập y khoa')}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Ở giữa / Bên phải: Bộ điều khiển, Đếm giờ, Bảng câu hỏi, Chế độ tập trung & Nộp bài */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
+          
+          {/* Nút kích hoạt / thoát Chế độ Tập Trung Focus Medical Pro */}
+          {focusMode ? (
+            <button
+              type="button"
+              onClick={handleExitFocusMode}
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-all cursor-pointer shadow-xs active:scale-95"
+              title="Thoát chế độ tập trung"
+            >
+              <Minimize2 size={14} />
+              <span className="hidden sm:inline">Thoát tập trung</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowFocusModal(true)}
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#EBF7F8] hover:bg-[#D9F1F3] text-[#087F8C] border border-[#087F8C]/40 transition-all cursor-pointer shadow-xs active:scale-95"
+              title="Bật chế độ tập trung toàn màn hình, loại bỏ mọi xao nhãng"
+            >
+              <Target size={14} className="text-[#087F8C]" />
+              <span className="font-bold">Chế độ tập trung</span>
+            </button>
+          )}
+
+          {/* Đồng hồ mini đếm ngược Chế độ tập trung (khi đang bật Focus Mode) */}
+          {focusMode && (
+            <div className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-full bg-[#17324D] text-white text-xs font-mono font-bold shadow-xs">
+              <Clock size={13} className="text-cyan-300 animate-pulse" />
+              <span className="text-cyan-300">
+                {focusIsUnlimited ? formatTime(focusUnlimitedElapsed) : formatTime(focusSecondsLeft)}
+              </span>
+            </div>
+          )}
+
+          {/* Đồng hồ thời gian làm bài thi (nếu là bài thi exam) */}
+          {test.mode === 'exam' && (
+            <div className={`font-mono text-xs sm:text-sm font-bold flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-full ${
+              timeLeft < 60 ? 'bg-rose-100 text-rose-700 animate-pulse border border-rose-300' : 'bg-slate-100 text-[#17324D] border border-slate-200'
+            }`}>
+              <Clock size={14} />
+              <span>{formatTime(timeLeft)}</span>
+            </div>
+          )}
+
+          {/* Khung số câu đã làm trên tổng số câu - Bấm để mở Bảng câu hỏi */}
+          <button
+            type="button"
+            onClick={() => setShowPaletteModal(true)}
+            className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-full bg-[#F0FAFA] hover:bg-[#E2F6F7] text-[#087F8C] text-xs font-bold border border-[#087F8C]/30 shadow-xs cursor-pointer transition-all active:scale-95"
+            title="Xem danh sách bảng câu hỏi"
+          >
+            <LayoutList size={14} />
+            <span>Đã làm: <strong>{Object.keys(answers).length}</strong>/{activeQuestions.length}</span>
+            {Object.keys(flaggedQuestions).length > 0 && (
+              <span className="bg-amber-400 text-amber-950 px-1.5 py-0.2 rounded-full text-[10px] font-black ml-0.5">
+                ★{Object.keys(flaggedQuestions).length}
+              </span>
+            )}
+          </button>
+
+          {/* Nút chuyển đổi View Mode: 1 Câu trung tâm vs Xem danh sách */}
+          {!focusMode && (
+            <button
+              type="button"
+              onClick={() => setViewMode(prev => prev === 'single' ? 'list' : 'single')}
+              className="hidden md:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all cursor-pointer"
+              title={viewMode === 'single' ? 'Chuyển sang xem toàn bộ danh sách' : 'Chuyển sang xem 1 câu hỏi trung tâm'}
+            >
+              <SlidersHorizontal size={13} />
+              <span>{viewMode === 'single' ? '1 Câu' : 'Danh sách'}</span>
+            </button>
+          )}
+
+          {/* Nút Nộp Bài */}
+          <button
+            type="button"
+            onClick={test.mode === 'exam' ? handleSubmit : handlePracticeSubmit}
+            className="px-3.5 sm:px-4 py-1.5 rounded-full bg-[#087F8C] hover:bg-[#066772] text-white font-bold text-xs sm:text-sm shadow-xs transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+          >
+            Nộp Bài
+          </button>
+        </div>
       </header>
 
-      <div className="flex-1 overflow-auto p-2.5 sm:p-4 pt-18 sm:pt-20 max-w-3xl mx-auto w-full pb-20 space-y-3 sm:space-y-3.5 relative z-10">
-        {activeQuestions.map((tq: any, i: number) => {
-          const q = tq.question
-          const isSelected = answers[q.id]
-          const status = showExplanation[q.id]
-          const opts = JSON.parse(q.options)
-          const isFlagged = !!flaggedQuestions[q.id]
-          
-          return (
-            <div key={q.id} className={`p-2.5 sm:p-3.5 mb-2.5 sm:mb-3.5 relative select-none ${
-              isFlagged ? 'apple-liquid-glass apple-liquid-glass-flagged' : 'apple-liquid-glass'
-            }`}>
-              {/* Dải Banner Hoàng Kim khi Đánh Dấu Xem Lại */}
-              {isFlagged && (
-                <div className="mb-2 sm:mb-2.5 inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] sm:text-xs font-black bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 shadow-xs border border-white/70">
-                  <Bookmark size={11} fill="currentColor" />
-                  <span>⭐ CÂU HỎI ĐANG ĐƯỢC LƯU Ý XEM LẠI</span>
+      {/* ─── NỘI DUNG LÀM BÀI TRẮC NGHIỆM: MỘT CÂU HỎI LÀM TRUNG TÂM ──────────── */}
+      <main className="flex-1 w-full max-w-3xl mx-auto px-3 sm:px-6 pt-20 sm:pt-24 pb-24 relative z-10 flex flex-col justify-start">
+        
+        {/* Thanh tiến độ mảnh y khoa */}
+        <div className="w-full bg-[#E2E8F0] h-1.5 rounded-full overflow-hidden mb-4 sm:mb-6">
+          <div
+            className="bg-[#087F8C] h-full transition-all duration-200"
+            style={{ width: `${((Object.keys(answers).length) / Math.max(1, activeQuestions.length)) * 100}%` }}
+          />
+        </div>
+
+        {/* TH1: CHẾ ĐỘ MỘT CÂU HỎI LÀM TRUNG TÂM (Default & Focus Mode) */}
+        {viewMode === 'single' || focusMode ? (
+          <div className="flex flex-col flex-1 justify-between">
+            
+            {/* Header nhỏ hiển thị vị trí câu hỏi */}
+            <div className="flex items-center justify-between mb-3 px-1 text-xs font-bold text-slate-500">
+              <span className="font-times text-sm text-[#17324D] font-bold">
+                Câu hỏi {currentQuestionIndex + 1} / {activeQuestions.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400">
+                  {answers[currentQ?.id] ? '✓ Đã chọn đáp án' : 'Chưa trả lời'}
+                </span>
+              </div>
+            </div>
+
+            {/* Thẻ câu hỏi trung tâm */}
+            {renderFocusMedicalQuestionCard(currentQ, currentQuestionIndex, true)}
+
+            {/* Thanh điều hướng Trước / Sau & Công cụ dưới chân thẻ */}
+            <div className="mt-4 flex items-center justify-between gap-2.5">
+              <button
+                type="button"
+                onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
+                disabled={currentQuestionIndex === 0}
+                className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-2xl bg-white hover:bg-slate-50 text-[#17324D] font-bold text-xs sm:text-sm border border-[#E2E8F0] shadow-xs disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 cursor-pointer"
+              >
+                <ChevronLeft size={16} />
+                <span>Câu trước</span>
+              </button>
+
+              {/* Nút xem nhanh danh sách câu */}
+              <button
+                type="button"
+                onClick={() => setShowPaletteModal(true)}
+                className="px-3.5 py-2.5 rounded-2xl bg-white hover:bg-slate-50 text-slate-600 font-bold text-xs border border-[#E2E8F0] shadow-xs transition-all active:scale-95 cursor-pointer"
+                title="Bảng câu hỏi"
+              >
+                <span>{currentQuestionIndex + 1}/{activeQuestions.length}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCurrentQuestionIndex(prev => Math.min(activeQuestions.length - 1, prev + 1))}
+                disabled={currentQuestionIndex === activeQuestions.length - 1}
+                className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-2xl bg-[#087F8C] hover:bg-[#066772] text-white font-bold text-xs sm:text-sm shadow-xs disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 cursor-pointer"
+              >
+                <span>Câu tiếp theo</span>
+                <ChevronRight size={16} />
+              </button>
+            </div>
+
+            {/* Gợi ý phím tắt trên máy tính */}
+            <div className="mt-6 text-center text-slate-400 text-xs hidden sm:block font-times">
+              Dùng phím mũi tên <strong>←</strong> / <strong>→</strong> để chuyển câu • Phím <strong>1, 2, 3, 4</strong> hoặc <strong>A, B, C, D</strong> để chọn đáp án
+            </div>
+          </div>
+        ) : (
+          /* TH2: CHẾ ĐỘ XEM TOÀN BỘ DANH SÁCH CÂU HỎI */
+          <div className="space-y-4">
+            {activeQuestions.map((tq: any, i: number) => renderFocusMedicalQuestionCard(tq, i, false))}
+          </div>
+        )}
+
+        {renderCopyrightBadge('my-6')}
+      </main>
+
+      {/* ─── MODAL SETUP CHẾ ĐỘ TẬP TRUNG Y KHOA (FOCUS MODE) ────────────────── */}
+      {showFocusModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-md p-5 sm:p-6 overflow-hidden animate-pop-in">
+            
+            {/* Header Modal */}
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-[#EBF7F8] text-[#087F8C] flex items-center justify-center shadow-xs">
+                  <Target size={22} />
                 </div>
-              )}
-
-              {/* Khung nội dung câu hỏi: Capsule trắng tinh thể sang trọng, chữ đen đậm 100% */}
-              <div className="apple-question-capsule p-3 sm:p-3.5 mb-2 sm:mb-2.5">
-                <div className="flex items-start justify-between gap-2.5">
-                  <div className="flex items-start gap-2.5 sm:gap-3 flex-1 min-w-0">
-                    <span className={`flex-shrink-0 font-extrabold w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-xl text-xs sm:text-sm shadow-xs mt-0.5 transition-all ${
-                      isFlagged 
-                        ? 'bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-600 text-slate-950 shadow-xs ring-2 ring-yellow-300 scale-105' 
-                        : 'bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 text-white shadow-xs'
-                    }`}>
-                      {i + 1}
-                    </span>
-                    <div className="prose prose-sm max-w-none text-slate-900 pt-0.5 flex-1 font-bold text-[14.5px] sm:text-[16px] leading-snug" dangerouslySetInnerHTML={{ __html: q.content }} />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleToggleFlag(q.id)}
-                    className={`flex-shrink-0 flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer select-none active:scale-95 ${
-                      isFlagged
-                        ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 shadow-xs border border-amber-300 ring-2 ring-yellow-300 font-black scale-105'
-                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-amber-700 border border-slate-200/80 shadow-2xs'
-                    }`}
-                    title={isFlagged ? 'Bỏ đánh dấu xem lại câu này' : 'Đánh dấu để xem lại câu này'}
-                  >
-                    <Bookmark size={12} fill={isFlagged ? 'currentColor' : 'none'} className={isFlagged ? 'text-slate-950' : 'text-amber-500'} />
-                    <span className="text-[11px] sm:text-xs font-extrabold">{isFlagged ? 'Đã lưu ý' : 'Xem lại'}</span>
-                  </button>
+                <div>
+                  <h3 className="font-times font-bold text-base sm:text-lg text-[#17324D] leading-tight">
+                    Chế Độ Tập Trung Y Khoa
+                  </h3>
+                  <p className="text-[11px] text-[#087F8C] font-semibold">
+                    Focus Medical Pro • Giảm xao nhãng tối đa
+                  </p>
                 </div>
               </div>
-              
-              {/* Options List with Apple Liquid Option Capsules */}
-              <div className="space-y-1.5 sm:space-y-2 pt-0.5">
-                {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(k => {
-                  if (!opts[k]) return null
-                  
+
+              <button
+                type="button"
+                onClick={() => setShowFocusModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Body: Lựa chọn thời gian tập trung */}
+            <div className="py-4 space-y-4">
+              <p className="font-times text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Khi kích hoạt, hệ thống sẽ mở <strong>toàn màn hình</strong>, khóa đa nhiệm và ẩn toàn bộ thông báo (Zalo, Messenger, chat widget) để bạn tập trung 100% vào bài thi.
+              </p>
+
+              <div>
+                <label className="block text-xs font-bold text-[#17324D] mb-2 uppercase tracking-wider">
+                  Chọn thời gian tập trung:
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: '15 phút', value: 15 },
+                    { label: '20 phút', value: 20 },
+                    { label: '25 phút (Pomodoro)', value: 25 },
+                    { label: '30 phút', value: 30 },
+                    { label: '60 phút', value: 60 },
+                    { label: 'Tùy chỉnh', value: 'custom' },
+                  ].map(item => (
+                    <button
+                      key={String(item.value)}
+                      type="button"
+                      onClick={() => setFocusPreset(item.value as any)}
+                      className={`py-2 px-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${
+                        focusPreset === item.value
+                          ? 'bg-[#087F8C] text-white border-[#087F8C] shadow-xs'
+                          : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Nút Không giới hạn thời gian (Tự do) */}
+                <button
+                  type="button"
+                  onClick={() => setFocusPreset('unlimited')}
+                  className={`mt-2 w-full py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center flex items-center justify-center gap-1.5 ${
+                    focusPreset === 'unlimited'
+                      ? 'bg-[#087F8C] text-white border-[#087F8C] shadow-xs'
+                      : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                  }`}
+                >
+                  <span>⏱️ Không giới hạn thời gian (Tự do bật/tắt)</span>
+                </button>
+
+                {/* Input khi chọn tùy chỉnh */}
+                {focusPreset === 'custom' && (
+                  <div className="mt-3 flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                    <span className="text-xs text-slate-600 font-bold whitespace-nowrap">Số phút tập trung:</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={180}
+                      value={customFocusMinutes}
+                      onChange={e => setCustomFocusMinutes(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-20 px-2 py-1 rounded-lg border border-slate-300 text-xs font-bold text-center bg-white"
+                    />
+                    <span className="text-xs text-slate-500 font-medium">phút</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer Modal */}
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setShowFocusModal(false)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleStartFocusMode}
+                className="px-5 py-2.5 rounded-xl bg-[#087F8C] hover:bg-[#066772] text-white font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95 cursor-pointer flex items-center gap-2"
+              >
+                <Maximize2 size={15} />
+                <span>Bắt Đầu Tập Trung Ngay</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL BẢNG DANH SÁCH CÂU HỎI (PALETTE) ─────────────────────────── */}
+      {showPaletteModal && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in"
+          onClick={() => setShowPaletteModal(false)}
+        >
+          <div
+            className="w-full max-h-[85vh] sm:max-h-[80vh] sm:max-w-xl bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-slide-up"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header Modal Palette */}
+            <div className="px-4 py-3.5 sm:px-6 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#EBF7F8] text-[#087F8C] flex items-center justify-center">
+                  <LayoutList size={18} />
+                </div>
+                <div>
+                  <h3 className="font-times font-bold text-[#17324D] text-sm sm:text-base leading-tight">
+                    Danh Sách Câu Hỏi
+                  </h3>
+                  <p className="text-[11px] text-slate-500">Chạm câu hỏi để nhảy nhanh tới câu đó</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPaletteModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center cursor-pointer transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Chú giải trạng thái câu hỏi */}
+            <div className="grid grid-cols-3 gap-2 px-3 sm:px-6 py-2.5 bg-slate-50 border-b border-slate-100 text-xs">
+              <div className="flex items-center gap-1.5 font-bold text-[#0E6245] bg-[#E7F5EE] px-2 py-1.5 rounded-xl border border-[#087F8C]/30">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#087F8C] flex-shrink-0"></span>
+                <span>Đã làm: <strong>{Object.keys(answers).length}</strong></span>
+              </div>
+              <div className="flex items-center gap-1.5 font-bold text-rose-800 bg-rose-50 px-2 py-1.5 rounded-xl border border-rose-200">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 flex-shrink-0"></span>
+                <span>Chưa làm: <strong>{activeQuestions.length - Object.keys(answers).length}</strong></span>
+              </div>
+              <div className="flex items-center gap-1.5 font-bold text-amber-900 bg-amber-50 px-2 py-1.5 rounded-xl border border-amber-300">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 flex-shrink-0"></span>
+                <span>Lưu ý: <strong>{Object.keys(flaggedQuestions).length}</strong></span>
+              </div>
+            </div>
+
+            {/* Grid danh sách câu hỏi */}
+            <div className="p-3 sm:p-5 overflow-y-auto flex-1 max-h-[55vh]">
+              <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                {activeQuestions.map((tq: any, idx: number) => {
+                  const q = tq.question || tq
+                  const isAns = !!answers[q.id]
+                  const isFlg = !!flaggedQuestions[q.id]
+                  const isCur = currentQuestionIndex === idx
+
+                  let btnClass = 'bg-rose-500 text-white'
+                  if (isFlg) {
+                    btnClass = 'bg-amber-400 text-amber-950 font-black ring-2 ring-amber-300'
+                  } else if (isAns) {
+                    btnClass = 'bg-[#087F8C] text-white font-bold'
+                  }
+
                   return (
-                    <div key={k} onClick={() => handleSelectAnswer(q.id, k)} 
-                      className={`
-                        py-2 px-3 sm:py-2.5 sm:px-3.5 cursor-pointer transition-all duration-150 flex items-center min-h-[38px] sm:min-h-[40px] apple-liquid-option
-                        ${isSelected === k 
-                           ? (isFlagged ? 'apple-liquid-option-flagged-selected' : 'apple-liquid-option-selected') 
-                           : (isFlagged ? 'border-amber-200/90' : '')}
-                        ${test.mode === 'practice' && status === 'correct' && (isSelected === k || q.correctOption === k) ? 'apple-liquid-option-correct' : ''}
-                        ${test.mode === 'practice' && status === 'incorrect' && isSelected === k ? 'apple-liquid-option-incorrect' : ''}
-                      `}>
-                      <span className={`w-6 h-6 sm:w-6.5 sm:h-6.5 flex-shrink-0 rounded-lg sm:rounded-xl border flex items-center justify-center mr-2.5 text-[11px] sm:text-xs font-black transition-all ${
-                         isSelected === k 
-                           ? (isFlagged ? 'bg-gradient-to-tr from-amber-500 to-yellow-400 border-amber-400 text-slate-950 shadow-xs' : 'bg-[#007AFF] border-[#007AFF] text-white shadow-xs') 
-                           : 'border-slate-300 text-slate-700 bg-slate-100'
-                      }
-                         ${test.mode === 'practice' && status === 'correct' && (isSelected === k || q.correctOption === k) ? '!bg-[#34C759] !border-[#34C759] !text-white shadow-xs' : ''}
-                         ${test.mode === 'practice' && status === 'incorrect' && isSelected === k ? '!bg-[#FF3B30] !border-[#FF3B30] !text-white shadow-xs' : ''}
-                      `}>{k}</span>
-                      <span className="text-slate-900 text-[13.5px] sm:text-[15px] flex-1 font-medium leading-snug">{opts[k]}</span>
-                      {test.mode === 'practice' && status === 'correct' && (isSelected === k || q.correctOption === k) && <CheckCircle size={18} className="text-[#34C759] ml-1.5 flex-shrink-0"/>}
-                      {test.mode === 'practice' && status === 'incorrect' && isSelected === k && <XCircle size={18} className="text-[#FF3B30] ml-1.5 flex-shrink-0"/>}
-                    </div>
+                    <button
+                      key={q.id || idx}
+                      type="button"
+                      onClick={() => {
+                        setCurrentQuestionIndex(idx)
+                        setShowPaletteModal(false)
+                        if (viewMode === 'list') {
+                          const el = document.getElementById(`test-question-card-${idx}`)
+                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                        }
+                      }}
+                      className={`h-10 sm:h-11 rounded-xl flex items-center justify-center text-xs sm:text-sm transition-all duration-150 cursor-pointer active:scale-95 ${btnClass} ${
+                        isCur ? 'ring-3 ring-[#17324D]' : ''
+                      }`}
+                    >
+                      <span>{idx + 1}</span>
+                      {isFlg && <span className="ml-0.5 text-[9px]">★</span>}
+                    </button>
                   )
                 })}
               </div>
-              
-              {/* Practice Mode: Button (?) Hỏi Giảng Viên AI sau khi trả lời */}
-              {test.mode === 'practice' && isSelected && (
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <div className="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
-                    {status === 'correct' ? (
-                      <span className="text-emerald-600 font-bold flex items-center gap-1">
-                        <Check size={14} /> Chính xác!
-                      </span>
-                    ) : (
-                      <span className="text-rose-600 font-bold flex items-center gap-1">
-                        <X size={14} /> Chưa đúng. Đáp án chuẩn: {q.correctOption}
-                      </span>
-                    )}
-                  </div>
-
-                  <button
-                    onClick={() => handleAskTeacher(q)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xs shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
-                    title="Hỏi giảng viên AI giải thích chi tiết"
-                  >
-                    <HelpCircle size={15} />
-                    <span>Giải thích (?)</span>
-                  </button>
-                </div>
-              )}
             </div>
-          )
-        })}
-        {renderCopyrightBadge('my-4')}
-      </div>
+
+            {/* Footer Modal */}
+            <div className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-xs text-slate-500 font-medium">
+                Tổng: <strong className="text-[#17324D]">{activeQuestions.length} câu</strong>
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowPaletteModal(false)}
+                className="px-4 py-1.5 rounded-full bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200 cursor-pointer"
+              >
+                Đóng
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* ─── POPUP GIẢI THÍCH CHUYÊN NGHIỆP CỦA GIẢNG VIÊN AI ─────────────────── */}
       {activeExplainQ && (
