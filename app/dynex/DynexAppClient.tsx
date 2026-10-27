@@ -19,7 +19,7 @@ import CreateOsceExamModal from './components/CreateOsceExamModal';
 import { storageService, Project, Lesson, ImageItem, Mask, DynexExamPaper } from './services/storageService';
 import { authService, DynexUser } from './services/authService';
 import { getStoredApiKey, getStoredModel } from './services/geminiService';
-import { ShieldCheck, Layers } from 'lucide-react';
+import { ShieldCheck, Layers, ShieldAlert } from 'lucide-react';
 
 interface DynexAppClientProps {
   initialUser?: {
@@ -158,6 +158,9 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
   // Current selected project and lesson helper
   const currentProject = projects.find(p => p.id === selectedProjectId) || projects[0];
 
+  // Super Admin Check: Only lenhatduy.vietnam@gmail.com can manage DYNEX
+  const isSuperAdmin = currentUser?.email?.toLowerCase() === 'lenhatduy.vietnam@gmail.com' || currentUser?.role === 'ADMIN';
+
   let currentLesson: Lesson | null = null;
   if (currentProject) {
     for (const cat of currentProject.categories || []) {
@@ -198,7 +201,12 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
     }
   };
 
-  // 2. Category CRUD (Thư mục lớn)
+  const handleRenameProject = (projId: string, name: string) => {
+    const updated = projects.map(p => (p.id === projId ? { ...p, name } : p));
+    updateProjectsState(updated);
+  };
+
+  // 2. Category CRUD (Chương trong môn)
   const handleAddCategory = (projectId: string, name: string) => {
     const updated = projects.map(proj => {
       if (proj.id !== projectId) return proj;
@@ -209,6 +217,17 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
         subFolders: []
       };
       return { ...proj, categories: [...(proj.categories || []), newCat] };
+    });
+    updateProjectsState(updated);
+  };
+
+  const handleRenameCategory = (catId: string, name: string) => {
+    const updated = projects.map(proj => {
+      if (proj.id !== selectedProjectId) return proj;
+      return {
+        ...proj,
+        categories: (proj.categories || []).map(cat => (cat.id === catId ? { ...cat, name } : cat))
+      };
     });
     updateProjectsState(updated);
   };
@@ -224,7 +243,7 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
     updateProjectsState(updated);
   };
 
-  // 3. SubFolder CRUD (Thư mục con)
+  // 3. SubFolder CRUD (Chủ đề trong chương)
   const handleAddSubFolder = (categoryId: string, name: string) => {
     const updated = projects.map(proj => {
       if (proj.id !== selectedProjectId) return proj;
@@ -238,6 +257,23 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
             lessons: []
           };
           return { ...cat, subFolders: [...(cat.subFolders || []), newSub] };
+        })
+      };
+    });
+    updateProjectsState(updated);
+  };
+
+  const handleRenameSubFolder = (categoryId: string, subId: string, name: string) => {
+    const updated = projects.map(proj => {
+      if (proj.id !== selectedProjectId) return proj;
+      return {
+        ...proj,
+        categories: (proj.categories || []).map(cat => {
+          if (cat.id !== categoryId) return cat;
+          return {
+            ...cat,
+            subFolders: (cat.subFolders || []).map(sub => (sub.id === subId ? { ...sub, name } : sub))
+          };
         })
       };
     });
@@ -261,7 +297,7 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
     updateProjectsState(updated);
   };
 
-  // 4. Lesson CRUD (Bài học)
+  // 4. Lesson CRUD (Bài học thực hành)
   const handleAddLesson = (
     subFolderId: string, 
     title: string, 
@@ -304,6 +340,29 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
     if (newImageId) {
       setCurrentImageId(newImageId);
     }
+  };
+
+  const handleRenameLesson = (catId: string, subId: string, lessonId: string, title: string) => {
+    const updated = projects.map(proj => {
+      if (proj.id !== selectedProjectId) return proj;
+      return {
+        ...proj,
+        categories: (proj.categories || []).map(cat => {
+          if (cat.id !== catId) return cat;
+          return {
+            ...cat,
+            subFolders: (cat.subFolders || []).map(sub => {
+              if (sub.id !== subId) return sub;
+              return {
+                ...sub,
+                lessons: (sub.lessons || []).map(les => (les.id === lessonId ? { ...les, title } : les))
+              };
+            })
+          };
+        })
+      };
+    });
+    updateProjectsState(updated);
   };
 
   const handleDeleteLesson = (catId: string, subId: string, lessonId: string) => {
@@ -501,85 +560,135 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
 
         {/* Tab 1: Admin & Structure / Mask Occlusion Studio */}
         {currentTab === 'admin' && (
-          <div className="flex-1 flex flex-col lg:flex-row gap-5 relative">
-            {/* Toggle Left Sidebar Button */}
-            <button
-              onClick={() => setIsTreeSidebarOpen(!isTreeSidebarOpen)}
-              className="hidden lg:flex absolute -left-3 top-4 z-20 items-center justify-center w-7 h-7 rounded-full bg-slate-800 border border-slate-600 text-slate-300 hover:text-white shadow-lg transition-transform hover:scale-110 cursor-pointer"
-              title={isTreeSidebarOpen ? 'Thu gọn danh mục bài học' : 'Mở rộng danh mục bài học'}
-            >
-              {isTreeSidebarOpen ? '◀' : '▶'}
-            </button>
+          !isSuperAdmin ? (
+            <div className="flex-1 min-h-[500px] flex items-center justify-center p-6">
+              <div className="max-w-md w-full bg-slate-900/90 border border-amber-500/30 rounded-3xl p-8 text-center backdrop-blur-xl shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <ShieldAlert className="w-8 h-8" />
+                </div>
+                <span className="inline-block px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-amber-500/10 text-amber-300 border border-amber-500/20 mb-3">
+                  Quyền Quản Trị Viên DYNEX
+                </span>
+                <h3 className="text-lg font-black text-white mb-2">
+                  Studio Quản Lý Thuộc Quyền Nhật Duy
+                </h3>
+                <p className="text-xs text-slate-300 leading-relaxed mb-6">
+                  Khu vực Quản trị Môn học, Chương, Chủ đề &amp; Soạn đề Giải phẫu thuộc quyền sở hữu độc quyền của Giảng viên <strong className="text-amber-400">Nhật Duy</strong> (<span className="text-slate-200">lenhatduy.vietnam@gmail.com</span>).
+                  <br />
+                  Học viên vui lòng vào <strong>Góc Học Tập</strong> để ôn luyện Flashcard và thi Chạy trạm!
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <button
+                    onClick={() => setCurrentTab('learn')}
+                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/30 cursor-pointer"
+                  >
+                    Về Góc Học Tập
+                  </button>
+                  {!currentUser ? (
+                    <button
+                      onClick={() => setIsLoginOpen(true)}
+                      className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition-all cursor-pointer"
+                    >
+                      Đăng Nhập Quản Trị
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col lg:flex-row gap-5 relative">
+              {/* Toggle Left Sidebar Button */}
+              <button
+                onClick={() => setIsTreeSidebarOpen(!isTreeSidebarOpen)}
+                className="hidden lg:flex absolute -left-3 top-4 z-20 items-center justify-center w-7 h-7 rounded-full bg-slate-800 border border-slate-600 text-slate-300 hover:text-white shadow-lg transition-transform hover:scale-110 cursor-pointer"
+                title={isTreeSidebarOpen ? 'Thu gọn danh mục bài học' : 'Mở rộng danh mục bài học'}
+              >
+                {isTreeSidebarOpen ? '◀' : '▶'}
+              </button>
 
-            {/* Sidebar Navigation Tree */}
-            {isTreeSidebarOpen && (
-              <AdminTreeNav
-                projects={projects}
-                selectedProjectId={selectedProjectId}
-                selectedLessonId={selectedLessonId}
-                onSelectProject={(id) => {
-                  setSelectedProjectId(id);
-                  const proj = projects.find(p => p.id === id);
-                  const firstLes = proj?.categories?.[0]?.subFolders?.[0]?.lessons?.[0];
-                  if (firstLes) {
-                    setSelectedLessonId(firstLes.id);
-                    setCurrentImageId(firstLes.images?.[0]?.id || '');
-                  }
-                }}
-                onSelectLesson={(id) => {
-                  setSelectedLessonId(id);
-                  for (const cat of currentProject?.categories || []) {
-                    for (const sub of cat.subFolders || []) {
-                      const l = sub.lessons?.find(item => item.id === id);
-                      if (l && l.images && l.images.length > 0) {
-                        setCurrentImageId(l.images[0].id);
-                        return;
+              {/* Sidebar Navigation Tree */}
+              {isTreeSidebarOpen && (
+                <AdminTreeNav
+                  projects={projects}
+                  selectedProjectId={selectedProjectId}
+                  selectedLessonId={selectedLessonId}
+                  onSelectProject={(id) => {
+                    setSelectedProjectId(id);
+                    const proj = projects.find(p => p.id === id);
+                    const firstLes = proj?.categories?.[0]?.subFolders?.[0]?.lessons?.[0];
+                    if (firstLes) {
+                      setSelectedLessonId(firstLes.id);
+                      setCurrentImageId(firstLes.images?.[0]?.id || '');
+                    }
+                  }}
+                  onSelectLesson={(id) => {
+                    setSelectedLessonId(id);
+                    for (const cat of currentProject?.categories || []) {
+                      for (const sub of cat.subFolders || []) {
+                        const l = sub.lessons?.find(item => item.id === id);
+                        if (l && l.images && l.images.length > 0) {
+                          setCurrentImageId(l.images[0].id);
+                          return;
+                        }
                       }
                     }
-                  }
-                  setCurrentImageId('');
-                }}
-                onAddProject={handleAddProject}
-                onDeleteProject={handleDeleteProject}
-                onAddCategory={handleAddCategory}
-                onDeleteCategory={handleDeleteCategory}
-                onAddSubFolder={handleAddSubFolder}
-                onDeleteSubFolder={handleDeleteSubFolder}
-                onAddLesson={handleAddLesson}
-                onDeleteLesson={handleDeleteLesson}
-              />
-            )}
-
-            {/* Right: Interactive Canvas Editor */}
-            <div className="flex-1 min-h-[620px] flex flex-col">
-              {currentLesson ? (
-                <MaskEditor
-                  lesson={currentLesson}
-                  currentImage={currentImage}
-                  onUpdateImageMasks={handleUpdateImageMasks}
-                  onAddImage={handleAddImage}
-                  onSelectImage={(id) => setCurrentImageId(id)}
-                  onDeleteImage={handleDeleteImage}
+                    setCurrentImageId('');
+                  }}
+                  onAddProject={handleAddProject}
+                  onDeleteProject={handleDeleteProject}
+                  onRenameProject={handleRenameProject}
+                  onAddCategory={handleAddCategory}
+                  onDeleteCategory={handleDeleteCategory}
+                  onRenameCategory={handleRenameCategory}
+                  onAddSubFolder={handleAddSubFolder}
+                  onDeleteSubFolder={handleDeleteSubFolder}
+                  onRenameSubFolder={handleRenameSubFolder}
+                  onAddLesson={handleAddLesson}
+                  onDeleteLesson={handleDeleteLesson}
+                  onRenameLesson={handleRenameLesson}
                   onOpenShare={(les) => {
                     setShareLessonTarget(les);
                     setIsShareOpen(true);
                   }}
+                  onPreviewLesson={(lesId) => {
+                    setSelectedLessonId(lesId);
+                    setCurrentTab('flashcard');
+                  }}
                 />
-              ) : (
-                <div className="flex-1 bg-slate-900/60 border border-slate-800 rounded-2xl flex flex-col items-center justify-center p-8 text-center backdrop-blur-sm">
-                  <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4">
-                    <Layers className="w-8 h-8 text-indigo-400" />
-                  </div>
-                  <h3 className="text-base font-bold text-white mb-1.5">
-                    Hãy chọn hoặc tạo một bài học từ danh mục bên trái
-                  </h3>
-                  <p className="text-xs text-slate-400 max-w-md leading-relaxed">
-                    Bạn có thể tạo các thư mục lớn theo hệ cơ quan (Tuần hoàn, Thần kinh, Tiêu hoá...), chia thành các chương và bài học giải phẫu để quản lý sơ đồ và ô che thông minh.
-                  </p>
-                </div>
               )}
+
+              {/* Right: Interactive Canvas Editor */}
+              <div className="flex-1 min-h-[620px] flex flex-col">
+                {currentLesson ? (
+                  <MaskEditor
+                    lesson={currentLesson}
+                    currentImage={currentImage}
+                    onUpdateImageMasks={handleUpdateImageMasks}
+                    onAddImage={handleAddImage}
+                    onSelectImage={(id) => setCurrentImageId(id)}
+                    onDeleteImage={handleDeleteImage}
+                    onOpenShare={(les) => {
+                      setShareLessonTarget(les);
+                      setIsShareOpen(true);
+                    }}
+                  />
+                ) : (
+                  <div className="flex-1 bg-slate-900/60 border border-slate-800 rounded-2xl flex flex-col items-center justify-center p-8 text-center backdrop-blur-sm">
+                    <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4">
+                      <Layers className="w-8 h-8 text-indigo-400" />
+                    </div>
+                    <h3 className="text-base font-bold text-white mb-1.5">
+                      Hãy chọn hoặc tạo một bài học từ danh mục bên trái
+                    </h3>
+                    <p className="text-xs text-slate-400 max-w-md leading-relaxed">
+                      Bạn có thể tạo các thư mục lớn theo hệ cơ quan (Tuần hoàn, Thần kinh, Tiêu hoá...), chia thành các chương và bài học giải phẫu để quản lý sơ đồ và ô che thông minh.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )
         )}
 
         {/* Tab 2: Flashcard Study Mode (Anki SM-2 Spaced Repetition) */}
