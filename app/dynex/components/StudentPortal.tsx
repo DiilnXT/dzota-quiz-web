@@ -16,7 +16,9 @@ import {
   GraduationCap, 
   ArrowRight,
   ChevronRight,
+  ChevronDown,
   FolderOpen,
+  Folder,
   Eye,
   AlertCircle,
   PlusCircle,
@@ -24,7 +26,10 @@ import {
   Layers,
   FileText,
   Edit3,
-  Trash2
+  Trash2,
+  FolderTree,
+  LayoutGrid,
+  RefreshCw
 } from 'lucide-react'
 import { Project, Lesson, storageService } from '../services/storageService'
 import { authService, DynexUser } from '../services/authService'
@@ -66,6 +71,33 @@ export default function StudentPortal({
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [filterMode, setFilterMode] = useState<'all' | 'unlocked' | 'locked'>('all')
+  const [portalViewMode, setPortalViewMode] = useState<'grid' | 'tree'>('grid')
+  const [openCategoriesTree, setOpenCategoriesTree] = useState<Record<string, boolean>>({
+    cat_tieu_hoa: true,
+    cat_tuan_hoan: true,
+    cat_than_kinh: true
+  })
+  const [openSubFoldersTree, setOpenSubFoldersTree] = useState<Record<string, boolean>>({
+    sub_gan_mat: true,
+    sub_tim_mach_lon: true,
+    sub_nao_bo: true
+  })
+
+  const toggleCategoryTree = (catId: string) => {
+    setOpenCategoriesTree(prev => ({
+      ...prev,
+      [catId]: prev[catId] === false ? true : !prev[catId]
+    }))
+    soundService.playTick()
+  }
+
+  const toggleSubFolderTree = (subId: string) => {
+    setOpenSubFoldersTree(prev => ({
+      ...prev,
+      [subId]: prev[subId] === false ? true : !prev[subId]
+    }))
+    soundService.playTick()
+  }
 
   // PIN Unlock Modal State
   const [unlockModalLesson, setUnlockModalLesson] = useState<any | null>(null)
@@ -322,38 +354,75 @@ export default function StudentPortal({
             )}
           </div>
 
-          {/* Access Filter Tabs */}
-          <div className="flex items-center gap-1 bg-[#070b14] p-1 rounded-xl border border-slate-800 shrink-0">
-            <button
-              onClick={() => setFilterMode('all')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                filterMode === 'all'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Tất cả ({totalCount})
-            </button>
-            <button
-              onClick={() => setFilterMode('unlocked')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                filterMode === 'unlocked'
-                  ? 'bg-emerald-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Đã mở khóa ({unlockedCount})
-            </button>
-            <button
-              onClick={() => setFilterMode('locked')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                filterMode === 'locked'
-                  ? 'bg-rose-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Khóa ({totalCount - unlockedCount})
-            </button>
+          {/* View Mode & Filter Tabs */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* View Mode Switcher: Grid vs Tree */}
+            <div className="flex items-center gap-1 bg-[#070b14] p-1 rounded-xl border border-slate-800 shrink-0">
+              <button
+                onClick={() => {
+                  setPortalViewMode('grid');
+                  soundService.playTick();
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  portalViewMode === 'grid'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                title="Xem dạng lưới thẻ bài học"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Lưới Thẻ</span>
+              </button>
+              <button
+                onClick={() => {
+                  setPortalViewMode('tree');
+                  soundService.playTick();
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  portalViewMode === 'tree'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                title="Xem dạng cây thư mục"
+              >
+                <FolderTree className="w-3.5 h-3.5" />
+                <span>Cây Thư Mục</span>
+              </button>
+            </div>
+
+            {/* Access Filter Tabs */}
+            <div className="flex items-center gap-1 bg-[#070b14] p-1 rounded-xl border border-slate-800 shrink-0">
+              <button
+                onClick={() => setFilterMode('all')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  filterMode === 'all'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Tất cả ({totalCount})
+              </button>
+              <button
+                onClick={() => setFilterMode('unlocked')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  filterMode === 'unlocked'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Đã mở khóa ({unlockedCount})
+              </button>
+              <button
+                onClick={() => setFilterMode('locked')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  filterMode === 'locked'
+                    ? 'bg-rose-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Khóa ({totalCount - unlockedCount})
+              </button>
+            </div>
           </div>
         </div>
 
@@ -394,11 +463,11 @@ export default function StudentPortal({
           <div>
             <h3 className="text-base font-bold text-white mb-1">Chưa có bài học hoặc chương nào</h3>
             <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-              Mọi chương mẫu cũ đã được dọn sạch theo yêu cầu. Hãy vào <strong>Quản Lý Thư Mục (This PC)</strong> để tạo Môn, Chương, Chủ Đề và Bài Học mới theo chuẩn của bạn!
+              Mọi chương mẫu cũ đã được dọn sạch theo yêu cầu. Hãy vào <strong>Quản Lý Thư Mục (This PC)</strong> để tạo Môn, Chương, Chủ Đề và Bài Học mới theo chuẩn của bạn, hoặc bấm nút dưới đây để nạp lại cây thư mục mẫu!
             </p>
           </div>
-          {onOpenExplorer && (
-            <div className="pt-2">
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+            {onOpenExplorer && (
               <button
                 onClick={onOpenExplorer}
                 className="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-lg shadow-cyan-600/30 transition-all cursor-pointer inline-flex items-center gap-2"
@@ -406,8 +475,217 @@ export default function StudentPortal({
                 <FolderOpen className="w-4 h-4" />
                 <span>Mở Trình Quản Lý Thư Mục (This PC)</span>
               </button>
-            </div>
-          )}
+            )}
+            <button
+              onClick={() => {
+                if (confirm('Khôi phục cây thư mục giải phẫu mẫu (Hệ Tiêu Hóa, Tim Mạch, Thần Kinh)?')) {
+                  storageService.resetDefaultCurriculum();
+                  window.location.reload();
+                }
+              }}
+              className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold shadow-lg shadow-amber-600/30 transition-all cursor-pointer inline-flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>Nạp Cây Thư Mục Mẫu</span>
+            </button>
+          </div>
+        </div>
+      ) : portalViewMode === 'tree' ? (
+        /* ─── 3B. CÂY THƯ MỤC Y KHOA HIERARCHICAL TREE VIEW ─── */
+        <div className="space-y-4">
+          {projects.map(proj => {
+            const projCategories = proj.categories || []
+            if (projCategories.length === 0) return null
+
+            return (
+              <div key={proj.id} className="rounded-3xl bg-[#111827] border border-slate-800 overflow-hidden shadow-xl">
+                {/* Project / Subject Header */}
+                <div className="p-4 sm:p-5 bg-gradient-to-r from-indigo-950/70 via-slate-900 to-slate-900/90 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
+                      <FolderTree className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                        <span>{proj.name}</span>
+                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 font-bold">
+                          {projCategories.length} Chương
+                        </span>
+                      </h2>
+                      <p className="text-xs text-slate-400">{proj.description}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Categories (Chương) List */}
+                <div className="p-3 sm:p-4 space-y-3">
+                  {projCategories.map(cat => {
+                    const isCatOpen = openCategoriesTree[cat.id] !== false
+                    const totalLessons = cat.subFolders?.reduce((acc, sub) => acc + (sub.lessons?.length || 0), 0) || 0
+
+                    return (
+                      <div key={cat.id} className="rounded-2xl bg-[#070b14]/70 border border-slate-800/80 overflow-hidden">
+                        {/* Category Header */}
+                        <div
+                          onClick={() => toggleCategoryTree(cat.id)}
+                          className="p-3 sm:p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-800/50 transition-colors select-none"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            {isCatOpen ? (
+                              <ChevronDown className="w-4 h-4 text-indigo-400 shrink-0" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4 text-slate-500 shrink-0" />
+                            )}
+                            <Folder className={`w-4 h-4 shrink-0 ${isCatOpen ? 'text-amber-400' : 'text-slate-400'}`} />
+                            <span className="text-sm font-black text-white">{cat.name}</span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono">
+                              {cat.subFolders?.length || 0} chủ đề • {totalLessons} bài học
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* SubFolders (Chủ đề) List */}
+                        {isCatOpen && (
+                          <div className="pl-4 sm:pl-6 pr-3 pb-3 space-y-2.5 border-t border-slate-800/60 bg-black/20">
+                            {cat.subFolders?.length === 0 ? (
+                              <p className="text-xs text-slate-500 italic py-2">Chưa có chủ đề nào trong chương này.</p>
+                            ) : (
+                              cat.subFolders.map(sub => {
+                                const isSubOpen = openSubFoldersTree[sub.id] !== false
+                                const lessonsList = sub.lessons || []
+
+                                return (
+                                  <div key={sub.id} className="rounded-xl border border-slate-800/70 bg-[#111827]/80 overflow-hidden">
+                                    {/* SubFolder Row */}
+                                    <div
+                                      onClick={() => toggleSubFolderTree(sub.id)}
+                                      className="p-2.5 sm:p-3 flex items-center justify-between cursor-pointer hover:bg-slate-800/60 transition-colors select-none"
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        {isSubOpen ? (
+                                          <ChevronDown className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                                        ) : (
+                                          <ChevronRight className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                                        )}
+                                        <FolderOpen className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                                        <span className="text-xs sm:text-sm font-bold text-cyan-200">{sub.name}</span>
+                                        <span className="text-[10px] text-slate-400">({lessonsList.length} bài)</span>
+                                      </div>
+                                    </div>
+
+                                    {/* Lessons List in SubFolder */}
+                                    {isSubOpen && (
+                                      <div className="p-2 sm:p-2.5 pt-0 space-y-2">
+                                        {lessonsList.length === 0 ? (
+                                          <p className="text-[11px] text-slate-500 italic pl-6 py-1">Chưa có bài học nào trong chủ đề này.</p>
+                                        ) : (
+                                          lessonsList.map(les => {
+                                            const totalImgs = les.images?.length || 0
+                                            const totalMsk = les.images?.reduce((sum, img) => sum + (img.masks?.length || 0), 0) || 0
+                                            const accessCheck = authService.checkAccess(les, currentUser)
+                                            const isAccessible = accessCheck.allowed
+
+                                            return (
+                                              <div
+                                                key={les.id}
+                                                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl bg-[#070b14] border border-slate-800/80 hover:border-indigo-500/40 transition-colors"
+                                              >
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-900 border border-slate-800 shrink-0 flex items-center justify-center">
+                                                    {les.images?.[0]?.url ? (
+                                                      <img src={les.images[0].url} alt="" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                      <BookOpen className="w-4 h-4 text-slate-500" />
+                                                    )}
+                                                  </div>
+                                                  <div className="truncate">
+                                                    <h4 className="text-xs sm:text-sm font-bold text-white truncate">{les.title}</h4>
+                                                    <div className="text-[10px] text-slate-400 flex items-center gap-2 mt-0.5">
+                                                      <span>{totalImgs} sơ đồ giải phẫu</span>
+                                                      <span>•</span>
+                                                      <span className="text-amber-400 font-bold">{totalMsk} trạm</span>
+                                                      {!isAccessible && (
+                                                        <span className="text-amber-400 font-bold flex items-center gap-0.5">
+                                                          <Lock className="w-2.5 h-2.5" /> Khóa
+                                                        </span>
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-1.5 shrink-0">
+                                                  {isAccessible ? (
+                                                    <>
+                                                      <button
+                                                        onClick={() => onSelectLessonForFlashcard(les.id, proj.id)}
+                                                        className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                                                      >
+                                                        <Brain className="w-3.5 h-3.5 text-cyan-200" />
+                                                        <span>Học Não Bộ</span>
+                                                      </button>
+
+                                                      <button
+                                                        onClick={() => onSelectLessonForExam(les.id)}
+                                                        className="px-3 py-1.5 rounded-lg bg-rose-600/30 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/40 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                                                      >
+                                                        <Flame className="w-3.5 h-3.5 text-rose-400" />
+                                                        <span>Thi Chạy Trạm</span>
+                                                      </button>
+
+                                                      {onEditLesson && (
+                                                        <button
+                                                          onClick={() => onEditLesson(les.id, proj.id)}
+                                                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-cyan-900/60 text-slate-300 hover:text-cyan-300 border border-slate-700/60 transition-colors cursor-pointer"
+                                                          title="Sửa bài học trong Studio"
+                                                        >
+                                                          <Edit3 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                      )}
+
+                                                      {onOpenShare && (
+                                                        <button
+                                                          onClick={() => onOpenShare(les)}
+                                                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60 transition-colors cursor-pointer"
+                                                          title="Chia sẻ link"
+                                                        >
+                                                          <Share2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                      )}
+                                                    </>
+                                                  ) : (
+                                                    <button
+                                                      onClick={() => {
+                                                        setUnlockModalLesson(les)
+                                                        setPinInput('')
+                                                        setPinError('')
+                                                        setPinSuccess('')
+                                                      }}
+                                                      className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+                                                    >
+                                                      <Key className="w-3.5 h-3.5" />
+                                                      <span>Mở Khóa Bằng PIN</span>
+                                                    </button>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            )
+                                          })
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )
+                              })
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

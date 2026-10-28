@@ -21,7 +21,8 @@ import MedicalFileExplorer from './components/MedicalFileExplorer';
 import { storageService, Project, Lesson, ImageItem, Mask, DynexExamPaper } from './services/storageService';
 import { authService, DynexUser } from './services/authService';
 import { getStoredApiKey, getStoredModel } from './services/geminiService';
-import { ShieldCheck, Layers, ShieldAlert, Laptop, ArrowLeft, Flame, AlertCircle } from 'lucide-react';
+import { soundService } from './services/soundService';
+import { ShieldCheck, Layers, ShieldAlert, Laptop, ArrowLeft, Flame, AlertCircle, FolderTree, RefreshCw } from 'lucide-react';
 
 interface DynexAppClientProps {
   initialUser?: {
@@ -43,7 +44,7 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentTab, setCurrentTab] = useState<DynexTabType>(initialTab);
-  const [adminSubView, setAdminSubView] = useState<'explorer' | 'studio'>('explorer');
+  const [adminSubView, setAdminSubView] = useState<'studio' | 'explorer'>('studio');
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [selectedLessonId, setSelectedLessonId] = useState<string>('');
   const [currentImageId, setCurrentImageId] = useState<string>('');
@@ -738,9 +739,21 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
             </div>
           ) : (
             <div className="flex-1 flex flex-col gap-4">
-              {/* Admin Mode Switcher: Laptop This PC Explorer vs Studio Mask Editor */}
+              {/* Admin Mode Switcher: Studio Mask Editor (Bố trí Cây Thư Mục) vs Laptop This PC Explorer */}
               <div className="bg-[#0e1424] border border-slate-800 rounded-2xl p-2.5 flex flex-wrap items-center justify-between gap-2 shadow-lg">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => setAdminSubView('studio')}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                      adminSubView === 'studio'
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <FolderTree className="w-4 h-4 text-indigo-300" />
+                    <span>🌲 Bố Trí Cây Thư Mục & Soạn Bài</span>
+                  </button>
+
                   <button
                     onClick={() => setAdminSubView('explorer')}
                     className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
@@ -750,19 +763,30 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
                     }`}
                   >
                     <Laptop className="w-4 h-4 text-cyan-300" />
-                    <span>Quản Lý Thư Mục (This PC)</span>
+                    <span>💻 Quản Lý Thư Mục (This PC)</span>
                   </button>
 
                   <button
-                    onClick={() => setAdminSubView('studio')}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
-                      adminSubView === 'studio'
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                    }`}
+                    onClick={() => {
+                      if (confirm('Khôi phục cây thư mục giải phẫu mẫu chuẩn y khoa (Hệ Tiêu Hóa, Gan Mật, Tá Tụy, Tim Mạch, Thần Kinh)?')) {
+                        const restored = storageService.resetDefaultCurriculum();
+                        updateProjectsState(restored);
+                        if (restored.length > 0) {
+                          setSelectedProjectId(restored[0].id);
+                          const firstLes = restored[0].categories?.[0]?.subFolders?.[0]?.lessons?.[0];
+                          if (firstLes) {
+                            setSelectedLessonId(firstLes.id);
+                            setCurrentImageId(firstLes.images?.[0]?.id || '');
+                          }
+                        }
+                        soundService.playSuccess();
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-amber-300 hover:text-white bg-amber-500/10 hover:bg-amber-600/30 border border-amber-500/30 flex items-center gap-1.5 transition-all cursor-pointer"
+                    title="Nạp lại cây thư mục giải phẫu chuẩn y khoa mẫu"
                   >
-                    <Layers className="w-4 h-4 text-indigo-300" />
-                    <span>Studio Soạn Ô Che</span>
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Nạp Cây Thư Mục Mẫu</span>
                   </button>
                 </div>
 

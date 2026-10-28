@@ -123,29 +123,141 @@ export const INITIAL_CLASSROOMS: DynexClassroom[] = [
   }
 ]
 
-export const INITIAL_SAVED_EXAMS: DynexExamPaper[] = []
-
-// XÓA HẾT MỌI CHƯƠNG CÓ SẴN THEO YÊU CẦU: Khởi đầu sạch hoàn toàn
-export const INITIAL_DATA: Project[] = [
+export const INITIAL_SAVED_EXAMS: DynexExamPaper[] = [
   {
-    id: 'proj_med_1',
-    name: 'Môn Giải Phẫu Học 1',
-    description: 'Thư mục Môn học Giải Phẫu Y Khoa (Dzota)',
-    author: 'Nhật Duy',
+    id: 'exam_osce_mau_tieu_hoa',
+    title: 'Đề Thi Chạy Trạm OSCE Chuẩn: Hệ Tiêu Hóa, Gan Mật & Tụy (Đề Mẫu K47)',
+    subject: 'Giải Phẫu Học 1',
+    timePerStation: 20,
+    totalStations: 8,
+    notes: 'Đề thi chuẩn 8 trạm giải phẫu mặt trước gan, môn vị, tá tràng và tụy. Ô che 100% đặc kín, âm thanh chuông chuyển trạm.',
+    generationStrategy: 'balanced_distribution',
+    avoidConsecutiveSameImage: true,
+    selectedLessonIds: ['les_gan_tuy_da_day'],
     createdAt: new Date().toISOString(),
-    categories: [] // HOÀN TOÀN TRỐNG - ĐÃ XÓA TOÀN BỘ CHƯƠNG MẪU CŨ!
+    author: 'Nhật Duy (Dzota Y Khoa)',
+    stations: SAMPLE_ANATOMY_FALLBACK_MASKS.map((m, idx) => ({
+      stationIndex: idx,
+      lessonId: 'les_gan_tuy_da_day',
+      lessonTitle: 'Bài 1: Giải phẫu Gan, Đường Mật, Môn Vị, Tá Tràng & Tuyến Tụy',
+      categoryName: 'Hệ Tiêu Hóa (Digestive System)',
+      subFolderName: 'Chương 1: Các Tạng Dưới Hoành & Đường Mật',
+      imageId: 'img_gan_1',
+      imageTitle: 'Sơ đồ Giải Phẫu Gan - Đường Mật - Dạ Dày - Tụy (Chuẩn Giáo Trình)',
+      imageUrl: sampleAnatomyUrl,
+      targetMask: { ...m },
+      allImageMasks: SAMPLE_ANATOMY_FALLBACK_MASKS.map(item => ({ ...item }))
+    }))
   }
 ]
+
+// CÂY THƯ MỤC GIẢI PHẪU CHUẨN Y KHOA (Môn -> Chương -> Chủ Đề -> Bài Học)
+export const DEFAULT_ANATOMY_CURRICULUM: Project[] = [
+  {
+    id: 'proj_med_1',
+    name: 'Môn Giải Phẫu Học 1 (Đại Cương & Các Tạng)',
+    description: 'Hệ thống ngân hàng dữ liệu hình ảnh giải phẫu y khoa chuyên sâu phục vụ học tập và thi chạy trạm OSCE.',
+    author: 'Nhật Duy',
+    createdAt: new Date().toISOString(),
+    categories: [
+      {
+        id: 'cat_tieu_hoa',
+        name: 'Hệ Tiêu Hóa (Digestive System)',
+        icon: 'Stethoscope',
+        subFolders: [
+          {
+            id: 'sub_gan_mat',
+            name: 'Chương 1: Các Tạng Dưới Hoành & Đường Mật',
+            lessons: [
+              {
+                id: 'les_gan_tuy_da_day',
+                title: 'Bài 1: Giải phẫu Gan, Đường Mật, Môn Vị, Tá Tràng & Tuyến Tụy',
+                description: 'Tổng quan chi tiết cấu trúc giải phẫu học mặt trước của hệ thống gan mật và tá tụy.',
+                createdAt: new Date().toISOString(),
+                accessMode: 'public',
+                allowedEmails: [],
+                accessPassword: '',
+                images: [
+                  {
+                    id: 'img_gan_1',
+                    title: 'Sơ đồ Giải Phẫu Gan - Đường Mật - Dạ Dày - Tụy (Chuẩn Giáo Trình)',
+                    url: sampleAnatomyUrl,
+                    masks: SAMPLE_ANATOMY_FALLBACK_MASKS.map(m => ({ ...m })),
+                    createdAt: new Date().toISOString()
+                  }
+                ]
+              },
+              {
+                id: 'les_ruot_da_day',
+                title: 'Bài 2: Cấu tạo Dạ dày & Các tầng thành ống tiêu hóa',
+                description: 'Cấu tạo giải phẫu vi thể và đại thể của dạ dày, các cơ vòng môn vị.',
+                createdAt: new Date().toISOString(),
+                accessMode: 'public',
+                allowedEmails: [],
+                accessPassword: '',
+                images: []
+              }
+            ]
+          },
+          {
+            id: 'sub_ruot_non_gia',
+            name: 'Chương 2: Ruột Non, Ruột Già & Mạc Treo',
+            lessons: []
+          }
+        ]
+      },
+      {
+        id: 'cat_tuan_hoan',
+        name: 'Hệ Tuần Hoàn & Tim Mạch (Cardiovascular)',
+        icon: 'Heart',
+        subFolders: [
+          {
+            id: 'sub_tim_mach_lon',
+            name: 'Chương 1: Giải Phẫu Tim & Các Mạch Máu Lớn',
+            lessons: []
+          }
+        ]
+      },
+      {
+        id: 'cat_than_kinh',
+        name: 'Hệ Thần Kinh Trung Ương (Neuroanatomy)',
+        icon: 'Brain',
+        subFolders: [
+          {
+            id: 'sub_nao_bo',
+            name: 'Chương 1: Bán Cầu Đại Não & Thân Não',
+            lessons: []
+          }
+        ]
+      }
+    ]
+  }
+]
+
+export const INITIAL_DATA: Project[] = DEFAULT_ANATOMY_CURRICULUM
 
 export const storageService = {
   getProjects(): Project[] {
     if (typeof window === 'undefined') return INITIAL_DATA
     try {
-      const raw = localStorage.getItem(STORAGE_KEY_PROJECTS)
+      let raw = localStorage.getItem(STORAGE_KEY_PROJECTS)
+      if (!raw) {
+        // Kiểm tra các bản lưu trước đó của người dùng (v3, v2, v1) để không bị mất dữ liệu đã tạo
+        raw = localStorage.getItem('dynex_projects_data_v3') || 
+              localStorage.getItem('dynex_projects_data_v2') || 
+              localStorage.getItem('dynex_projects_data_v1')
+        if (raw) {
+          localStorage.setItem(STORAGE_KEY_PROJECTS, raw)
+        }
+      }
       if (raw) {
         const parsed = JSON.parse(raw)
-        if (Array.isArray(parsed)) {
-          return parsed
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Nếu có danh mục (categories), trả về dữ liệu người dùng
+          const hasCategories = parsed.some(p => p.categories && p.categories.length > 0)
+          if (hasCategories) {
+            return parsed
+          }
         }
       }
     } catch (e) {
@@ -153,6 +265,11 @@ export const storageService = {
     }
     this.saveProjects(INITIAL_DATA)
     return INITIAL_DATA
+  },
+
+  resetDefaultCurriculum(): Project[] {
+    this.saveProjects(DEFAULT_ANATOMY_CURRICULUM)
+    return DEFAULT_ANATOMY_CURRICULUM
   },
 
   clearAllData(): Project[] {
@@ -363,7 +480,13 @@ export const storageService = {
   getSavedExams(): DynexExamPaper[] {
     if (typeof window === 'undefined') return INITIAL_SAVED_EXAMS
     try {
-      const raw = localStorage.getItem(STORAGE_KEY_SAVED_EXAMS)
+      let raw = localStorage.getItem(STORAGE_KEY_SAVED_EXAMS)
+      if (!raw) {
+        raw = localStorage.getItem('dynex_saved_exams_v1')
+        if (raw) {
+          localStorage.setItem(STORAGE_KEY_SAVED_EXAMS, raw)
+        }
+      }
       if (raw) {
         const parsed = JSON.parse(raw)
         if (Array.isArray(parsed) && parsed.length > 0) return parsed
@@ -371,7 +494,9 @@ export const storageService = {
     } catch (e) {
       console.error('Error reading saved exams from storage:', e)
     }
-    this.saveExam(INITIAL_SAVED_EXAMS[0])
+    if (INITIAL_SAVED_EXAMS.length > 0) {
+      this.saveExam(INITIAL_SAVED_EXAMS[0])
+    }
     return INITIAL_SAVED_EXAMS
   },
 
