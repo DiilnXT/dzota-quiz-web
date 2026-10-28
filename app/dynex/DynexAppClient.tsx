@@ -21,7 +21,7 @@ import MedicalFileExplorer from './components/MedicalFileExplorer';
 import { storageService, Project, Lesson, ImageItem, Mask, DynexExamPaper } from './services/storageService';
 import { authService, DynexUser } from './services/authService';
 import { getStoredApiKey, getStoredModel } from './services/geminiService';
-import { ShieldCheck, Layers, ShieldAlert, Laptop, ArrowLeft } from 'lucide-react';
+import { ShieldCheck, Layers, ShieldAlert, Laptop, ArrowLeft, Flame, AlertCircle } from 'lucide-react';
 
 interface DynexAppClientProps {
   initialUser?: {
@@ -70,6 +70,8 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
   // Exam Candidate Focus Mode & Active Exam Paper
   const [isExamCandidateMode, setIsExamCandidateMode] = useState<boolean>(isExamUrl);
   const [selectedExamPaper, setSelectedExamPaper] = useState<DynexExamPaper | null>(null);
+  const [isLoadingExam, setIsLoadingExam] = useState<boolean>(Boolean(searchParams.get('examId')));
+  const [examLoadError, setExamLoadError] = useState<string>('');
   const [isCreateExamModalOpen, setIsCreateExamModalOpen] = useState(false);
 
   // Exam history
@@ -107,10 +109,18 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
     const examIdParam = searchParams.get('examId');
 
     if (examIdParam) {
+      setIsLoadingExam(true);
       storageService.getExamByIdAsync(examIdParam).then((foundExam) => {
         if (foundExam) {
           setSelectedExamPaper(foundExam);
+        } else {
+          setExamLoadError(`Không tìm thấy đề thi với mã: ${examIdParam}`);
         }
+        setIsLoadingExam(false);
+      }).catch((err) => {
+        console.warn('Error loading exam async:', err);
+        setExamLoadError('Lỗi kết nối máy chủ khi tải đề thi.');
+        setIsLoadingExam(false);
       });
       setIsExamCandidateMode(true);
       setCurrentTab('exam');
@@ -576,6 +586,44 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
 
   // Dedicated Pure OSCE Exam Mode (Hoàn toàn cách ly, không có navbar hay tab admin)
   if (isExamCandidateMode) {
+    if (isLoadingExam) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[#070b14] text-white p-6 select-none animate-fadeIn">
+          <div className="w-16 h-16 rounded-3xl bg-rose-600/20 border border-rose-500/40 flex items-center justify-center text-rose-400 mb-4 animate-pulse">
+            <Flame className="w-8 h-8" />
+          </div>
+          <h3 className="text-base font-bold text-white mb-1.5">Đang Kết Nối Phòng Thi Chạy Trạm...</h3>
+          <p className="text-xs text-slate-400 max-w-sm text-center leading-relaxed">
+            Hệ thống đang tải sơ đồ giải phẫu và các trạm thi OSCE từ máy chủ. Vui lòng chờ trong giây lát!
+          </p>
+        </div>
+      );
+    }
+
+    if (examLoadError && !selectedExamPaper) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[#070b14] text-white p-6 select-none animate-fadeIn">
+          <div className="w-16 h-16 rounded-3xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4">
+            <AlertCircle className="w-8 h-8" />
+          </div>
+          <h3 className="text-base font-bold text-white mb-1.5">Không Tìm Thấy Đề Thi Này</h3>
+          <p className="text-xs text-slate-400 max-w-md text-center mb-6 leading-relaxed">
+            {examLoadError}
+          </p>
+          <button
+            onClick={() => {
+              setIsExamCandidateMode(false);
+              setSelectedExamPaper(null);
+              setCurrentTab('learn');
+            }}
+            className="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-lg cursor-pointer"
+          >
+            Quay Về Trang Chủ DYNEX
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div className={`${isEmbedded ? 'min-h-[85vh] rounded-2xl' : 'min-h-screen'} flex flex-col bg-[#070b14] text-slate-100 selection:bg-rose-500 selection:text-white`}>
         <MedicalSpottingExam

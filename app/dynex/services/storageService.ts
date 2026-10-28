@@ -176,9 +176,35 @@ export const storageService = {
     if (typeof window === 'undefined') return
     try {
       localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(projects))
+      // Background sync full curriculum to API
+      fetch('/api/dynex/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projects })
+      }).catch(() => {})
     } catch (e) {
       console.error('Error saving projects to storage:', e)
     }
+  },
+
+  async getProjectsAsync(): Promise<Project[]> {
+    const local = this.getProjects()
+    const hasLessons = local.some(p => p.categories?.some(c => c.subFolders?.some(s => (s.lessons?.length || 0) > 0)))
+    if (hasLessons) return local
+
+    try {
+      const res = await fetch('/api/dynex/projects')
+      if (res.ok) {
+        const data = await res.json()
+        if (Array.isArray(data.projects) && data.projects.length > 0) {
+          this.saveProjects(data.projects)
+          return data.projects
+        }
+      }
+    } catch (e) {
+      console.warn('Error fetching server projects:', e)
+    }
+    return local
   },
 
   resetDefaultData(): Project[] {
