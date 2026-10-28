@@ -37,8 +37,12 @@ export type DynexTabType = 'learn' | 'flashcard' | 'exam' | 'exams' | 'admin' | 
 
 function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientProps) {
   const searchParams = useSearchParams();
+  const isExamUrl = searchParams.get('mode') === 'exam' || searchParams.get('tab') === 'exam' || Boolean(searchParams.get('examId'));
+  const isFlashcardUrl = searchParams.get('mode') === 'flashcard' || searchParams.get('tab') === 'flashcard';
+  const initialTab: DynexTabType = isExamUrl ? 'exam' : isFlashcardUrl ? 'flashcard' : ((searchParams.get('tab') as DynexTabType) || 'learn');
+
   const [projects, setProjects] = useState<Project[]>([]);
-  const [currentTab, setCurrentTab] = useState<DynexTabType>('learn');
+  const [currentTab, setCurrentTab] = useState<DynexTabType>(initialTab);
   const [adminSubView, setAdminSubView] = useState<'explorer' | 'studio'>('explorer');
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [selectedLessonId, setSelectedLessonId] = useState<string>('');
@@ -64,7 +68,7 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
   const [isDeckSelectorOpen, setIsDeckSelectorOpen] = useState(false);
 
   // Exam Candidate Focus Mode & Active Exam Paper
-  const [isExamCandidateMode, setIsExamCandidateMode] = useState(false);
+  const [isExamCandidateMode, setIsExamCandidateMode] = useState<boolean>(isExamUrl);
   const [selectedExamPaper, setSelectedExamPaper] = useState<DynexExamPaper | null>(null);
   const [isCreateExamModalOpen, setIsCreateExamModalOpen] = useState(false);
 
@@ -113,6 +117,21 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
     } else if (tabParam === 'exam' || searchParams.get('mode') === 'exam') {
       setIsExamCandidateMode(true);
       setCurrentTab('exam');
+      // If a lessonId is provided, generate exam paper directly from that lesson
+      if (lessonParam && loadedProjects.length > 0) {
+        for (const proj of loadedProjects) {
+          for (const cat of proj.categories || []) {
+            for (const sub of cat.subFolders || []) {
+              const target = sub.lessons?.find(l => l.id === lessonParam);
+              if (target) {
+                const autoPaper = storageService.createExamFromLesson(target);
+                setSelectedExamPaper(autoPaper);
+                break;
+              }
+            }
+          }
+        }
+      }
     } else if (tabParam && ['learn', 'admin', 'flashcard', 'exam', 'exams', 'classes', 'history'].includes(tabParam)) {
       setCurrentTab(tabParam as DynexTabType);
     }
@@ -554,6 +573,25 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
       setExamHistory([]);
     }
   };
+
+  // Dedicated Pure OSCE Exam Mode (Hoàn toàn cách ly, không có navbar hay tab admin)
+  if (isExamCandidateMode) {
+    return (
+      <div className={`${isEmbedded ? 'min-h-[85vh] rounded-2xl' : 'min-h-screen'} flex flex-col bg-[#070b14] text-slate-100 selection:bg-rose-500 selection:text-white`}>
+        <MedicalSpottingExam
+          projects={projects}
+          onSaveExamResult={handleSaveExamResult}
+          initialExamPaper={selectedExamPaper}
+          isExamCandidateMode={true}
+          onExitExam={() => {
+            setIsExamCandidateMode(false);
+            setSelectedExamPaper(null);
+            setCurrentTab('learn');
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={`${isEmbedded ? 'min-h-[85vh] rounded-2xl' : 'min-h-screen'} flex flex-col bg-[#0B0F19] text-slate-100 selection:bg-indigo-500 selection:text-white`}>

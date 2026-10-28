@@ -609,6 +609,47 @@ export const storageService = {
       })
     })
     return stations
+  },
+
+  // Create an on-the-fly exam paper for a specific lesson
+  createExamFromLesson(lesson: Lesson): DynexExamPaper {
+    const stations: DynexExamStation[] = []
+    let idx = 0
+    lesson.images?.forEach((img) => {
+      img.masks?.forEach((mask) => {
+        stations.push({
+          stationIndex: idx++,
+          stationId: `station_${idx}`,
+          lessonId: lesson.id,
+          lessonTitle: lesson.title,
+          categoryName: 'Mô-đun Giải Phẫu',
+          subFolderName: 'Thực Hành Y Khoa',
+          imageId: img.id,
+          imageTitle: img.title,
+          imageUrl: img.url,
+          maskId: mask.id,
+          officialAnswer: mask.label || mask.customAnswer || '',
+          synonyms: mask.synonyms || [],
+          targetMask: mask,
+          allImageMasks: img.masks || []
+        })
+      })
+    })
+
+    return {
+      id: `exam_auto_${lesson.id}`,
+      title: `Chạy Trạm OSCE: ${lesson.title}`,
+      subject: 'Giải Phẫu Học',
+      timePerStation: 20,
+      totalStations: Math.max(stations.length, 1),
+      notes: 'Bài thi chạy trạm OSCE tạo tự động từ bài học',
+      generationStrategy: 'balanced_distribution',
+      avoidConsecutiveSameImage: true,
+      selectedLessonIds: [lesson.id],
+      createdAt: new Date().toISOString(),
+      author: 'Nhật Duy (Dzota Y Khoa)',
+      stations
+    }
   }
 }
 

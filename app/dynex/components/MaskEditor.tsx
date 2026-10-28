@@ -116,7 +116,7 @@ export default function MaskEditor({
     }
   }, [selectedMaskId]);
 
-  // Shortcuts: Ctrl+S to save
+  // Shortcuts: Ctrl+S to save, Ctrl+V to paste image from clipboard
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
@@ -125,8 +125,42 @@ export default function MaskEditor({
       }
     };
 
+    const handlePaste = (e: ClipboardEvent) => {
+      // Don't intercept if user is typing in an input or textarea
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.type.indexOf('image') !== -1) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (!file) continue;
+          const reader = new FileReader();
+          reader.onload = (loadEvent) => {
+            const dataUrl = loadEvent.target?.result as string;
+            if (dataUrl) {
+              handleCreateNewImageFromDataUrl(dataUrl, 'Sơ đồ dán từ Clipboard');
+              soundService.playSuccess();
+            }
+          };
+          reader.readAsDataURL(file);
+          break;
+        }
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('paste', handlePaste);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('paste', handlePaste);
+    };
   }, [lesson, masks, currentImage]);
 
   const handleManualSave = () => {
@@ -624,15 +658,76 @@ export default function MaskEditor({
               })}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center p-8 text-center text-slate-500">
-              <Upload size={36} className="mb-2 text-slate-600" />
-              <p className="text-sm font-semibold">Chưa có sơ đồ nào trong bài học này</p>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="mt-3 px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold"
-              >
-                Tải ảnh sơ đồ lên
-              </button>
+            <div 
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const files = e.dataTransfer.files;
+                if (files && files.length > 0 && files[0].type.startsWith('image/')) {
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    if (typeof ev.target?.result === 'string') {
+                      handleCreateNewImageFromDataUrl(ev.target.result, files[0].name.replace(/\.[^/.]+$/, ''));
+                    }
+                  };
+                  reader.readAsDataURL(files[0]);
+                }
+              }}
+              className="flex-1 min-h-[420px] flex flex-col items-center justify-center p-6 text-center border-2 border-dashed border-slate-800 rounded-3xl m-4 bg-[#070b14]/50 hover:border-cyan-500/50 transition-colors"
+            >
+              <div className="w-16 h-16 rounded-3xl bg-cyan-950/60 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mb-3.5 shadow-xl">
+                <Upload size={32} />
+              </div>
+              <h3 className="text-base font-bold text-white mb-1.5">
+                Chưa có sơ đồ nào trong bài học này
+              </h3>
+              <p className="text-xs text-slate-400 max-w-md leading-relaxed mb-6">
+                Nhấn <kbd className="px-2 py-0.5 rounded bg-slate-800 text-cyan-300 font-mono text-[11px] border border-slate-700 font-bold">Ctrl + V</kbd> để dán ảnh trực tiếp từ Clipboard, kéo thả ảnh vào đây, hoặc tải file từ máy tính.
+              </p>
+
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-cyan-600/30 flex items-center gap-2 cursor-pointer transition-all"
+                >
+                  <Upload size={14} />
+                  <span>Tải ảnh từ máy tính</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      if (navigator.clipboard && navigator.clipboard.read) {
+                        const items = await navigator.clipboard.read();
+                        for (const item of items) {
+                          const imageType = item.types.find(t => t.startsWith('image/'));
+                          if (imageType) {
+                            const blob = await item.getType(imageType);
+                            const reader = new FileReader();
+                            reader.onload = (ev) => {
+                              if (typeof ev.target?.result === 'string') {
+                                handleCreateNewImageFromDataUrl(ev.target.result, 'Sơ đồ dán từ Clipboard');
+                              }
+                            };
+                            reader.readAsDataURL(blob);
+                            return;
+                          }
+                        }
+                      }
+                      alert('Vui lòng chụp màn hình hoặc sao chép ảnh rồi bấm Ctrl + V trên bàn phím!');
+                    } catch (err) {
+                      alert('Hãy nhấn Ctrl + V để dán ảnh từ Clipboard!');
+                    }
+                  }}
+                  className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-bold border border-slate-700 flex items-center gap-2 cursor-pointer transition-all"
+                >
+                  <Copy size={14} className="text-cyan-400" />
+                  <span>Dán Ảnh (Ctrl + V)</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
