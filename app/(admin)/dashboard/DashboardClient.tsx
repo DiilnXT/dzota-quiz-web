@@ -1599,8 +1599,15 @@ export default function DashboardClient({
           onRefresh={refreshData}
           onOpenChangePass={() => setIsChangeAccPassOpen(true)}
           onSwitchTab={switchTab}
-          onToggleQuizStatus={toggleQuizStatus}
-          onCopyShareLink={copyShareLink}
+          onToggleQuizStatus={(quizId) => {
+            const q = quizzes.find(item => item.id === quizId)
+            if (q) handleToggleQuizStatus(q)
+          }}
+          onCopyShareLink={(quizId) => {
+            const url = `${window.location.origin}/?id=${quizId}`
+            navigator.clipboard.writeText(url)
+            showToast('Đã copy link bài thi!')
+          }}
           onDeleteQuiz={(quizId) => {
             const q = quizzes.find(item => item.id === quizId)
             if (q) handleDeleteQuiz(q)
