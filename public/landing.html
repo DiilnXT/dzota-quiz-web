@@ -472,158 +472,267 @@
 
                     </div>
 
-                    <!-- Right Column: DYNEX OSCE Interactive Station (Thay thế chuẩn theo ảnh DYNEX thực tế) -->
+                    <!-- Right Column: Interactive 3-Way Showcase (Kaito Kid 1412, Real OSCE Station, Hierarchical Tree) -->
                     <div class="lg:col-span-5 relative mt-6 lg:mt-0">
                         
-                        <!-- Ambient Glow -->
-                        <div class="absolute -inset-3 bg-gradient-to-r from-cyan-600/30 via-blue-600/20 to-purple-600/30 rounded-3xl blur-2xl opacity-60 pointer-events-none"></div>
+                        <!-- Ambient Moonlight Glow Behind -->
+                        <div class="absolute -inset-3 bg-gradient-to-r from-cyan-500/30 via-blue-600/25 to-indigo-600/30 rounded-3xl blur-2xl opacity-70 pointer-events-none"></div>
 
-                        <!-- Real DYNEX Mockup Container -->
-                        <div class="relative glass-card rounded-3xl p-4 sm:p-5 border border-white/15 shadow-2xl space-y-3.5 overflow-hidden">
+                        <!-- Main Showcase Container -->
+                        <div class="relative glass-card rounded-3xl p-4 sm:p-5 border border-cyan-500/30 shadow-[0_25px_60px_-15px_rgba(56,189,248,0.25)] space-y-3.5 overflow-hidden">
                             
-                            <!-- DYNEX Top Header Bar -->
-                            <div class="flex items-center justify-between pb-2.5 border-b border-white/10 text-xs">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 rounded-lg bg-cyan-950 border border-cyan-500/50 flex items-center justify-center text-cyan-400">
-                                        <i data-lucide="activity" class="w-3.5 h-3.5 animate-pulse"></i>
-                                    </div>
-                                    <span class="font-black text-white tracking-wide">DYNEX</span>
-                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-900/60 text-cyan-300 border border-blue-700/50">
-                                        Dzota Y Khoa
-                                    </span>
-                                </div>
-                                <div class="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono">
-                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                                    <span>OSCE 20S/TRẠM</span>
-                                </div>
+                            <!-- 3-Way Showcase Tab Switcher -->
+                            <div class="flex items-center p-1 rounded-2xl bg-slate-950/90 border border-white/10 shadow-inner">
+                                <button 
+                                    id="hero-tab-kid" 
+                                    onclick="switchHeroShowcase('kid')" 
+                                    class="flex-1 py-2 px-2 rounded-xl text-xs font-black transition-all cursor-pointer bg-gradient-to-r from-blue-600 via-cyan-600 to-indigo-600 text-white shadow-md shadow-cyan-600/30 flex items-center justify-center gap-1.5"
+                                >
+                                    <span>🎩 Kaito Kid 1412</span>
+                                </button>
+                                <button 
+                                    id="hero-tab-osce" 
+                                    onclick="switchHeroShowcase('osce')" 
+                                    class="flex-1 py-2 px-2 rounded-xl text-xs font-black transition-all cursor-pointer text-slate-400 hover:text-white flex items-center justify-center gap-1.5"
+                                >
+                                    <span>⚡ Trạm Thi OSCE</span>
+                                </button>
+                                <button 
+                                    id="hero-tab-tree" 
+                                    onclick="switchHeroShowcase('tree')" 
+                                    class="flex-1 py-2 px-2 rounded-xl text-xs font-black transition-all cursor-pointer text-slate-400 hover:text-white flex items-center justify-center gap-1.5"
+                                >
+                                    <span>🌲 Cây Thư Mục</span>
+                                </button>
                             </div>
 
-                            <!-- Chapter & Module Tag -->
-                            <div class="flex items-center justify-between gap-2 flex-wrap text-xs">
-                                <div>
-                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">GIẢI PHẪU 1 • ĐẦU MẶT CỔ</span>
-                                    <h4 class="font-black text-white text-sm">Đầu (6 vị trí giải phẫu)</h4>
-                                </div>
-                                <div class="flex items-center gap-1.5">
-                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-cyan-950 text-cyan-300 border border-cyan-800 flex items-center gap-1">
-                                        <span>🧠 Não Bộ Anki (SM-2)</span>
-                                    </span>
-                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-red-950 text-rose-300 border border-red-800">
-                                        Trạm 20s
-                                    </span>
-                                </div>
-                            </div>
+                            <!-- ─── TAB 1: KAITO KID 1412 SHOWCASE ─── -->
+                            <div id="hero-view-kid" class="space-y-3">
+                                <!-- Kaito Kid Portrait Container -->
+                                <div class="relative rounded-2xl overflow-hidden bg-slate-950 border border-cyan-500/40 shadow-2xl group">
+                                    <div class="relative aspect-[4/3] w-full overflow-hidden">
+                                        <img 
+                                            src="/kaito-kid.png" 
+                                            alt="Kaito Kid 1412 - Dzota Y Khoa" 
+                                            class="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                                        />
+                                        <!-- Gradient Overlay -->
+                                        <div class="absolute inset-0 bg-gradient-to-t from-[#070B19] via-transparent to-transparent opacity-80"></div>
+                                        
+                                        <!-- Glowing Monocle Sparkle Tag -->
+                                        <div class="absolute top-3 right-3 px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md border border-cyan-400/50 flex items-center gap-1.5 text-[11px] font-black text-cyan-300 shadow-lg">
+                                            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-monocle"></span>
+                                            <span>Kaito Kid #1412</span>
+                                        </div>
 
-                            <!-- Anatomical Diagram with Masking Pins (From Uploaded Photo) -->
-                            <div class="relative rounded-2xl overflow-hidden bg-slate-950 border border-cyan-900/40 shadow-inner group">
-                                <img 
-                                    src="/dynex-osce-demo.png" 
-                                    alt="Giải Phẫu Đầu Mặt Cổ - DYNEX OSCE" 
-                                    class="w-full h-auto object-contain transition-transform duration-500 group-hover:scale-[1.02]"
-                                />
-                                <div class="absolute bottom-2 left-2 right-2 px-2.5 py-1 rounded-xl bg-slate-950/85 backdrop-blur-md border border-white/10 flex items-center justify-between text-[10px]">
-                                    <span class="text-cyan-300 font-bold flex items-center gap-1">
-                                        <i data-lucide="check-circle" class="w-3 h-3 text-cyan-400"></i>
-                                        <span>Tiêu bản số 01: 4 xương đơn & 2 xương đôi</span>
-                                    </span>
-                                    <span class="text-amber-400 font-mono font-black animate-pulse">CHỈ ĐIỂM ? #1</span>
-                                </div>
-                            </div>
-
-                            <!-- Interactive Flashcard Section -->
-                            <div id="dynex-flashcard-box" class="p-3.5 sm:p-4 rounded-2xl bg-slate-950/90 border border-white/10 space-y-3 transition-all">
-                                
-                                <!-- Progress Bar -->
-                                <div class="space-y-1">
-                                    <div class="flex items-center justify-between text-[11px]">
-                                        <span class="font-bold text-slate-300 flex items-center gap-1">
-                                            <span>🗂️ Hàng Đợi: 6 Thẻ</span>
-                                        </span>
-                                        <span id="dynex-progress-text" class="font-mono font-bold text-cyan-400">Đã thuộc: 0 / 6 (0%)</span>
-                                    </div>
-                                    <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
-                                        <div id="dynex-progress-bar" class="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                        <!-- Badge overlay -->
+                                        <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+                                            <div class="px-2.5 py-1 rounded-xl bg-slate-950/90 backdrop-blur-md border border-white/15 text-[10px] text-slate-200">
+                                                <span class="text-cyan-400 font-bold">Ảo thuật gia Y Khoa Dzota</span>
+                                                <span class="text-slate-400 block -mt-0.5">Đánh cắp mọi câu hỏi bẫy thi chạy trạm</span>
+                                            </div>
+                                            <span class="px-2 py-1 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 text-white font-mono font-black text-[10px] shadow-md animate-pulse">
+                                                MAGIC OSCE
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <!-- Card Front State -->
-                                <div id="dynex-card-front" class="space-y-2.5">
+                                <!-- Interactive Magic Poker Card Box -->
+                                <div class="p-3.5 sm:p-4 rounded-2xl magic-poker-card space-y-3">
                                     <div class="flex items-center justify-between">
-                                        <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-blue-950 text-cyan-300 border border-blue-800">
-                                            THẺ SỐ #1 • ĐẦU
+                                        <div class="flex items-center gap-2">
+                                            <span id="kid-card-code" class="text-lg font-black text-amber-400 font-mono">♠ A</span>
+                                            <h5 id="kid-card-title" class="text-xs sm:text-sm font-black text-white">Xương Sọ & Trần Ổ Mắt</h5>
+                                        </div>
+                                        <span class="text-[9px] uppercase font-bold px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800">
+                                            Thẻ Bài Bí Kíp
                                         </span>
-                                        <button onclick="toggleDynexHint()" class="text-[10px] font-bold text-slate-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer">
-                                            <i data-lucide="help-circle" class="w-3 h-3"></i>
-                                            <span>Gợi ý (H)</span>
+                                    </div>
+                                    <p id="kid-card-tip" class="text-[11px] text-slate-300 leading-relaxed bg-black/40 p-2.5 rounded-xl border border-white/5">
+                                        Xương trán khớp với xương đỉnh qua đường khớp vành (Coronal suture), tạo vòm sọ phía trước và trần ổ mắt!
+                                    </p>
+                                    <div class="flex items-center gap-2 pt-1">
+                                        <button 
+                                            type="button" 
+                                            onclick="drawKaitoKidCard()"
+                                            class="flex-1 py-2.5 px-3 rounded-xl font-black text-xs text-white bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 hover:brightness-110 shadow-lg shadow-cyan-500/25 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                                        >
+                                            <span>🃏 Rút Thẻ Bí Kíp 1412</span>
+                                            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
+                                        </button>
+                                        <a 
+                                            href="/dynex"
+                                            class="py-2.5 px-3 rounded-xl font-bold text-xs text-slate-200 hover:text-white bg-slate-900 border border-slate-700 transition flex items-center gap-1 no-underline"
+                                        >
+                                            <span>Vào Thi</span>
+                                            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ─── TAB 2: OSCE REAL STATION (20s SPOT) ─── -->
+                            <div id="hero-view-osce" class="space-y-3.5 hidden">
+                                <!-- Chapter & Module Tag -->
+                                <div class="flex items-center justify-between gap-2 flex-wrap text-xs">
+                                    <div>
+                                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">GIẢI PHẪU 1 • ĐẦU MẶT CỔ</span>
+                                        <h4 class="font-black text-white text-sm">Đầu (6 vị trí giải phẫu)</h4>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-cyan-950 text-cyan-300 border border-cyan-800">
+                                            🧠 Anki SM-2
+                                        </span>
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-red-950 text-rose-300 border border-red-800">
+                                            Trạm 20s
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Anatomical Diagram with Masking Pins -->
+                                <div class="relative rounded-2xl overflow-hidden bg-slate-950 border border-cyan-900/40 shadow-inner group">
+                                    <img 
+                                        src="/dynex-osce-demo.png" 
+                                        alt="Giải Phẫu Đầu Mặt Cổ - DYNEX OSCE" 
+                                        class="w-full h-auto object-contain transition-transform duration-500 group-hover:scale-[1.02]"
+                                    />
+                                    <div class="absolute bottom-2 left-2 right-2 px-2.5 py-1 rounded-xl bg-slate-950/85 backdrop-blur-md border border-white/10 flex items-center justify-between text-[10px]">
+                                        <span class="text-cyan-300 font-bold flex items-center gap-1">
+                                            <i data-lucide="check-circle" class="w-3 h-3 text-cyan-400"></i>
+                                            <span>Tiêu bản số 01: 4 xương đơn & 2 xương đôi</span>
+                                        </span>
+                                        <span class="text-amber-400 font-mono font-black animate-pulse">CHỈ ĐIỂM ? #1</span>
+                                    </div>
+                                </div>
+
+                                <!-- Interactive Flashcard Section -->
+                                <div id="dynex-flashcard-box" class="p-3.5 sm:p-4 rounded-2xl bg-slate-950/90 border border-white/10 space-y-3 transition-all">
+                                    <!-- Progress Bar -->
+                                    <div class="space-y-1">
+                                        <div class="flex items-center justify-between text-[11px]">
+                                            <span class="font-bold text-slate-300 flex items-center gap-1">
+                                                <span>🗂️ Hàng Đợi: 6 Thẻ</span>
+                                            </span>
+                                            <span id="dynex-progress-text" class="font-mono font-bold text-cyan-400">Đã thuộc: 0 / 6 (0%)</span>
+                                        </div>
+                                        <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                                            <div id="dynex-progress-bar" class="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Card Front State -->
+                                    <div id="dynex-card-front" class="space-y-2.5">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-blue-950 text-cyan-300 border border-blue-800">
+                                                THẺ SỐ #1 • ĐẦU
+                                            </span>
+                                            <button onclick="toggleDynexHint()" class="text-[10px] font-bold text-slate-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer">
+                                                <i data-lucide="help-circle" class="w-3 h-3"></i>
+                                                <span>Gợi ý (H)</span>
+                                            </button>
+                                        </div>
+
+                                        <h5 class="text-sm sm:text-base font-black text-white flex items-center gap-2">
+                                            <span>Vị trí</span>
+                                            <span class="px-2 py-0.5 rounded-lg bg-amber-500 text-slate-950 font-mono font-black text-xs">#1</span>
+                                            <span>là cấu trúc gì?</span>
+                                        </h5>
+
+                                        <div id="dynex-hint-text" class="hidden p-2 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-amber-300">
+                                            💡 Gợi ý: Xương đơn thuộc nhóm xương sọ não, tạo nên vòm sọ phía trước và trần ổ mắt.
+                                        </div>
+
+                                        <p class="text-[11px] text-slate-400 leading-snug">
+                                            Nhớ lại tên gọi trong đầu, sau đó bấm nút lật mặt sau để tự đánh giá mức độ ghi nhớ não bộ.
+                                        </p>
+
+                                        <button 
+                                            type="button" 
+                                            onclick="flipDynexCard()"
+                                            class="w-full py-3 px-4 rounded-xl font-black text-xs sm:text-sm text-white bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 hover:brightness-110 shadow-lg shadow-cyan-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                                        >
+                                            <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+                                            <span>LẬT MẶT SAU (Phím Space)</span>
                                         </button>
                                     </div>
 
-                                    <h5 class="text-sm sm:text-base font-black text-white flex items-center gap-2">
-                                        <span>Vị trí</span>
-                                        <span class="px-2 py-0.5 rounded-lg bg-amber-500 text-slate-950 font-mono font-black text-xs">#1</span>
-                                        <span>là cấu trúc gì?</span>
-                                    </h5>
-
-                                    <div id="dynex-hint-text" class="hidden p-2 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-amber-300">
-                                        💡 Gợi ý: Xương đơn thuộc nhóm xương sọ não, tạo nên vòm sọ phía trước và trần ổ mắt.
-                                    </div>
-
-                                    <p class="text-[11px] text-slate-400 leading-snug">
-                                        Nhớ lại tên gọi trong đầu, sau đó bấm nút lật mặt sau để tự đánh giá mức độ ghi nhớ não bộ.
-                                    </p>
-
-                                    <button 
-                                        type="button" 
-                                        onclick="flipDynexCard()"
-                                        class="w-full py-3 px-4 rounded-xl font-black text-xs sm:text-sm text-white bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 hover:brightness-110 shadow-lg shadow-cyan-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-                                    >
-                                        <i data-lucide="rotate-cw" class="w-4 h-4"></i>
-                                        <span>LẬT MẶT SAU (Phím Space)</span>
-                                    </button>
-                                </div>
-
-                                <!-- Card Back State (Hidden initially) -->
-                                <div id="dynex-card-back" class="hidden space-y-3 pt-1">
-                                    <div class="p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/50 space-y-1">
-                                        <div class="flex items-center gap-1.5 text-emerald-400 font-black text-xs sm:text-sm">
-                                            <i data-lucide="check-circle-2" class="w-4 h-4 flex-shrink-0"></i>
-                                            <span>ĐÁP ÁN: XƯƠNG TRÁN (Frontal Bone)</span>
+                                    <!-- Card Back State -->
+                                    <div id="dynex-card-back" class="hidden space-y-3 pt-1">
+                                        <div class="p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/50 space-y-1">
+                                            <div class="flex items-center gap-1.5 text-emerald-400 font-black text-xs sm:text-sm">
+                                                <i data-lucide="check-circle-2" class="w-4 h-4 flex-shrink-0"></i>
+                                                <span>ĐÁP ÁN: XƯƠNG TRÁN (Frontal Bone)</span>
+                                            </div>
+                                            <p class="text-[11px] text-slate-300 leading-relaxed pl-5">
+                                                Thuộc nhóm xương đơn tạo nên vòm sọ và trần ổ mắt. Khớp với xương đỉnh qua đường khớp vành (Coronal suture).
+                                            </p>
                                         </div>
-                                        <p class="text-[11px] text-slate-300 leading-relaxed pl-5">
-                                            Thuộc nhóm xương đơn tạo nên vòm sọ và trần ổ mắt. Khớp với xương đỉnh qua đường khớp vành (Coronal suture).
-                                        </p>
-                                    </div>
 
-                                    <div>
-                                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5 text-center">
-                                            ĐÁNH GIÁ MỨC ĐỘ GHI NHỚ (ANKI SM-2):
+                                        <div>
+                                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5 text-center">
+                                                ĐÁNH GIÁ MỨC ĐỘ GHI NHỚ (ANKI SM-2):
+                                            </span>
+                                            <div class="grid grid-cols-4 gap-1.5 text-center">
+                                                <button onclick="rateDynexCard(1)" class="p-2 rounded-xl bg-rose-950/80 hover:bg-rose-900 border border-rose-600/40 text-rose-300 text-[10px] font-bold transition cursor-pointer">
+                                                    <div>Quên</div>
+                                                    <div class="text-[9px] text-slate-400 font-mono">&lt; 1m</div>
+                                                </button>
+                                                <button onclick="rateDynexCard(2)" class="p-2 rounded-xl bg-amber-950/80 hover:bg-amber-900 border border-amber-600/40 text-amber-300 text-[10px] font-bold transition cursor-pointer">
+                                                    <div>Khó</div>
+                                                    <div class="text-[9px] text-slate-400 font-mono">10m</div>
+                                                </button>
+                                                <button onclick="rateDynexCard(3)" class="p-2 rounded-xl bg-blue-950/80 hover:bg-blue-900 border border-blue-600/40 text-cyan-300 text-[10px] font-bold transition cursor-pointer">
+                                                    <div>Tốt</div>
+                                                    <div class="text-[9px] text-slate-400 font-mono">1 ngày</div>
+                                                </button>
+                                                <button onclick="rateDynexCard(4)" class="p-2 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-600/40 text-emerald-300 text-[10px] font-bold transition cursor-pointer">
+                                                    <div>Dễ</div>
+                                                    <div class="text-[9px] text-slate-400 font-mono">4 ngày</div>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ─── TAB 3: TREE EXPLORER VIEW ─── -->
+                            <div id="hero-view-tree" class="space-y-3 hidden">
+                                <div class="relative rounded-2xl overflow-hidden bg-slate-950 border border-indigo-500/40 shadow-inner group">
+                                    <img 
+                                        src="/dynex-tree-sample.png" 
+                                        alt="Cây Thư Mục Y Khoa Dzota" 
+                                        class="w-full h-auto object-contain transition-transform duration-500 group-hover:scale-[1.02]"
+                                    />
+                                    <div class="absolute bottom-2 left-2 right-2 px-2.5 py-1.5 rounded-xl bg-slate-950/90 backdrop-blur-md border border-white/10 flex items-center justify-between text-[10px]">
+                                        <span class="text-indigo-300 font-bold flex items-center gap-1.5">
+                                            <i data-lucide="folder-tree" class="w-3.5 h-3.5 text-indigo-400"></i>
+                                            <span>Môn Học → Chương → Chủ Đề → Bài Học</span>
                                         </span>
-                                        <div class="grid grid-cols-4 gap-1.5 text-center">
-                                            <button onclick="rateDynexCard(1)" class="p-2 rounded-xl bg-rose-950/80 hover:bg-rose-900 border border-rose-600/40 text-rose-300 text-[10px] font-bold transition cursor-pointer">
-                                                <div>Quên</div>
-                                                <div class="text-[9px] text-slate-400 font-mono">&lt; 1m</div>
-                                            </button>
-                                            <button onclick="rateDynexCard(2)" class="p-2 rounded-xl bg-amber-950/80 hover:bg-amber-900 border border-amber-600/40 text-amber-300 text-[10px] font-bold transition cursor-pointer">
-                                                <div>Khó</div>
-                                                <div class="text-[9px] text-slate-400 font-mono">10m</div>
-                                            </button>
-                                            <button onclick="rateDynexCard(3)" class="p-2 rounded-xl bg-blue-950/80 hover:bg-blue-900 border border-blue-600/40 text-cyan-300 text-[10px] font-bold transition cursor-pointer">
-                                                <div>Tốt</div>
-                                                <div class="text-[9px] text-slate-400 font-mono">1 ngày</div>
-                                            </button>
-                                            <button onclick="rateDynexCard(4)" class="p-2 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-600/40 text-emerald-300 text-[10px] font-bold transition cursor-pointer">
-                                                <div>Dễ</div>
-                                                <div class="text-[9px] text-slate-400 font-mono">4 ngày</div>
-                                            </button>
-                                        </div>
+                                        <span class="text-emerald-400 font-mono font-bold">+ Tạo Nhanh Trực Tiếp</span>
                                     </div>
                                 </div>
-
+                                <div class="p-3.5 rounded-2xl bg-slate-950/90 border border-white/10 space-y-2">
+                                    <h5 class="text-xs sm:text-sm font-black text-white flex items-center gap-1.5">
+                                        <i data-lucide="layers" class="w-4 h-4 text-cyan-400"></i>
+                                        <span>Quản Lý Học Liệu Độc Quyền</span>
+                                    </h5>
+                                    <p class="text-[11px] text-slate-400 leading-relaxed">
+                                        Tạo và quản lý các cây thư mục giải phẫu theo từng học phần: Đầu Mặt Cổ, Ngực Bụng, Chi Trên, Chi Dưới. Thao tác thêm ảnh tiêu bản và tạo trạm thi chỉ với một nút bấm <strong>+</strong>!
+                                    </p>
+                                    <a 
+                                        href="/dynex"
+                                        class="w-full py-2.5 rounded-xl font-bold text-xs text-white bg-indigo-600 hover:bg-indigo-500 transition flex items-center justify-center gap-1.5 no-underline shadow-md shadow-indigo-600/30"
+                                    >
+                                        <span>Khám Phá Cây Thư Mục Đầy Đủ</span>
+                                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                                    </a>
+                                </div>
                             </div>
 
                             <!-- Bottom Link to Full App -->
                             <div class="flex items-center justify-between pt-1 text-xs">
-                                <span class="text-[11px] text-slate-400">Mô phỏng thuật toán ghi nhớ SM-2</span>
+                                <span class="text-[11px] text-slate-400">Mô phỏng OSCE & Anki SM-2</span>
                                 <a href="/dynex" class="text-xs font-black text-cyan-400 hover:text-cyan-300 flex items-center gap-1 no-underline">
                                     <span>Vào phòng thi 500+ trạm</span>
                                     <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
@@ -1238,17 +1347,18 @@
             <!-- Brand Logo & Emblem with Glowing Aura -->
             <div class="text-center mb-6 pt-1">
                 <div class="relative w-14 h-14 mx-auto mb-3">
-                    <div class="w-full h-full rounded-2xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-rose-600 p-0.5 shadow-xl shadow-cyan-500/30 group-hover:scale-105 transition-transform">
+                    <div class="w-full h-full rounded-2xl bg-gradient-to-tr from-cyan-400 via-blue-600 to-indigo-600 p-0.5 shadow-xl shadow-cyan-500/30 group-hover:scale-105 transition-transform">
                         <div class="w-full h-full bg-[#0A0F24] rounded-[14px] flex items-center justify-center p-2">
                             <img src="/logo-dzota.png" alt="Dzota" class="w-full h-full object-contain" />
                         </div>
                     </div>
-                    <span class="absolute -bottom-1 -right-1 text-xs">🎀</span>
+                    <span class="absolute -bottom-1 -right-1 text-sm animate-monocle">🎩</span>
+                    <span class="absolute -top-1 -left-1 text-xs">✨</span>
                 </div>
                 <h3 class="text-xl sm:text-2xl font-black text-white font-display tracking-tight">
-                    Cổng Khảo Thí Y Khoa <span class="text-gradient-conan">Dzota</span>
+                    Cổng Khảo Thí Y Khoa <span class="text-gradient-kid">Dzota 1412</span>
                 </h3>
-                <p class="text-xs text-slate-400 mt-1">Đăng nhập để vào ngay phòng thi chạy trạm DYNEX OSCE & AI</p>
+                <p class="text-xs text-slate-400 mt-1">Đăng nhập để vào ngay phòng thi chạy trạm DYNEX OSCE & NoteBook ND</p>
             </div>
 
             <!-- Tab Switcher (Đăng Nhập / Đăng Ký) -->
@@ -1647,6 +1757,92 @@
                 }
             }
         }
+
+        // --- 6. HERO SHOWCASE SWITCHER (Kaito Kid vs OSCE vs Tree Explorer) ---
+        function switchHeroShowcase(mode) {
+            const tabKid = document.getElementById('hero-tab-kid');
+            const tabOsce = document.getElementById('hero-tab-osce');
+            const tabTree = document.getElementById('hero-tab-tree');
+
+            const viewKid = document.getElementById('hero-view-kid');
+            const viewOsce = document.getElementById('hero-view-osce');
+            const viewTree = document.getElementById('hero-view-tree');
+
+            const activeClass = "flex-1 py-2 px-2 rounded-xl text-xs font-black transition-all cursor-pointer bg-gradient-to-r from-blue-600 via-cyan-600 to-indigo-600 text-white shadow-md shadow-cyan-600/30 flex items-center justify-center gap-1.5";
+            const inactiveClass = "flex-1 py-2 px-2 rounded-xl text-xs font-black transition-all cursor-pointer text-slate-400 hover:text-white flex items-center justify-center gap-1.5";
+
+            if (tabKid && tabOsce && tabTree && viewKid && viewOsce && viewTree) {
+                if (mode === 'kid') {
+                    tabKid.className = activeClass;
+                    tabOsce.className = inactiveClass;
+                    tabTree.className = inactiveClass;
+                    viewKid.classList.remove('hidden');
+                    viewOsce.classList.add('hidden');
+                    viewTree.classList.add('hidden');
+                } else if (mode === 'osce') {
+                    tabKid.className = inactiveClass;
+                    tabOsce.className = activeClass;
+                    tabTree.className = inactiveClass;
+                    viewKid.classList.add('hidden');
+                    viewOsce.classList.remove('hidden');
+                    viewTree.classList.add('hidden');
+                } else if (mode === 'tree') {
+                    tabKid.className = inactiveClass;
+                    tabOsce.className = inactiveClass;
+                    tabTree.className = activeClass;
+                    viewKid.classList.add('hidden');
+                    viewOsce.classList.add('hidden');
+                    viewTree.classList.remove('hidden');
+                }
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        // --- 7. KAITO KID MAGIC CARD DRAW INTERACTION ---
+        const magicMedicalCards = [
+            { code: "♠ A", title: "Xương Sọ & Vòm Sọ", tip: "Xương trán khớp với xương đỉnh qua đường khớp vành (Coronal suture), tạo vòm sọ phía trước và trần ổ mắt!" },
+            { code: "♥ K", title: "Dây Thần Kinh Mặt (VII)", tip: "Đi qua lỗ ống tai trong, qua xương đá rồi thoát ra ngoài sọ tại LỖ TRÂM CHŨM!" },
+            { code: "♦ Q", title: "Tam Giác Cảnh Cổ", tip: "Giới hạn bởi cơ ức đòn chũm, bụng sau cơ hai thân, bụng trên cơ vai móng. Chứa bó mạch cảnh!" },
+            { code: "♣ J", title: "Ống Bẹn & Thoát Vị", tip: "Thoát vị bẹn gián tiếp đi qua lỗ bẹn sâu, đi trong ống bẹn, nằm ngoài động mạch thượng vị dưới!" },
+            { code: "🃏 1412", title: "Bí Kíp Đánh Cắp Điểm 10", tip: "Nguyên tắc 20s/trạm: Nhận diện mốc giải phẫu chính trước, loại suy nhánh phụ sau!" }
+        ];
+        let currentCardIdx = 0;
+        function drawKaitoKidCard() {
+            currentCardIdx = (currentCardIdx + 1) % magicMedicalCards.length;
+            const card = magicMedicalCards[currentCardIdx];
+            const codeEl = document.getElementById('kid-card-code');
+            const titleEl = document.getElementById('kid-card-title');
+            const tipEl = document.getElementById('kid-card-tip');
+            if (codeEl) codeEl.textContent = card.code;
+            if (titleEl) titleEl.textContent = card.title;
+            if (tipEl) tipEl.textContent = card.tip;
+
+            if (window.confetti) {
+                confetti({
+                    particleCount: 45,
+                    spread: 65,
+                    origin: { y: 0.5 },
+                    colors: ['#38BDF8', '#818CF8', '#FFFFFF', '#EF4444', '#F59E0B']
+                });
+            }
+        }
     </script>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         12. FIXED MOBILE QUICK ACTION BAR (DÀNH RIÊNG CHO ĐIỆN THOẠI)
+    ───────────────────────────────────────────────────────────── -->
+    <div class="fixed bottom-0 left-0 right-0 z-40 bg-[#070B19]/95 backdrop-blur-xl border-t border-cyan-500/30 px-3 py-2 sm:hidden flex items-center justify-between gap-2 shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+        <a href="/dynex" class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-black text-xs text-center flex items-center justify-center gap-1.5 no-underline shadow-lg shadow-cyan-600/30 active:scale-95">
+            <i data-lucide="play" class="w-3.5 h-3.5"></i>
+            <span>Vào Thi OSCE Free</span>
+        </a>
+        <a href="https://zalo.me/0914659511" target="_blank" rel="noreferrer" class="py-2.5 px-3 rounded-xl bg-blue-600/25 text-cyan-300 border border-blue-500/40 font-bold text-xs flex items-center gap-1.5 no-underline active:scale-95">
+            <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+            <span>Zalo: 0914.659.511</span>
+        </a>
+        <button onclick="openAuthModal('login')" class="py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 font-bold text-xs flex items-center justify-center active:scale-95" title="Đăng Nhập">
+            <i data-lucide="log-in" class="w-3.5 h-3.5 text-cyan-400"></i>
+        </button>
+    </div>
 </body>
 </html>
