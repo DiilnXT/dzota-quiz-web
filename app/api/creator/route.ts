@@ -6,16 +6,9 @@ import path from 'path'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
-  // If an RSC client navigation hits this route, redirect hard to do full HTML page load
-  if (request.headers.get('RSC') === '1' || request.headers.get('next-router-prefetch') === '1') {
-    const url = new URL(request.url)
-    return new NextResponse('', {
-      headers: {
-        'x-nextjs-redirect': url.pathname + url.search,
-        'Location': url.pathname + url.search
-      },
-      status: 303
-    })
+  // If next router prefetch hits this route, return empty 204 to avoid unnecessary work
+  if (request.headers.get('next-router-prefetch') === '1') {
+    return new NextResponse(null, { status: 204 })
   }
 
   const cookieStore = await cookies()
