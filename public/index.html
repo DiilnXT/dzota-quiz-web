@@ -4811,8 +4811,9 @@ Bảng đáp án:
         const categories = useMemo(() => {
             const cats = new Set(['Tất cả']);
             savedQuizzes.forEach(q => { 
-                if (q.config && q.config.quizType !== 'bank' && q.config.category) {
-                    cats.add(q.config.category); 
+                const cat = q.config?.category || q.category;
+                if (q.config?.quizType !== 'bank' && cat) {
+                    cats.add(cat); 
                 }
             });
             return Array.from(cats).sort();
@@ -4821,19 +4822,20 @@ Bảng đáp án:
         const bankCategories = useMemo(() => {
             const cats = new Set(['Tất cả']);
             savedQuizzes.forEach(q => { 
-                if (q.config && q.config.quizType === 'bank' && q.config.category) {
-                    cats.add(q.config.category); 
+                const cat = q.config?.category || q.category;
+                if (q.config?.quizType === 'bank' && cat) {
+                    cats.add(cat); 
                 }
             });
             return Array.from(cats).sort();
         }, [savedQuizzes]);
 
         const standardQuizzes = useMemo(() => {
-            return savedQuizzes.filter(q => q.config?.quizType !== 'bank');
+            return savedQuizzes.filter(q => (q.config?.quizType || q.quizType) !== 'bank');
         }, [savedQuizzes]);
 
         const bankQuizzes = useMemo(() => {
-            return savedQuizzes.filter(q => q.config?.quizType === 'bank');
+            return savedQuizzes.filter(q => (q.config?.quizType || q.quizType) === 'bank');
         }, [savedQuizzes]);
 
         const filteredQuizzes = useMemo(() => {
@@ -4842,8 +4844,9 @@ Bảng đáp án:
                     if (q.authorId && q.authorId !== currentUser?.id) return false;
                 }
                 const matchesSearch = (q.title || '').toLowerCase().includes(searchTerm.toLowerCase());
-                const matchesCategory = selectedCategory === 'Tất cả' || (q.config && q.config.category === selectedCategory);
-                const isActive = q.config?.isActive !== false;
+                const qCat = q.config?.category || q.category;
+                const matchesCategory = selectedCategory === 'Tất cả' || (qCat === selectedCategory);
+                const isActive = q.config?.isActive !== false && q.isActive !== false;
                 const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' && isActive) || (statusFilter === 'inactive' && !isActive);
                 return matchesSearch && matchesCategory && matchesStatus;
             });
@@ -4855,8 +4858,9 @@ Bảng đáp án:
                     if (q.authorId && q.authorId !== currentUser?.id) return false;
                 }
                 const matchesSearch = (q.title || '').toLowerCase().includes(bankSearchTerm.toLowerCase());
-                const matchesCategory = bankSelectedCategory === 'Tất cả' || (q.config && q.config.category === bankSelectedCategory);
-                const isActive = q.config?.isActive !== false;
+                const bCat = q.config?.category || q.category;
+                const matchesCategory = bankSelectedCategory === 'Tất cả' || (bCat === bankSelectedCategory);
+                const isActive = q.config?.isActive !== false && q.isActive !== false;
                 const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' && isActive) || (statusFilter === 'inactive' && !isActive);
                 return matchesSearch && matchesCategory && matchesStatus;
             });
