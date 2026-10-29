@@ -6,11 +6,6 @@ import path from 'path'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
-  // If next router prefetch hits this route, return empty 204 to avoid unnecessary work
-  if (request.headers.get('next-router-prefetch') === '1') {
-    return new NextResponse(null, { status: 204 })
-  }
-
   const cookieStore = await cookies()
   const sessionStr = cookieStore.get('dzota_session')?.value
   
@@ -40,7 +35,13 @@ export async function GET(request: Request) {
       html = injectionScript + html
     }
 
-    return new NextResponse(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+    return new NextResponse(html, {
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    })
   } catch (error) {
     return new NextResponse('Error loading creator', { status: 500 })
   }

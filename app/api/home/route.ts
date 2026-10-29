@@ -36,7 +36,13 @@ export async function GET(request: Request) {
         html = html.replace(/<meta property="og:description" content="[^"]*"/, `<meta property="og:description" content="Nhấn để bắt đầu làm bài thi: ${quiz.title}"`)
         html = html.replace(/<title>.*?<\/title>/, `<title>${quiz.title}</title>`)
       }
-      return new NextResponse(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+      return new NextResponse(html, {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      })
     } else {
       let landingHtml = fs.readFileSync(path.join(process.cwd(), 'public/landing.html'), 'utf8')
       if (sessionData) {
@@ -47,7 +53,13 @@ export async function GET(request: Request) {
           landingHtml = injectionScript + landingHtml
         }
       }
-      return new NextResponse(landingHtml, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+      return new NextResponse(landingHtml, {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      })
     }
   } catch (error) {
     console.error(error)

@@ -23,6 +23,9 @@
     <!-- Canvas Confetti for Interactive Quiz widget -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
+    <!-- Three.js r128 3D Interactive Engine -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -108,6 +111,22 @@
         html:not(.dark) body {
             background-color: #FAFAFC;
             color: #0F172A;
+        }
+
+        /* Fixed WebGL Three.js Canvas */
+        #webgl-canvas {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* 3D Perspective Tilt on Interactive Cards */
+        .card-3d-tilt {
+            transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.4, 1), box-shadow 0.25s ease;
+            transform-style: preserve-3d;
         }
 
         /* Ambient Background Grid Pattern */
@@ -233,6 +252,9 @@
     </style>
 </head>
 <body class="min-h-screen relative selection:bg-indigo-500 selection:text-white">
+
+    <!-- Three.js WebGL Interactive 3D Canvas Background -->
+    <canvas id="webgl-canvas" class="fixed inset-0 pointer-events-none z-0 w-full h-full"></canvas>
 
     <!-- Ambient Visual Glow Orbs (Fixed Backdrop) -->
     <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
@@ -901,6 +923,8 @@
             const landingEl = document.getElementById('view-landing');
             const loginEl = document.getElementById('view-login');
 
+            pulseBoost = 1.6;
+
             if (viewName === 'login') {
                 currentView = 'login';
                 loginEl.classList.remove('hidden');
@@ -1145,15 +1169,340 @@
             startDemoTimer();
         }
 
+        // =====================================================================
+        // THREE.JS 3D CYBER-ACADEMIC ENGINE (THRED.JS DYNAMIC 3D BACKGROUND)
+        // =====================================================================
+        let scene, camera, renderer, worldGroup;
+        let academicCore, capMeshGroup, orbitalRings, floatingNodesGroup;
+        let particleField, particleMaterial;
+        let sapphireMat, emeraldMat, wireMat, goldMat;
+        let pointerX = 0, pointerY = 0;
+        let targetPointerX = 0, targetPointerY = 0;
+        let scrollProgressRatio = 0;
+        let pulseBoost = 1.0;
+        let isMobileDevice = typeof window !== 'undefined' && window.innerWidth < 768;
+
+        const waypoints = [
+            // 0: Hero section: Academic core centered & proud, camera pulled back
+            { camX: 0, camY: 0, camZ: isMobileDevice ? 26 : 21, grpX: 0, grpY: 0, grpZ: 0, rotY: 0, rotZ: 0 },
+            // 1: Features / Architecture: Shift world group right, camera pans slightly left
+            { camX: -3.5, camY: -1.5, camZ: isMobileDevice ? 24 : 19, grpX: 4.5, grpY: -1.2, grpZ: 1.5, rotY: 1.8, rotZ: 0.1 },
+            // 2: DYNEX OSCE & Medical Matrix: Deep perspective tilt & emerald orbital accent
+            { camX: 3.5, camY: -3.0, camZ: isMobileDevice ? 25 : 18.5, grpX: -4.0, grpY: -2.0, grpZ: 2.0, rotY: 3.4, rotZ: -0.15 },
+            // 3: Stats & Testimonials: Dynamic high-angle vantage point
+            { camX: 0, camY: -4.5, camZ: isMobileDevice ? 23 : 18, grpX: 0, grpY: -3.0, grpZ: 1.0, rotY: 5.0, rotZ: 0.05 },
+            // 4: Footer: Gentle return
+            { camX: 0, camY: -6.0, camZ: isMobileDevice ? 26 : 20, grpX: 0, grpY: -4.0, grpZ: 0.5, rotY: 6.28, rotZ: 0 }
+        ];
+
+        const loginWaypoint = {
+            camX: 0, camY: 0.4, camZ: isMobileDevice ? 22 : 16.5,
+            grpX: 0, grpY: 0.2, grpZ: -1.5,
+            rotY: 1.45, rotZ: 0.08
+        };
+
+        function lerp(a, b, t) {
+            return a + (b - a) * t;
+        }
+
+        function getInterpolatedWaypoint(ratio) {
+            if (currentView === 'login') return loginWaypoint;
+            const totalSegments = waypoints.length - 1;
+            const scaled = Math.max(0, Math.min(ratio, 1)) * totalSegments;
+            const idx = Math.min(Math.floor(scaled), totalSegments - 1);
+            const frac = scaled - idx;
+            const smoothT = frac * frac * (3 - 2 * frac);
+
+            const w1 = waypoints[idx];
+            const w2 = waypoints[idx + 1];
+            return {
+                camX: lerp(w1.camX, w2.camX, smoothT),
+                camY: lerp(w1.camY, w2.camY, smoothT),
+                camZ: lerp(w1.camZ, w2.camZ, smoothT),
+                grpX: lerp(w1.grpX, w2.grpX, smoothT),
+                grpY: lerp(w1.grpY, w2.grpY, smoothT),
+                grpZ: lerp(w1.grpZ, w2.grpZ, smoothT),
+                rotY: lerp(w1.rotY, w2.rotY, smoothT),
+                rotZ: lerp(w1.rotZ, w2.rotZ, smoothT)
+            };
+        }
+
+        function initThreeJS() {
+            const canvas = document.getElementById('webgl-canvas');
+            if (!canvas || typeof THREE === 'undefined') return;
+
+            isMobileDevice = window.innerWidth < 768;
+
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 0, isMobileDevice ? 26 : 21);
+
+            renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                alpha: true,
+                antialias: !isMobileDevice,
+                powerPreference: 'high-performance'
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileDevice ? 1.5 : 2));
+
+            // Ambient & Directional Lights
+            const isDark = document.documentElement.classList.contains('dark');
+            const ambLight = new THREE.AmbientLight(isDark ? 0xffffff : 0x8899bb, isDark ? 0.9 : 1.2);
+            scene.add(ambLight);
+
+            const dirLight = new THREE.DirectionalLight(0x6366f1, 1.8);
+            dirLight.position.set(16, 22, 18);
+            scene.add(dirLight);
+
+            const accentLight = new THREE.PointLight(0x10b981, 1.4, 50);
+            accentLight.position.set(-14, -10, 12);
+            scene.add(accentLight);
+
+            const cyanLight = new THREE.PointLight(0x38bdf8, 1.2, 50);
+            cyanLight.position.set(14, 12, 10);
+            scene.add(cyanLight);
+
+            worldGroup = new THREE.Group();
+            scene.add(worldGroup);
+
+            // High-Tier PBR Materials
+            sapphireMat = new THREE.MeshPhysicalMaterial({
+                color: isDark ? 0x4f46e5 : 0x3b82f6,
+                metalness: 0.25,
+                roughness: 0.18,
+                transparent: true,
+                opacity: isDark ? 0.78 : 0.65,
+                clearcoat: 0.95
+            });
+
+            emeraldMat = new THREE.MeshPhysicalMaterial({
+                color: 0x10b981,
+                metalness: 0.2,
+                roughness: 0.2,
+                transparent: true,
+                opacity: isDark ? 0.8 : 0.7
+            });
+
+            wireMat = new THREE.MeshBasicMaterial({
+                color: isDark ? 0x818cf8 : 0x6366f1,
+                wireframe: true,
+                transparent: true,
+                opacity: isDark ? 0.35 : 0.22
+            });
+
+            goldMat = new THREE.MeshStandardMaterial({
+                color: 0xf59e0b,
+                metalness: 0.7,
+                roughness: 0.2
+            });
+
+            // 1. Central Academic Core & 3D Graduation Cap
+            academicCore = new THREE.Group();
+
+            const geoCore = new THREE.IcosahedronGeometry(2.4, 1);
+            academicCore.add(new THREE.Mesh(geoCore, wireMat));
+
+            const innerCrystal = new THREE.Mesh(new THREE.OctahedronGeometry(1.4, 0), sapphireMat);
+            academicCore.add(innerCrystal);
+
+            capMeshGroup = new THREE.Group();
+            const board = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.2, 4.2), sapphireMat);
+            board.rotation.y = Math.PI / 4;
+            capMeshGroup.add(board);
+
+            const skullCap = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.5, 0.9, 6), wireMat);
+            skullCap.position.y = -0.6;
+            capMeshGroup.add(skullCap);
+
+            const tassel = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.14, 1.75, 8), goldMat);
+            tassel.position.set(1.85, -0.75, 0.95);
+            tassel.rotation.z = -0.25;
+            capMeshGroup.add(tassel);
+
+            capMeshGroup.position.y = 3.2;
+            capMeshGroup.rotation.set(0.2, 0.25, -0.08);
+            academicCore.add(capMeshGroup);
+
+            worldGroup.add(academicCore);
+
+            // 2. Orbital Knowledge Rings
+            orbitalRings = new THREE.Group();
+            const r1 = new THREE.Mesh(new THREE.TorusGeometry(4.5, 0.04, 12, 90), wireMat);
+            r1.rotation.x = Math.PI / 2.5;
+            orbitalRings.add(r1);
+
+            const r2 = new THREE.Mesh(new THREE.TorusGeometry(5.8, 0.035, 12, 90), emeraldMat);
+            r2.rotation.y = Math.PI / 3;
+            r2.rotation.x = Math.PI / 4;
+            orbitalRings.add(r2);
+
+            worldGroup.add(orbitalRings);
+
+            // 3. Floating Knowledge Polyhedrons (Universal academic symbols)
+            floatingNodesGroup = new THREE.Group();
+            const nodeGeos = [
+                new THREE.OctahedronGeometry(0.55, 0),
+                new THREE.DodecahedronGeometry(0.5, 0),
+                new THREE.IcosahedronGeometry(0.48, 0)
+            ];
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const radius = 7.5 + (i % 2) * 1.5;
+                const mesh = new THREE.Mesh(
+                    nodeGeos[i % nodeGeos.length],
+                    i % 3 === 0 ? sapphireMat : (i % 3 === 1 ? emeraldMat : goldMat)
+                );
+                mesh.position.set(
+                    Math.cos(angle) * radius,
+                    Math.sin(i * 1.7) * 3.2,
+                    Math.sin(angle) * radius * 0.6
+                );
+                floatingNodesGroup.add(mesh);
+            }
+            worldGroup.add(floatingNodesGroup);
+
+            // 4. Adaptive Cyber Starfield / Particle Constellation
+            const particleCount = isMobileDevice ? 650 : 1400;
+            const pGeo = new THREE.BufferGeometry();
+            const pPos = new Float32Array(particleCount * 3);
+            const pCol = new Float32Array(particleCount * 3);
+
+            const colBlue = new THREE.Color(0x38bdf8);
+            const colEmerald = new THREE.Color(0x10b981);
+            const colIndigo = new THREE.Color(0x818cf8);
+
+            for (let i = 0; i < particleCount; i++) {
+                const i3 = i * 3;
+                pPos[i3] = (Math.random() - 0.5) * 65;
+                pPos[i3 + 1] = (Math.random() - 0.5) * 45;
+                pPos[i3 + 2] = (Math.random() - 0.5) * 40 - 5;
+
+                const c = i % 3 === 0 ? colBlue : (i % 3 === 1 ? colEmerald : colIndigo);
+                pCol[i3] = c.r;
+                pCol[i3 + 1] = c.g;
+                pCol[i3 + 2] = c.b;
+            }
+
+            pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+            pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
+
+            particleMaterial = new THREE.PointsMaterial({
+                size: isMobileDevice ? 0.18 : 0.14,
+                vertexColors: true,
+                transparent: true,
+                opacity: isDark ? 0.85 : 0.65
+            });
+
+            particleField = new THREE.Points(pGeo, particleMaterial);
+            scene.add(particleField);
+
+            // Mouse & Touch Interaction
+            window.addEventListener('mousemove', (e) => {
+                targetPointerX = (e.clientX / window.innerWidth) - 0.5;
+                targetPointerY = (e.clientY / window.innerHeight) - 0.5;
+
+                // 3D Card tilt for hero card
+                if (!isMobileDevice) {
+                    const heroCard = document.getElementById('hero-demo-card');
+                    if (heroCard && currentView === 'landing') {
+                        heroCard.style.transform = `perspective(1000px) rotateX(${-targetPointerY * 6}deg) rotateY(${targetPointerX * 6}deg)`;
+                    }
+                }
+            }, { passive: true });
+
+            window.addEventListener('touchmove', (e) => {
+                if (e.touches.length > 0) {
+                    targetPointerX = (e.touches[0].clientX / window.innerWidth) - 0.5;
+                    targetPointerY = (e.touches[0].clientY / window.innerHeight) - 0.5;
+                }
+            }, { passive: true });
+
+            window.addEventListener('resize', () => {
+                isMobileDevice = window.innerWidth < 768;
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileDevice ? 1.5 : 2));
+            });
+        }
+
+        function updateThreeTheme(isDark) {
+            if (!particleMaterial || !sapphireMat || !wireMat) return;
+            particleMaterial.opacity = isDark ? 0.85 : 0.65;
+            sapphireMat.color.setHex(isDark ? 0x4f46e5 : 0x3b82f6);
+            sapphireMat.opacity = isDark ? 0.78 : 0.65;
+            wireMat.color.setHex(isDark ? 0x818cf8 : 0x6366f1);
+            wireMat.opacity = isDark ? 0.35 : 0.22;
+        }
+
+        let clock = 0;
+        function animateThreeJS() {
+            requestAnimationFrame(animateThreeJS);
+
+            pulseBoost += (1 - pulseBoost) * 0.05;
+            clock += 0.012 * pulseBoost;
+
+            // Dampen mouse pointer with smooth lerp
+            pointerX += (targetPointerX - pointerX) * 0.08;
+            pointerY += (targetPointerY - pointerY) * 0.08;
+
+            const wp = getInterpolatedWaypoint(scrollProgressRatio);
+
+            camera.position.x += (wp.camX + pointerX * 1.8 - camera.position.x) * 0.05;
+            camera.position.y += (wp.camY - pointerY * 1.5 - camera.position.y) * 0.05;
+            camera.position.z += (wp.camZ - camera.position.z) * 0.05;
+
+            if (worldGroup) {
+                worldGroup.position.x += (wp.grpX - worldGroup.position.x) * 0.05;
+                worldGroup.position.y += (wp.grpY - worldGroup.position.y) * 0.05;
+                worldGroup.position.z += (wp.grpZ - worldGroup.position.z) * 0.05;
+
+                worldGroup.rotation.y += (wp.rotY + pointerX * 0.45 - worldGroup.rotation.y) * 0.05;
+                worldGroup.rotation.z += (wp.rotZ - worldGroup.rotation.z) * 0.05;
+                worldGroup.rotation.x += (pointerY * 0.3 - worldGroup.rotation.x) * 0.05;
+            }
+
+            if (academicCore) {
+                academicCore.rotation.y += 0.005 * pulseBoost;
+                academicCore.position.y = Math.sin(clock) * 0.45;
+            }
+
+            if (orbitalRings) {
+                orbitalRings.rotation.z += 0.006 * pulseBoost;
+                orbitalRings.rotation.x += 0.0035 * pulseBoost;
+            }
+
+            if (floatingNodesGroup) {
+                floatingNodesGroup.rotation.y -= 0.004 * pulseBoost;
+                floatingNodesGroup.children.forEach((child, i) => {
+                    child.rotation.x += 0.01;
+                    child.rotation.y += 0.015;
+                    child.position.y += Math.sin(clock + i) * 0.008;
+                });
+            }
+
+            if (particleField) {
+                particleField.rotation.y += 0.0008;
+                particleField.rotation.x += 0.0004;
+            }
+
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+        }
+
         // --- 7. THEME TOGGLE (LIGHT / DARK) ---
         function toggleTheme() {
             const isDark = document.documentElement.classList.contains('dark');
             if (isDark) {
                 document.documentElement.classList.remove('dark');
                 try { localStorage.setItem('dzota_theme', 'light'); } catch (e) {}
+                updateThreeTheme(false);
             } else {
                 document.documentElement.classList.add('dark');
                 try { localStorage.setItem('dzota_theme', 'dark'); } catch (e) {}
+                updateThreeTheme(true);
             }
             if (window.lucide) lucide.createIcons();
         }
@@ -1188,12 +1537,16 @@
             checkExistingSession();
             startDemoTimer();
 
-            // Scroll progress listener
+            // Initialize Three.js 3D Dynamic Engine
+            initThreeJS();
+            animateThreeJS();
+
+            // Scroll progress listener & Three.js Waypoints
             window.addEventListener('scroll', () => {
                 const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
-                const progress = totalScroll > 0 ? (window.scrollY / totalScroll) * 100 : 0;
+                scrollProgressRatio = totalScroll > 0 ? (window.scrollY / totalScroll) : 0;
                 const bar = document.getElementById('scroll-progress-bar');
-                if (bar) bar.style.width = `${progress}%`;
+                if (bar) bar.style.width = `${scrollProgressRatio * 100}%`;
             });
         });
 
