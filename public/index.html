@@ -841,6 +841,7 @@
       // --- MAIN COMPONENT ---
       function App() {
         const isEditorDirectMode = typeof window !== 'undefined' && (
+          (window.location.pathname.startsWith('/creator') && !new URLSearchParams(window.location.search).get('view')?.includes('bank')) ||
           (new URLSearchParams(window.location.search).get('import') === 'notebook_nd') ||
           (new URLSearchParams(window.location.search).get('mode') === 'editor') ||
           (new URLSearchParams(window.location.search).get('action') === 'create') ||
@@ -2645,11 +2646,12 @@ Bảng đáp án:
           const initApp = async () => {
             const params = new URLSearchParams(window.location.search);
             const quizId = params.get('id') || params.get('test') || params.get('editId');
-            const isEditParam = params.get('edit') === 'true' || params.has('editId');
+            const isEditParam = params.get('edit') === 'true' || params.has('editId') || (typeof window !== 'undefined' && window.location.pathname.startsWith('/creator'));
             const viewParam = params.get('view') || params.get('tab');
             const isBankView = viewParam === 'bank' || viewParam === 'banks' || params.get('tab') === 'banks';
             const hasPendingImport = typeof window !== 'undefined' && !!localStorage.getItem('dzota_pending_import_quiz');
             const isEditorMode = typeof window !== 'undefined' && (
+              (window.location.pathname.startsWith('/creator') && !isBankView) ||
               params.get('import') === 'notebook_nd' || 
               params.get('mode') === 'editor' ||
               params.get('action') === 'create' ||

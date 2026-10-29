@@ -165,13 +165,13 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
           </button>
 
           {!isStudent && (
-            <Link
+            <a
               href="/creator"
-              className="px-2.5 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs flex items-center gap-1 shadow-xs active:scale-95 transition-all"
+              className="px-2.5 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs flex items-center gap-1 shadow-xs active:scale-95 transition-all no-underline"
             >
               <Plus size={13} />
               <span>Tạo đề</span>
-            </Link>
+            </a>
           )}
 
           <div className="w-7 h-7 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-black text-xs flex items-center justify-center border border-indigo-200 dark:border-indigo-800">
@@ -383,10 +383,10 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                 Công cụ đề thi
               </h3>
               <div className="space-y-1">
-                <Link
+                <a
                   href="/creator"
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 ${
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 no-underline ${
                     isCreatorActive
                       ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/60'
@@ -401,7 +401,7 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                   }`}>
                     Pro
                   </span>
-                </Link>
+                </a>
 
                 <Link
                   href="/notebook"
@@ -444,14 +444,14 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                   </div>
                 </Link>
 
-                <Link
+                <a
                   href="/creator?view=bank"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition-all text-left cursor-pointer"
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition-all text-left cursor-pointer no-underline"
                 >
                   <BookOpen size={17} className="text-slate-400 dark:text-slate-500" />
                   <span>Ngân hàng câu hỏi</span>
-                </Link>
+                </a>
               </div>
             </div>
           )}
@@ -661,13 +661,13 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
               <div className="p-3 bg-indigo-50 dark:bg-indigo-950/60 rounded-xl border border-indigo-100 dark:border-indigo-900 text-xs text-indigo-700 dark:text-indigo-300">
                 Ngân hàng câu hỏi cho phép bạn import hàng trăm câu hỏi và tự động bốc ngẫu nhiên (random pick) theo từng lần thi!
               </div>
-              <Link
+              <a
                 href="/creator?view=bank"
                 onClick={() => setActiveModal(null)}
-                className="block text-center py-2.5 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition-colors"
+                className="block text-center py-2.5 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition-colors no-underline"
               >
                 Mở Thư Viện Ngân Hàng Đề Thi →
-              </Link>
+              </a>
             </div>
 
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">

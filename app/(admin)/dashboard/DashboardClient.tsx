@@ -1530,13 +1530,13 @@ export default function DashboardClient({
             </button>
 
             {!isStudent && (
-              <Link
+              <a
                 href="/creator"
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-md shadow-indigo-200 transition-all flex items-center gap-1.5 no-underline cursor-pointer"
               >
                 <Plus size={15} />
                 <span>Tạo Đề Mới</span>
-              </Link>
+              </a>
             )}
           </div>
         </div>
@@ -1884,13 +1884,13 @@ export default function DashboardClient({
                               </button>
 
                               {/* Edit in Creator */}
-                              <Link
+                              <a
                                 href={`/creator?id=${quiz.id}`}
-                                className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 transition cursor-pointer"
+                                className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 transition cursor-pointer inline-flex items-center no-underline"
                                 title="Mở trong trình soạn thảo"
                               >
                                 <Edit2 size={15} />
-                              </Link>
+                              </a>
 
                               {/* Delete */}
                               <button

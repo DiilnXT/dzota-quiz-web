@@ -95,7 +95,6 @@ export default function ModernAdminDashboard({
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('cards')
-  const [aiPromptInput, setAiPromptInput] = useState('')
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
   // Determine time-of-day greeting
@@ -158,21 +157,6 @@ export default function ModernAdminDashboard({
     setCopiedId(id)
     setTimeout(() => setCopiedId(null), 2000)
   }
-
-  // Handle Quick AI Generator Submit
-  const handleQuickAiSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!aiPromptInput.trim()) return
-    const encoded = encodeURIComponent(aiPromptInput.trim())
-    window.location.href = `/creator?prompt=${encoded}`
-  }
-
-  const quickPrompts = [
-    '20 câu Dược lý lâm sàng kháng sinh thế hệ mới',
-    'Giải phẫu Hệ Tiêu Hóa, Gan Mật & Tụy',
-    'Điện tâm đồ ECG cơ bản & Rối loạn nhịp tim',
-    'Cấp cứu hồi sức chấn thương sọ não'
-  ]
 
   const GreetingIcon = greeting.icon
 
@@ -280,13 +264,13 @@ export default function ModernAdminDashboard({
 
             {/* Quick Action CTAs */}
             <div className="flex flex-wrap items-center gap-2.5 pt-2">
-              <Link
+              <a
                 href="/creator"
                 className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-black text-xs sm:text-sm shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all active:scale-95 no-underline cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>Soạn Đề Mới (AI / Thủ Công)</span>
-              </Link>
+              </a>
 
               <Link
                 href="/dynex"
@@ -346,74 +330,7 @@ export default function ModernAdminDashboard({
         </div>
       </div>
 
-      {/* ─── 2. INSTANT AI QUIZ GENERATOR COMMAND STUDIO ─── */}
-      <div className="relative rounded-3xl bg-gradient-to-r from-indigo-950/60 via-slate-900 to-violet-950/60 border border-indigo-500/40 p-5 sm:p-6 shadow-xl overflow-hidden group">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
-
-        <div className="relative z-10 space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
-                <Sparkles className="w-4 h-4 text-amber-300 animate-spin-slow" />
-              </div>
-              <h3 className="text-sm sm:text-base font-black text-white tracking-tight">
-                Sinh Đề Thi Trắc Nghiệm Thông Minh Bằng AI (Instant Studio)
-              </h3>
-            </div>
-            <span className="text-[11px] font-semibold text-indigo-300">
-              Công nghệ Gemini 3.8 Flash • Tạo 20 - 50 câu chỉ trong vài giây
-            </span>
-          </div>
-
-          <form onSubmit={handleQuickAiSubmit} className="flex flex-col sm:flex-row items-stretch gap-2.5">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                value={aiPromptInput}
-                onChange={(e) => setAiPromptInput(e.target.value)}
-                placeholder="Gõ chủ đề bài thi cần tạo... (vd: 20 câu trắc nghiệm Dược lý về thuốc chẹn Beta giao cảm...)"
-                className="w-full pl-4 pr-10 py-3 bg-[#070b14]/90 border border-slate-700 rounded-2xl text-xs sm:text-sm text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 transition-all shadow-inner"
-              />
-              {aiPromptInput && (
-                <button
-                  type="button"
-                  onClick={() => setAiPromptInput('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              disabled={!aiPromptInput.trim()}
-              className="px-5 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 disabled:opacity-40 text-white font-black text-xs sm:text-sm shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shrink-0"
-            >
-              <Zap className="w-4 h-4 text-amber-300 fill-current" />
-              <span>Sinh Đề Bằng AI Ngay</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </form>
-
-          {/* Quick Prompt Chips */}
-          <div className="flex items-center gap-2 overflow-x-auto pt-1 pb-1 scrollbar-none">
-            <span className="text-[11px] font-bold text-slate-400 shrink-0">Gợi ý nhanh:</span>
-            {quickPrompts.map((p, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => setAiPromptInput(p)}
-                className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-800/80 hover:bg-indigo-900/60 text-slate-300 hover:text-white border border-slate-700/60 hover:border-indigo-500/50 whitespace-nowrap transition-colors cursor-pointer"
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ─── 3. INTERACTIVE BENTO GRID METRICS ─── */}
+      {/* ─── 2. INTERACTIVE BENTO GRID METRICS ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         {/* Bento 1: Quizzes & Status Distribution */}
         <div
@@ -589,13 +506,13 @@ export default function ModernAdminDashboard({
               </button>
             </div>
 
-            <Link
+            <a
               href="/creator"
               className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 flex items-center gap-1.5 no-underline transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>+ Tạo Đề Mới</span>
-            </Link>
+            </a>
           </div>
         </div>
 
@@ -690,13 +607,13 @@ export default function ModernAdminDashboard({
               Thử thay đổi từ khóa tìm kiếm hoặc bấm nút Tạo Đề Mới để bắt đầu soạn đề thi!
             </p>
             <div className="pt-2">
-              <Link
+              <a
                 href="/creator"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md no-underline"
               >
                 <Plus className="w-4 h-4" />
                 <span>Soạn Đề Ngay</span>
-              </Link>
+              </a>
             </div>
           </div>
         ) : viewMode === 'cards' ? (
