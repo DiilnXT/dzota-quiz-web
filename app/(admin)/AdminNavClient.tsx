@@ -25,7 +25,8 @@ import {
   Clock,
   Plus,
   Activity,
-  ExternalLink
+  ExternalLink,
+  Folder
 } from 'lucide-react'
 import { useTheme } from '../ThemeContext'
 
@@ -336,6 +337,19 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                   <FileText size={17} />
                   <span>{isTeacher ? 'Đề thi của tôi' : 'Quản lý Bài test'}</span>
                 </button>
+
+                <a
+                  href="/creator?view=bank"
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition-all text-left cursor-pointer no-underline group"
+                >
+                  <div className="flex items-center gap-3">
+                    <Folder size={17} className="text-emerald-500 group-hover:scale-110 transition-transform" />
+                    <span>Ngân hàng câu hỏi</span>
+                  </div>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-200/60 dark:border-emerald-800/60">
+                    Kho đề
+                  </span>
+                </a>
 
                 <button
                   onClick={() => handleNavigateTab('classes')}

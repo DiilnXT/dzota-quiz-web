@@ -39,7 +39,8 @@ import {
   Moon,
   Sunset,
   Bell,
-  Key
+  Key,
+  Folder
 } from 'lucide-react'
 
 export interface ModernAdminDashboardProps {
@@ -270,6 +271,14 @@ export default function ModernAdminDashboard({
               >
                 <Plus className="w-4 h-4" />
                 <span>Soạn Đề Mới (AI / Thủ Công)</span>
+              </a>
+
+              <a
+                href="/creator?view=bank"
+                className="px-4 py-2.5 rounded-xl bg-emerald-600/25 hover:bg-emerald-600/40 border border-emerald-500/50 text-emerald-300 hover:text-white font-black text-xs sm:text-sm flex items-center gap-2 transition-all active:scale-95 no-underline cursor-pointer shadow-lg shadow-emerald-950/20"
+              >
+                <Folder className="w-4 h-4 text-emerald-400" />
+                <span>Ngân Hàng Câu Hỏi & Kho Đề</span>
               </a>
 
               <Link
@@ -505,6 +514,14 @@ export default function ModernAdminDashboard({
                 <List className="w-4 h-4" />
               </button>
             </div>
+
+            <a
+              href="/creator?view=bank"
+              className="px-3.5 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 font-bold text-xs flex items-center gap-1.5 no-underline transition-all cursor-pointer"
+            >
+              <Folder className="w-4 h-4 text-emerald-400" />
+              <span>Ngân Hàng Câu Hỏi</span>
+            </a>
 
             <a
               href="/creator"
