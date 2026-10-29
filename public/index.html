@@ -6314,11 +6314,11 @@ Bảng đáp án:
                                             Ngân Hàng Đề
                                         </span>
                                         <span className="text-[10px] uppercase font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
-                                            {bankConfig.category || 'Chung'}
+                                            {bankConfig?.category || 'Chung'}
                                         </span>
                                     </div>
                                     <h2 className="text-sm sm:text-base font-extrabold text-slate-900 truncate">
-                                        {bankConfig.title || 'Ngân Hàng Đề Mới'}
+                                        {bankConfig?.title || 'Ngân Hàng Đề Mới'}
                                     </h2>
                                 </div>
                             </div>
@@ -6358,8 +6358,8 @@ Bảng đáp án:
                                             title: bankConfig.title || 'Ngan_Hang_Cau_Hoi',
                                             config: {
                                                 quizType: 'bank',
-                                                category: bankConfig.category || 'Chung',
-                                                note: bankConfig.note || ''
+                                                category: bankConfig?.category || 'Chung',
+                                                note: bankConfig?.note || ''
                                             },
                                             questions: bankSlots
                                         };
@@ -6449,7 +6449,7 @@ Bảng đáp án:
                                     </label>
                                     <input
                                         type="text"
-                                        value={bankConfig.category}
+                                        value={bankConfig?.category || ''}
                                         onChange={(e) => setBankConfig(prev => ({ ...prev, category: e.target.value }))}
                                         placeholder="VD: Dược lý, Giải phẫu..."
                                         className="w-full px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-800 text-base focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition"
@@ -9623,7 +9623,7 @@ Bảng đáp án:
                                 </label>
                                 <input
                                     type="text"
-                                    value={bankConfig.category}
+                                    value={bankConfig?.category || ''}
                                     onChange={(e) => setBankConfig(prev => ({ ...prev, category: e.target.value }))}
                                     placeholder="VD: Dược lý, Giải phẫu, Y học cơ sở, Toán, Ngoại ngữ..."
                                     className="w-full px-4 py-3 rounded-xl border border-slate-200 font-medium text-slate-800 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition"
@@ -10421,7 +10421,7 @@ Bảng đáp án:
                                         <label className="text-xs font-bold text-slate-700">Môn Học (Tự động lấy theo ngân hàng):</label>
                                         <input
                                             type="text"
-                                            value={bankGenerateConfig.category}
+                                            value={bankGenerateConfig?.category || ''}
                                             onChange={(e) => setBankGenerateConfig(prev => ({ ...prev, category: e.target.value }))}
                                             placeholder="Môn học..."
                                             className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"

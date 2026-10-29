@@ -64,6 +64,20 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
 
   // Create Content modal (+ Tạo mới Bài học, Chương, Hệ cơ quan)
   const [isCreateContentOpen, setIsCreateContentOpen] = useState(false);
+  const [createContentOpts, setCreateContentOpts] = useState<{
+    type?: 'lesson' | 'subFolder' | 'category';
+    categoryId?: string;
+    subFolderId?: string;
+  }>({});
+
+  const handleOpenCreateModal = (opts?: {
+    type?: 'lesson' | 'subFolder' | 'category';
+    categoryId?: string;
+    subFolderId?: string;
+  }) => {
+    setCreateContentOpts(opts || {});
+    setIsCreateContentOpen(true);
+  };
 
   // Multi-deck selector modal (Ôn luyện đa chương / đa bài)
   const [isDeckSelectorOpen, setIsDeckSelectorOpen] = useState(false);
@@ -682,7 +696,7 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
             }}
             onOpenLogin={() => setIsLoginOpen(true)}
             onOpenClassroomManager={() => setCurrentTab('classes')}
-            onOpenCreateModal={() => setIsCreateContentOpen(true)}
+            onOpenCreateModal={handleOpenCreateModal}
             onOpenShare={(les) => {
               setShareLessonTarget(les);
               setIsShareOpen(true);
@@ -1060,6 +1074,9 @@ function DynexInnerClient({ initialUser, isEmbedded = false }: DynexAppClientPro
         onClose={() => setIsCreateContentOpen(false)}
         projects={projects}
         selectedProjectId={selectedProjectId || projects[0]?.id || ''}
+        initialCreateType={createContentOpts.type}
+        initialCategoryId={createContentOpts.categoryId}
+        initialSubFolderId={createContentOpts.subFolderId}
         onAddProject={handleAddProject}
         onAddCategory={handleAddCategory}
         onAddSubFolder={handleAddSubFolder}

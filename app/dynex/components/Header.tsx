@@ -278,18 +278,6 @@ export default function Header({
               </>
             ) : (
               <>
-                {/* Create Content Quick Button */}
-                {onOpenCreateModal && (
-                  <button
-                    onClick={onOpenCreateModal}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black shadow-lg shadow-emerald-600/30 active:scale-95 transition-all cursor-pointer whitespace-nowrap"
-                    title="Tạo Bài học, Chương hoặc Hệ cơ quan mới"
-                  >
-                    <PlusCircle className="w-4 h-4 text-emerald-200" />
-                    <span className="hidden sm:inline">+ Tạo Mới</span>
-                  </button>
-                )}
-
                 {/* Sound Toggle */}
                 <button
                   onClick={toggleMute}

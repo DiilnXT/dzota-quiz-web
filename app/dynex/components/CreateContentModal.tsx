@@ -26,6 +26,9 @@ interface CreateContentModalProps {
   onClose: () => void
   projects: Project[]
   selectedProjectId: string
+  initialCreateType?: 'lesson' | 'subFolder' | 'category'
+  initialCategoryId?: string
+  initialSubFolderId?: string
   onAddProject: (data: { name: string; description: string }) => void
   onAddCategory: (projectId: string, name: string) => void
   onAddSubFolder: (categoryId: string, name: string) => void
@@ -38,6 +41,9 @@ export default function CreateContentModal({
   onClose,
   projects,
   selectedProjectId,
+  initialCreateType,
+  initialCategoryId,
+  initialSubFolderId,
   onAddProject,
   onAddCategory,
   onAddSubFolder,
@@ -47,23 +53,32 @@ export default function CreateContentModal({
   if (!isOpen) return null
 
   // 3 Modes: 'lesson' (Tạo bài học mới), 'subFolder' (Tạo chương mới), 'category' (Tạo hệ cơ quan mới)
-  const [createType, setCreateType] = useState<'lesson' | 'subFolder' | 'category'>('lesson')
+  const [createType, setCreateType] = useState<'lesson' | 'subFolder' | 'category'>(initialCreateType || 'lesson')
 
   const currentProject = projects.find(p => p.id === selectedProjectId) || projects[0]
   const categories = currentProject?.categories || []
 
   // Lesson Form State
-  const [selectedCatId, setSelectedCatId] = useState<string>(categories[0]?.id || '')
+  const [selectedCatId, setSelectedCatId] = useState<string>(initialCategoryId || categories[0]?.id || '')
   const currentCategory = categories.find(c => c.id === selectedCatId) || categories[0]
   const subFolders = currentCategory?.subFolders || []
 
-  const [selectedSubId, setSelectedSubId] = useState<string>(subFolders[0]?.id || '')
+  const [selectedSubId, setSelectedSubId] = useState<string>(initialSubFolderId || subFolders[0]?.id || '')
   const [lessonTitle, setLessonTitle] = useState('')
   const [lessonDesc, setLessonDesc] = useState('')
   const [imageUrlInput, setImageUrlInput] = useState('')
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [accessMode, setAccessMode] = useState<'public' | 'password'>('public')
   const [accessPassword, setAccessPassword] = useState('')
+
+  // Sync initial props when opened or changed
+  React.useEffect(() => {
+    if (isOpen) {
+      if (initialCreateType) setCreateType(initialCreateType)
+      if (initialCategoryId) setSelectedCatId(initialCategoryId)
+      if (initialSubFolderId) setSelectedSubId(initialSubFolderId)
+    }
+  }, [isOpen, initialCreateType, initialCategoryId, initialSubFolderId])
 
   // SubFolder Form State
   const [newSubFolderName, setNewSubFolderName] = useState('')

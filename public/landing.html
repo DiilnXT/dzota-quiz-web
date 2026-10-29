@@ -150,6 +150,65 @@
             -webkit-text-fill-color: transparent;
         }
 
+        .text-gradient-kid {
+            background: linear-gradient(135deg, #FFFFFF 0%, #38BDF8 45%, #818CF8 80%, #C084FC 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .text-gradient-moonlight {
+            background: linear-gradient(135deg, #F8FAFC 0%, #BAE6FD 50%, #38BDF8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-cta-kid {
+            background: linear-gradient(135deg, #1E40AF 0%, #2563EB 50%, #06B6D4 100%);
+            box-shadow: 0 10px 30px -5px rgba(37, 99, 235, 0.55);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .btn-cta-kid:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 15px 35px -5px rgba(6, 182, 212, 0.7);
+        }
+
+        /* Floating Magic Cards & Animations */
+        @keyframes floatKid {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(2.5deg); }
+        }
+        @keyframes floatReverse {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-14px) rotate(-3deg); }
+        }
+        @keyframes monocleSparkle {
+            0%, 100% { opacity: 0.2; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.2); filter: drop-shadow(0 0 12px #38BDF8); }
+        }
+
+        .animate-float-kid {
+            animation: floatKid 4s ease-in-out infinite;
+        }
+        .animate-float-reverse {
+            animation: floatReverse 4.5s ease-in-out infinite;
+        }
+        .animate-monocle {
+            animation: monocleSparkle 2.2s ease-in-out infinite;
+        }
+
+        .magic-poker-card {
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            box-shadow: 0 12px 30px -8px rgba(56, 189, 248, 0.3);
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .magic-poker-card:hover {
+            transform: translateY(-8px) scale(1.04) rotate(-2deg);
+            border-color: rgba(56, 189, 248, 0.8);
+            box-shadow: 0 20px 40px -10px rgba(56, 189, 248, 0.55);
+        }
+
         .text-gradient-gold {
             background: linear-gradient(135deg, #FDE68A 0%, #F59E0B 50%, #D97706 100%);
             -webkit-background-clip: text;
@@ -197,26 +256,26 @@
     <div class="relative z-10 flex flex-col min-h-screen">
 
         <!-- ─────────────────────────────────────────────────────────────
-             0. TOP NOTIFICATION BAR (PHONG CÁCH KHÁNH HÙNG ACADEMY & CONAN)
+             0. TOP NOTIFICATION BAR (PHONG CÁCH KAITO KID 1412 & CONAN)
         ───────────────────────────────────────────────────────────── -->
-        <div class="bg-gradient-to-r from-slate-950 via-blue-950 to-red-950/60 border-b border-cyan-900/40 text-xs py-2 px-4">
+        <div class="bg-gradient-to-r from-slate-950 via-blue-950 to-indigo-950/80 border-b border-cyan-900/40 text-xs py-2 px-4">
             <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
                 <div class="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
-                    <span class="px-2 py-0.5 rounded-full font-black text-[10px] bg-red-600 text-white uppercase tracking-wider animate-pulse flex items-center gap-1">
-                        <span>🕵️ CASE #2026</span>
+                    <span class="px-2.5 py-0.5 rounded-full font-black text-[10px] bg-gradient-to-r from-blue-600 to-cyan-500 text-white uppercase tracking-wider animate-pulse flex items-center gap-1 shadow-sm">
+                        <span>🃏 PHANTOM NOTICE #1412</span>
                     </span>
                     <span class="text-slate-200 font-medium text-[11px] sm:text-xs">
-                        Hệ Thống Khảo Thí & Chạy Trạm <strong class="text-cyan-400 font-bold">Dzota DYNEX OSCE 3.0</strong> — Phá án 1.200+ ca lâm sàng & tiêu bản Y khoa.
+                        Hệ Thống Khảo Thí & Chạy Trạm <strong class="text-cyan-400 font-bold">Dzota DYNEX OSCE 3.0</strong> — Đánh cắp mọi câu hỏi bẫy & phá án 1.200+ ca Y khoa.
                     </span>
                 </div>
                 <div class="flex items-center gap-3 text-slate-300 font-semibold text-[11px]">
                     <a href="https://zalo.me/0914659511" target="_blank" rel="noreferrer" class="hover:text-cyan-300 transition flex items-center gap-1.5 no-underline bg-white/10 px-2.5 py-0.5 rounded-full border border-white/10">
                         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                         <i data-lucide="message-circle" class="w-3.5 h-3.5 text-cyan-400"></i>
-                        <span>Zalo Bác sĩ Duy: <strong class="text-white">0914.659.511</strong></span>
+                        <span>Zalo: <strong class="text-white">0914.659.511</strong></span>
                     </a>
                     <span class="text-slate-600 hidden md:inline">•</span>
-                    <span class="text-rose-300 hidden lg:inline">Tác giả: <strong>Lê Nhật Duy (Y Khoa K26)</strong></span>
+                    <span class="text-cyan-300 hidden lg:inline">Tác giả: <strong>Lê Nhật Duy (Y Khoa K26)</strong></span>
                 </div>
             </div>
         </div>
@@ -227,23 +286,24 @@
         <header class="sticky top-0 z-50 bg-[#070B19]/90 backdrop-blur-xl border-b border-white/10 transition-colors">
             <div class="max-w-7xl mx-auto px-3 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
                 
-                <!-- Logo & Brand Name (Chibi Conan Badge) -->
+                <!-- Logo & Brand Name (Chibi Conan & Kaito Kid Badge) -->
                 <a href="/" class="flex items-center gap-2 sm:gap-3 no-underline group flex-shrink-0">
-                    <div class="relative w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-rose-600 p-0.5 shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-transform">
+                    <div class="relative w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 p-0.5 shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-transform">
                         <div class="w-full h-full bg-[#0A0F24] rounded-[10px] sm:rounded-[14px] flex items-center justify-center p-1 sm:p-1.5 overflow-hidden">
                             <img src="/logo-dzota.png" alt="Dzota" class="w-full h-full object-contain" />
                         </div>
-                        <!-- Mini Conan Bowtie Badge -->
-                        <span class="absolute -bottom-1 -right-1 text-[10px] sm:text-[11px]">🎀</span>
+                        <!-- Mini Kaito Kid & Conan Badges -->
+                        <span class="absolute -bottom-1 -right-1 text-[10px] sm:text-[11px] animate-monocle">🎩</span>
+                        <span class="absolute -top-1 -left-1 text-[9px] sm:text-[10px]">✨</span>
                     </div>
                     <div>
                         <div class="flex items-center gap-1.5 sm:gap-2">
                             <span class="text-xl sm:text-2xl font-black tracking-tight text-white font-display">Dzota<span class="text-cyan-400">.Edu</span></span>
-                            <span class="text-[9px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 rounded-full bg-red-500/20 text-rose-300 border border-red-500/30 hidden xs:inline-block">
-                                Detective OSCE
+                            <span class="text-[9px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 rounded-full bg-blue-500/20 text-cyan-300 border border-blue-500/30 hidden xs:inline-block">
+                                Ảo Thuật OSCE 1412
                             </span>
                         </div>
-                        <p class="text-[10px] sm:text-[11px] text-slate-400 font-medium -mt-1 hidden md:block">Giải mã bệnh án & Chạy trạm Y khoa chuẩn Bloom</p>
+                        <p class="text-[10px] sm:text-[11px] text-slate-400 font-medium -mt-1 hidden md:block">Ảo thuật gia Y Khoa & Đấu trường chạy trạm OSCE</p>
                     </div>
                 </a>
 
@@ -297,7 +357,7 @@
 
                     <a
                         href="/dynex"
-                        class="btn-cta-conan px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-extrabold text-xs sm:text-sm text-white transition flex items-center gap-1.5 sm:gap-2 no-underline shadow-lg"
+                        class="btn-cta-kid px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-extrabold text-xs sm:text-sm text-white transition flex items-center gap-1.5 sm:gap-2 no-underline shadow-lg"
                     >
                         <span>Vào Thi</span>
                         <i data-lucide="arrow-right" class="w-3.5 sm:w-4 h-3.5 sm:h-4"></i>
@@ -308,67 +368,42 @@
         </header>
 
         <!-- ─────────────────────────────────────────────────────────────
-             2. HERO SECTION (PHONG CÁCH KHÁNH HÙNG ACADEMY & CHIBI CONAN)
+             2. HERO SECTION (PHONG CÁCH KAITO KID 1412 & CONAN CHIBI)
         ───────────────────────────────────────────────────────────── -->
-        <section id="hero" class="relative pt-12 sm:pt-20 pb-16 sm:pb-24 px-4 sm:px-6 overflow-hidden">
+        <section id="hero" class="relative pt-10 sm:pt-16 pb-16 sm:pb-24 px-4 sm:px-6 overflow-hidden">
             <div class="max-w-7xl mx-auto">
                 
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
                     
-                    <!-- Left Column: Detective Pitch & High-Conversion Copy -->
+                    <!-- Left Column: Detective & Kid Pitch & High-Conversion Copy -->
                     <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
                         
-                        <!-- Conan Badge Tag -->
-                        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-cyan-500/30 text-cyan-300 text-xs font-black shadow-lg">
-                            <span class="text-base">🕵️‍♂️</span>
-                            <span class="uppercase tracking-wider">TƯ DUY THÁM TỬ TRONG PHÒNG THI Y KHOA</span>
-                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+                        <!-- Kaito Kid & Conan Badge Tag -->
+                        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-cyan-400/40 text-cyan-300 text-xs font-black shadow-lg shadow-cyan-950">
+                            <span class="text-base animate-monocle">🎩</span>
+                            <span class="uppercase tracking-wider">ẢO THUẬT GIA KAITO KID 1412 x THÁM TỬ CONAN CHIBI</span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
                         </div>
 
                         <!-- Mega Headline -->
                         <h1 class="text-3xl sm:text-5xl xl:text-6xl font-black text-white font-display tracking-tight leading-[1.12]">
                             Chinh Phục Điểm 10 <br class="hidden sm:inline" />
-                            <span class="text-gradient-conan">Chạy Trạm Y Khoa OSCE</span> <br />
-                            Với Phong Cách Thám Tử Conan
+                            <span class="text-gradient-kid">Chạy Trạm Y Khoa OSCE</span> <br />
+                            Với Ma Thuật Kaito Kid 1412
                         </h1>
 
                         <!-- Subtitle -->
                         <p class="text-sm sm:text-base xl:text-lg text-slate-300 leading-relaxed max-w-2xl mx-auto lg:mx-0 font-medium">
-                            Đừng học vẹt tiêu bản giải phẫu hay triệu chứng máy móc. Nền tảng <strong class="text-white font-bold">Dzota DYNEX OSCE 3.0</strong> giúp bạn truy tìm manh mối bệnh học, phản xạ nhận diện trong <span class="text-rose-400 font-bold underline decoration-wavy decoration-rose-500">20 giây/trạm</span> và làm chủ hơn <strong class="text-cyan-300 font-bold">1.200+ ca trắc nghiệm</strong> chuẩn quốc gia.
+                            Đừng học vẹt tiêu bản giải phẫu hay triệu chứng máy móc. Nền tảng <strong class="text-white font-bold">Dzota DYNEX OSCE 3.0</strong> giúp bạn lật tẩy mọi câu hỏi bẫy, phản xạ che ảnh giải phẫu trong <span class="text-cyan-400 font-bold underline decoration-wavy decoration-cyan-400">20 giây/trạm</span> và làm chủ hơn <strong class="text-cyan-300 font-bold">1.200+ ca trắc nghiệm</strong> chuẩn quốc gia.
                         </p>
 
                         <!-- Author & Founder Bento Card -->
                         <div class="p-4 sm:p-5 rounded-2xl glass-card border border-white/10 flex flex-col sm:flex-row items-center gap-4 text-left shadow-xl">
-                            <!-- Chibi Avatar Badge -->
+                            <!-- Chibi Doctor & Kaito Kid Avatar Badge -->
                             <div class="relative flex-shrink-0">
-                                <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-rose-600 p-0.5 shadow-md">
+                                <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-400 via-blue-600 to-indigo-600 p-0.5 shadow-md">
                                     <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center p-1 overflow-hidden">
-                                        <!-- Chibi Doctor Icon -->
-                                        <svg viewBox="0 0 100 100" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <!-- Chibi Face & Hair -->
-                                            <circle cx="50" cy="46" r="32" fill="#FFE0BD"/>
-                                            <path d="M22 36C22 20 34 10 50 10C66 10 78 20 78 36C78 24 68 18 50 18C32 18 22 24 22 36Z" fill="#1E293B"/>
-                                            <path d="M18 38C15 28 28 14 42 12C28 18 24 28 24 38H18Z" fill="#0F172A"/>
-                                            <path d="M82 38C85 28 72 14 58 12C72 18 76 28 76 38H82Z" fill="#0F172A"/>
-                                            <!-- Conan Oversized Glasses -->
-                                            <rect x="25" y="38" width="22" height="18" rx="5" stroke="#0284C7" stroke-width="3.5" fill="#E0F2FE" fill-opacity="0.3"/>
-                                            <rect x="53" y="38" width="22" height="18" rx="5" stroke="#0284C7" stroke-width="3.5" fill="#E0F2FE" fill-opacity="0.3"/>
-                                            <line x1="47" y1="46" x2="53" y2="46" stroke="#0284C7" stroke-width="3.5"/>
-                                            <!-- Eyes behind glasses -->
-                                            <circle cx="36" cy="46" r="4" fill="#0F172A"/>
-                                            <circle cx="38" cy="44" r="1.5" fill="#FFFFFF"/>
-                                            <circle cx="64" cy="46" r="4" fill="#0F172A"/>
-                                            <circle cx="66" cy="44" r="1.5" fill="#FFFFFF"/>
-                                            <!-- Cute Smile -->
-                                            <path d="M44 57C47 60 53 60 56 57" stroke="#DC2626" stroke-width="2" stroke-linecap="round"/>
-                                            <!-- Conan Bowtie -->
-                                            <path d="M42 70L50 74L42 78Z" fill="#DC2626"/>
-                                            <path d="M58 70L50 74L58 78Z" fill="#DC2626"/>
-                                            <circle cx="50" cy="74" r="3.5" fill="#B91C1C"/>
-                                            <!-- Doctor Lab Coat & Stethoscope -->
-                                            <path d="M30 76C30 74 38 72 50 72C62 72 70 74 70 76V96H30V76Z" fill="#FFFFFF"/>
-                                            <path d="M36 78C36 84 42 88 50 88C58 88 64 84 64 78" stroke="#0284C7" stroke-width="2" fill="none"/>
-                                        </svg>
+                                        <img src="/kaito-kid.png" alt="Lê Nhật Duy" class="w-full h-full object-cover object-top rounded-xl" />
                                     </div>
                                 </div>
                                 <span class="absolute -bottom-1 -right-1 px-1.5 py-0.2 rounded-full bg-cyan-500 text-slate-950 font-black text-[9px]">K26</span>
@@ -381,7 +416,7 @@
                                     </span>
                                 </div>
                                 <p class="text-xs text-slate-400 mt-1 leading-snug">
-                                    "Chỉ có sinh viên Y mới thấu hiểu sự căng thẳng tột độ khi tiếng chuông chạy trạm vang lên. Dzota sinh ra để biến mỗi trạm thi thành một vụ án thú vị mà bạn hoàn toàn nắm chắc phần thắng."
+                                    "Chỉ có sinh viên Y mới thấu hiểu sự căng thẳng tột độ khi tiếng chuông chạy trạm vang lên. Dzota sinh ra để biến mỗi trạm thi thành một màn ảo thuật kỳ tài mà bạn hoàn toàn nắm chắc điểm 10."
                                 </p>
                             </div>
                         </div>
@@ -390,7 +425,7 @@
                         <div class="flex flex-col sm:flex-row items-center gap-3 pt-2 justify-center lg:justify-start">
                             <a
                                 href="/dynex"
-                                class="w-full sm:w-auto btn-cta-conan px-7 py-4 rounded-2xl font-black text-sm text-white transition flex items-center justify-center gap-2.5 no-underline shadow-xl shadow-red-600/30"
+                                class="w-full sm:w-auto btn-cta-kid px-7 py-4 rounded-2xl font-black text-sm text-white transition flex items-center justify-center gap-2.5 no-underline shadow-xl shadow-blue-600/30"
                             >
                                 <i data-lucide="play-circle" class="w-5 h-5"></i>
                                 <span>Vào Đấu Trường OSCE Ngay (Free)</span>

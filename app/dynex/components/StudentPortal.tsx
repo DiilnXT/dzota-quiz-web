@@ -22,6 +22,9 @@ import {
   Eye,
   AlertCircle,
   PlusCircle,
+  Plus,
+  FolderPlus,
+  Image as ImageIcon,
   Share2,
   Layers,
   FileText,
@@ -42,7 +45,11 @@ interface StudentPortalProps {
   onSelectLessonForExam: (lessonId: string) => void
   onOpenLogin: () => void
   onOpenClassroomManager?: () => void
-  onOpenCreateModal?: () => void
+  onOpenCreateModal?: (opts?: {
+    type?: 'lesson' | 'subFolder' | 'category';
+    categoryId?: string;
+    subFolderId?: string;
+  }) => void
   onOpenShare?: (lesson: Lesson) => void
   onOpenDeckSelector?: () => void
   onOpenCreateExamModal?: () => void
@@ -259,28 +266,8 @@ export default function StudentPortal({
               Phương pháp học thuộc ngắt quãng Spaced Repetition (Anki SM-2) kết hợp che ảnh giải phẫu 100% không lộ chữ và mô phỏng 20 trạm chạy trạm OSCE 20 giây chuẩn thi y khoa.
             </p>
 
-            {/* Quick Action Buttons on Hero */}
+            {/* Quick Learning Actions on Hero */}
             <div className="flex flex-wrap items-center gap-2.5 pt-2">
-              {onOpenCreateModal && (
-                <button
-                  onClick={onOpenCreateModal}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-600/30 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
-                >
-                  <PlusCircle className="w-4 h-4 text-emerald-200" />
-                  <span>+ Tạo Bài Học / Chương Mới</span>
-                </button>
-              )}
-
-              {onOpenCreateExamModal && (
-                <button
-                  onClick={onOpenCreateExamModal}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 via-red-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-black text-xs shadow-lg shadow-rose-600/30 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
-                >
-                  <Flame className="w-4 h-4 text-white" />
-                  <span>+ Tạo Đề Thi Chạy Trạm (OSCE)</span>
-                </button>
-              )}
-
               {onOpenExamManagement && (
                 <button
                   onClick={onOpenExamManagement}
@@ -515,6 +502,18 @@ export default function StudentPortal({
                       <p className="text-xs text-slate-400">{proj.description}</p>
                     </div>
                   </div>
+
+                  {/* Add Chapter / Folder Button */}
+                  {onOpenCreateModal && (
+                    <button
+                      onClick={() => onOpenCreateModal({ type: 'category' })}
+                      className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-950 transition-all active:scale-95 cursor-pointer ml-auto"
+                      title="Tạo chương / thư mục mới trong môn học này"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-emerald-200" />
+                      <span>+ Thêm Chương</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Categories (Chương) List */}
@@ -542,6 +541,28 @@ export default function StudentPortal({
                               {cat.subFolders?.length || 0} chủ đề • {totalLessons} bài học
                             </span>
                           </div>
+
+                          {/* Quick Category Action Buttons */}
+                          {onOpenCreateModal && (
+                            <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                              <button
+                                onClick={() => onOpenCreateModal({ type: 'subFolder', categoryId: cat.id })}
+                                className="px-2 py-1 rounded-lg bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer"
+                                title="Thêm chủ đề mới vào chương này"
+                              >
+                                <FolderPlus className="w-3 h-3 text-indigo-300" />
+                                <span>+ Chủ Đề</span>
+                              </button>
+                              <button
+                                onClick={() => onOpenCreateModal({ type: 'lesson', categoryId: cat.id })}
+                                className="px-2 py-1 rounded-lg bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer"
+                                title="Thêm bài học mới vào chương này"
+                              >
+                                <Plus className="w-3 h-3 text-emerald-300" />
+                                <span>+ Bài Học</span>
+                              </button>
+                            </div>
+                          )}
                         </div>
 
                         {/* SubFolders (Chủ đề) List */}
@@ -571,6 +592,20 @@ export default function StudentPortal({
                                         <span className="text-xs sm:text-sm font-bold text-cyan-200">{sub.name}</span>
                                         <span className="text-[10px] text-slate-400">({lessonsList.length} bài)</span>
                                       </div>
+
+                                      {/* Quick SubFolder Add Lesson Button */}
+                                      {onOpenCreateModal && (
+                                        <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                                          <button
+                                            onClick={() => onOpenCreateModal({ type: 'lesson', categoryId: cat.id, subFolderId: sub.id })}
+                                            className="px-2 py-0.5 rounded-lg bg-cyan-600/30 hover:bg-cyan-600 text-cyan-300 hover:text-white border border-cyan-500/40 font-bold text-[10px] flex items-center gap-1 transition-all cursor-pointer"
+                                            title="Thêm bài học & tiêu bản giải phẫu vào chủ đề này"
+                                          >
+                                            <Plus className="w-3 h-3 text-cyan-300" />
+                                            <span>+ Thêm Bài</span>
+                                          </button>
+                                        </div>
+                                      )}
                                     </div>
 
                                     {/* Lessons List in SubFolder */}
@@ -635,6 +670,18 @@ export default function StudentPortal({
                                                       {onEditLesson && (
                                                         <button
                                                           onClick={() => onEditLesson(les.id, proj.id)}
+                                                          className="px-2.5 py-1.5 rounded-lg bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white border border-cyan-500/30 font-bold text-xs flex items-center gap-1 transition-all cursor-pointer"
+                                                          title="Thêm ảnh tiêu bản giải phẫu hoặc chỉnh sửa trạm che chữ cho bài này"
+                                                        >
+                                                          <ImageIcon className="w-3.5 h-3.5" />
+                                                          <span className="hidden sm:inline">+ Thêm Ảnh / Trạm</span>
+                                                          <span className="sm:hidden">+ Ảnh</span>
+                                                        </button>
+                                                      )}
+
+                                                      {onEditLesson && (
+                                                        <button
+                                                          onClick={() => onEditLesson(les.id, proj.id)}
                                                           className="p-1.5 rounded-lg bg-slate-800 hover:bg-cyan-900/60 text-slate-300 hover:text-cyan-300 border border-slate-700/60 transition-colors cursor-pointer"
                                                           title="Sửa bài học trong Studio"
                                                         >
@@ -686,6 +733,46 @@ export default function StudentPortal({
               </div>
             )
           })}
+
+          {/* Bottom Tree Quick Actions Bar */}
+          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-slate-900 via-[#0a1120] to-slate-900 border border-slate-800 flex flex-wrap items-center justify-between gap-3 shadow-xl">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <div>
+                <h4 className="text-xs sm:text-sm font-black text-white">Thao Tác Cây Thư Mục & Soạn Tài Liệu</h4>
+                <p className="text-[11px] text-slate-400">Tạo môn học, chương, bài học và tải ảnh tiêu bản giải phẫu nhanh chóng ngay tại đây.</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {onOpenCreateModal && (
+                <>
+                  <button
+                    onClick={() => onOpenCreateModal({ type: 'category' })}
+                    className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-indigo-950 transition-all active:scale-95 cursor-pointer"
+                  >
+                    <FolderPlus className="w-4 h-4 text-indigo-200" />
+                    <span>+ Thêm Chương / Thư Mục</span>
+                  </button>
+                  <button
+                    onClick={() => onOpenCreateModal({ type: 'lesson' })}
+                    className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-950 transition-all active:scale-95 cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4 text-emerald-200" />
+                    <span>+ Thêm Bài Học & Tiêu Bản</span>
+                  </button>
+                </>
+              )}
+              {onOpenExplorer && (
+                <button
+                  onClick={onOpenExplorer}
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 border border-slate-700 transition-all cursor-pointer"
+                >
+                  <FolderTree className="w-4 h-4 text-cyan-400" />
+                  <span>Quản Lý Cây Chi Tiết (This PC)</span>
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
