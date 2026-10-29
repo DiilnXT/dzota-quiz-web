@@ -1,5 +1,5 @@
 // Dzota Quiz - Service Worker for Offline Exam Support
-const CACHE_NAME = 'dzota-quiz-offline-v3';
+const CACHE_NAME = 'dzota-quiz-offline-v4';
 
 const CORE_ASSETS = [
   '/',
@@ -58,8 +58,12 @@ self.addEventListener('fetch', (event) => {
             const copy = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(req, copy);
-              // Lưu cả vào '/' làm app shell dự phòng khi mất mạng
-              cache.put('/', response.clone());
+              try {
+                const u = new URL(req.url);
+                if (u.pathname === '/' || u.pathname === '/index.html') {
+                  cache.put('/', response.clone());
+                }
+              } catch (e) {}
             });
           }
           return response;
@@ -139,7 +143,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   // API calls: Network first, fallback to cached
-  if (url.includes('/api/quick-quiz') || url.includes('/api/creator')) {
+  if (url.includes('/api/quick-quiz')) {
     event.respondWith(
       fetch(req)
         .then((response) => {

@@ -47,7 +47,7 @@ export interface ModernStudentDashboardProps {
 }
 
 export default function ModernStudentDashboard({
-  history,
+  history = [],
   session,
   unreadCount = 0,
   isLoading = false,
@@ -59,22 +59,23 @@ export default function ModernStudentDashboard({
 }: ModernStudentDashboardProps) {
   const [filterScore, setFilterScore] = useState<'all' | 'high' | 'low'>('all')
 
-  const totalTests = history.length
+  const safeHistory = Array.isArray(history) ? history : []
+  const totalTests = safeHistory.length
   const avgScore = totalTests > 0
-    ? (history.reduce((acc, cur) => acc + (cur.score || 0), 0) / totalTests).toFixed(1)
+    ? (safeHistory.reduce((acc, cur) => acc + (cur.score || 0), 0) / totalTests).toFixed(1)
     : '0.0'
   const highestScore = totalTests > 0
-    ? Math.max(...history.map(h => h.score || 0)).toFixed(1)
+    ? Math.max(...safeHistory.map(h => h.score || 0)).toFixed(1)
     : '0.0'
   
-  const totalCorrect = history.reduce((acc, cur) => acc + (cur.correctCount || 0), 0)
-  const totalAnswered = history.reduce((acc, cur) => acc + (cur.totalCount || 0), 0)
+  const totalCorrect = safeHistory.reduce((acc, cur) => acc + (cur.correctCount || 0), 0)
+  const totalAnswered = safeHistory.reduce((acc, cur) => acc + (cur.totalCount || 0), 0)
   const accuracyRate = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0
 
   // Filter history
-  const filteredHistory = history.filter(item => {
-    if (filterScore === 'high') return item.score >= 8
-    if (filterScore === 'low') return item.score < 5
+  const filteredHistory = safeHistory.filter(item => {
+    if (filterScore === 'high') return (item.score || 0) >= 8
+    if (filterScore === 'low') return (item.score || 0) < 5
     return true
   })
 

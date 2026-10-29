@@ -73,9 +73,9 @@ export interface ModernAdminDashboardProps {
 }
 
 export default function ModernAdminDashboard({
-  quizzes,
-  classes,
-  users,
+  quizzes = [],
+  classes = [],
+  users = [],
   session,
   isTeacher,
   isAdmin,
@@ -110,34 +110,39 @@ export default function ModernAdminDashboard({
     }
   }, [])
 
+  // Safe collections
+  const safeQuizzes = Array.isArray(quizzes) ? quizzes : []
+  const safeClasses = Array.isArray(classes) ? classes : []
+  const safeUsers = Array.isArray(users) ? users : []
+
   // Stats calculation
-  const totalQuizzes = quizzes.length
-  const activeQuizzes = quizzes.filter(q => q.isActive !== false).length
-  const inactiveQuizzes = quizzes.filter(q => q.isActive === false).length
+  const totalQuizzes = safeQuizzes.length
+  const activeQuizzes = safeQuizzes.filter(q => q && q.isActive !== false).length
+  const inactiveQuizzes = safeQuizzes.filter(q => q && q.isActive === false).length
   const activePercent = totalQuizzes > 0 ? Math.round((activeQuizzes / totalQuizzes) * 100) : 0
 
   const totalStudents = useMemo(() => {
     const emailSet = new Set<string>()
-    classes.forEach(c => {
-      c.students?.forEach((s: any) => {
-        if (s.email) emailSet.add(s.email.toLowerCase())
+    safeClasses.forEach(c => {
+      c?.students?.forEach((s: any) => {
+        if (s?.email) emailSet.add(s.email.toLowerCase())
       })
     })
     return emailSet.size
-  }, [classes])
+  }, [safeClasses])
 
   // Unique categories list
   const categories = useMemo(() => {
     const set = new Set<string>()
-    quizzes.forEach(q => {
-      if (q.category) set.add(q.category)
+    safeQuizzes.forEach(q => {
+      if (q?.category) set.add(q.category)
     })
     return Array.from(set)
   }, [quizzes])
 
   // Filtered quizzes
   const filteredQuizzes = useMemo(() => {
-    return quizzes.filter(q => {
+    return safeQuizzes.filter(q => {
       const matchSearch = (q.title || '').toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
         (q.category || '').toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
         (q.author?.name || q.author?.username || '').toLowerCase().includes(searchQuery.toLowerCase().trim())
@@ -328,7 +333,7 @@ export default function ModernAdminDashboard({
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Lớp & Học Viên</span>
                 <div className="text-2xl sm:text-3xl font-black text-purple-400 font-mono mt-0.5">
-                  {classes.length}
+                  {safeClasses.length}
                 </div>
                 <div className="text-[11px] text-slate-400 font-bold flex items-center gap-1 mt-1">
                   <span>{totalStudents} học sinh</span>
@@ -400,7 +405,7 @@ export default function ModernAdminDashboard({
               </div>
             </div>
             <div className="text-3xl font-black text-white font-mono">
-              {classes.length}
+              {safeClasses.length}
               <span className="text-xs font-normal text-slate-400 ml-1.5">lớp học</span>
             </div>
             <p className="text-xs text-slate-400 mt-2 leading-relaxed">
