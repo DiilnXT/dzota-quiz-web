@@ -853,7 +853,6 @@
       // --- MAIN COMPONENT ---
       function App() {
         const isEditorDirectMode = typeof window !== 'undefined' && (
-          (window.location.pathname.startsWith('/creator') && !new URLSearchParams(window.location.search).get('view')?.includes('bank') && !new URLSearchParams(window.location.search).get('view')?.includes('library')) ||
           (new URLSearchParams(window.location.search).get('import') === 'notebook_nd') ||
           (new URLSearchParams(window.location.search).get('mode') === 'editor') ||
           (new URLSearchParams(window.location.search).get('action') === 'create') ||
@@ -905,6 +904,12 @@
         // --- CÁC STATE QUẢN LÝ THƯ VIỆN & SOẠN THẢO NGÂN HÀNG ĐỀ ---
         const [homeViewTab, setHomeViewTab] = useState(() => {
             try {
+                const p = new URLSearchParams(window.location.search);
+                const view = p.get('view') || p.get('tab');
+                if (view === 'bank' || view === 'banks') return 'banks';
+                if (view === 'quiz' || view === 'quizzes') return 'quizzes';
+                // /creator không tham số -> Vào thẳng tab Đề Thi Tiêu Chuẩn (như ảnh 2)
+                if (typeof window !== 'undefined' && window.location.pathname.startsWith('/creator')) return 'quizzes';
                 const saved = localStorage.getItem('dzota_home_tab');
                 if (saved === 'banks' || saved === 'quizzes') return saved;
             } catch (e) {}
@@ -2658,14 +2663,10 @@ Bảng đáp án:
           const initApp = async () => {
             const params = new URLSearchParams(window.location.search);
             const quizId = params.get('id') || params.get('test') || params.get('editId');
-            const isEditParam = params.get('edit') === 'true' || params.has('editId') || (typeof window !== 'undefined' && window.location.pathname.startsWith('/creator'));
             const viewParam = params.get('view') || params.get('tab');
             const isBankView = viewParam === 'bank' || viewParam === 'banks' || params.get('tab') === 'banks';
-            const isLibraryView = viewParam === 'library' || viewParam === 'quizzes';
             const hasPendingImport = typeof window !== 'undefined' && !!localStorage.getItem('dzota_pending_import_quiz');
-            const isCreatorDirect = typeof window !== 'undefined' && window.location.pathname.startsWith('/creator') && !isBankView && !isLibraryView;
             const isEditorMode = typeof window !== 'undefined' && (
-              isCreatorDirect ||
               params.get('import') === 'notebook_nd' || 
               params.get('mode') === 'editor' ||
               params.get('action') === 'create' ||
@@ -2688,14 +2689,17 @@ Bảng đáp án:
             }
 
             // Nếu có cờ vào chế độ editor trực tiếp (import đề từ NoteBook ND hoặc tham số mode=editor) mà không có quizId
-            if (isEditorMode && !isBankView && !quizId) {
+            if (isEditorMode && !quizId) {
               setAppMode('editor');
               setIsLoading(false);
             } else if (!quizId) {
-              // Mặc định luôn mở Thư viện đề thi (Home view - Chuẩn theo yêu cầu người dùng)
+              // Mặc định luôn mở Thư viện đề thi (Home view - Chuẩn theo ảnh 2 ở tab Đề thi tiêu chuẩn)
               if (isBankView) {
                 setHomeViewTab('banks');
                 try { localStorage.setItem('dzota_home_tab', 'banks'); } catch (e) {}
+              } else {
+                setHomeViewTab('quizzes');
+                try { localStorage.setItem('dzota_home_tab', 'quizzes'); } catch (e) {}
               }
               setAppMode('home');
               setIsLoading(false);
@@ -5930,11 +5934,17 @@ Bảng đáp án:
                                     <p className="text-gray-500 text-sm mt-2">Chưa có bài thi nào khớp điều kiện tìm kiếm.</p>
                                 </div>
                             ) : (
-                                filteredQuizzes.map(quiz => (
+                                filteredQuizzes.map(quiz => {
+                                    const qCfg = quiz.config || {};
+                                    const qCategory = qCfg.category || quiz.category || 'Chung';
+                                    const qIsActive = qCfg.isActive !== false;
+                                    const qTimeLimit = qCfg.timeLimit || quiz.timeLimit || 15;
+                                    const isMatrix = qCfg.isMatrixBank || qCfg.quizType === 'matrix_bank';
+                                    return (
                                     <div key={quiz.id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 relative overflow-hidden flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center cursor-pointer group hover:shadow-md hover:border-gray-200 transition-all" onClick={() => setSelectedItemAction(quiz)}>
                                         <div className="flex-1 min-w-0 w-full">
                                             <div className="flex items-center gap-2 mb-2 flex-wrap">
-                                                {quiz.config?.isMatrixBank || quiz.config?.quizType === 'matrix_bank' ? (
+                                                {isMatrix ? (
                                                     <span className="text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-md flex items-center gap-1 text-purple-800 bg-purple-100 border border-purple-200 shadow-xs">
                                                         <Icons.Zap size={11} className="text-purple-600"/> Ma Trận Ngân Hàng
                                                     </span>
@@ -5943,10 +5953,10 @@ Bảng đáp án:
                                                         <Icons.FileText size={10}/> Đề thi
                                                     </span>
                                                 )}
-                                                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-600 bg-gray-100 px-2 py-1 rounded-md">{quiz.config.category || 'Chung'}</span>
-                                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md flex items-center gap-1 ${quiz.config.isActive !== false ? 'text-ios-green bg-green-50' : 'text-ios-red bg-red-50'}`}>
-                                                    {quiz.config.isActive !== false ? <Icons.Check size={10}/> : <Icons.Lock size={10}/>}
-                                                    {quiz.config.isActive !== false ? 'Đang mở' : 'Đã khóa'}
+                                                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-600 bg-gray-100 px-2 py-1 rounded-md">{qCategory}</span>
+                                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md flex items-center gap-1 ${qIsActive ? 'text-ios-green bg-green-50' : 'text-ios-red bg-red-50'}`}>
+                                                    {qIsActive ? <Icons.Check size={10}/> : <Icons.Lock size={10}/>}
+                                                    {qIsActive ? 'Đang mở' : 'Đã khóa'}
                                                 </span>
                                                 {quiz.author?.username && (
                                                     <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-1 rounded-md flex items-center gap-1">
@@ -5956,21 +5966,21 @@ Bảng đáp án:
                                             </div>
                                             <h3 className="text-[18px] font-bold text-gray-900 leading-tight mb-1.5 truncate group-hover:text-ios-blue transition-colors">{quiz.title}</h3>
                                             <p className="text-[13px] text-gray-500 flex items-center gap-4 font-medium flex-wrap">
-                                                <span className="flex items-center gap-1.5"><Icons.Clock size={14} className="text-gray-400"/> {quiz.config.timeLimit} phút</span>
-                                                {quiz.config?.isMatrixBank || quiz.config?.quizType === 'matrix_bank' ? (
+                                                <span className="flex items-center gap-1.5"><Icons.Clock size={14} className="text-gray-400"/> {qTimeLimit} phút</span>
+                                                {isMatrix ? (
                                                     <span className="flex items-center gap-1.5 text-purple-700 font-bold"><Icons.Layers size={14} className="text-purple-500"/> {quiz.questions ? quiz.questions.length : 0} câu lớn (random per click)</span>
                                                 ) : (
                                                     <span className="flex items-center gap-1.5"><Icons.FileText size={14} className="text-gray-400"/> {quiz.questions ? quiz.questions.length : 0} câu hỏi</span>
                                                 )}
-                                                {quiz.config?.sourceBankTitle && (
-                                                    <span className="text-[11px] text-slate-400 italic">Kho: {quiz.config.sourceBankTitle}</span>
+                                                {qCfg.sourceBankTitle && (
+                                                    <span className="text-[11px] text-slate-400 italic">Kho: {qCfg.sourceBankTitle}</span>
                                                 )}
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-2 w-full sm:w-auto justify-end border-t border-gray-100 sm:border-0 pt-3 sm:pt-0 mt-2 sm:mt-0">
                                             {canEditQuiz(quiz) ? (
                                                 <div className="flex items-center mr-2" onClick={(e) => e.stopPropagation()}>
-                                                    <input type="checkbox" id={`toggle-${quiz.id}`} className="toggle-checkbox-ios hidden" checked={quiz.config.isActive !== false} onChange={(e) => handleToggleStatus(quiz.id, quiz.config.isActive !== false, e)} />
+                                                    <input type="checkbox" id={`toggle-${quiz.id}`} className="toggle-checkbox-ios hidden" checked={qIsActive} onChange={(e) => handleToggleStatus(quiz.id, qIsActive, e)} />
                                                     <label htmlFor={`toggle-${quiz.id}`} className="toggle-label-ios"></label>
                                                 </div>
                                             ) : (
@@ -5990,7 +6000,8 @@ Bảng đáp án:
                                             </div>
                                         </div>
                                     </div>
-                                ))
+                                    );
+                                })
                             )}
                         </div>
                       </>
@@ -6122,7 +6133,7 @@ Bảng đáp án:
 
                                                     {bank.config?.note && (
                                                         <p className="text-xs text-slate-500 italic mb-2 line-clamp-1">
-                                                            📝 {bank.config.note}
+                                                            📝 {bank.config?.note}
                                                         </p>
                                                     )}
 
@@ -9461,17 +9472,24 @@ Bảng đáp án:
             )}
 
             {/* Modal Menu Hành Động cho Card */}
-            {selectedItemAction && (
+            {selectedItemAction && (() => {
+                const sCfg = selectedItemAction.config || {};
+                const sCategory = sCfg.category || selectedItemAction.category || 'Chung';
+                const isBank = sCfg.quizType === 'bank';
+                const isMatrix = sCfg.isMatrixBank || sCfg.quizType === 'matrix_bank';
+                const isOwnerOrAdmin = canEditQuiz(selectedItemAction);
+
+                return (
                 <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={() => setSelectedItemAction(null)}>
                     <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up" onClick={e => e.stopPropagation()}>
                         <div className="p-6 border-b border-gray-100">
                             <div className="flex items-center gap-3 mb-2">
-                                <span className="text-[11px] font-bold uppercase tracking-wide text-ios-blue bg-blue-50 px-2 py-0.5 rounded-md">{selectedItemAction.config.category || 'Chung'}</span>
-                                {selectedItemAction.config.quizType === 'bank' ? (
+                                <span className="text-[11px] font-bold uppercase tracking-wide text-ios-blue bg-blue-50 px-2 py-0.5 rounded-md">{sCategory}</span>
+                                {isBank ? (
                                     <span className="text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md flex items-center gap-1 text-emerald-700 bg-emerald-50">
                                         <Icons.Folder size={10}/> Ngân hàng
                                     </span>
-                                ) : (selectedItemAction.config.isMatrixBank || selectedItemAction.config.quizType === 'matrix_bank') ? (
+                                ) : isMatrix ? (
                                     <span className="text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md flex items-center gap-1 text-purple-700 bg-purple-100 border border-purple-200">
                                         <Icons.Zap size={10}/> Ma Trận Ngân Hàng
                                     </span>
@@ -9482,83 +9500,79 @@ Bảng đáp án:
                                 )}
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 leading-tight">{selectedItemAction.title}</h3>
-                            <p className="text-sm text-gray-500 mt-1">{selectedItemAction.questions?.length || 0} {selectedItemAction.config.quizType === 'bank' ? 'nhóm câu hỏi' : (selectedItemAction.config.isMatrixBank || selectedItemAction.config.quizType === 'matrix_bank') ? 'câu lớn (random per click)' : 'câu hỏi'}</p>
+                            <p className="text-sm text-gray-500 mt-1">{selectedItemAction.questions?.length || 0} {isBank ? 'nhóm câu hỏi' : isMatrix ? 'câu lớn (random per click)' : 'câu hỏi'}</p>
                         </div>
                         
-                        {(() => {
-                            const isOwnerOrAdmin = canEditQuiz(selectedItemAction);
-                            return (
-                                <div className="p-3 bg-gray-50 space-y-1">
-                                    {!isOwnerOrAdmin && (
-                                        <div className="mb-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-medium flex items-center gap-2">
-                                            <Icons.Lock size={16} className="text-amber-600 flex-shrink-0" />
-                                            <span>Đề thi được tạo bởi <b>{selectedItemAction.author?.username || 'giáo viên khác'}</b>. Bạn chỉ có quyền xem thử hoặc copy link.</span>
-                                        </div>
-                                    )}
-
-                                    {isOwnerOrAdmin && selectedItemAction.config.quizType !== 'bank' && (
-                                        <button onClick={() => { handleEditQuiz(selectedItemAction); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
-                                            <div className="text-ios-blue bg-blue-50 p-2 rounded-lg"><Icons.Edit3 size={18}/></div>
-                                            {selectedItemAction.config.isMatrixBank || selectedItemAction.config.quizType === 'matrix_bank'
-                                                ? 'Cài đặt đề ma trận (thời gian, tên, mật khẩu...)'
-                                                : 'Chỉnh sửa nội dung'
-                                            }
-                                        </button>
-                                    )}
-                                    
-                                    {selectedItemAction.config.quizType === 'bank' && (
-                                        <>
-                                            <button onClick={() => { handleOpenGenerateBankModal(selectedItemAction); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-emerald-800 font-bold bg-emerald-50/60">
-                                                <div className="text-emerald-700 bg-emerald-100 p-2 rounded-lg"><Icons.Zap size={18}/></div> ⚡ Tạo đề thi từ ngân hàng này
-                                            </button>
-                                            {isOwnerOrAdmin && (
-                                                <button onClick={() => { handleEditBank(selectedItemAction); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
-                                                    <div className="text-emerald-600 bg-emerald-50 p-2 rounded-lg"><Icons.Edit3 size={18}/></div> Chỉnh sửa ngân hàng đề
-                                                </button>
-                                            )}
-                                            <button onClick={() => { setShowBankCloneModal(selectedItemAction); setCloneNewTitle(`[Bản sao] ${selectedItemAction.title}`); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
-                                                <div className="text-indigo-600 bg-indigo-50 p-2 rounded-lg"><Icons.Copy size={18}/></div> Nhân bản ngân hàng với tên mới
-                                            </button>
-                                        </>
-                                    )}
-                                    
-                                    {selectedItemAction.config.quizType !== 'bank' && (
-                                        <button onClick={() => { window.open(`/?id=${selectedItemAction.id}`, '_blank'); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
-                                            <div className="text-emerald-600 bg-emerald-50 p-2 rounded-lg"><Icons.Eye size={18}/></div> Xem / Làm thử đề thi
-                                        </button>
-                                    )}
-
-                                    {isOwnerOrAdmin && (
-                                        selectedItemAction.config.quizType === 'bank' ? (
-                                            <button onClick={() => { handleExportDocx(selectedItemAction); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-blue-800 font-bold bg-blue-50/60 border border-blue-100">
-                                                <div className="text-blue-700 bg-blue-100 p-2 rounded-lg"><Icons.Download size={18}/></div> Tải ngân hàng câu hỏi (.docx Word)
-                                            </button>
-                                        ) : (
-                                            <button onClick={() => { handleExportDocx(selectedItemAction); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-blue-800 font-bold bg-blue-50/60 border border-blue-100">
-                                                <div className="text-blue-700 bg-blue-100 p-2 rounded-lg"><Icons.Download size={18}/></div> Tải file Word (.docx) chuẩn
-                                            </button>
-                                        )
-                                    )}
-
-                                    <button onClick={() => { handleCopyLink(selectedItemAction.id); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
-                                        <div className="text-orange-500 bg-orange-50 p-2 rounded-lg"><Icons.LinkIcon size={18}/></div> Copy link chia sẻ
-                                    </button>
-                                    
-                                    {isOwnerOrAdmin && (
-                                        <button onClick={() => { handleDeleteQuiz(selectedItemAction.id); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-red-600 font-medium">
-                                            <div className="text-red-600 bg-red-50 p-2 rounded-lg"><Icons.Trash size={18}/></div> Xóa {selectedItemAction.config.quizType === 'bank' ? 'ngân hàng đề' : 'đề thi'}
-                                        </button>
-                                    )}
+                        <div className="p-3 bg-gray-50 space-y-1">
+                            {!isOwnerOrAdmin && (
+                                <div className="mb-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-medium flex items-center gap-2">
+                                    <Icons.Lock size={16} className="text-amber-600 flex-shrink-0" />
+                                    <span>Đề thi được tạo bởi <b>{selectedItemAction.author?.username || 'giáo viên khác'}</b>. Bạn chỉ có quyền xem thử hoặc copy link.</span>
                                 </div>
-                            );
-                        })()}
-                        
+                            )}
+
+                            {isOwnerOrAdmin && !isBank && (
+                                <button onClick={() => { handleEditQuiz(selectedItemAction); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
+                                    <div className="text-ios-blue bg-blue-50 p-2 rounded-lg"><Icons.Edit3 size={18}/></div>
+                                    {isMatrix
+                                        ? 'Cài đặt đề ma trận (thời gian, tên, mật khẩu...)'
+                                        : 'Chỉnh sửa nội dung'
+                                    }
+                                </button>
+                            )}
+                            
+                            {isBank && (
+                                <>
+                                    <button onClick={() => { handleOpenGenerateBankModal(selectedItemAction); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-emerald-800 font-bold bg-emerald-50/60">
+                                        <div className="text-emerald-700 bg-emerald-100 p-2 rounded-lg"><Icons.Zap size={18}/></div> ⚡ Tạo đề thi từ ngân hàng này
+                                    </button>
+                                    {isOwnerOrAdmin && (
+                                        <button onClick={() => { handleEditBank(selectedItemAction); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
+                                            <div className="text-emerald-600 bg-emerald-50 p-2 rounded-lg"><Icons.Edit3 size={18}/></div> Chỉnh sửa ngân hàng đề
+                                        </button>
+                                    )}
+                                    <button onClick={() => { setShowBankCloneModal(selectedItemAction); setCloneNewTitle(`[Bản sao] ${selectedItemAction.title}`); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
+                                        <div className="text-indigo-600 bg-indigo-50 p-2 rounded-lg"><Icons.Copy size={18}/></div> Nhân bản ngân hàng với tên mới
+                                    </button>
+                                </>
+                            )}
+                            
+                            {!isBank && (
+                                <button onClick={() => { window.open(`/?id=${selectedItemAction.id}`, '_blank'); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
+                                    <div className="text-emerald-600 bg-emerald-50 p-2 rounded-lg"><Icons.Eye size={18}/></div> Xem / Làm thử đề thi
+                                </button>
+                            )}
+
+                            {isOwnerOrAdmin && (
+                                isBank ? (
+                                    <button onClick={() => { handleExportDocx(selectedItemAction); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-blue-800 font-bold bg-blue-50/60 border border-blue-100">
+                                        <div className="text-blue-700 bg-blue-100 p-2 rounded-lg"><Icons.Download size={18}/></div> Tải ngân hàng câu hỏi (.docx Word)
+                                    </button>
+                                ) : (
+                                    <button onClick={() => { handleExportDocx(selectedItemAction); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-blue-800 font-bold bg-blue-50/60 border border-blue-100">
+                                        <div className="text-blue-700 bg-blue-100 p-2 rounded-lg"><Icons.Download size={18}/></div> Tải file Word (.docx) chuẩn
+                                    </button>
+                                )
+                            )}
+
+                            <button onClick={() => { handleCopyLink(selectedItemAction.id); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
+                                <div className="text-orange-500 bg-orange-50 p-2 rounded-lg"><Icons.LinkIcon size={18}/></div> Copy link chia sẻ
+                            </button>
+                            
+                            {isOwnerOrAdmin && (
+                                <button onClick={() => { handleDeleteQuiz(selectedItemAction.id); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-red-600 font-medium">
+                                    <div className="text-red-600 bg-red-50 p-2 rounded-lg"><Icons.Trash size={18}/></div> Xóa {isBank ? 'ngân hàng đề' : 'đề thi'}
+                                </button>
+                            )}
+                        </div>
+
                         <div className="p-4 bg-white sm:hidden border-t border-gray-100">
                             <button onClick={() => setSelectedItemAction(null)} className="w-full py-3 bg-gray-100 text-gray-800 font-bold rounded-xl active:bg-gray-200 transition-colors">Đóng</button>
                         </div>
                     </div>
                 </div>
-            )}
+                );
+            })()}
 
             {/* Modal 1: Cấu hình tạo Ngân Hàng Đề Mới */}
             {showBankSetupModal && (
