@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-    <title>Dzota Education — Nền Tảng Khảo Thí & Đề Thi Trắc Nghiệm Thông Minh Chuẩn Quốc Tế</title>
+    <title>Dzota Education — Nền Tảng Khảo Thí & Ôn Thi Chạy Trạm OSCE Y Khoa Đỉnh Cao</title>
     
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="Dzota Education — Hệ thống Khảo thí & Đề thi Trắc nghiệm Thông minh" />
-    <meta property="og:description" content="Trí tuệ nhân tạo Gemini, khảo thí chống nghẽn giờ cao điểm, DYNEX OSCE Y Khoa và thư viện ngân hàng câu hỏi ma trận." />
+    <meta property="og:title" content="Dzota Education — Nền Tảng Khảo Thí & Ôn Thi Chạy Trạm DYNEX OSCE" />
+    <meta property="og:description" content="Đấu trường thi chạy trạm y khoa 20s/trạm, tạo đề trắc nghiệm thông minh bằng AI, 500+ tiêu bản giải phẫu và ngân hàng câu hỏi chuẩn y khoa. Tác giả: Lê Nhật Duy Y Khoa K26." />
     <meta property="og:image" content="https://i.ibb.co/tpzK0Y8Z/logo-dzota-1-1-1-1-1.png" />
     <link rel="icon" type="image/png" href="/logo-dzota.png" />
     <link rel="apple-touch-icon" href="/logo-dzota.png" />
@@ -15,15 +15,15 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Google Fonts: Plus Jakarta Sans, Outfit & Great Vibes (Chữ ký nghệ thuật Lê Nhật Duy) -->
+    <!-- Google Fonts: Plus Jakarta Sans, Outfit & Great Vibes -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     
-    <!-- Canvas Confetti for Interactive Quiz widget -->
+    <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
-    <!-- Three.js r128 3D Interactive Engine -->
+    <!-- Three.js 3D WebGL Engine -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <!-- Lucide Icons -->
@@ -45,35 +45,32 @@
                     },
                     colors: {
                         brand: {
-                            50: '#EEF2FF',
-                            100: '#E0E7FF',
-                            500: '#6366F1',
-                            600: '#4F46E5',
-                            700: '#4338CA',
-                            900: '#1E1B4B',
+                            50: '#F5F3FF',
+                            100: '#EDE9FE',
+                            200: '#DDD6FE',
+                            500: '#8B5CF6',
+                            600: '#7C3AED',
+                            700: '#6D28D9',
+                            800: '#5B21B6',
+                            900: '#4C1D95',
+                            khanh: '#7C0FD1',
+                            gold: '#F59E0B',
                         }
                     },
                     animation: {
-                        'blob': 'blob 7s infinite',
                         'pulse-glow': 'pulseGlow 3s ease-in-out infinite',
                         'float': 'float 4s ease-in-out infinite',
                         'shimmer': 'shimmer 2.5s linear infinite',
-                        'spin-slow': 'spin 12s linear infinite',
+                        'spin-slow': 'spin 14s linear infinite',
                     },
                     keyframes: {
-                        blob: {
-                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
-                            '33%': { transform: 'translate(30px, -40px) scale(1.08)' },
-                            '66%': { transform: 'translate(-20px, 20px) scale(0.94)' },
-                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
-                        },
                         pulseGlow: {
-                            '0%, 100%': { opacity: 0.4, transform: 'scale(1)' },
-                            '50%': { opacity: 0.8, transform: 'scale(1.04)' },
+                            '0%, 100%': { opacity: '0.4', transform: 'scale(1)' },
+                            '50%': { opacity: '0.9', transform: 'scale(1.03)' },
                         },
                         float: {
                             '0%, 100%': { transform: 'translateY(0px)' },
-                            '50%': { transform: 'translateY(-8px)' },
+                            '50%': { transform: 'translateY(-10px)' },
                         },
                         shimmer: {
                             '0%': { backgroundPosition: '-200% 0' },
@@ -86,1026 +83,1227 @@
     </script>
 
     <style>
-        /* ==========================================================================
-           SILICON VALLEY TOP-TIER AESTHETIC (VERCEL / LINEAR / RAYCAST STANDARD)
-           ========================================================================== */
-        :root {
-            --bg-mesh: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-                       radial-gradient(at 100% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%),
-                       radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%);
-        }
-
-        * {
-            -webkit-tap-highlight-color: transparent;
-            box-sizing: border-box;
-        }
-
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             overflow-x: hidden;
-            background-color: #030712;
-            color: #F9FAFB;
-            transition: background-color 0.4s ease, color 0.4s ease;
+            background-color: #060913;
+            color: #F8FAFC;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        html:not(.dark) body {
-            background-color: #FAFAFC;
-            color: #0F172A;
-        }
-
-        /* Fixed WebGL Three.js Canvas */
+        /* Fixed Three.js Background Canvas */
         #webgl-canvas {
             position: fixed;
             inset: 0;
             width: 100vw;
             height: 100vh;
-            z-index: 0;
             pointer-events: none;
+            z-index: 0;
+            opacity: 0.65;
         }
 
-        /* 3D Perspective Tilt on Interactive Cards */
-        .card-3d-tilt {
-            transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.4, 1), box-shadow 0.25s ease;
-            transform-style: preserve-3d;
-        }
-
-        /* Ambient Background Grid Pattern */
-        .bg-grid-pattern {
-            background-size: 40px 40px;
-            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-                              linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-        }
-        html:not(.dark) .bg-grid-pattern {
-            background-image: linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
-                              linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
-        }
-
-        /* Ambient Glow Blobs */
-        .ambient-glow-1 {
-            background: radial-gradient(circle, rgba(99, 102, 241, 0.35) 0%, rgba(79, 70, 229, 0) 70%);
-        }
-        .ambient-glow-2 {
-            background: radial-gradient(circle, rgba(56, 189, 248, 0.28) 0%, rgba(14, 165, 233, 0) 70%);
-        }
-        .ambient-glow-3 {
-            background: radial-gradient(circle, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0) 70%);
-        }
-
-        /* High-End Glassmorphism */
-        .glass-panel {
-            background: rgba(13, 19, 33, 0.72);
-            backdrop-filter: blur(24px) saturate(180%);
-            -webkit-backdrop-filter: blur(24px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.5);
-        }
-        html:not(.dark) .glass-panel {
-            background: rgba(255, 255, 255, 0.85);
-            border: 1px solid rgba(226, 232, 240, 0.9);
-            box-shadow: 0 20px 45px -10px rgba(79, 70, 229, 0.08);
-        }
-
-        .glass-pill {
-            background: rgba(255, 255, 255, 0.05);
+        .glass-card {
+            background: rgba(17, 24, 39, 0.75);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-        }
-        html:not(.dark) .glass-pill {
-            background: rgba(255, 255, 255, 0.85);
-            border: 1px solid rgba(226, 232, 240, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        /* Shimmering Button Gradient */
-        .btn-shimmer {
-            background: linear-gradient(135deg, #4F46E5 0%, #6366F1 50%, #06B6D4 100%);
-            position: relative;
-            overflow: hidden;
+        .glass-card-hover {
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .btn-shimmer::before {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%; width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
-            transition: 0.5s;
-        }
-        .btn-shimmer:hover::before {
-            left: 100%;
-        }
-        .btn-shimmer:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 30px -5px rgba(79, 70, 229, 0.5);
-        }
-        .btn-shimmer:active {
-            transform: scale(0.97);
+        .glass-card-hover:hover {
+            transform: translateY(-5px);
+            border-color: rgba(139, 92, 246, 0.45);
+            box-shadow: 0 20px 40px -15px rgba(124, 15, 209, 0.25);
         }
 
-        /* Iridescent Border Container */
-        .iridescent-border {
-            position: relative;
-            background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.02));
-            border-radius: 28px;
-            padding: 1px;
+        .gold-badge {
+            background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+            border: 1px solid #FCD34D;
+            color: #92400E;
         }
-        .iridescent-border::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 28px;
-            padding: 1.5px;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.6), rgba(56, 189, 248, 0.4), rgba(16, 185, 129, 0.3));
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            pointer-events: none;
+        .dark .gold-badge {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.25) 100%);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: #FCD34D;
         }
 
-        /* Gradient Text Cliping */
-        .text-gradient-cosmic {
-            background: linear-gradient(135deg, #FFFFFF 0%, #E0E7FF 45%, #38BDF8 80%, #34D399 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        html:not(.dark) .text-gradient-cosmic {
-            background: linear-gradient(135deg, #0F172A 0%, #312E81 50%, #0284C7 100%);
+        .text-gradient-purple {
+            background: linear-gradient(135deg, #C084FC 0%, #A855F7 50%, #EC4899 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        .text-gradient-brand {
-            background: linear-gradient(135deg, #818CF8 0%, #38BDF8 100%);
+        .text-gradient-gold {
+            background: linear-gradient(135deg, #FDE68A 0%, #F59E0B 50%, #D97706 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+        }
+
+        .btn-cta-khanh {
+            background: linear-gradient(135deg, #7C0FD1 0%, #9333EA 50%, #4F46E5 100%);
+            box-shadow: 0 10px 30px -5px rgba(124, 15, 209, 0.5);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .btn-cta-khanh:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 15px 35px -5px rgba(124, 15, 209, 0.7);
         }
 
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.25); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.45); }
-
-        /* Animation utilities */
-        .view-transition {
-            transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0B0F19; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4B5563; }
     </style>
 </head>
-<body class="min-h-screen relative selection:bg-indigo-500 selection:text-white">
+<body class="relative selection:bg-purple-600 selection:text-white">
 
-    <!-- Three.js WebGL Interactive 3D Canvas Background -->
-    <canvas id="webgl-canvas" class="fixed inset-0 pointer-events-none z-0 w-full h-full"></canvas>
+    <!-- 3D WebGL Canvas Layer -->
+    <canvas id="webgl-canvas"></canvas>
 
-    <!-- Ambient Visual Glow Orbs (Fixed Backdrop) -->
-    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div class="absolute -top-40 -left-40 w-96 sm:w-[600px] h-96 sm:h-[600px] ambient-glow-1 rounded-full blur-[100px] animate-blob"></div>
-        <div class="absolute top-1/4 -right-40 w-96 sm:w-[650px] h-96 sm:h-[650px] ambient-glow-2 rounded-full blur-[110px] animate-blob animation-delay-2000"></div>
-        <div class="absolute -bottom-40 left-1/3 w-96 sm:w-[700px] h-96 sm:h-[700px] ambient-glow-3 rounded-full blur-[120px] animate-blob animation-delay-4000"></div>
-        <div class="absolute inset-0 bg-grid-pattern opacity-40"></div>
-    </div>
+    <div class="relative z-10 flex flex-col min-h-screen">
 
-    <!-- Scroll Progress Indicator -->
-    <div id="scroll-progress-bar" class="fixed top-0 left-0 h-[2.5px] w-0 bg-gradient-to-r from-indigo-500 via-sky-400 to-emerald-400 z-50 transition-all duration-75"></div>
-
-    <!-- ===================================================================== -->
-    <!-- GLOBAL TOP NAVIGATION BAR (STICKY BLURRED COMMAND BAR)               -->
-    <!-- ===================================================================== -->
-    <header class="fixed top-0 inset-x-0 z-40 px-3 sm:px-6 pt-3 sm:pt-4 transition-all duration-300">
-        <div class="max-w-7xl mx-auto glass-panel rounded-2xl sm:rounded-3xl px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between border border-white/10 dark:border-white/10 shadow-lg shadow-black/10">
-            
-            <!-- Logo & Brand Identity -->
-            <a href="/" onclick="switchView('landing', event)" class="flex items-center gap-2.5 sm:gap-3 group cursor-pointer no-underline">
-                <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white dark:bg-slate-900 p-1 flex items-center justify-center shadow-md border border-slate-200/80 dark:border-slate-800 group-hover:scale-105 transition-transform">
-                    <img src="/logo-dzota.png" alt="Dzota" class="w-full h-full object-contain" />
-                </div>
-                <div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="font-display font-extrabold text-base sm:text-lg tracking-tight text-slate-900 dark:text-white group-hover:text-indigo-400 transition-colors">
-                            Dzota
-                        </span>
-                        <span class="text-[9px] font-black tracking-widest uppercase px-1.5 py-0.2 rounded-md bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-                            2.0 PRO
-                        </span>
-                    </div>
-                </div>
-            </a>
-
-            <!-- Center Navigation Links (Desktop) -->
-            <nav class="hidden md:flex items-center gap-1 text-xs sm:text-sm font-semibold text-slate-400 dark:text-slate-400">
-                <a href="#features" class="px-3.5 py-1.5 rounded-xl hover:text-white hover:bg-white/5 transition-colors no-underline">Tính năng</a>
-                <a href="#dynex" class="px-3.5 py-1.5 rounded-xl hover:text-white hover:bg-white/5 transition-colors no-underline flex items-center gap-1.5 text-emerald-400">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>DYNEX Y Khoa</span>
-                </a>
-                <a href="#banks" class="px-3.5 py-1.5 rounded-xl hover:text-white hover:bg-white/5 transition-colors no-underline">Ngân hàng đề</a>
-                <a href="#preview" class="px-3.5 py-1.5 rounded-xl hover:text-white hover:bg-white/5 transition-colors no-underline">Làm thử</a>
-                <a href="#author" class="px-3.5 py-1.5 rounded-xl hover:text-white hover:bg-white/5 transition-colors no-underline">Tác giả</a>
-            </nav>
-
-            <!-- Right Controls (Theme Switch, Google Login / Dashboard) -->
-            <div class="flex items-center gap-2 sm:gap-3">
-                <!-- Theme Toggle Button -->
-                <button 
-                    onclick="toggleTheme()" 
-                    class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl glass-pill text-slate-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-                    title="Chuyển chế độ Sáng / Tối"
-                >
-                    <i data-lucide="sun" class="w-4 h-4 hidden dark:block text-amber-300"></i>
-                    <i data-lucide="moon" class="w-4 h-4 block dark:hidden text-indigo-600"></i>
-                </button>
-
-                <!-- Auth Action Button (Dynamic based on session) -->
-                <button 
-                    id="nav-auth-btn"
-                    onclick="switchView('login')"
-                    class="btn-shimmer text-white font-display font-bold text-xs sm:text-sm px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl flex items-center gap-1.5 sm:gap-2 shadow-md cursor-pointer"
-                >
-                    <i data-lucide="log-in" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
-                    <span id="nav-auth-text">Đăng nhập</span>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- ===================================================================== -->
-    <!-- VIEW 1: STATE-OF-THE-ART LANDING PAGE (VIEW_LANDING)                  -->
-    <!-- ===================================================================== -->
-    <main id="view-landing" class="relative z-10 pt-24 sm:pt-32 pb-20 px-4 sm:px-6 max-w-7xl mx-auto space-y-24 sm:space-y-36 view-transition">
-        
-        <!-- ─── 1. HERO SECTION ─── -->
-        <section class="text-center space-y-6 sm:space-y-8 max-w-5xl mx-auto pt-6 sm:pt-10">
-            
-            <!-- Floating Live Announcement Pill -->
-            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-pill text-xs font-semibold text-slate-300 border border-indigo-500/30 shadow-inner hover:border-indigo-500/60 transition-all cursor-pointer group">
-                <span class="flex h-2 w-2 relative">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span class="text-indigo-400 font-bold uppercase tracking-wider text-[10px]">Đột Phá 2026</span>
-                <span class="text-slate-400">•</span>
-                <span class="group-hover:text-white transition-colors">Tích hợp Gemini 3.8 Flash & Khảo thí Y Khoa DYNEX OSCE</span>
-                <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
-            </div>
-
-            <!-- Mega Headline (Billion-Dollar Level Typography) -->
-            <h1 class="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.08] text-gradient-cosmic">
-                Kiến tạo kỳ thi thông minh. <br class="hidden sm:inline">
-                <span class="text-gradient-brand">Tối ưu hoá hoàn hảo.</span>
-            </h1>
-
-            <!-- Narrative Subtitle -->
-            <p class="text-base sm:text-xl text-slate-400 dark:text-slate-400 font-medium max-w-3xl mx-auto leading-relaxed">
-                Nền tảng khảo thí trực tuyến thế hệ mới cho Giảng viên & Sinh viên. Tự động sinh đề AI chuẩn y khoa, phân quyền Gmail lớp học 1-chạm và chịu tải hàng chục nghìn lượt thi giờ cao điểm với độ trễ bằng 0.
-            </p>
-
-            <!-- Dual Primary Call-To-Action Buttons -->
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-2">
-                <!-- One-click Google Sign-in CTA -->
-                <button 
-                    onclick="handleGoogleLoginClick()" 
-                    class="w-full sm:w-auto px-7 py-4 rounded-2xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white font-display font-extrabold text-sm sm:text-base border border-slate-300 dark:border-slate-700/80 shadow-xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer group"
-                >
-                    <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
-                        <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"/>
-                        <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.7z"/>
-                        <path fill="#FBBC05" d="M5.3 14.8c-.2-.8-.4-1.6-.4-2.5s.2-1.7.4-2.5L1.6 7C.6 9 0 11.2 0 13.5s.6 4.5 1.6 6.5l3.7-2.9z"/>
-                        <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.1-6.7-5l-3.7 2.9C3.5 21.4 7.4 24 12 24z"/>
-                    </svg>
-                    <span>Tiếp tục với Google</span>
-                    <i data-lucide="arrow-right" class="w-4 h-4 text-slate-400 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all"></i>
-                </button>
-
-                <!-- Explore Creator / Dashboard CTA -->
-                <button 
-                    onclick="switchView('login')" 
-                    class="w-full sm:w-auto btn-shimmer text-white font-display font-extrabold text-sm sm:text-base px-8 py-4 rounded-2xl flex items-center justify-center gap-2.5 shadow-xl shadow-indigo-600/25 cursor-pointer"
-                >
-                    <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
-                    <span>Vào Hệ Thống Ngay</span>
-                    <i data-lucide="zap" class="w-4 h-4"></i>
-                </button>
-            </div>
-
-            <!-- Trust / Benchmark Counters Strip -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 pt-8 max-w-4xl mx-auto">
-                <div class="glass-panel rounded-2xl p-4 sm:p-5 text-center">
-                    <div class="text-2xl sm:text-3xl font-mono font-black text-indigo-400">50,000+</div>
-                    <div class="text-xs text-slate-400 font-semibold mt-1">Lượt thi trực tuyến</div>
-                </div>
-                <div class="glass-panel rounded-2xl p-4 sm:p-5 text-center">
-                    <div class="text-2xl sm:text-3xl font-mono font-black text-emerald-400">0.02s</div>
-                    <div class="text-xs text-slate-400 font-semibold mt-1">Độ trễ tức thì (Zero-Lag)</div>
-                </div>
-                <div class="glass-panel rounded-2xl p-4 sm:p-5 text-center">
-                    <div class="text-2xl sm:text-3xl font-mono font-black text-sky-400">99.98%</div>
-                    <div class="text-xs text-slate-400 font-semibold mt-1">Chống nghẽn giờ thi cao điểm</div>
-                </div>
-                <div class="glass-panel rounded-2xl p-4 sm:p-5 text-center">
-                    <div class="text-2xl sm:text-3xl font-mono font-black text-purple-400">1-Touch</div>
-                    <div class="text-xs text-slate-400 font-semibold mt-1">Bốc đề Ma trận Ngẫu nhiên</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ─── 2. LIVE INTERACTIVE HERO DEMO WIDGET (PLAYABLE RIGHT HERE) ─── -->
-        <section id="preview" class="max-w-4xl mx-auto">
-            <div class="iridescent-border">
-                <div class="glass-panel rounded-[27px] p-5 sm:p-8 space-y-6">
-                    <!-- Widget Header -->
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-700/60">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-sky-400 p-0.5 shadow-md">
-                                <div class="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center text-indigo-300">
-                                    <i data-lucide="play" class="w-4 h-4 fill-current"></i>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 class="font-display font-extrabold text-base sm:text-lg text-white flex items-center gap-2">
-                                    Trải Nghiệm Khảo Thí Tương Tác Trực Tiếp
-                                    <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Live Demo</span>
-                                </h3>
-                                <p class="text-xs text-slate-400">Thử click đáp án bên dưới để trải nghiệm thuật toán chấm điểm và hiệu ứng của Dzota!</p>
-                            </div>
-                        </div>
-
-                        <!-- 20s OSCE Timer Badge -->
-                        <div class="flex items-center gap-2 bg-slate-900/80 border border-slate-700 px-3 py-1.5 rounded-xl self-start sm:self-auto font-mono text-xs text-amber-300 font-bold">
-                            <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-400"></i>
-                            <span id="demo-timer">Trạm 01 • 00:20</span>
-                        </div>
-                    </div>
-
-                    <!-- Question Container -->
-                    <div id="demo-quiz-card" class="space-y-4">
-                        <div class="text-xs font-bold text-indigo-400 uppercase tracking-wider">
-                            Câu 1 / 1 • Giải Phẫu Học & Lâm Sàng
-                        </div>
-                        <h4 class="text-base sm:text-lg font-bold text-slate-100 leading-snug">
-                            Cấu trúc giải phẫu nào sau đây là mốc phân chia quan trọng giữa tầng trên và tầng dưới mạc treo đại tràng ngang?
-                        </h4>
-
-                        <!-- 4 Options -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2" id="demo-options">
-                            <button onclick="handleDemoAnswer(this, false, 'A')" class="demo-option-btn p-3.5 rounded-xl bg-slate-900/60 hover:bg-slate-800 border border-slate-700/80 text-left text-xs sm:text-sm font-semibold text-slate-200 transition-all flex items-center gap-3 cursor-pointer group">
-                                <span class="w-6 h-6 rounded-lg bg-slate-800 text-slate-400 group-hover:text-white flex items-center justify-center font-bold text-xs shrink-0">A</span>
-                                <span>Dây chằng liềm gan</span>
-                            </button>
-
-                            <button onclick="handleDemoAnswer(this, true, 'B')" class="demo-option-btn p-3.5 rounded-xl bg-slate-900/60 hover:bg-slate-800 border border-slate-700/80 text-left text-xs sm:text-sm font-semibold text-slate-200 transition-all flex items-center gap-3 cursor-pointer group">
-                                <span class="w-6 h-6 rounded-lg bg-slate-800 text-slate-400 group-hover:text-white flex items-center justify-center font-bold text-xs shrink-0">B</span>
-                                <span>Mạc treo đại tràng ngang</span>
-                            </button>
-
-                            <button onclick="handleDemoAnswer(this, false, 'C')" class="demo-option-btn p-3.5 rounded-xl bg-slate-900/60 hover:bg-slate-800 border border-slate-700/80 text-left text-xs sm:text-sm font-semibold text-slate-200 transition-all flex items-center gap-3 cursor-pointer group">
-                                <span class="w-6 h-6 rounded-lg bg-slate-800 text-slate-400 group-hover:text-white flex items-center justify-center font-bold text-xs shrink-0">C</span>
-                                <span>Dây chằng Treitz</span>
-                            </button>
-
-                            <button onclick="handleDemoAnswer(this, false, 'D')" class="demo-option-btn p-3.5 rounded-xl bg-slate-900/60 hover:bg-slate-800 border border-slate-700/80 text-left text-xs sm:text-sm font-semibold text-slate-200 transition-all flex items-center gap-3 cursor-pointer group">
-                                <span class="w-6 h-6 rounded-lg bg-slate-800 text-slate-400 group-hover:text-white flex items-center justify-center font-bold text-xs shrink-0">D</span>
-                                <span>Mạc nối lớn</span>
-                            </button>
-                        </div>
-
-                        <!-- Feedback Panel (Hidden initially) -->
-                        <div id="demo-feedback" class="hidden p-4 rounded-xl bg-indigo-950/40 border border-indigo-500/40 space-y-1.5 animate-fadeIn">
-                            <div class="flex items-center gap-2 text-emerald-400 font-bold text-xs sm:text-sm" id="demo-feedback-title">
-                                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                                <span>Chính xác tuyệt đối!</span>
-                            </div>
-                            <p class="text-xs text-slate-300 leading-relaxed" id="demo-feedback-desc">
-                                Mạc treo đại tràng ngang (Transverse Mesocolon) gắn kết đại tràng ngang với thành bụng sau, chia ổ phúc mạc thành tầng trên và tầng dưới đại tràng ngang.
-                            </p>
-                            <div class="pt-2 flex items-center justify-between text-[11px] text-slate-400">
-                                <span>💡 Khảo thí trực tuyến Dzota cung cấp giải thích chi tiết tức thì cho từng câu hỏi.</span>
-                                <button onclick="resetDemoQuiz()" class="text-indigo-400 hover:text-indigo-300 font-bold underline cursor-pointer">Làm lại</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ─── 3. BENTO GRID OF REVOLUTIONARY SUPERPOWERS (BỘ TÍNH NĂNG ĐỈNH CAO) ─── -->
-        <section id="features" class="space-y-8">
-            <div class="text-center space-y-3 max-w-3xl mx-auto">
-                <span class="text-xs font-bold uppercase tracking-widest text-indigo-400 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20">
-                    Kiến Trúc Đột Phá
-                </span>
-                <h2 class="font-display text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
-                    Công nghệ Khảo thí Đẳng cấp Thế giới
-                </h2>
-                <p class="text-slate-400 text-sm sm:text-base">
-                    Mỗi tính năng được thiết kế tỉ mỉ bởi các chuyên gia công nghệ và giáo dục hàng đầu, mang lại trải nghiệm mượt mà không đối thủ.
-                </p>
-            </div>
-
-            <!-- Bento 6-Card Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                
-                <!-- Bento 1: DYNEX Y KHOA OSCE (Spans 2 cols on Large) -->
-                <div id="dynex" class="md:col-span-2 lg:col-span-2 glass-panel rounded-3xl p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden group hover:border-emerald-500/40 transition-all">
-                    <div class="absolute top-0 right-0 w-80 h-80 ambient-glow-3 rounded-full blur-3xl pointer-events-none"></div>
-                    <div class="space-y-4 relative z-10">
-                        <div class="flex items-center justify-between">
-                            <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center">
-                                <i data-lucide="activity" class="w-6 h-6"></i>
-                            </div>
-                            <span class="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                                Độc Quyền Y Khoa
-                            </span>
-                        </div>
-                        <h3 class="font-display text-xl sm:text-2xl font-black text-white">
-                            DYNEX • Mô Phỏng Thi Chạy Trạm OSCE
-                        </h3>
-                        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                            Mô phỏng chính xác kỳ thi chạy trạm giải phẫu Y khoa (20s - 30s/trạm) với hình ảnh tiêu bản trực quan, nhận diện chi tiết giải phẫu tự động và flashcard lặp lại ngắt quãng (SM-2 Spaced Repetition).
-                        </p>
-                        <div class="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-700/80 space-y-2 font-mono text-xs">
-                            <div class="flex items-center justify-between text-slate-400">
-                                <span>Trạm: Hệ Thần Kinh Trung Ương</span>
-                                <span class="text-emerald-400 font-bold">20.0s / trạm</span>
-                            </div>
-                            <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                                <div class="bg-gradient-to-r from-emerald-500 to-cyan-400 h-1.5 rounded-full" style="width: 75%"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="pt-5 border-t border-slate-800/80 flex items-center justify-between text-xs font-bold text-emerald-400">
-                        <span>Bản quyền phát triển: Lê Nhật Duy</span>
-                        <a href="/dynex" target="_blank" class="hover:underline flex items-center gap-1">Khám phá DYNEX →</a>
-                    </div>
-                </div>
-
-                <!-- Bento 2: AI GEMINI 3.8 FLASH CREATOR -->
-                <div class="glass-panel rounded-3xl p-6 sm:p-8 flex flex-col justify-between hover:border-indigo-500/40 transition-all">
-                    <div class="space-y-4">
-                        <div class="w-12 h-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center">
-                            <i data-lucide="cpu" class="w-6 h-6"></i>
-                        </div>
-                        <h3 class="font-display text-xl font-bold text-white">
-                            AI Quiz Creator
-                        </h3>
-                        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                            Khai thác sức mạnh Gemini 3.8 Flash để sinh 20 - 50 câu trắc nghiệm chuyên sâu từ file Word, PDF hoặc prompt chỉ trong 3 giây.
-                        </p>
-                    </div>
-                    <div class="pt-4 text-xs font-bold text-indigo-400 flex items-center gap-1.5">
-                        <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-300"></i>
-                        <span>Zero-Latency Generation</span>
-                    </div>
-                </div>
-
-                <!-- Bento 3: MA TRẬN NGÂN HÀNG ĐỀ THI -->
-                <div id="banks" class="glass-panel rounded-3xl p-6 sm:p-8 flex flex-col justify-between hover:border-purple-500/40 transition-all">
-                    <div class="space-y-4">
-                        <div class="w-12 h-12 rounded-2xl bg-purple-500/15 border border-purple-500/30 text-purple-400 flex items-center justify-center">
-                            <i data-lucide="folder-kanban" class="w-6 h-6"></i>
-                        </div>
-                        <h3 class="font-display text-xl font-bold text-white">
-                            Ngân Hàng Ma Trận
-                        </h3>
-                        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                            Quản lý kho câu hỏi chùm (Câu 1.1, 1.2... Câu n.n). Tự động bốc ngẫu nhiên biến thể đảm bảo không thí sinh nào trùng đề thi.
-                        </p>
-                    </div>
-                    <div class="pt-4 text-xs font-bold text-purple-400 flex items-center gap-1.5">
-                        <i data-lucide="file-down" class="w-3.5 h-3.5"></i>
-                        <span>Hỗ trợ xuất Word .docx 1-Click</span>
-                    </div>
-                </div>
-
-                <!-- Bento 4: BATTLE ARENA -->
-                <div class="glass-panel rounded-3xl p-6 sm:p-8 flex flex-col justify-between hover:border-rose-500/40 transition-all">
-                    <div class="space-y-4">
-                        <div class="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 flex items-center justify-center">
-                            <i data-lucide="swords" class="w-6 h-6"></i>
-                        </div>
-                        <h3 class="font-display text-xl font-bold text-white">
-                            Đấu Trường Battle 1v1
-                        </h3>
-                        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                            Chế độ thi đấu đối kháng trực tuyến thời gian thực. Bảng xếp hạng cập nhật điểm số và tốc độ trả lời theo mili-giây.
-                        </p>
-                    </div>
-                    <div class="pt-4 text-xs font-bold text-rose-400 flex items-center gap-1">
-                        <span>PvP Realtime Racing</span>
-                    </div>
-                </div>
-
-                <!-- Bento 5: LỚP HỌC & WHITELIST GMAIL -->
-                <div class="glass-panel rounded-3xl p-6 sm:p-8 flex flex-col justify-between hover:border-cyan-500/40 transition-all">
-                    <div class="space-y-4">
-                        <div class="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 flex items-center justify-center">
-                            <i data-lucide="school" class="w-6 h-6"></i>
-                        </div>
-                        <h3 class="font-display text-xl font-bold text-white">
-                            Lớp Học & Whitelist
-                        </h3>
-                        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                            Cấp mã PIN tham gia lớp, tự động phân quyền làm bài theo danh sách Gmail của học sinh. Chống gian lận chuyển tab tối ưu.
-                        </p>
-                    </div>
-                    <div class="pt-4 text-xs font-bold text-cyan-400 flex items-center gap-1">
-                        <span>Chống lộ đề & bảo mật 100%</span>
-                    </div>
-                </div>
-
-                <!-- Bento 6: SỔ TAY LỖI SAI AI & NOTEBOOK ND (Spans 2 cols on Large) -->
-                <div class="md:col-span-2 lg:col-span-2 glass-panel rounded-3xl p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden group hover:border-indigo-500/40 transition-all">
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between">
-                            <div class="w-12 h-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center">
-                                <i data-lucide="brain" class="w-6 h-6"></i>
-                            </div>
-                            <span class="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                                AI Tự Học Thông Minh
-                            </span>
-                        </div>
-                        <h3 class="font-display text-xl sm:text-2xl font-black text-white">
-                            Sổ Tay Lỗi Sai & NoteBook ND
-                        </h3>
-                        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                            Tự động thu thập các câu hỏi làm sai của từng thí sinh, phân tích lỗ hổng kiến thức và cung cấp mẹo ghi nhớ lâm sàng (Clinical Mnemonics) giúp ghi nhớ lâu bền không tái phạm.
-                        </p>
-                    </div>
-                    <div class="pt-5 border-t border-slate-800/80 flex items-center justify-between text-xs font-bold text-indigo-400">
-                        <span>Cá nhân hoá lộ trình ôn thi</span>
-                        <a href="/notebook" class="hover:underline flex items-center gap-1">Khám phá NoteBook ND →</a>
-                    </div>
-                </div>
-
-            </div>
-        </section>
-
-        <!-- ─── 4. AUTHOR RECOGNITION & PRESTIGE BADGE ─── -->
-        <section id="author" class="glass-panel rounded-3xl p-8 sm:p-12 relative overflow-hidden text-center sm:text-left">
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-8">
-                <div class="space-y-3 max-w-2xl">
-                    <span class="text-xs font-bold uppercase tracking-widest text-indigo-400 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20">
-                        Nhà Phát Triển & Bản Quyền
+        <!-- ─────────────────────────────────────────────────────────────
+             0. TOP NOTIFICATION BAR (PHONG CÁCH KHÁNH HÙNG ACADEMY)
+        ───────────────────────────────────────────────────────────── -->
+        <div class="bg-gradient-to-r from-purple-950 via-slate-950 to-indigo-950 border-b border-purple-900/40 text-xs py-2 px-4">
+            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
+                <div class="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+                    <span class="px-2 py-0.5 rounded-full font-black text-[10px] bg-amber-500 text-slate-950 uppercase tracking-wider animate-pulse">
+                        HOT 2026
                     </span>
-                    <h3 class="font-display text-2xl sm:text-4xl font-extrabold text-white">
-                        “Quản lý đề thi hiệu quả hơn, <br>
-                        cho một hành trình giáo dục tốt đẹp hơn.”
-                    </h3>
-                    <p class="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                        Dzota Education là tâm huyết được kiến trúc và hoàn thiện bởi Lê Nhật Duy, hướng đến mục tiêu phổ cập công nghệ khảo thí y khoa và giáo dục hiện đại nhất cho giảng viên và học sinh Việt Nam.
-                    </p>
+                    <span class="text-slate-300 font-medium">
+                        Khai mở <strong class="text-white font-bold">Đấu Trường Chạy Trạm DYNEX OSCE Y Khoa</strong> — Hơn 45.000 sinh viên & bác sĩ tin dùng.
+                    </span>
                 </div>
-
-                <div class="text-center sm:text-right shrink-0 space-y-1">
-                    <div class="font-signature text-5xl sm:text-6xl text-gradient-brand select-none">
-                        Lê Nhật Duy
-                    </div>
-                    <div class="text-[11px] font-mono uppercase tracking-widest text-slate-400 font-bold">
-                        Lead Architect & Founder
-                    </div>
+                <div class="flex items-center gap-4 text-slate-400 font-semibold text-[11px]">
+                    <a href="https://zalo.me/0355926970" target="_blank" rel="noreferrer" class="hover:text-amber-400 transition flex items-center gap-1.5 no-underline">
+                        <i data-lucide="phone-call" class="w-3.5 h-3.5 text-amber-400"></i>
+                        <span>Hotline/Zalo: <strong>0355 926 970</strong></span>
+                    </a>
+                    <span class="text-slate-700 hidden sm:inline">•</span>
+                    <span class="text-purple-300 hidden md:inline">Bản quyền: <strong>Lê Nhật Duy (Y Khoa K26)</strong></span>
                 </div>
             </div>
-        </section>
-
-    </main>
-
-    <!-- ===================================================================== -->
-    <!-- VIEW 2: ULTRA-LUXURIOUS BENTO AUTHENTICATION PORTAL (VIEW_LOGIN)     -->
-    <!-- ===================================================================== -->
-    <section id="view-login" class="hidden fixed inset-0 z-50 overflow-y-auto p-4 sm:p-6 flex items-center justify-center bg-[#030712]/80 backdrop-blur-2xl view-transition">
-        
-        <!-- Ambient Background Glow behind Login Card -->
-        <div class="fixed inset-0 pointer-events-none z-0">
-            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] ambient-glow-1 rounded-full blur-[120px] opacity-60"></div>
         </div>
 
-        <!-- CENTERED FROSTED BENTO AUTH POD -->
-        <div class="iridescent-border w-full max-w-md relative z-10 my-auto animate-fadeIn">
-            <div class="glass-panel rounded-[27px] p-6 sm:p-8 space-y-6 text-center">
+        <!-- ─────────────────────────────────────────────────────────────
+             1. HEADER NAVIGATION BAR
+        ───────────────────────────────────────────────────────────── -->
+        <header class="sticky top-0 z-50 bg-[#060913]/90 backdrop-blur-xl border-b border-white/10 transition-colors">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-4">
                 
-                <!-- Escape / Return to Home Button -->
-                <button 
-                    onclick="switchView('landing')" 
-                    class="absolute top-4 left-4 sm:top-5 sm:left-5 text-xs font-bold text-slate-400 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
-                >
-                    <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
-                    <span>Trang chủ</span>
-                </button>
-
-                <!-- Official Logo Emblem with Radiant Aura -->
-                <div class="w-16 h-16 mx-auto rounded-2xl bg-white dark:bg-slate-900 p-2 shadow-xl border border-slate-200/80 dark:border-slate-800 flex items-center justify-center relative mt-2 group">
-                    <img src="/logo-dzota.png" alt="Dzota" class="w-full h-full object-contain group-hover:scale-105 transition-transform" />
-                    <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-md border-2 border-[#0B0F19]">
-                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-300"></i>
-                    </div>
-                </div>
-
-                <!-- Portal Title -->
-                <div class="space-y-1">
-                    <h2 class="font-display text-2xl sm:text-3xl font-black text-white tracking-tight">
-                        Đăng nhập Dzota
-                    </h2>
-                    <p class="text-xs text-slate-400">
-                        Cổng quản trị khảo thí & phòng thi thông minh
-                    </p>
-                </div>
-
-                <!-- Dual Auth Method Switcher Tabs -->
-                <div class="p-1 rounded-2xl bg-slate-900/80 border border-slate-800 grid grid-cols-2 gap-1 text-xs font-bold">
-                    <button 
-                        type="button" 
-                        id="tab-btn-google" 
-                        onclick="switchAuthTab('google')" 
-                        class="py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                    >
-                        <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
-                            <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"/>
-                            <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.7z"/>
-                            <path fill="#FBBC05" d="M5.3 14.8c-.2-.8-.4-1.6-.4-2.5s.2-1.7.4-2.5L1.6 7C.6 9 0 11.2 0 13.5s.6 4.5 1.6 6.5l3.7-2.9z"/>
-                            <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.1-6.7-5l-3.7 2.9C3.5 21.4 7.4 24 12 24z"/>
-                        </svg>
-                        <span>Bằng Google</span>
-                    </button>
-
-                    <button 
-                        type="button" 
-                        id="tab-btn-account" 
-                        onclick="switchAuthTab('account')" 
-                        class="py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer text-slate-400 hover:text-white"
-                    >
-                        <i data-lucide="user" class="w-4 h-4"></i>
-                        <span>Tài Khoản</span>
-                    </button>
-                </div>
-
-                <!-- TAB 1: GOOGLE ONE-CLICK AUTHENTICATION -->
-                <div id="auth-panel-google" class="space-y-4">
-                    <div class="p-4 rounded-2xl bg-indigo-950/30 border border-indigo-500/20 text-left space-y-1.5">
-                        <div class="flex items-center gap-2 text-indigo-300 font-bold text-xs">
-                            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
-                            <span>Khuyến nghị cho Giảng viên & Sinh viên</span>
+                <!-- Logo & Brand Name -->
+                <a href="/" class="flex items-center gap-3 no-underline group flex-shrink-0">
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 p-0.5 shadow-lg shadow-purple-600/30 group-hover:scale-105 transition-transform">
+                        <div class="w-full h-full bg-[#0B0F19] rounded-[14px] flex items-center justify-center p-1.5">
+                            <img src="/logo-dzota.png" alt="Dzota" class="w-full h-full object-contain" />
                         </div>
-                        <p class="text-[11px] text-slate-400 leading-relaxed">
-                            Đăng nhập an toàn qua tài khoản Google. Hệ thống tự động phân quyền truy cập đề thi theo Gmail và đồng bộ kết quả làm bài tức thì.
-                        </p>
                     </div>
-
-                    <!-- Big Tactile Google Button -->
-                    <button 
-                        type="button" 
-                        onclick="handleGoogleLoginClick()" 
-                        class="w-full py-4 px-5 rounded-2xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white font-display font-extrabold text-sm sm:text-base border border-slate-300 dark:border-slate-700 shadow-xl flex items-center justify-center gap-3 transition-all hover:scale-[1.01] active:scale-95 cursor-pointer group"
-                    >
-                        <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
-                            <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"/>
-                            <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.7z"/>
-                            <path fill="#FBBC05" d="M5.3 14.8c-.2-.8-.4-1.6-.4-2.5s.2-1.7.4-2.5L1.6 7C.6 9 0 11.2 0 13.5s.6 4.5 1.6 6.5l3.7-2.9z"/>
-                            <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.1-6.7-5l-3.7 2.9C3.5 21.4 7.4 24 12 24z"/>
-                        </svg>
-                        <span>Đăng nhập với Google</span>
-                        <i data-lucide="arrow-right" class="w-4 h-4 text-slate-400 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all"></i>
-                    </button>
-
-                    <div class="pt-1">
-                        <button 
-                            type="button" 
-                            onclick="switchAuthTab('account')" 
-                            class="text-xs font-semibold text-slate-400 hover:text-indigo-400 transition-colors inline-flex items-center gap-1 cursor-pointer"
-                        >
-                            <span>Hoặc đăng nhập bằng tên người dùng & mật khẩu</span>
-                            <span>→</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- TAB 2: USERNAME & PASSWORD AUTHENTICATION -->
-                <form id="auth-panel-account" onsubmit="handleAccountFormSubmit(event)" class="space-y-4 text-left hidden">
-                    <div class="space-y-1.5">
-                        <label for="login-username" class="block text-xs font-bold text-slate-300">
-                            Tên đăng nhập
-                        </label>
-                        <div class="relative">
-                            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
-                                <i data-lucide="user" class="w-4 h-4"></i>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl font-black tracking-tight text-white font-display">Dzota<span class="text-purple-500">.Edu</span></span>
+                            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 hidden sm:inline-block">
+                                Y Khoa Pro
                             </span>
-                            <input 
-                                id="login-username" 
-                                type="text" 
-                                required
-                                placeholder="Nhập tên đăng nhập hoặc email" 
-                                class="w-full pl-10 pr-4 py-3 rounded-xl bg-[#070b14] border border-slate-700/80 text-sm font-medium text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
-                            />
                         </div>
+                        <p class="text-[11px] text-slate-400 font-medium -mt-1 hidden sm:block">Khảo thí & Chạy trạm OSCE chuẩn Quốc gia</p>
                     </div>
+                </a>
 
-                    <div class="space-y-1.5">
-                        <label for="login-password" class="block text-xs font-bold text-slate-300">
-                            Mật khẩu
-                        </label>
-                        <div class="relative">
-                            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
-                                <i data-lucide="lock" class="w-4 h-4"></i>
-                            </span>
-                            <input 
-                                id="login-password" 
-                                type="password" 
-                                required
-                                placeholder="Nhập mật khẩu" 
-                                class="w-full pl-10 pr-10 py-3 rounded-xl bg-[#070b14] border border-slate-700/80 text-sm font-medium text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
-                            />
-                            <button 
-                                type="button" 
-                                onclick="togglePasswordVisibility()" 
-                                class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-white cursor-pointer" 
-                                title="Ẩn/Hiện mật khẩu"
-                            >
-                                <i id="eye-icon" data-lucide="eye" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                    </div>
+                <!-- Desktop Navigation Menu -->
+                <nav class="hidden lg:flex items-center gap-1 xl:gap-2">
+                    <a href="#about" class="px-3.5 py-2 rounded-xl text-xs xl:text-sm font-bold text-slate-300 hover:text-white hover:bg-white/5 transition-all no-underline">
+                        Về Dzota
+                    </a>
+                    <a href="#osce" class="px-3.5 py-2 rounded-xl text-xs xl:text-sm font-bold text-slate-300 hover:text-white hover:bg-white/5 transition-all no-underline flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        <span>Đấu Trường OSCE</span>
+                    </a>
+                    <a href="#hall-of-fame" class="px-3.5 py-2 rounded-xl text-xs xl:text-sm font-bold text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 transition-all no-underline flex items-center gap-1">
+                        <i data-lucide="crown" class="w-4 h-4 text-amber-400"></i>
+                        <span>Đại Sảnh Danh Vọng</span>
+                    </a>
+                    <a href="#curriculum" class="px-3.5 py-2 rounded-xl text-xs xl:text-sm font-bold text-slate-300 hover:text-white hover:bg-white/5 transition-all no-underline">
+                        Kho Đề Thi
+                    </a>
+                    <a href="#guarantee" class="px-3.5 py-2 rounded-xl text-xs xl:text-sm font-bold text-slate-300 hover:text-white hover:bg-white/5 transition-all no-underline">
+                        03 Cam Kết Vàng
+                    </a>
+                    <a href="#pricing" class="px-3.5 py-2 rounded-xl text-xs xl:text-sm font-bold text-slate-300 hover:text-white hover:bg-white/5 transition-all no-underline">
+                        Bảng Giá
+                    </a>
+                    <a href="#faq" class="px-3.5 py-2 rounded-xl text-xs xl:text-sm font-bold text-slate-300 hover:text-white hover:bg-white/5 transition-all no-underline">
+                        Hỏi Đáp
+                    </a>
+                </nav>
 
-                    <!-- Remember session checkbox -->
-                    <div class="flex items-center justify-between text-xs pt-1">
-                        <label class="inline-flex items-center gap-2 font-semibold text-slate-400 cursor-pointer">
-                            <input type="checkbox" id="login-remember" checked class="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
-                            <span>Ghi nhớ đăng nhập</span>
-                        </label>
-                        <button type="button" onclick="switchAuthTab('google')" class="text-indigo-400 hover:underline font-semibold cursor-pointer">
-                            Dùng Google →
-                        </button>
-                    </div>
-
-                    <!-- Submit Button -->
-                    <button 
-                        id="btn-submit-account" 
-                        type="submit" 
-                        class="w-full btn-shimmer py-3.5 px-5 rounded-xl text-white font-display font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 cursor-pointer mt-2"
+                <!-- Auth Action Buttons -->
+                <div class="flex items-center gap-3">
+                    <button
+                        onclick="openAuthModal('login')"
+                        class="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-200 hover:text-white bg-slate-900/80 hover:bg-slate-800 border border-slate-700 transition cursor-pointer flex items-center gap-1.5 shadow-sm"
                     >
                         <i data-lucide="log-in" class="w-4 h-4"></i>
-                        <span>Xác Nhận Đăng Nhập</span>
+                        <span class="hidden sm:inline">Đăng Nhập</span>
                     </button>
-                </form>
-
-                <!-- Footer Encryption Badge -->
-                <div class="pt-4 border-t border-slate-800/80 flex items-center justify-center gap-2 text-xs font-bold text-slate-400">
-                    <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
-                    <span>Bảo mật chuẩn AES-256 & OAuth 2.0</span>
+                    <button
+                        onclick="openAuthModal('register')"
+                        class="btn-cta-khanh px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white flex items-center gap-2 cursor-pointer"
+                    >
+                        <i data-lucide="zap" class="w-4 h-4 text-amber-300 fill-amber-300"></i>
+                        <span>Vào Thi Thử Miễn Phí</span>
+                    </button>
                 </div>
             </div>
-        </div>
-    </section>
+        </header>
 
-    <!-- ===================================================================== -->
-    <!-- GLOBAL FOOTER (ELEGANT MINIMALIST TECH BRANDING)                     -->
-    <!-- ===================================================================== -->
-    <footer class="relative z-10 border-t border-slate-800/80 bg-[#02050E]/80 backdrop-blur-xl py-12 px-4 sm:px-6">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-white dark:bg-slate-900 p-1 flex items-center justify-center border border-slate-800">
-                    <img src="/logo-dzota.png" alt="Dzota" class="w-full h-full object-contain" />
+        <!-- ─────────────────────────────────────────────────────────────
+             2. HERO SECTION (PHONG CÁCH KHÁNH HÙNG ACADEMY ĐẲNG CẤP)
+        ───────────────────────────────────────────────────────────── -->
+        <section class="relative pt-12 sm:pt-20 pb-20 overflow-hidden">
+            <!-- Radial Glow Orbs -->
+            <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-purple-700/20 blur-[140px] pointer-events-none rounded-full"></div>
+            <div class="absolute top-1/3 right-10 w-[400px] h-[300px] bg-indigo-600/15 blur-[120px] pointer-events-none rounded-full"></div>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 text-center">
+                
+                <!-- Authority Badge -->
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-900/50 via-slate-900/80 to-indigo-900/50 border border-purple-500/40 text-purple-300 text-xs sm:text-sm font-extrabold mb-6 shadow-md shadow-purple-950/50 animate-float">
+                    <i data-lucide="award" class="w-4 h-4 text-amber-400"></i>
+                    <span>TÁC GIẢ: BÁC SĨ TƯƠNG LAI LÊ NHẬT DUY • Y KHOA K26</span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                    <span class="text-amber-300">CHUẨN ĐỀ THI BỘ MÔN 100%</span>
+                </div>
+
+                <!-- Main Punchy Title (Chuẩn phong cách Khánh Hùng Academy) -->
+                <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.15] text-white font-display max-w-5xl mx-auto">
+                    BIẾN KIẾN THỨC Y KHOA THÀNH <span class="text-gradient-purple">KẾT QUẢ ĐỈNH CAO:</span><br/>
+                    <span class="text-gradient-gold">ÔN THI CHẠY TRẠM 9–10 ĐIỂM,</span> TẠO ĐỀ AI TRONG VÀI GIÂY
+                </h1>
+
+                <!-- Subtitle -->
+                <p class="mt-6 text-base sm:text-xl text-slate-300 max-w-3xl mx-auto font-medium leading-relaxed">
+                    Chấm dứt hoàn toàn nỗi ám ảnh thi chạy trạm giải phẫu <strong class="text-white">20 giây/trạm</strong>, đề thi rời rạc hay file Word lỗi công thức. Nền tảng khảo thí số 1 Việt Nam kết hợp <strong class="text-purple-300">Đấu Trường DYNEX OSCE</strong>, ngân hàng ma trận đề thi và trợ lý NoteBook ND.
+                </p>
+
+                <!-- Action Button Group -->
+                <div class="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto">
+                    <button
+                        onclick="openAuthModal('register')"
+                        class="w-full sm:w-auto btn-cta-khanh px-8 py-4 rounded-2xl font-black text-sm sm:text-base text-white flex items-center justify-center gap-3 cursor-pointer group"
+                    >
+                        <i data-lucide="play-circle" class="w-5 h-5 text-amber-300 group-hover:scale-110 transition-transform"></i>
+                        <span>BẮT ĐẦU ÔN LUYỆN NGAY — MIỄN PHÍ</span>
+                    </button>
+                    <a
+                        href="/dynex?mode=exam&examId=exam_osce_mau_tieu_hoa"
+                        class="w-full sm:w-auto px-7 py-4 rounded-2xl font-black text-sm sm:text-base text-slate-200 hover:text-white bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 transition flex items-center justify-center gap-2.5 no-underline shadow-lg"
+                    >
+                        <i data-lucide="eye" class="w-5 h-5 text-purple-400"></i>
+                        <span>Xem Phòng Thi Chạy Trạm</span>
+                    </a>
+                </div>
+
+                <!-- Social Proof Line -->
+                <div class="mt-8 flex items-center justify-center gap-3 text-xs sm:text-sm text-slate-400">
+                    <div class="flex -space-x-2 overflow-hidden">
+                        <img class="inline-block h-8 w-8 rounded-full ring-2 ring-purple-500 object-cover" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop" alt="User 1"/>
+                        <img class="inline-block h-8 w-8 rounded-full ring-2 ring-purple-500 object-cover" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="User 2"/>
+                        <img class="inline-block h-8 w-8 rounded-full ring-2 ring-purple-500 object-cover" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" alt="User 3"/>
+                        <img class="inline-block h-8 w-8 rounded-full ring-2 ring-purple-500 object-cover" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop" alt="User 4"/>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-1 text-amber-400">
+                            ★★★★★ <span class="font-bold text-white ml-1">4.9/5.0</span>
+                        </div>
+                        <p class="text-slate-400 text-[11px]">Được tin dùng bởi hơn <strong>45.000+</strong> Bác sĩ & Sinh viên Y Dược toàn quốc</p>
+                    </div>
+                </div>
+
+                <!-- ─────────────────────────────────────────────────────────────
+                     INTERACTIVE LIVE SPOTLIGHT: PHÒNG THI CHẠY TRẠM DEMO
+                ───────────────────────────────────────────────────────────── -->
+                <div class="mt-14 max-w-4xl mx-auto text-left">
+                    <div class="glass-card rounded-3xl p-5 sm:p-7 shadow-2xl border border-purple-500/30 relative overflow-hidden">
+                        <div class="absolute -top-12 -right-12 w-48 h-48 bg-purple-600/20 blur-3xl pointer-events-none rounded-full"></div>
+                        
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-black">
+                                    <i data-lucide="timer" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm sm:text-base font-black text-white flex items-center gap-2">
+                                        <span>Trải Nghiệm Thử: Trạm Giải Phẫu 20 Giây</span>
+                                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">DYNEX LIVE</span>
+                                    </h3>
+                                    <p class="text-xs text-slate-400">Chỉ định cấu trúc được che kín • Hãy chọn đáp án chính xác trước khi chuông reo!</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2 self-start sm:self-auto">
+                                <span id="demo-timer" class="px-3.5 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/40 font-mono font-black text-xs sm:text-sm animate-pulse">
+                                    Trạm 01 • 00:20
+                                </span>
+                                <button onclick="startDemoTimer()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition cursor-pointer">
+                                    Làm lại
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Station Question Body -->
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 mt-5 items-center">
+                            <!-- Visual Specimen -->
+                            <div class="md:col-span-5 bg-slate-950 rounded-2xl p-4 border border-slate-800 relative group overflow-hidden text-center">
+                                <div class="relative inline-block mx-auto rounded-xl overflow-hidden border border-slate-800 shadow-md">
+                                    <img src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600&h=400&fit=crop" alt="Giải Phẫu Demo" class="w-full max-h-48 object-cover rounded-lg" />
+                                    <!-- Spotting Target Mask Pin -->
+                                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-3 py-1 rounded-md bg-purple-600/95 text-white font-black text-xs shadow-lg border border-white/40 animate-bounce">
+                                        📍 Chi tiết số [A]
+                                    </div>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-2 font-medium">Tiêu bản: Thiết đồ cắt ngang Tầng trên Mạc treo đại tràng</p>
+                            </div>
+
+                            <!-- Multiple Choice Interactive -->
+                            <div class="md:col-span-7 space-y-2.5">
+                                <p class="text-xs sm:text-sm font-extrabold text-white">
+                                    Câu hỏi trạm: Chi tiết giải phẫu được đánh dấu bằng ký hiệu <span class="text-purple-400 font-black">[A]</span> là cấu trúc nào sau đây?
+                                </p>
+                                
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <button onclick="handleDemoAnswer(this, false, 'A')" class="demo-option-btn p-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-left text-xs font-bold text-slate-200 transition cursor-pointer flex items-center gap-2">
+                                        <span class="w-5 h-5 rounded-md bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-black">A</span>
+                                        <span>Rãnh dây chằng tĩnh mạch</span>
+                                    </button>
+                                    <button onclick="handleDemoAnswer(this, true, 'B')" class="demo-option-btn p-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-left text-xs font-bold text-slate-200 transition cursor-pointer flex items-center gap-2">
+                                        <span class="w-5 h-5 rounded-md bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-black">B</span>
+                                        <span class="font-extrabold">Mạc treo đại tràng ngang</span>
+                                    </button>
+                                    <button onclick="handleDemoAnswer(this, false, 'C')" class="demo-option-btn p-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-left text-xs font-bold text-slate-200 transition cursor-pointer flex items-center gap-2">
+                                        <span class="w-5 h-5 rounded-md bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-black">C</span>
+                                        <span>Túi mạc nối (Hậu cung)</span>
+                                    </button>
+                                    <button onclick="handleDemoAnswer(this, false, 'D')" class="demo-option-btn p-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-left text-xs font-bold text-slate-200 transition cursor-pointer flex items-center gap-2">
+                                        <span class="w-5 h-5 rounded-md bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-black">D</span>
+                                        <span>Môn vị & Hành tá tràng</span>
+                                    </button>
+                                </div>
+
+                                <!-- Live Interactive Feedback -->
+                                <div id="demo-feedback" class="hidden p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-xs">
+                                    <div id="demo-feedback-title" class="font-black flex items-center gap-1.5 mb-1"></div>
+                                    <p id="demo-feedback-desc" class="text-slate-400 leading-relaxed text-[11px]"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ─────────────────────────────────────────────────────────────
+             3. STATS COUNTER BAR (UY TÍN VƯỢT BẬC)
+        ───────────────────────────────────────────────────────────── -->
+        <section class="border-y border-white/10 bg-[#0B0F19]/80 backdrop-blur-md py-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                    <div class="space-y-1">
+                        <div class="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-display">45.000<span class="text-purple-400">+</span></div>
+                        <p class="text-xs sm:text-sm font-bold text-slate-400">Sinh Viên & Bác Sĩ Toàn Quốc</p>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-display">1.500<span class="text-amber-400">+</span></div>
+                        <p class="text-xs sm:text-sm font-bold text-slate-400">Bộ Đề Thi Ma Trận Chuẩn Bác Sĩ</p>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-display">500<span class="text-emerald-400">+</span></div>
+                        <p class="text-xs sm:text-sm font-bold text-slate-400">Tiêu Bản Chạy Trạm DYNEX OSCE</p>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-display">99.4<span class="text-purple-400">%</span></div>
+                        <p class="text-xs sm:text-sm font-bold text-slate-400">Tỷ Lệ Đạt Điểm Khá Giỏi (≥ 8.5)</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─────────────────────────────────────────────────────────────
+             4. ĐẠI SẢNH DANH VỌNG (HALL OF FAME - CLONE TỪ KHÁNH HÙNG)
+        ───────────────────────────────────────────────────────────── -->
+        <section id="hall-of-fame" class="py-20 relative">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6">
+                
+                <div class="text-center max-w-3xl mx-auto mb-14">
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full gold-badge text-xs font-black uppercase tracking-wider mb-3">
+                        <i data-lucide="trophy" class="w-3.5 h-3.5"></i>
+                        <span>BẢNG VÀNG VINH DANH • DZOTA HALL OF FAME</span>
+                    </div>
+                    <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-display">
+                        ĐẠI SẢNH DANH VỌNG <span class="text-gradient-gold">HỌC VIÊN XUẤT SẮC</span>
+                    </h2>
+                    <p class="text-slate-400 text-sm sm:text-base mt-3">
+                        Thành quả thực tế từ các học viên, thủ khoa bộ môn và bác sĩ nội trú đã ôn luyện trên Dzota.
+                    </p>
+                </div>
+
+                <!-- Hall of Fame Grid Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    
+                    <!-- Top 1 Student Card -->
+                    <div class="glass-card rounded-3xl p-6 relative overflow-hidden border border-amber-500/40 shadow-xl shadow-amber-500/10">
+                        <div class="absolute top-0 right-0 px-4 py-1.5 bg-gradient-to-l from-amber-500 to-amber-600 text-slate-950 font-black text-xs rounded-bl-2xl flex items-center gap-1">
+                            <i data-lucide="crown" class="w-3.5 h-3.5 fill-slate-950"></i> THỦ KHOA GIẢI PHẪU
+                        </div>
+                        <div class="flex items-center gap-4 mt-2">
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&h=120&fit=crop" class="w-16 h-16 rounded-2xl object-cover border-2 border-amber-400" alt="Avatar"/>
+                            <div>
+                                <h4 class="text-lg font-black text-white">Nguyễn Hoàng Yến</h4>
+                                <p class="text-xs text-amber-400 font-bold">Sinh viên Y Khoa K47 • ĐH Y Dược TP.HCM</p>
+                                <div class="text-2xl font-black text-white font-mono mt-1">10.0 / 10 <span class="text-xs font-normal text-slate-400">Chạy Trạm OSCE</span></div>
+                            </div>
+                        </div>
+                        <div class="mt-4 p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300 leading-relaxed italic">
+                            "Trước kỳ thi em cực kỳ hoang mang vì không biết đề thi chạy trạm 20s sẽ hỏi những tiêu bản nào. Nhờ luyện bộ 500 trạm trên Dzota của anh Duy, em nhận diện tiêu bản chỉ mất 5 giây và đạt điểm 10 tuyệt đối!"
+                        </div>
+                    </div>
+
+                    <!-- Top 2 Doctor Card -->
+                    <div class="glass-card rounded-3xl p-6 relative overflow-hidden border border-purple-500/30">
+                        <div class="absolute top-0 right-0 px-4 py-1.5 bg-purple-600 text-white font-black text-xs rounded-bl-2xl">
+                            TOP 3 BÁC SĨ NỘI TRÚ
+                        </div>
+                        <div class="flex items-center gap-4 mt-2">
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop" class="w-16 h-16 rounded-2xl object-cover border-2 border-purple-400" alt="Avatar"/>
+                            <div>
+                                <h4 class="text-lg font-black text-white">BS. Trần Minh Khang</h4>
+                                <p class="text-xs text-purple-400 font-bold">Bác sĩ Nội Trú Ngoại Khoa • ĐH Y Hà Nội</p>
+                                <div class="text-2xl font-black text-white font-mono mt-1">9.8 / 10 <span class="text-xs font-normal text-slate-400">Thi Sau Đại Học</span></div>
+                            </div>
+                        </div>
+                        <div class="mt-4 p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300 leading-relaxed italic">
+                            "Kho đề thi ma trận phân tầng và tính năng NoteBook ND của Dzota giúp mình gom sạch các câu hỏi bẫy về giải phẫu mạch máu và thần kinh. Khuyên thật lòng các bạn ôn Nội Trú nên luyện nền tảng này!"
+                        </div>
+                    </div>
+
+                    <!-- Top 3 Pharmacology Card -->
+                    <div class="glass-card rounded-3xl p-6 relative overflow-hidden border border-emerald-500/30">
+                        <div class="absolute top-0 right-0 px-4 py-1.5 bg-emerald-600 text-white font-black text-xs rounded-bl-2xl">
+                            Á KHOA DƯỢC LÝ
+                        </div>
+                        <div class="flex items-center gap-4 mt-2">
+                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&h=120&fit=crop" class="w-16 h-16 rounded-2xl object-cover border-2 border-emerald-400" alt="Avatar"/>
+                            <div>
+                                <h4 class="text-lg font-black text-white">Lê Thu Trang</h4>
+                                <p class="text-xs text-emerald-400 font-bold">Sinh viên Dược K25 • ĐH Dược Hà Nội</p>
+                                <div class="text-2xl font-black text-white font-mono mt-1">9.6 / 10 <span class="text-xs font-normal text-slate-400">Dược Lý Lâm Sàng</span></div>
+                            </div>
+                        </div>
+                        <div class="mt-4 p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300 leading-relaxed italic">
+                            "Bộ Mindmap Kháng sinh và ngân hàng câu hỏi phân nhóm hoạt chất trên Dzota đã cứu vớt điểm số môn Dược lý của mình. Cảm ơn anh Nhật Duy rất nhiều vì nền tảng tâm huyết cho sinh viên y!"
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ─────────────────────────────────────────────────────────────
+             5. 3 YẾU TỐ QUYẾT ĐỊNH THÀNH CÔNG (3 CỘT TRỤ CỦA DZOTA)
+        ───────────────────────────────────────────────────────────── -->
+        <section id="about" class="py-20 bg-[#0B0F19]/60 border-y border-white/5 relative">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6">
+                
+                <div class="text-center max-w-3xl mx-auto mb-16">
+                    <span class="text-xs font-black uppercase tracking-wider text-purple-400 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30">
+                        GIẢI MÃ PHƯƠNG PHÁP HỌC Y KHOA HIỆN ĐẠI
+                    </span>
+                    <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-display mt-3">
+                        3 YẾU TỐ QUYẾT ĐỊNH <span class="text-gradient-purple">"ĐỖ CAO & NHÀN NHÃ"</span>
+                    </h2>
+                    <p class="text-slate-400 text-sm sm:text-base mt-3">
+                        Không còn cảnh học vẹt tài liệu photocopy mờ căm. Dzota xây dựng hệ sinh thái khảo thí chuẩn hóa cho sinh viên Y Dược.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    
+                    <!-- Yếu tố 1 -->
+                    <div class="glass-card glass-card-hover rounded-3xl p-8 relative overflow-hidden group">
+                        <div class="w-14 h-14 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <i data-lucide="layers" class="w-7 h-7"></i>
+                        </div>
+                        <span class="text-[11px] font-black uppercase tracking-wider text-purple-400">CỘT TRỤ 01</span>
+                        <h3 class="text-xl font-black text-white mt-1 mb-3">Đấu Trường DYNEX OSCE Thực Chiến</h3>
+                        <p class="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                            Mô phỏng 100% không gian phòng thi chạy trạm tại giảng đường: ô che tiêu bản đặc kín, bộ đếm ngược 20s/trạm, âm thanh chuông báo đổi trạm tự động và phóng to hình ảnh độ phân giải cao chuẩn Retina.
+                        </p>
+                    </div>
+
+                    <!-- Yếu tố 2 -->
+                    <div class="glass-card glass-card-hover rounded-3xl p-8 relative overflow-hidden group">
+                        <div class="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <i data-lucide="sparkles" class="w-7 h-7"></i>
+                        </div>
+                        <span class="text-[11px] font-black uppercase tracking-wider text-amber-400">CỘT TRỤ 02</span>
+                        <h3 class="text-xl font-black text-white mt-1 mb-3">AI Soạn Đề & Bóc Tách File Word 1-Click</h3>
+                        <p class="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                            Tự động trích xuất mọi file Word (.docx) giáo trình hay ngân hàng đề thi thành trắc nghiệm chuẩn ma trận chỉ trong 5 giây. Không lo lỗi font chữ, tự nhận diện bảng đáp án và giải thích chi tiết từng câu.
+                        </p>
+                    </div>
+
+                    <!-- Yếu tố 3 -->
+                    <div class="glass-card glass-card-hover rounded-3xl p-8 relative overflow-hidden group">
+                        <div class="w-14 h-14 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <i data-lucide="book-marked" class="w-7 h-7"></i>
+                        </div>
+                        <span class="text-[11px] font-black uppercase tracking-wider text-emerald-400">CỘT TRỤ 03</span>
+                        <h3 class="text-xl font-black text-white mt-1 mb-3">Kho Giáo Trình & NoteBook ND Độc Quyền</h3>
+                        <p class="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                            Sách Ebook 500 Tiêu Bản Giải Phẫu Chạy Trạm 10 Điểm, Mindmap Dược Lý Kháng Sinh thế hệ mới cùng tính năng tự động ghi nhận các câu làm sai để sinh viên luyện lại đến khi đạt điểm tuyệt đối.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ─────────────────────────────────────────────────────────────
+             6. KHO ĐỀ THI & CHUYÊN ĐỀ Y KHOA SẮP RA MẮT & ĐANG HOT
+        ───────────────────────────────────────────────────────────── -->
+        <section id="curriculum" class="py-20 relative">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6">
+                
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
+                    <div>
+                        <span class="text-xs font-black uppercase tracking-wider text-purple-400 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30">
+                            NGÂN HÀNG ĐỀ THI ĐÃ ĐƯỢC CHỨNG THỰC
+                        </span>
+                        <h2 class="text-3xl sm:text-4xl font-black text-white font-display mt-3">
+                            KHO ĐỀ THI CHẠY TRẠM <span class="text-gradient-purple">OSCE Y KHOA</span>
+                        </h2>
+                    </div>
+                    <button onclick="openAuthModal('register')" class="px-5 py-2.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 font-bold text-xs sm:text-sm border border-purple-500/40 transition cursor-pointer self-start md:self-auto">
+                        Xem tất cả 1.500+ bộ đề →
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Exam Card 1 -->
+                    <div class="glass-card glass-card-hover rounded-3xl p-6 flex flex-col justify-between border border-purple-500/30">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-3">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-500 text-slate-950">HOT • 20s/Trạm</span>
+                                <span class="text-xs text-slate-400 font-mono font-bold">8 Trạm • 100% Ô Che</span>
+                            </div>
+                            <h4 class="text-lg font-black text-white">Chạy Trạm OSCE: Hệ Tiêu Hóa, Gan Mật & Tụy</h4>
+                            <p class="text-xs text-slate-400 mt-2 line-clamp-2">
+                                Bộ tiêu bản kinh điển mặt trước gan, môn vị, tá tràng, ống mật chủ và tuyến tụy chuẩn đề thi thực tế K47.
+                            </p>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
+                            <span class="text-xs font-bold text-purple-400">Tác giả: Lê Nhật Duy</span>
+                            <a href="/dynex?mode=exam&examId=exam_osce_mau_tieu_hoa" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xs transition no-underline">
+                                Vào Thi Ngay
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Exam Card 2 -->
+                    <div class="glass-card glass-card-hover rounded-3xl p-6 flex flex-col justify-between border border-indigo-500/30">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-3">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-indigo-500/30 text-indigo-300 border border-indigo-500/40">Giải Phẫu Chi</span>
+                                <span class="text-xs text-slate-400 font-mono font-bold">15 Trạm • Chuông Reo</span>
+                            </div>
+                            <h4 class="text-lg font-black text-white">Chạy Trạm Cơ - Xương - Mạch Chi Trên & Đám Rối</h4>
+                            <p class="text-xs text-slate-400 mt-2 line-clamp-2">
+                                Nhận diện nguyên ủy, bám tận, thần kinh chi phối cơ tam đầu, ống cánh tay và đám rối thần kinh.
+                            </p>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
+                            <span class="text-xs font-bold text-indigo-400">Tác giả: Lê Nhật Duy</span>
+                            <a href="/dynex?mode=exam&examId=osce_gph_co_chi_tren" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs transition no-underline">
+                                Vào Thi Ngay
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Exam Card 3 -->
+                    <div class="glass-card glass-card-hover rounded-3xl p-6 flex flex-col justify-between border border-amber-500/30">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-3">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40">Bác Sĩ Nội Trú / CK1</span>
+                                <span class="text-xs text-slate-400 font-mono font-bold">20 Trạm • Nâng Cao</span>
+                            </div>
+                            <h4 class="text-lg font-black text-white">Chạy Trạm Tổng Hợp Thi Nội Trú: Tim - Phổi - Ổ Bụng</h4>
+                            <p class="text-xs text-slate-400 mt-2 line-clamp-2">
+                                Phân biệt rãnh gian thất, cuống phổi, màng phổi, động mạch mạc treo tràng trên và tĩnh mạch cửa.
+                            </p>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
+                            <span class="text-xs font-bold text-amber-400">Tác giả: Lê Nhật Duy</span>
+                            <a href="/dynex?mode=exam&examId=osce_ck1_gph" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-xs transition no-underline">
+                                Vào Thi Ngay
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Exam Card 4 -->
+                    <div class="glass-card glass-card-hover rounded-3xl p-6 flex flex-col justify-between border border-emerald-500/30">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-3">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Dược Lý Lâm Sàng</span>
+                                <span class="text-xs text-slate-400 font-mono font-bold">12 Trạm • Kháng Sinh</span>
+                            </div>
+                            <h4 class="text-lg font-black text-white">Nhận Diện Hoạt Chất & Cơ Chế Kháng Sinh Vi Sinh</h4>
+                            <p class="text-xs text-slate-400 mt-2 line-clamp-2">
+                                Ức chế thành tế bào, tiểu đơn vị 30S/50S ribosom, phổ tác dụng vi khuẩn gram âm, gram dương.
+                            </p>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
+                            <span class="text-xs font-bold text-emerald-400">Tác giả: Lê Nhật Duy</span>
+                            <a href="/dynex?mode=exam&examId=osce_duoc_khangsinh" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs transition no-underline">
+                                Vào Thi Ngay
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Exam Card 5 -->
+                    <div class="glass-card glass-card-hover rounded-3xl p-6 flex flex-col justify-between border border-rose-500/30">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-3">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-500/20 text-rose-300 border border-rose-500/40">Điện Tâm Đồ ECG</span>
+                                <span class="text-xs text-slate-400 font-mono font-bold">10 Trạm • Cấp Cứu</span>
+                            </div>
+                            <h4 class="text-lg font-black text-white">Chạy Trạm ECG: Rối Loạn Nhịp & Nhồi Máu Cơ Tim Cấp</h4>
+                            <p class="text-xs text-slate-400 mt-2 line-clamp-2">
+                                Đọc nhanh ST chênh lên theo vùng chuyển đạo V1-V6, DII, DIII, aVF, nhận diện rung nhĩ và ngoại tâm thu.
+                            </p>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
+                            <span class="text-xs font-bold text-rose-400">Tác giả: Lê Nhật Duy</span>
+                            <a href="/dynex?mode=exam&examId=osce_tim_mach_ecg" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs transition no-underline">
+                                Vào Thi Ngay
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Creator Promo Card -->
+                    <div class="glass-card rounded-3xl p-6 flex flex-col justify-between border-2 border-dashed border-purple-500/40 bg-purple-950/20 text-center">
+                        <div>
+                            <div class="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center mx-auto mb-3">
+                                <i data-lucide="file-plus-2" class="w-6 h-6"></i>
+                            </div>
+                            <h4 class="text-lg font-black text-white">Bạn Là Giảng Viên Hoặc Bác Sĩ?</h4>
+                            <p class="text-xs text-slate-400 mt-2">
+                                Tự tạo bộ đề thi trắc nghiệm riêng của bạn, tổ chức thi trực tuyến cho hàng trăm sinh viên mà không lo nghẽn mạng!
+                            </p>
+                        </div>
+                        <div class="mt-6">
+                            <a href="/creator" class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black text-xs transition no-underline shadow-md">
+                                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                                <span>Mở Trình Soạn Đề Dzota Creator</span>
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ─────────────────────────────────────────────────────────────
+             7. 03 CAM KẾT VÀNG TỪ LÊ NHẬT DUY (CLONE "03 BẢO HIỂM CỦA HÙNG")
+        ───────────────────────────────────────────────────────────── -->
+        <section id="guarantee" class="py-20 bg-gradient-to-b from-[#0B0F19]/90 to-[#060913] border-t border-white/5 relative">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6">
+                
+                <div class="text-center max-w-3xl mx-auto mb-14">
+                    <span class="text-xs font-black uppercase tracking-wider text-amber-400 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30">
+                        AN TÂM TUYỆT ĐỐI CHO TƯƠNG LAI BÁC SĨ
+                    </span>
+                    <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-display mt-3">
+                        ĐỂ DỄ DÀNG HƠN CHO QUYẾT ĐỊNH CỦA BẠN<br/>
+                        <span class="text-gradient-gold">NHẬT DUY CUNG CẤP 03 BẢO HIỂM VÀNG</span>
+                    </h2>
+                    <p class="text-slate-400 text-sm sm:text-base mt-3">
+                        Cam kết danh dự và uy tín của sinh viên Y Khoa K26 dành cho cộng đồng học viên Dzota.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    
+                    <!-- Bảo hiểm 1 -->
+                    <div class="glass-card rounded-3xl p-8 border border-amber-500/30 relative">
+                        <div class="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-xl mb-6">
+                            01
+                        </div>
+                        <h3 class="text-xl font-black text-white mb-3">Nội Dung Chuẩn 100% & Cập Nhật Trọn Đời</h3>
+                        <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                            Toàn bộ ngân hàng đề thi, tiêu bản giải phẫu và câu hỏi ma trận đều được đối chiếu chặt chẽ theo giáo trình của Bộ môn Giải Phẫu, Dược Lý và Nội Khoa các trường Y lớn. Được cập nhật liên tục mỗi khi bộ môn đổi mới cấu trúc đề thi.
+                        </p>
+                    </div>
+
+                    <!-- Bảo hiểm 2 -->
+                    <div class="glass-card rounded-3xl p-8 border border-purple-500/30 relative">
+                        <div class="w-14 h-14 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-black text-xl mb-6">
+                            02
+                        </div>
+                        <h3 class="text-xl font-black text-white mb-3">Đồng Hành & Hỗ Trợ Kỹ Thuật 24/7</h3>
+                        <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                            Bất cứ khi nào bạn gặp khó khăn trong việc thao tác phòng thi chạy trạm, tạo lớp học hay cần giải đáp câu hỏi chuyên môn, Nhật Duy và đội ngũ kỹ thuật K26 luôn sẵn sàng giải đáp trực tiếp qua Zalo Admin trong vòng 5 phút.
+                        </p>
+                    </div>
+
+                    <!-- Bảo hiểm 3 -->
+                    <div class="glass-card rounded-3xl p-8 border border-emerald-500/30 relative">
+                        <div class="w-14 h-14 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-black text-xl mb-6">
+                            03
+                        </div>
+                        <h3 class="text-xl font-black text-white mb-3">Cam Kết Tiến Bộ Rõ Rệt — Tự Tin Điểm 9–10</h3>
+                        <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                            Nếu bạn hoàn thành nghiêm túc các trạm thi trên Dzota mà khi vào kỳ thi thực tế tại giảng đường vẫn lúng túng hoặc không cải thiện được phản xạ nhận diện tiêu bản trong 20 giây, Duy cam kết hỗ trợ định hướng 1:1 cho bạn đến khi đạt mục tiêu!
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ─────────────────────────────────────────────────────────────
+             8. AI SẼ PHÙ HỢP THAM GIA DZOTA EDUCATION?
+        ───────────────────────────────────────────────────────────── -->
+        <section class="py-20 relative">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6">
+                
+                <div class="text-center max-w-3xl mx-auto mb-14">
+                    <h2 class="text-3xl sm:text-4xl font-black text-white font-display">
+                        AI SẼ PHÙ HỢP THAM GIA <span class="text-gradient-purple">DZOTA EDUCATION?</span>
+                    </h2>
+                    <p class="text-slate-400 text-sm sm:text-base mt-2">
+                        Thiết kế chuyên biệt cho từng giai đoạn trên con đường trở thành Thầy thuốc giỏi.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    
+                    <div class="glass-card rounded-3xl p-7 border border-slate-800 space-y-4">
+                        <div class="w-12 h-12 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                            <i data-lucide="graduation-cap" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-lg font-black text-white">1. Sinh Viên Y Đa Khoa & Dược (Y1 - Y6)</h3>
+                        <ul class="text-xs text-slate-300 space-y-2 list-disc list-inside leading-relaxed">
+                            <li>Cần môi trường luyện thi chạy trạm Giải Phẫu, Mô Phôi, Ký Sinh Trùng 20s.</li>
+                            <li>Muốn làm quen với câu hỏi tình huống lâm sàng và dược lý thực chiến.</li>
+                            <li>Tích lũy ngân hàng câu hỏi để thi hết môn đạt điểm 9-10.</li>
+                        </ul>
+                    </div>
+
+                    <div class="glass-card rounded-3xl p-7 border border-purple-500/40 bg-purple-950/20 space-y-4 relative overflow-hidden">
+                        <div class="w-12 h-12 rounded-2xl bg-purple-500/30 text-purple-300 flex items-center justify-center">
+                            <i data-lucide="stethoscope" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-lg font-black text-white">2. Bác Sĩ Ôn Thi Nội Trú & Sau Đại Học</h3>
+                        <ul class="text-xs text-slate-200 space-y-2 list-disc list-inside leading-relaxed">
+                            <li>Luyện đề thi phân tầng độ khó cao (Chuyên Khoa 1, Bác Sĩ Nội Trú).</li>
+                            <li>Ghi nhớ các chi tiết giải phẫu mạch máu - thần kinh vi phẫu tinh tế.</li>
+                            <li>Sử dụng NoteBook ND để quét sạch các điểm mù kiến thức.</li>
+                        </ul>
+                    </div>
+
+                    <div class="glass-card rounded-3xl p-7 border border-slate-800 space-y-4">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                            <i data-lucide="users" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-lg font-black text-white">3. Giảng Viên, Bác Sĩ Bộ Môn & Nhóm Học</h3>
+                        <ul class="text-xs text-slate-300 space-y-2 list-disc list-inside leading-relaxed">
+                            <li>Tạo đề thi tự động từ file giáo trình Word (.docx) chỉ mất 5 giây.</li>
+                            <li>Quản lý danh sách lớp học, phân quyền làm bài thi theo Gmail học sinh.</li>
+                            <li>Hệ thống máy chủ tối ưu chịu tải cao, không bao giờ bị nghẽn giờ thi.</li>
+                        </ul>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ─────────────────────────────────────────────────────────────
+             9. BẢNG GIÁ & GÓI TÀI KHOẢN (PRICING TABLE)
+        ───────────────────────────────────────────────────────────── -->
+        <section id="pricing" class="py-20 bg-[#0B0F19]/80 border-y border-white/5 relative">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6">
+                
+                <div class="text-center max-w-3xl mx-auto mb-14">
+                    <span class="text-xs font-black uppercase tracking-wider text-purple-400 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30">
+                        CHI PHÍ TINH GỌN • HIỆU QUẢ VÔ HẠN
+                    </span>
+                    <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-display mt-3">
+                        BÁO GIÁ GÓI HỌC VIÊN <span class="text-gradient-purple">DZOTA EDUCATION</span>
+                    </h2>
+                    <p class="text-slate-400 text-sm sm:text-base mt-3">
+                        Chọn gói phù hợp với nhu cầu ôn tập của bạn — Đăng ký 1 lần, đồng hành trọn đời.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+                    
+                    <!-- Gói 1: Miễn Phí -->
+                    <div class="glass-card rounded-3xl p-8 flex flex-col justify-between border border-slate-800">
+                        <div>
+                            <span class="px-3 py-1 rounded-full text-xs font-black uppercase bg-slate-800 text-slate-300">TRẢI NGHIỆM</span>
+                            <h3 class="text-2xl font-black text-white mt-4">Học Viên Miễn Phí</h3>
+                            <div class="text-3xl font-black text-white font-mono mt-3">0 VNĐ <span class="text-xs text-slate-400 font-normal">/ Mãi mãi</span></div>
+                            <p class="text-xs text-slate-400 mt-2">Dành cho sinh viên muốn thi thử và làm quen với hệ thống.</p>
+
+                            <ul class="mt-6 space-y-3 text-xs text-slate-300">
+                                <li class="flex items-center gap-2">✓ Làm bài thi thử chạy trạm mẫu</li>
+                                <li class="flex items-center gap-2">✓ Xem kết quả thi trắc nghiệm cơ bản</li>
+                                <li class="flex items-center gap-2">✓ Hỗ trợ học tập trên điện thoại và máy tính</li>
+                            </ul>
+                        </div>
+
+                        <button onclick="openAuthModal('register')" class="mt-8 w-full py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition cursor-pointer">
+                            Đăng Ký Miễn Phí
+                        </button>
+                    </div>
+
+                    <!-- Gói 2: Y Khoa Pro (Bestseller) -->
+                    <div class="glass-card rounded-3xl p-8 flex flex-col justify-between border-2 border-purple-500 shadow-2xl shadow-purple-600/20 bg-gradient-to-b from-purple-950/40 to-slate-950/80 relative">
+                        <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-amber-500 to-purple-600 text-white font-black text-[11px] uppercase tracking-wider shadow-md">
+                            ★ KHUYÊN DÙNG CHO SINH VIÊN Y DƯỢC ★
+                        </div>
+                        <div>
+                            <span class="px-3 py-1 rounded-full text-xs font-black uppercase bg-purple-500/20 text-purple-300 border border-purple-500/40">Y KHOA VIP PRO</span>
+                            <h3 class="text-2xl font-black text-white mt-4">Thẻ Thành Viên VIP</h3>
+                            <div class="text-4xl font-black text-white font-mono mt-3">199.000đ <span class="text-xs text-amber-300 font-bold line-through">499.000đ</span></div>
+                            <p class="text-xs text-purple-300 mt-2">Mở khóa trọn bộ kho tàng chạy trạm DYNEX OSCE & tài liệu VIP.</p>
+
+                            <ul class="mt-6 space-y-3 text-xs text-slate-200">
+                                <li class="flex items-center gap-2 font-bold text-white">✓ Trọn bộ 500+ Tiêu Bản Chạy Trạm DYNEX OSCE</li>
+                                <li class="flex items-center gap-2 font-bold text-white">✓ Ebook 500 Tiêu Bản Giải Phẫu Điểm 10 (Lê Nhật Duy)</li>
+                                <li class="flex items-center gap-2 font-bold text-white">✓ Mindmap Dược Lý Kháng Sinh & Điện Tâm Đồ ECG</li>
+                                <li class="flex items-center gap-2">✓ Sổ tay tự động lưu câu làm sai NoteBook ND</li>
+                                <li class="flex items-center gap-2">✓ Tham gia Nhóm Zalo Học Thuật Y Khoa K26</li>
+                            </ul>
+                        </div>
+
+                        <a href="https://zalo.me/0355926970?text=Xin%20chào%20Nhật%20Duy,%20tôi%20muốn%20nâng%20cấp%20Gói%20VIP%20Y%20Khoa%20Pro%20trên%20Dzota" target="_blank" rel="noreferrer" class="mt-8 w-full btn-cta-khanh py-4 rounded-2xl text-center text-white font-black text-sm transition no-underline block cursor-pointer">
+                            NÂNG CẤP VIP NGAY (QUA ZALO)
+                        </a>
+                    </div>
+
+                    <!-- Gói 3: Giảng Viên & Bác Sĩ Master -->
+                    <div class="glass-card rounded-3xl p-8 flex flex-col justify-between border border-slate-800">
+                        <div>
+                            <span class="px-3 py-1 rounded-full text-xs font-black uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">GIẢNG VIÊN / BÁC SĨ</span>
+                            <h3 class="text-2xl font-black text-white mt-4">Tài Khoản Master</h3>
+                            <div class="text-3xl font-black text-white font-mono mt-3">Liên Hệ <span class="text-xs text-slate-400 font-normal">/ Hỗ trợ riêng</span></div>
+                            <p class="text-xs text-slate-400 mt-2">Dành cho Thầy/Cô, Bác sĩ cần tổ chức thi và quản lý học sinh.</p>
+
+                            <ul class="mt-6 space-y-3 text-xs text-slate-300">
+                                <li class="flex items-center gap-2">✓ Tạo đề thi AI & trích xuất Word không giới hạn</li>
+                                <li class="flex items-center gap-2">✓ Quản lý lớp học và danh sách học viên theo môn</li>
+                                <li class="flex items-center gap-2">✓ Phân quyền bảo mật bài thi chống lộ đề</li>
+                                <li class="flex items-center gap-2">✓ Xuất bảng điểm Excel chi tiết từng học sinh</li>
+                            </ul>
+                        </div>
+
+                        <a href="https://zalo.me/0355926970?text=Xin%20chào%20Nhật%20Duy,%20tôi%20muốn%20tư%20vấn%20Gói%20Giảng%20Viên%20Master%20Dzota" target="_blank" rel="noreferrer" class="mt-8 w-full py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs text-center transition no-underline block cursor-pointer">
+                            Liên Hệ Tư Vấn Riêng
+                        </a>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ─────────────────────────────────────────────────────────────
+             10. Q&A - CÂU HỎI THƯỜNG GẶP (ACCORDION CHUẨN KHÁNH HÙNG)
+        ───────────────────────────────────────────────────────────── -->
+        <section id="faq" class="py-20 relative">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6">
+                
+                <div class="text-center mb-14">
+                    <span class="text-xs font-black uppercase tracking-wider text-purple-400 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30">
+                        GIẢI ĐÁP TOÀN BỘ
+                    </span>
+                    <h2 class="text-3xl sm:text-4xl font-black text-white font-display mt-3">
+                        Q&A — CÂU HỎI THƯỜNG GẶP
+                    </h2>
+                    <p class="text-slate-400 text-sm mt-2">Những thắc mắc phổ biến nhất khi tham gia học tập cùng Dzota Education.</p>
+                </div>
+
+                <div class="space-y-4">
+                    
+                    <!-- FAQ 1 -->
+                    <div class="glass-card rounded-2xl p-5 border border-slate-800 transition">
+                        <button onclick="toggleFaq(this)" class="w-full text-left font-black text-sm sm:text-base text-white flex items-center justify-between gap-3 cursor-pointer">
+                            <span>1. Tôi có thể học và làm bài thi chạy trạm trên điện thoại được không?</span>
+                            <i data-lucide="chevron-down" class="w-5 h-5 text-purple-400 transition-transform"></i>
+                        </button>
+                        <div class="faq-content hidden mt-3 pt-3 border-t border-slate-800/80 text-xs sm:text-sm text-slate-300 leading-relaxed">
+                            Hoàn toàn được! Dzota được thiết kế tương thích 100% trên cả iPhone, iPad, điện thoại Android và Laptop. Tiêu bản giải phẫu được tối ưu hiển thị sắc nét, nút bấm to và hỗ trợ cảm ứng mượt mà.
+                        </div>
+                    </div>
+
+                    <!-- FAQ 2 -->
+                    <div class="glass-card rounded-2xl p-5 border border-slate-800 transition">
+                        <button onclick="toggleFaq(this)" class="w-full text-left font-black text-sm sm:text-base text-white flex items-center justify-between gap-3 cursor-pointer">
+                            <span>2. Đấu trường DYNEX OSCE hoạt động như thế nào? Có đúng 20 giây một trạm không?</span>
+                            <i data-lucide="chevron-down" class="w-5 h-5 text-purple-400 transition-transform"></i>
+                        </button>
+                        <div class="faq-content hidden mt-3 pt-3 border-t border-slate-800/80 text-xs sm:text-sm text-slate-300 leading-relaxed">
+                            Chính xác 100%! Bạn sẽ được đưa vào phòng thi với đồng hồ đếm ngược 20 giây (hoặc 30 giây tùy theo cài đặt của bộ đề). Các cấu trúc giải phẫu được che kín bằng ô màu y khoa chuẩn giáo trình. Khi hết giờ, chuông ding-dong sẽ vang lên và tự động chuyển trạm tiếp theo hệt như kỳ thi thực tế.
+                        </div>
+                    </div>
+
+                    <!-- FAQ 3 -->
+                    <div class="glass-card rounded-2xl p-5 border border-slate-800 transition">
+                        <button onclick="toggleFaq(this)" class="w-full text-left font-black text-sm sm:text-base text-white flex items-center justify-between gap-3 cursor-pointer">
+                            <span>3. Khi mất kết nối internet có bị mất bài thi đang làm dở không?</span>
+                            <i data-lucide="chevron-down" class="w-5 h-5 text-purple-400 transition-transform"></i>
+                        </button>
+                        <div class="faq-content hidden mt-3 pt-3 border-t border-slate-800/80 text-xs sm:text-sm text-slate-300 leading-relaxed">
+                            Không hề! Dzota trang bị công nghệ Service Worker Offline thế hệ mới. Khi bạn đã nạp đề thi, toàn bộ câu hỏi và đáp án được bảo vệ an toàn ngay trong bộ nhớ máy. Bạn vẫn có thể tiếp tục làm bài và kết quả sẽ tự động đồng bộ khi có mạng trở lại.
+                        </div>
+                    </div>
+
+                    <!-- FAQ 4 -->
+                    <div class="glass-card rounded-2xl p-5 border border-slate-800 transition">
+                        <button onclick="toggleFaq(this)" class="w-full text-left font-black text-sm sm:text-base text-white flex items-center justify-between gap-3 cursor-pointer">
+                            <span>4. Tài liệu Ebook và kho đề thi có được cập nhật thường xuyên không?</span>
+                            <i data-lucide="chevron-down" class="w-5 h-5 text-purple-400 transition-transform"></i>
+                        </button>
+                        <div class="faq-content hidden mt-3 pt-3 border-t border-slate-800/80 text-xs sm:text-sm text-slate-300 leading-relaxed">
+                            Có! Tác giả Lê Nhật Duy (Y Khoa K26) liên tục cập nhật các bộ đề thi mới nhất từ các trường Y Dược hàng đầu Việt Nam. Khi bạn đã sở hữu tài khoản VIP, mọi đợt cập nhật đều hoàn toàn MIỄN PHÍ trọn đời.
+                        </div>
+                    </div>
+
+                    <!-- FAQ 5 -->
+                    <div class="glass-card rounded-2xl p-5 border border-slate-800 transition">
+                        <button onclick="toggleFaq(this)" class="w-full text-left font-black text-sm sm:text-base text-white flex items-center justify-between gap-3 cursor-pointer">
+                            <span>5. Làm thế nào để nâng cấp Gói VIP hoặc mua trọn bộ tài liệu?</span>
+                            <i data-lucide="chevron-down" class="w-5 h-5 text-purple-400 transition-transform"></i>
+                        </button>
+                        <div class="faq-content hidden mt-3 pt-3 border-t border-slate-800/80 text-xs sm:text-sm text-slate-300 leading-relaxed">
+                            Bạn chỉ cần nhắn tin trực tiếp qua Zalo Admin Lê Nhật Duy theo số điện thoại <strong>0355 926 970</strong>. Tài khoản sẽ được kích hoạt quyền VIP ngay trong vòng 2 phút để bạn bắt đầu ôn luyện tức thì!
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ─────────────────────────────────────────────────────────────
+             11. FINAL HIGH-CONVERTING CTA (CLONE TỪ KHÁNH HÙNG ACADEMY)
+        ───────────────────────────────────────────────────────────── -->
+        <section class="py-20 relative overflow-hidden bg-gradient-to-r from-purple-950 via-indigo-950 to-slate-950 border-t border-purple-500/30">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 text-center relative z-10">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-black mb-6">
+                    <i data-lucide="flame" class="w-4 h-4 text-amber-400 fill-amber-400"></i>
+                    <span>ĐỪNG TRÌ HOÃN NỮA — KỲ THI ĐANG ĐẾN RẤT GẦN!</span>
+                </div>
+                <h2 class="text-3xl sm:text-5xl font-black text-white font-display leading-tight">
+                    HÃY BẮT ĐẦU ÔN LUYỆN CÙNG <span class="text-gradient-purple">DZOTA NGAY HÔM NAY!</span>
+                </h2>
+                <p class="text-slate-300 text-sm sm:text-lg max-w-2xl mx-auto mt-4 font-medium">
+                    Gia nhập hơn 45.000 sinh viên & bác sĩ tương lai. Tự tin bước vào phòng thi và giành trọn điểm 9–10 trong tầm tay!
+                </p>
+
+                <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <button
+                        onclick="openAuthModal('register')"
+                        class="w-full sm:w-auto btn-cta-khanh px-10 py-4 rounded-2xl font-black text-base text-white cursor-pointer shadow-xl shadow-purple-600/40"
+                    >
+                        TẠO TÀI KHOẢN & VÀO THI MIỄN PHÍ NGAY
+                    </button>
+                    <a
+                        href="https://zalo.me/0355926970"
+                        target="_blank"
+                        rel="noreferrer"
+                        class="w-full sm:w-auto px-8 py-4 rounded-2xl font-black text-base text-slate-200 hover:text-white bg-slate-900 border border-slate-700 transition flex items-center justify-center gap-2 no-underline"
+                    >
+                        <i data-lucide="message-circle" class="w-5 h-5 text-amber-400"></i>
+                        <span>Chat Trực Tiếp Với Nhật Duy</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─────────────────────────────────────────────────────────────
+             12. FOOTER CHUYÊN NGHIỆP & BẢN QUYỀN
+        ───────────────────────────────────────────────────────────── -->
+        <footer class="bg-[#03060D] border-t border-white/10 py-12 text-slate-400 text-xs">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8 pb-12 border-b border-white/5">
+                    
+                    <!-- Col 1: Brand Info -->
+                    <div class="space-y-4 md:col-span-1">
+                        <div class="flex items-center gap-3">
+                            <img src="/logo-dzota.png" alt="Dzota" class="w-8 h-8 object-contain" />
+                            <span class="text-xl font-black text-white font-display">Dzota.Edu</span>
+                        </div>
+                        <p class="text-slate-400 leading-relaxed text-xs">
+                            Hệ sinh thái khảo thí thông minh và đấu trường chạy trạm DYNEX OSCE y khoa hàng đầu Việt Nam.
+                        </p>
+                        <div class="text-[11px] text-purple-400 font-bold">
+                            Tác giả & Chủ nhiệm dự án: <strong>Lê Nhật Duy (Y Khoa K26)</strong>
+                        </div>
+                    </div>
+
+                    <!-- Col 2: Hệ thống tính năng -->
+                    <div class="space-y-2.5">
+                        <h4 class="text-xs font-black uppercase tracking-wider text-white">Tính Năng Cốt Lõi</h4>
+                        <ul class="space-y-1.5">
+                            <li><a href="/dynex" class="hover:text-purple-400 transition no-underline">Đấu Trường DYNEX OSCE</a></li>
+                            <li><a href="/creator" class="hover:text-purple-400 transition no-underline">Trình Tạo Đề Dzota Creator</a></li>
+                            <li><a href="/creator?view=bank" class="hover:text-purple-400 transition no-underline">Thư Viện Ngân Hàng Câu Hỏi</a></li>
+                            <li><a href="/notebook" class="hover:text-purple-400 transition no-underline">NoteBook ND Trợ Lý AI</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Col 3: Hỗ trợ & Khóa học -->
+                    <div class="space-y-2.5">
+                        <h4 class="text-xs font-black uppercase tracking-wider text-white">Học Viên & Giáo Trình</h4>
+                        <ul class="space-y-1.5">
+                            <li><a href="#hall-of-fame" class="hover:text-purple-400 transition no-underline">Đại Sảnh Danh Vọng</a></li>
+                            <li><a href="#curriculum" class="hover:text-purple-400 transition no-underline">Kho Đề Thi Y Khoa K47/K48</a></li>
+                            <li><a href="#guarantee" class="hover:text-purple-400 transition no-underline">03 Cam Kết Chất Lượng</a></li>
+                            <li><a href="#faq" class="hover:text-purple-400 transition no-underline">Giải Đáp Thắc Mắc (FAQ)</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Col 4: Hotline & Liên hệ -->
+                    <div class="space-y-2.5">
+                        <h4 class="text-xs font-black uppercase tracking-wider text-white">Liên Hệ & Bản Quyền</h4>
+                        <p class="text-xs text-slate-300">Hotline Kỹ Thuật / Zalo VIP:</p>
+                        <p class="text-base font-black text-amber-400 font-mono">0355 926 970</p>
+                        <p class="text-[11px] text-slate-500">Phục vụ sinh viên & giảng viên 24/7 trên toàn quốc.</p>
+                    </div>
+
+                </div>
+
+                <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
+                    <p>© 2026 Dzota Education. Bản quyền sở hữu trí tuệ thuộc về <strong>Lê Nhật Duy (Y Khoa K26)</strong>.</p>
+                    <p class="font-signature text-lg text-purple-400">Le Nhat Duy</p>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         13. MODAL ĐĂNG NHẬP / ĐĂNG KÝ BENTO (GOOGLE OAUTH & TÀI KHOẢN)
+    ───────────────────────────────────────────────────────────── -->
+    <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden transition-all duration-300">
+        <div class="glass-card bg-[#0F172A] rounded-3xl max-w-md w-full p-6 sm:p-8 border border-white/10 shadow-2xl relative animate-scaleUp">
+            
+            <!-- Close Button -->
+            <button onclick="closeAuthModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white transition cursor-pointer p-1">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Brand Logo in Modal -->
+            <div class="text-center mb-6">
+                <img src="/logo-dzota.png" alt="Dzota" class="w-12 h-12 mx-auto object-contain mb-2" />
+                <h3 class="text-xl font-black text-white font-display">Gia Nhập Dzota Education</h3>
+                <p class="text-xs text-slate-400 mt-1">Đăng nhập để vào ngay phòng thi chạy trạm DYNEX OSCE</p>
+            </div>
+
+            <!-- Tab Switcher (Đăng Nhập / Đăng Ký) -->
+            <div class="flex items-center p-1 rounded-2xl bg-slate-950 border border-slate-800 mb-6">
+                <button id="tab-btn-login" onclick="switchAuthTab('login')" class="flex-1 py-2 rounded-xl text-xs font-black transition cursor-pointer bg-purple-600 text-white shadow-sm">
+                    Đăng Nhập
+                </button>
+                <button id="tab-btn-register" onclick="switchAuthTab('register')" class="flex-1 py-2 rounded-xl text-xs font-black transition cursor-pointer text-slate-400 hover:text-white">
+                    Đăng Ký
+                </button>
+            </div>
+
+            <!-- Google One-Click Login Button -->
+            <button
+                type="button"
+                onclick="handleGoogleSignIn()"
+                class="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-3 transition shadow-md cursor-pointer mb-5"
+            >
+                <svg class="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                <span>Tiếp tục nhanh với Google</span>
+            </button>
+
+            <!-- Divider -->
+            <div class="flex items-center gap-3 my-5">
+                <div class="flex-1 h-px bg-slate-800"></div>
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Hoặc tài khoản Dzota</span>
+                <div class="flex-1 h-px bg-slate-800"></div>
+            </div>
+
+            <!-- Account Login Form -->
+            <form onsubmit="handleAccountFormSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1.5">Tên đăng nhập hoặc Gmail</label>
+                    <input
+                        type="text"
+                        id="login-username"
+                        required
+                        placeholder="Ví dụ: nhatduy hoặc duy@gmail.com"
+                        class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500 transition"
+                    />
                 </div>
                 <div>
-                    <div class="font-display font-black text-white text-base">Dzota Education</div>
-                    <div class="text-xs text-slate-400">Hệ sinh thái Khảo thí & DYNEX Y Khoa Thông Minh</div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1.5">Mật khẩu</label>
+                    <input
+                        type="password"
+                        id="login-password"
+                        required
+                        placeholder="Nhập mật khẩu..."
+                        class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500 transition"
+                    />
                 </div>
+
+                <button
+                    type="submit"
+                    id="btn-submit-account"
+                    class="w-full btn-cta-khanh py-3.5 rounded-xl font-black text-xs sm:text-sm text-white transition cursor-pointer mt-2"
+                >
+                    Đăng Nhập Vào Hệ Thống
+                </button>
+            </form>
+
+            <div class="mt-4 text-center">
+                <a href="https://zalo.me/0355926970?text=Tôi%20cần%20hỗ%20trợ%20tài%20khoản%20Dzota" target="_blank" rel="noreferrer" class="text-xs text-purple-400 hover:text-purple-300 transition font-medium no-underline">
+                    Quên mật khẩu hoặc cần cấp quyền nhanh qua Zalo?
+                </a>
             </div>
 
-            <div class="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400 font-semibold">
-                <a href="/dashboard" class="hover:text-white transition-colors no-underline">Dashboard</a>
-                <a href="/creator" class="hover:text-white transition-colors no-underline">Soạn Đề Thi</a>
-                <a href="/creator?view=bank" class="hover:text-white transition-colors no-underline">Ngân Hàng Câu Hỏi</a>
-                <a href="/dynex" target="_blank" class="hover:text-white transition-colors no-underline">DYNEX Y Khoa</a>
-                <a href="/notebook" class="hover:text-white transition-colors no-underline">NoteBook ND</a>
-            </div>
-
-            <div class="text-xs text-slate-400">
-                © 2026 Dzota Education • Bản quyền thuộc về <strong class="text-slate-200">Lê Nhật Duy</strong>
-            </div>
         </div>
-    </footer>
+    </div>
 
-    <!-- Toast Notification Container -->
-    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
-
-    <!-- ===================================================================== -->
-    <!-- CLIENT APPLICATION LOGIC                                            -->
-    <!-- ===================================================================== -->
+    <!-- ─────────────────────────────────────────────────────────────
+         14. JAVASCRIPT LOGIC & THREE.JS 3D BACKGROUND
+        ───────────────────────────────────────────────────────────── -->
     <script>
-        // --- 1. STATE & INITIALIZATION ---
-        let googleClientId = '900284408463-uie2edl4gq37pkk81a7bkhuud3fooeh2.apps.googleusercontent.com';
-        let currentUserSession = window.__DZOTA_SESSION__ || null;
-        let currentView = 'landing';
-
-        // --- 2. TOAST SYSTEM ---
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            if (!container) return;
-            const toast = document.createElement('div');
-            toast.className = `px-4 py-3 rounded-2xl text-xs font-bold shadow-2xl flex items-center gap-2.5 pointer-events-auto transform transition-all duration-300 translate-y-2 opacity-0 ${
-                type === 'error' 
-                    ? 'bg-rose-950/90 text-rose-200 border border-rose-500/40' 
-                    : type === 'success' 
-                        ? 'bg-emerald-950/90 text-emerald-200 border border-emerald-500/40' 
-                        : 'bg-slate-900/90 text-slate-100 border border-slate-700/80 backdrop-blur-md'
-            }`;
-            toast.innerHTML = `<span>${message}</span>`;
-            container.appendChild(toast);
-            requestAnimationFrame(() => {
-                toast.classList.remove('translate-y-2', 'opacity-0');
-            });
-            setTimeout(() => {
-                toast.classList.add('translate-y-2', 'opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }, 3500);
+        // Init Lucide Icons
+        if (window.lucide) {
+            lucide.createIcons();
         }
 
-        // --- 3. VIEW SWITCHER (LANDING <-> LOGIN) ---
-        function switchView(viewName, e) {
-            if (e && e.preventDefault) e.preventDefault();
-            const landingEl = document.getElementById('view-landing');
-            const loginEl = document.getElementById('view-login');
-
-            pulseBoost = 1.6;
-
-            if (viewName === 'login') {
-                currentView = 'login';
-                loginEl.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
-                try { window.history.pushState({ view: 'login' }, '', '/login'); } catch (err) {}
-            } else {
-                currentView = 'landing';
-                loginEl.classList.add('hidden');
-                document.body.style.overflow = '';
-                try { window.history.pushState({ view: 'landing' }, '', '/'); } catch (err) {}
-            }
-            if (window.lucide) lucide.createIcons();
-        }
-
-        // --- 4. AUTH TAB SWITCHER (GOOGLE <-> ACCOUNT) ---
-        function switchAuthTab(tab) {
-            const btnGoogle = document.getElementById('tab-btn-google');
-            const btnAccount = document.getElementById('tab-btn-account');
-            const panelGoogle = document.getElementById('auth-panel-google');
-            const panelAccount = document.getElementById('auth-panel-account');
-
-            if (tab === 'google') {
-                panelGoogle.classList.remove('hidden');
-                panelAccount.classList.add('hidden');
-                btnGoogle.className = 'py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer bg-indigo-600 text-white shadow-md shadow-indigo-600/30';
-                btnAccount.className = 'py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer text-slate-400 hover:text-white';
-            } else {
-                panelGoogle.classList.add('hidden');
-                panelAccount.classList.remove('hidden');
-                btnAccount.className = 'py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer bg-indigo-600 text-white shadow-md shadow-indigo-600/30';
-                btnGoogle.className = 'py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer text-slate-400 hover:text-white';
-                setTimeout(() => {
-                    const u = document.getElementById('login-username');
-                    if (u) u.focus();
-                }, 50);
-            }
-            if (window.lucide) lucide.createIcons();
-        }
-
-        function togglePasswordVisibility() {
-            const pwd = document.getElementById('login-password');
-            const icon = document.getElementById('eye-icon');
-            if (!pwd || !icon) return;
-            if (pwd.type === 'password') {
-                pwd.type = 'text';
-                icon.setAttribute('data-lucide', 'eye-off');
-            } else {
-                pwd.type = 'password';
-                icon.setAttribute('data-lucide', 'eye');
-            }
-            if (window.lucide) lucide.createIcons();
-        }
-
-        // --- 5. AUTHENTICATION HANDLERS ---
-        async function fetchGoogleConfig() {
+        // --- 1. THREE.JS 3D WEBGL INTERACTIVE PARTICLES BACKGROUND ---
+        (function initThreeBackground() {
             try {
-                const res = await fetch('/api/auth/google-config');
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && data.clientId) googleClientId = data.clientId.trim();
+                const canvas = document.getElementById('webgl-canvas');
+                if (!canvas || !window.THREE) return;
+
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+                camera.position.z = 400;
+
+                const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+                // Medical Particle Nebula Nodes
+                const particlesCount = window.innerWidth < 768 ? 400 : 900;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particlesCount * 3);
+                const colors = new Float32Array(particlesCount * 3);
+
+                // Purple & Amber/Indigo Color Palette
+                const colorPalette = [
+                    new THREE.Color(0x7C0FD1), // Khanh Hung Purple
+                    new THREE.Color(0xA855F7), // Light Purple
+                    new THREE.Color(0x4F46E5), // Indigo
+                    new THREE.Color(0xF59E0B)  // Gold
+                ];
+
+                for (let i = 0; i < particlesCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 1000;
+                    positions[i * 3 + 1] = (Math.random() - 0.5) * 800;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 600;
+
+                    const clr = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+                    colors[i * 3] = clr.r;
+                    colors[i * 3 + 1] = clr.g;
+                    colors[i * 3 + 2] = clr.b;
                 }
-            } catch (e) {}
-        }
 
-        async function checkExistingSession() {
-            try {
-                if (currentUserSession) {
-                    updateNavForLoggedInUser(currentUserSession);
-                    return;
-                }
-                const res = await fetch('/api/auth/me');
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && data.authenticated && data.user) {
-                        currentUserSession = data.user;
-                        updateNavForLoggedInUser(data.user);
-                    }
-                }
-            } catch (e) {}
-        }
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-        function updateNavForLoggedInUser(user) {
-            const navBtn = document.getElementById('nav-auth-btn');
-            const navText = document.getElementById('nav-auth-text');
-            if (navBtn && navText) {
-                navText.textContent = 'Vào Dashboard';
-                navBtn.onclick = () => { window.location.href = '/dashboard'; };
-            }
-        }
-
-        function handleGoogleLoginClick() {
-            if (window.google?.accounts?.oauth2) {
-                try {
-                    const client = window.google.accounts.oauth2.initTokenClient({
-                        client_id: googleClientId,
-                        scope: 'email profile openid',
-                        callback: async (tokenResponse) => {
-                            if (tokenResponse?.error) {
-                                if (tokenResponse.error !== 'popup_closed_by_user') {
-                                    showToast('Đăng nhập Google thất bại: ' + tokenResponse.error, 'error');
-                                }
-                                return;
-                            }
-                            if (tokenResponse?.access_token) {
-                                showToast('Đang kết nối tài khoản Google...', 'info');
-                                try {
-                                    const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                                        headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
-                                    });
-                                    const userInfo = await userRes.json();
-                                    const loginRes = await fetch('/api/auth/login', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ googleUser: userInfo })
-                                    });
-                                    const loginData = await loginRes.json();
-                                    if (loginRes.ok) {
-                                        showToast('Đăng nhập Google thành công! Đang chuyển hướng...', 'success');
-                                        setTimeout(() => { window.location.href = '/dashboard'; }, 400);
-                                    } else {
-                                        showToast(loginData.error || 'Đăng nhập Google thất bại', 'error');
-                                    }
-                                } catch (err) {
-                                    showToast('Không thể lấy thông tin tài khoản Google.', 'error');
-                                }
-                            }
-                        }
-                    });
-                    client.requestAccessToken({ prompt: 'select_account' });
-                    return;
-                } catch (e) {
-                    console.error('Error initTokenClient:', e);
-                }
-            }
-            showToast('Đang khởi tạo kết nối Google, vui lòng thử lại...');
-        }
-
-        async function handleAccountFormSubmit(e) {
-            e.preventDefault();
-            const usernameInput = document.getElementById('login-username');
-            const passwordInput = document.getElementById('login-password');
-            const btnSubmit = document.getElementById('btn-submit-account');
-
-            const username = usernameInput ? usernameInput.value.trim() : '';
-            const password = passwordInput ? passwordInput.value : '';
-
-            if (!username || !password) {
-                showToast('Vui lòng điền đầy đủ tài khoản và mật khẩu', 'error');
-                return;
-            }
-
-            if (btnSubmit) {
-                btnSubmit.disabled = true;
-                btnSubmit.classList.add('opacity-70');
-            }
-
-            showToast('Đang kiểm tra thông tin...', 'info');
-            try {
-                const res = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
+                const material = new THREE.PointsMaterial({
+                    size: 4,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.75,
+                    blending: THREE.AdditiveBlending
                 });
-                const data = await res.json();
-                if (res.ok) {
-                    showToast('Đăng nhập thành công! Đang chuyển hướng...', 'success');
-                    setTimeout(() => { window.location.href = '/dashboard'; }, 400);
-                } else {
-                    showToast(data.error || 'Tài khoản hoặc mật khẩu không chính xác', 'error');
+
+                const particleSystem = new THREE.Points(geometry, material);
+                scene.add(particleSystem);
+
+                // Interactive Mouse Movement
+                let mouseX = 0;
+                let mouseY = 0;
+                window.addEventListener('mousemove', (e) => {
+                    mouseX = (e.clientX - window.innerWidth / 2) * 0.05;
+                    mouseY = (e.clientY - window.innerHeight / 2) * 0.05;
+                }, { passive: true });
+
+                // Render Loop
+                function animate() {
+                    requestAnimationFrame(animate);
+                    particleSystem.rotation.y += 0.0015;
+                    particleSystem.rotation.x += 0.0008;
+
+                    camera.position.x += (mouseX - camera.position.x) * 0.02;
+                    camera.position.y += (-mouseY - camera.position.y) * 0.02;
+                    camera.lookAt(scene.position);
+
+                    renderer.render(scene, camera);
                 }
+                animate();
+
+                // Window Resize
+                window.addEventListener('resize', () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                });
             } catch (err) {
-                showToast('Lỗi kết nối máy chủ.', 'error');
-            } finally {
-                if (btnSubmit) {
-                    btnSubmit.disabled = false;
-                    btnSubmit.classList.remove('opacity-70');
-                }
+                console.warn('Three.js initialization skipped:', err);
+            }
+        })();
+
+        // --- 2. FAQ ACCORDION LOGIC ---
+        function toggleFaq(btn) {
+            const content = btn.nextElementSibling;
+            const icon = btn.querySelector('i');
+            const isHidden = content.classList.contains('hidden');
+            
+            document.querySelectorAll('.faq-content').forEach(c => c.classList.add('hidden'));
+            document.querySelectorAll('#faq button i').forEach(i => i.style.transform = 'rotate(0deg)');
+
+            if (isHidden) {
+                content.classList.remove('hidden');
+                if (icon) icon.style.transform = 'rotate(180deg)';
             }
         }
 
-        // --- 6. INTERACTIVE DEMO QUIZ WIDGET ---
+        // --- 3. DEMO QUIZ INTERACTIVE LOGIC ---
         let demoTimerCount = 20;
         let demoTimerInterval = null;
 
@@ -1120,16 +1318,23 @@
                 }
                 if (demoTimerCount <= 0) {
                     clearInterval(demoTimerInterval);
+                    if (timerEl) timerEl.textContent = 'HẾT GIỜ (CHUYỂN TRẠM)';
                 }
             }, 1000);
+
+            // Reset buttons
+            const allBtns = document.querySelectorAll('.demo-option-btn');
+            allBtns.forEach(b => {
+                b.disabled = false;
+                b.classList.remove('bg-emerald-950/80', 'border-emerald-500', 'bg-rose-950/80', 'border-rose-500');
+            });
+            const feedback = document.getElementById('demo-feedback');
+            if (feedback) feedback.classList.add('hidden');
         }
 
         function handleDemoAnswer(btn, isCorrect, letter) {
             const allBtns = document.querySelectorAll('.demo-option-btn');
-            allBtns.forEach(b => {
-                b.disabled = true;
-                b.classList.remove('bg-emerald-950/80', 'border-emerald-500', 'bg-rose-950/80', 'border-rose-500');
-            });
+            allBtns.forEach(b => b.disabled = true);
 
             const feedback = document.getElementById('demo-feedback');
             const fTitle = document.getElementById('demo-feedback-title');
@@ -1138,428 +1343,145 @@
             if (isCorrect) {
                 btn.classList.add('bg-emerald-950/80', 'border-emerald-500');
                 if (window.confetti) {
-                    confetti({
-                        particleCount: 50,
-                        spread: 60,
-                        origin: { y: 0.6 }
-                    });
+                    confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
                 }
-                fTitle.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i><span class="text-emerald-400">Chính xác tuyệt đối! Đáp án đúng: ${letter}</span>`;
-                fDesc.textContent = "Mạc treo đại tràng ngang (Transverse Mesocolon) gắn kết đại tràng ngang với thành bụng sau, là mốc giải phẫu phân chia ổ phúc mạc thành tầng trên và tầng dưới đại tràng ngang.";
+                fTitle.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i><span class="text-emerald-400">Chính xác tuyệt đối! Đáp án đúng: [${letter}] Mạc treo đại tràng ngang</span>`;
+                fDesc.textContent = "Mạc treo đại tràng ngang gắn kết đại tràng ngang với thành bụng sau, là mốc giải phẫu phân chia ổ phúc mạc thành tầng trên và tầng dưới đại tràng ngang. Bạn có phản xạ nhận diện tiêu bản rất tốt!";
             } else {
                 btn.classList.add('bg-rose-950/80', 'border-rose-500');
-                // Highlight correct button
-                allBtns[1].classList.add('bg-emerald-950/80', 'border-emerald-500');
-                fTitle.innerHTML = `<i data-lucide="x-circle" class="w-4 h-4 text-rose-400"></i><span class="text-rose-400">Chưa chính xác! Đáp án đúng là B</span>`;
-                fDesc.textContent = "Mạc treo đại tràng ngang mới là mốc giải phẫu chuẩn xác chia khoang phúc mạc thành tầng trên và tầng dưới.";
+                allBtns[1].classList.add('bg-emerald-950/80', 'border-emerald-500'); // Highlight correct option B
+                fTitle.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4 text-rose-400"></i><span class="text-rose-400">Rất tiếc! Đáp án đúng phải là [B] Mạc treo đại tràng ngang</span>`;
+                fDesc.textContent = "Hãy chú ý mạc treo này bắt chéo mặt trước phần dưới tá tràng và đầu tụy. Đừng lo lắng, luyện thêm các trạm trên Dzota sẽ giúp bạn khắc sâu 100%!";
             }
-
-            if (feedback) feedback.classList.remove('hidden');
-            if (window.lucide) lucide.createIcons();
-        }
-
-        function resetDemoQuiz() {
-            const allBtns = document.querySelectorAll('.demo-option-btn');
-            allBtns.forEach(b => {
-                b.disabled = false;
-                b.classList.remove('bg-emerald-950/80', 'border-emerald-500', 'bg-rose-950/80', 'border-rose-500');
-            });
-            const feedback = document.getElementById('demo-feedback');
-            if (feedback) feedback.classList.add('hidden');
-            startDemoTimer();
-        }
-
-        // =====================================================================
-        // THREE.JS 3D CYBER-ACADEMIC ENGINE (THRED.JS DYNAMIC 3D BACKGROUND)
-        // =====================================================================
-        let scene, camera, renderer, worldGroup;
-        let academicCore, capMeshGroup, orbitalRings, floatingNodesGroup;
-        let particleField, particleMaterial;
-        let sapphireMat, emeraldMat, wireMat, goldMat;
-        let pointerX = 0, pointerY = 0;
-        let targetPointerX = 0, targetPointerY = 0;
-        let scrollProgressRatio = 0;
-        let pulseBoost = 1.0;
-        let isMobileDevice = typeof window !== 'undefined' && window.innerWidth < 768;
-
-        const waypoints = [
-            // 0: Hero section: Academic core centered & proud, camera pulled back
-            { camX: 0, camY: 0, camZ: isMobileDevice ? 26 : 21, grpX: 0, grpY: 0, grpZ: 0, rotY: 0, rotZ: 0 },
-            // 1: Features / Architecture: Shift world group right, camera pans slightly left
-            { camX: -3.5, camY: -1.5, camZ: isMobileDevice ? 24 : 19, grpX: 4.5, grpY: -1.2, grpZ: 1.5, rotY: 1.8, rotZ: 0.1 },
-            // 2: DYNEX OSCE & Medical Matrix: Deep perspective tilt & emerald orbital accent
-            { camX: 3.5, camY: -3.0, camZ: isMobileDevice ? 25 : 18.5, grpX: -4.0, grpY: -2.0, grpZ: 2.0, rotY: 3.4, rotZ: -0.15 },
-            // 3: Stats & Testimonials: Dynamic high-angle vantage point
-            { camX: 0, camY: -4.5, camZ: isMobileDevice ? 23 : 18, grpX: 0, grpY: -3.0, grpZ: 1.0, rotY: 5.0, rotZ: 0.05 },
-            // 4: Footer: Gentle return
-            { camX: 0, camY: -6.0, camZ: isMobileDevice ? 26 : 20, grpX: 0, grpY: -4.0, grpZ: 0.5, rotY: 6.28, rotZ: 0 }
-        ];
-
-        const loginWaypoint = {
-            camX: 0, camY: 0.4, camZ: isMobileDevice ? 22 : 16.5,
-            grpX: 0, grpY: 0.2, grpZ: -1.5,
-            rotY: 1.45, rotZ: 0.08
-        };
-
-        function lerp(a, b, t) {
-            return a + (b - a) * t;
-        }
-
-        function getInterpolatedWaypoint(ratio) {
-            if (currentView === 'login') return loginWaypoint;
-            const totalSegments = waypoints.length - 1;
-            const scaled = Math.max(0, Math.min(ratio, 1)) * totalSegments;
-            const idx = Math.min(Math.floor(scaled), totalSegments - 1);
-            const frac = scaled - idx;
-            const smoothT = frac * frac * (3 - 2 * frac);
-
-            const w1 = waypoints[idx];
-            const w2 = waypoints[idx + 1];
-            return {
-                camX: lerp(w1.camX, w2.camX, smoothT),
-                camY: lerp(w1.camY, w2.camY, smoothT),
-                camZ: lerp(w1.camZ, w2.camZ, smoothT),
-                grpX: lerp(w1.grpX, w2.grpX, smoothT),
-                grpY: lerp(w1.grpY, w2.grpY, smoothT),
-                grpZ: lerp(w1.grpZ, w2.grpZ, smoothT),
-                rotY: lerp(w1.rotY, w2.rotY, smoothT),
-                rotZ: lerp(w1.rotZ, w2.rotZ, smoothT)
-            };
-        }
-
-        function initThreeJS() {
-            const canvas = document.getElementById('webgl-canvas');
-            if (!canvas || typeof THREE === 'undefined') return;
-
-            isMobileDevice = window.innerWidth < 768;
-
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 0, isMobileDevice ? 26 : 21);
-
-            renderer = new THREE.WebGLRenderer({
-                canvas: canvas,
-                alpha: true,
-                antialias: !isMobileDevice,
-                powerPreference: 'high-performance'
-            });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileDevice ? 1.5 : 2));
-
-            // Ambient & Directional Lights
-            const isDark = document.documentElement.classList.contains('dark');
-            const ambLight = new THREE.AmbientLight(isDark ? 0xffffff : 0x8899bb, isDark ? 0.9 : 1.2);
-            scene.add(ambLight);
-
-            const dirLight = new THREE.DirectionalLight(0x6366f1, 1.8);
-            dirLight.position.set(16, 22, 18);
-            scene.add(dirLight);
-
-            const accentLight = new THREE.PointLight(0x10b981, 1.4, 50);
-            accentLight.position.set(-14, -10, 12);
-            scene.add(accentLight);
-
-            const cyanLight = new THREE.PointLight(0x38bdf8, 1.2, 50);
-            cyanLight.position.set(14, 12, 10);
-            scene.add(cyanLight);
-
-            worldGroup = new THREE.Group();
-            scene.add(worldGroup);
-
-            // High-Tier PBR Materials
-            sapphireMat = new THREE.MeshPhysicalMaterial({
-                color: isDark ? 0x4f46e5 : 0x3b82f6,
-                metalness: 0.25,
-                roughness: 0.18,
-                transparent: true,
-                opacity: isDark ? 0.78 : 0.65,
-                clearcoat: 0.95
-            });
-
-            emeraldMat = new THREE.MeshPhysicalMaterial({
-                color: 0x10b981,
-                metalness: 0.2,
-                roughness: 0.2,
-                transparent: true,
-                opacity: isDark ? 0.8 : 0.7
-            });
-
-            wireMat = new THREE.MeshBasicMaterial({
-                color: isDark ? 0x818cf8 : 0x6366f1,
-                wireframe: true,
-                transparent: true,
-                opacity: isDark ? 0.35 : 0.22
-            });
-
-            goldMat = new THREE.MeshStandardMaterial({
-                color: 0xf59e0b,
-                metalness: 0.7,
-                roughness: 0.2
-            });
-
-            // 1. Central Academic Core & 3D Graduation Cap
-            academicCore = new THREE.Group();
-
-            const geoCore = new THREE.IcosahedronGeometry(2.4, 1);
-            academicCore.add(new THREE.Mesh(geoCore, wireMat));
-
-            const innerCrystal = new THREE.Mesh(new THREE.OctahedronGeometry(1.4, 0), sapphireMat);
-            academicCore.add(innerCrystal);
-
-            capMeshGroup = new THREE.Group();
-            const board = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.2, 4.2), sapphireMat);
-            board.rotation.y = Math.PI / 4;
-            capMeshGroup.add(board);
-
-            const skullCap = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.5, 0.9, 6), wireMat);
-            skullCap.position.y = -0.6;
-            capMeshGroup.add(skullCap);
-
-            const tassel = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.14, 1.75, 8), goldMat);
-            tassel.position.set(1.85, -0.75, 0.95);
-            tassel.rotation.z = -0.25;
-            capMeshGroup.add(tassel);
-
-            capMeshGroup.position.y = 3.2;
-            capMeshGroup.rotation.set(0.2, 0.25, -0.08);
-            academicCore.add(capMeshGroup);
-
-            worldGroup.add(academicCore);
-
-            // 2. Orbital Knowledge Rings
-            orbitalRings = new THREE.Group();
-            const r1 = new THREE.Mesh(new THREE.TorusGeometry(4.5, 0.04, 12, 90), wireMat);
-            r1.rotation.x = Math.PI / 2.5;
-            orbitalRings.add(r1);
-
-            const r2 = new THREE.Mesh(new THREE.TorusGeometry(5.8, 0.035, 12, 90), emeraldMat);
-            r2.rotation.y = Math.PI / 3;
-            r2.rotation.x = Math.PI / 4;
-            orbitalRings.add(r2);
-
-            worldGroup.add(orbitalRings);
-
-            // 3. Floating Knowledge Polyhedrons (Universal academic symbols)
-            floatingNodesGroup = new THREE.Group();
-            const nodeGeos = [
-                new THREE.OctahedronGeometry(0.55, 0),
-                new THREE.DodecahedronGeometry(0.5, 0),
-                new THREE.IcosahedronGeometry(0.48, 0)
-            ];
-            for (let i = 0; i < 8; i++) {
-                const angle = (i / 8) * Math.PI * 2;
-                const radius = 7.5 + (i % 2) * 1.5;
-                const mesh = new THREE.Mesh(
-                    nodeGeos[i % nodeGeos.length],
-                    i % 3 === 0 ? sapphireMat : (i % 3 === 1 ? emeraldMat : goldMat)
-                );
-                mesh.position.set(
-                    Math.cos(angle) * radius,
-                    Math.sin(i * 1.7) * 3.2,
-                    Math.sin(angle) * radius * 0.6
-                );
-                floatingNodesGroup.add(mesh);
-            }
-            worldGroup.add(floatingNodesGroup);
-
-            // 4. Adaptive Cyber Starfield / Particle Constellation
-            const particleCount = isMobileDevice ? 650 : 1400;
-            const pGeo = new THREE.BufferGeometry();
-            const pPos = new Float32Array(particleCount * 3);
-            const pCol = new Float32Array(particleCount * 3);
-
-            const colBlue = new THREE.Color(0x38bdf8);
-            const colEmerald = new THREE.Color(0x10b981);
-            const colIndigo = new THREE.Color(0x818cf8);
-
-            for (let i = 0; i < particleCount; i++) {
-                const i3 = i * 3;
-                pPos[i3] = (Math.random() - 0.5) * 65;
-                pPos[i3 + 1] = (Math.random() - 0.5) * 45;
-                pPos[i3 + 2] = (Math.random() - 0.5) * 40 - 5;
-
-                const c = i % 3 === 0 ? colBlue : (i % 3 === 1 ? colEmerald : colIndigo);
-                pCol[i3] = c.r;
-                pCol[i3 + 1] = c.g;
-                pCol[i3 + 2] = c.b;
-            }
-
-            pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-            pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
-
-            particleMaterial = new THREE.PointsMaterial({
-                size: isMobileDevice ? 0.18 : 0.14,
-                vertexColors: true,
-                transparent: true,
-                opacity: isDark ? 0.85 : 0.65
-            });
-
-            particleField = new THREE.Points(pGeo, particleMaterial);
-            scene.add(particleField);
-
-            // Mouse & Touch Interaction
-            window.addEventListener('mousemove', (e) => {
-                targetPointerX = (e.clientX / window.innerWidth) - 0.5;
-                targetPointerY = (e.clientY / window.innerHeight) - 0.5;
-
-                // 3D Card tilt for hero card
-                if (!isMobileDevice) {
-                    const heroCard = document.getElementById('hero-demo-card');
-                    if (heroCard && currentView === 'landing') {
-                        heroCard.style.transform = `perspective(1000px) rotateX(${-targetPointerY * 6}deg) rotateY(${targetPointerX * 6}deg)`;
-                    }
-                }
-            }, { passive: true });
-
-            window.addEventListener('touchmove', (e) => {
-                if (e.touches.length > 0) {
-                    targetPointerX = (e.touches[0].clientX / window.innerWidth) - 0.5;
-                    targetPointerY = (e.touches[0].clientY / window.innerHeight) - 0.5;
-                }
-            }, { passive: true });
-
-            window.addEventListener('resize', () => {
-                isMobileDevice = window.innerWidth < 768;
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileDevice ? 1.5 : 2));
-            });
-        }
-
-        function updateThreeTheme(isDark) {
-            if (!particleMaterial || !sapphireMat || !wireMat) return;
-            particleMaterial.opacity = isDark ? 0.85 : 0.65;
-            sapphireMat.color.setHex(isDark ? 0x4f46e5 : 0x3b82f6);
-            sapphireMat.opacity = isDark ? 0.78 : 0.65;
-            wireMat.color.setHex(isDark ? 0x818cf8 : 0x6366f1);
-            wireMat.opacity = isDark ? 0.35 : 0.22;
-        }
-
-        let clock = 0;
-        function animateThreeJS() {
-            requestAnimationFrame(animateThreeJS);
-
-            pulseBoost += (1 - pulseBoost) * 0.05;
-            clock += 0.012 * pulseBoost;
-
-            // Dampen mouse pointer with smooth lerp
-            pointerX += (targetPointerX - pointerX) * 0.08;
-            pointerY += (targetPointerY - pointerY) * 0.08;
-
-            const wp = getInterpolatedWaypoint(scrollProgressRatio);
-
-            camera.position.x += (wp.camX + pointerX * 1.8 - camera.position.x) * 0.05;
-            camera.position.y += (wp.camY - pointerY * 1.5 - camera.position.y) * 0.05;
-            camera.position.z += (wp.camZ - camera.position.z) * 0.05;
-
-            if (worldGroup) {
-                worldGroup.position.x += (wp.grpX - worldGroup.position.x) * 0.05;
-                worldGroup.position.y += (wp.grpY - worldGroup.position.y) * 0.05;
-                worldGroup.position.z += (wp.grpZ - worldGroup.position.z) * 0.05;
-
-                worldGroup.rotation.y += (wp.rotY + pointerX * 0.45 - worldGroup.rotation.y) * 0.05;
-                worldGroup.rotation.z += (wp.rotZ - worldGroup.rotation.z) * 0.05;
-                worldGroup.rotation.x += (pointerY * 0.3 - worldGroup.rotation.x) * 0.05;
-            }
-
-            if (academicCore) {
-                academicCore.rotation.y += 0.005 * pulseBoost;
-                academicCore.position.y = Math.sin(clock) * 0.45;
-            }
-
-            if (orbitalRings) {
-                orbitalRings.rotation.z += 0.006 * pulseBoost;
-                orbitalRings.rotation.x += 0.0035 * pulseBoost;
-            }
-
-            if (floatingNodesGroup) {
-                floatingNodesGroup.rotation.y -= 0.004 * pulseBoost;
-                floatingNodesGroup.children.forEach((child, i) => {
-                    child.rotation.x += 0.01;
-                    child.rotation.y += 0.015;
-                    child.position.y += Math.sin(clock + i) * 0.008;
-                });
-            }
-
-            if (particleField) {
-                particleField.rotation.y += 0.0008;
-                particleField.rotation.x += 0.0004;
-            }
-
-            if (renderer && scene && camera) {
-                renderer.render(scene, camera);
+            if (feedback) {
+                feedback.classList.remove('hidden');
+                if (window.lucide) lucide.createIcons();
             }
         }
 
-        // --- 7. THEME TOGGLE (LIGHT / DARK) ---
-        function toggleTheme() {
-            const isDark = document.documentElement.classList.contains('dark');
-            if (isDark) {
-                document.documentElement.classList.remove('dark');
-                try { localStorage.setItem('dzota_theme', 'light'); } catch (e) {}
-                updateThreeTheme(false);
+        // --- 4. AUTH MODAL CONTROL ---
+        function openAuthModal(mode) {
+            const modal = document.getElementById('auth-modal');
+            if (modal) modal.classList.remove('hidden');
+            switchAuthTab(mode || 'login');
+        }
+
+        function closeAuthModal() {
+            const modal = document.getElementById('auth-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function switchAuthTab(tab) {
+            const btnLogin = document.getElementById('tab-btn-login');
+            const btnRegister = document.getElementById('tab-btn-register');
+            const btnSubmit = document.getElementById('btn-submit-account');
+
+            if (tab === 'register') {
+                btnRegister.className = "flex-1 py-2 rounded-xl text-xs font-black transition cursor-pointer bg-purple-600 text-white shadow-sm";
+                btnLogin.className = "flex-1 py-2 rounded-xl text-xs font-black transition cursor-pointer text-slate-400 hover:text-white";
+                if (btnSubmit) btnSubmit.textContent = "Đăng Ký Tài Khoản Mới";
             } else {
-                document.documentElement.classList.add('dark');
-                try { localStorage.setItem('dzota_theme', 'dark'); } catch (e) {}
-                updateThreeTheme(true);
+                btnLogin.className = "flex-1 py-2 rounded-xl text-xs font-black transition cursor-pointer bg-purple-600 text-white shadow-sm";
+                btnRegister.className = "flex-1 py-2 rounded-xl text-xs font-black transition cursor-pointer text-slate-400 hover:text-white";
+                if (btnSubmit) btnSubmit.textContent = "Đăng Nhập Vào Hệ Thống";
             }
-            if (window.lucide) lucide.createIcons();
         }
 
-        // --- 8. LIFECYCLE & ROUTING BOOTSTRAP ---
-        window.addEventListener('DOMContentLoaded', () => {
-            // Check saved theme
+        // Close on background click
+        document.getElementById('auth-modal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'auth-modal') closeAuthModal();
+        });
+
+        // --- 5. GOOGLE OAUTH & ACCOUNT LOGIN API ---
+        let googleClientId = '';
+        async function fetchGoogleConfig() {
             try {
-                const savedTheme = localStorage.getItem('dzota_theme');
-                if (savedTheme === 'light') {
-                    document.documentElement.classList.remove('dark');
-                } else {
-                    document.documentElement.classList.add('dark');
-                }
+                const res = await fetch('/api/auth/google-config');
+                const data = await res.json();
+                if (data.clientId) googleClientId = data.clientId;
             } catch (e) {}
+        }
+        fetchGoogleConfig();
 
-            // Check initial view from URL
-            const path = window.location.pathname;
-            const params = new URLSearchParams(window.location.search);
-            const viewParam = params.get('view');
-            if (path === '/login' || viewParam === 'login' || window.location.hash === '#login') {
-                switchView('login');
-            } else {
-                switchView('landing');
+        function handleGoogleSignIn() {
+            if (window.google?.accounts?.oauth2 && googleClientId) {
+                try {
+                    const client = window.google.accounts.oauth2.initTokenClient({
+                        client_id: googleClientId,
+                        scope: 'email profile openid',
+                        callback: async (tokenResponse) => {
+                            if (tokenResponse?.access_token) {
+                                try {
+                                    const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                                        headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                                    });
+                                    const userInfo = await userRes.json();
+                                    const loginRes = await fetch('/api/auth/login', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ googleUser: userInfo })
+                                    });
+                                    if (loginRes.ok) {
+                                        window.location.href = '/dashboard';
+                                    } else {
+                                        const errData = await loginRes.json();
+                                        alert(errData.error || 'Đăng nhập Google thất bại');
+                                    }
+                                } catch (err) {
+                                    alert('Không thể xác thực thông tin tài khoản Google.');
+                                }
+                            }
+                        }
+                    });
+                    client.requestAccessToken({ prompt: 'select_account' });
+                    return;
+                } catch (e) {
+                    console.error('Google Auth Init Error:', e);
+                }
+            }
+            alert('Đang kết nối cổng Google, vui lòng thử lại sau 2 giây.');
+        }
+
+        async function handleAccountFormSubmit(e) {
+            e.preventDefault();
+            const usernameInput = document.getElementById('login-username');
+            const passwordInput = document.getElementById('login-password');
+            const btnSubmit = document.getElementById('btn-submit-account');
+
+            const username = usernameInput ? usernameInput.value.trim() : '';
+            const password = passwordInput ? passwordInput.value : '';
+
+            if (!username || !password) {
+                alert('Vui lòng điền đầy đủ thông tin');
+                return;
             }
 
-            // Init Lucide Icons
-            if (window.lucide) lucide.createIcons();
-
-            // Background preflight
-            fetchGoogleConfig();
-            checkExistingSession();
-            startDemoTimer();
-
-            // Initialize Three.js 3D Dynamic Engine
-            initThreeJS();
-            animateThreeJS();
-
-            // Scroll progress listener & Three.js Waypoints
-            window.addEventListener('scroll', () => {
-                const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
-                scrollProgressRatio = totalScroll > 0 ? (window.scrollY / totalScroll) : 0;
-                const bar = document.getElementById('scroll-progress-bar');
-                if (bar) bar.style.width = `${scrollProgressRatio * 100}%`;
-            });
-        });
-
-        // Handle Browser Forward / Back buttons
-        window.addEventListener('popstate', (e) => {
-            if (e.state && e.state.view) {
-                switchView(e.state.view);
-            } else if (window.location.pathname === '/login') {
-                switchView('login');
-            } else {
-                switchView('landing');
+            if (btnSubmit) {
+                btnSubmit.disabled = true;
+                btnSubmit.textContent = "Đang xử lý...";
             }
-        });
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    window.location.href = '/dashboard';
+                } else {
+                    alert(data.error || 'Tài khoản hoặc mật khẩu không chính xác');
+                }
+            } catch (err) {
+                alert('Lỗi kết nối máy chủ.');
+            } finally {
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.textContent = "Đăng Nhập Vào Hệ Thống";
+                }
+            }
+        }
     </script>
 </body>
 </html>
