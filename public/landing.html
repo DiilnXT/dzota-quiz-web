@@ -399,11 +399,11 @@
 
                         <!-- Author & Founder Bento Card -->
                         <div class="p-4 sm:p-5 rounded-2xl glass-card border border-white/10 flex flex-col sm:flex-row items-center gap-4 text-left shadow-xl">
-                            <!-- Chibi Doctor & Kaito Kid Avatar Badge -->
+                            <!-- Chibi Doctor / Author Avatar Badge -->
                             <div class="relative flex-shrink-0">
                                 <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-400 via-blue-600 to-indigo-600 p-0.5 shadow-md">
-                                    <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center p-1 overflow-hidden">
-                                        <img src="/kaito-kid.png" alt="Lê Nhật Duy" class="w-full h-full object-cover object-top rounded-xl" />
+                                    <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center p-2 overflow-hidden">
+                                        <img src="/logo-dzota.png" alt="Lê Nhật Duy - Dzota" class="w-full h-full object-contain" />
                                     </div>
                                 </div>
                                 <span class="absolute -bottom-1 -right-1 px-1.5 py-0.2 rounded-full bg-cyan-500 text-slate-950 font-black text-[9px]">K26</span>
@@ -472,7 +472,7 @@
 
                     </div>
 
-                    <!-- Right Column: Interactive 3-Way Showcase (Kaito Kid 1412, Real OSCE Station, Hierarchical Tree) -->
+                    <!-- Right Column: Interactive Showcase (Trạm Thi OSCE & Cây Thư Mục Y Khoa) -->
                     <div class="lg:col-span-5 relative mt-6 lg:mt-0">
                         
                         <!-- Ambient Moonlight Glow Behind -->
@@ -481,99 +481,26 @@
                         <!-- Main Showcase Container -->
                         <div class="relative glass-card rounded-3xl p-4 sm:p-5 border border-cyan-500/30 shadow-[0_25px_60px_-15px_rgba(56,189,248,0.25)] space-y-3.5 overflow-hidden">
                             
-                            <!-- 3-Way Showcase Tab Switcher -->
+                            <!-- 2-Way Showcase Tab Switcher -->
                             <div class="flex items-center p-1 rounded-2xl bg-slate-950/90 border border-white/10 shadow-inner">
-                                <button 
-                                    id="hero-tab-kid" 
-                                    onclick="switchHeroShowcase('kid')" 
-                                    class="flex-1 py-2 px-2 rounded-xl text-xs font-black transition-all cursor-pointer bg-gradient-to-r from-blue-600 via-cyan-600 to-indigo-600 text-white shadow-md shadow-cyan-600/30 flex items-center justify-center gap-1.5"
-                                >
-                                    <span>🎩 Kaito Kid 1412</span>
-                                </button>
                                 <button 
                                     id="hero-tab-osce" 
                                     onclick="switchHeroShowcase('osce')" 
-                                    class="flex-1 py-2 px-2 rounded-xl text-xs font-black transition-all cursor-pointer text-slate-400 hover:text-white flex items-center justify-center gap-1.5"
+                                    class="flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer bg-gradient-to-r from-blue-600 via-cyan-600 to-indigo-600 text-white shadow-md shadow-cyan-600/30 flex items-center justify-center gap-1.5"
                                 >
-                                    <span>⚡ Trạm Thi OSCE</span>
+                                    <span>⚡ Trạm Thi OSCE (20s/trạm)</span>
                                 </button>
                                 <button 
                                     id="hero-tab-tree" 
                                     onclick="switchHeroShowcase('tree')" 
-                                    class="flex-1 py-2 px-2 rounded-xl text-xs font-black transition-all cursor-pointer text-slate-400 hover:text-white flex items-center justify-center gap-1.5"
+                                    class="flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer text-slate-400 hover:text-white flex items-center justify-center gap-1.5"
                                 >
-                                    <span>🌲 Cây Thư Mục</span>
+                                    <span>🌲 Cây Thư Mục Y Khoa</span>
                                 </button>
                             </div>
 
-                            <!-- ─── TAB 1: KAITO KID 1412 SHOWCASE ─── -->
-                            <div id="hero-view-kid" class="space-y-3">
-                                <!-- Kaito Kid Portrait Container -->
-                                <div class="relative rounded-2xl overflow-hidden bg-slate-950 border border-cyan-500/40 shadow-2xl group">
-                                    <div class="relative aspect-[4/3] w-full overflow-hidden">
-                                        <img 
-                                            src="/kaito-kid.png" 
-                                            alt="Kaito Kid 1412 - Dzota Y Khoa" 
-                                            class="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
-                                        />
-                                        <!-- Gradient Overlay -->
-                                        <div class="absolute inset-0 bg-gradient-to-t from-[#070B19] via-transparent to-transparent opacity-80"></div>
-                                        
-                                        <!-- Glowing Monocle Sparkle Tag -->
-                                        <div class="absolute top-3 right-3 px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md border border-cyan-400/50 flex items-center gap-1.5 text-[11px] font-black text-cyan-300 shadow-lg">
-                                            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-monocle"></span>
-                                            <span>Kaito Kid #1412</span>
-                                        </div>
-
-                                        <!-- Badge overlay -->
-                                        <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-                                            <div class="px-2.5 py-1 rounded-xl bg-slate-950/90 backdrop-blur-md border border-white/15 text-[10px] text-slate-200">
-                                                <span class="text-cyan-400 font-bold">Ảo thuật gia Y Khoa Dzota</span>
-                                                <span class="text-slate-400 block -mt-0.5">Đánh cắp mọi câu hỏi bẫy thi chạy trạm</span>
-                                            </div>
-                                            <span class="px-2 py-1 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 text-white font-mono font-black text-[10px] shadow-md animate-pulse">
-                                                MAGIC OSCE
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Interactive Magic Poker Card Box -->
-                                <div class="p-3.5 sm:p-4 rounded-2xl magic-poker-card space-y-3">
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex items-center gap-2">
-                                            <span id="kid-card-code" class="text-lg font-black text-amber-400 font-mono">♠ A</span>
-                                            <h5 id="kid-card-title" class="text-xs sm:text-sm font-black text-white">Xương Sọ & Trần Ổ Mắt</h5>
-                                        </div>
-                                        <span class="text-[9px] uppercase font-bold px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800">
-                                            Thẻ Bài Bí Kíp
-                                        </span>
-                                    </div>
-                                    <p id="kid-card-tip" class="text-[11px] text-slate-300 leading-relaxed bg-black/40 p-2.5 rounded-xl border border-white/5">
-                                        Xương trán khớp với xương đỉnh qua đường khớp vành (Coronal suture), tạo vòm sọ phía trước và trần ổ mắt!
-                                    </p>
-                                    <div class="flex items-center gap-2 pt-1">
-                                        <button 
-                                            type="button" 
-                                            onclick="drawKaitoKidCard()"
-                                            class="flex-1 py-2.5 px-3 rounded-xl font-black text-xs text-white bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 hover:brightness-110 shadow-lg shadow-cyan-500/25 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-                                        >
-                                            <span>🃏 Rút Thẻ Bí Kíp 1412</span>
-                                            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
-                                        </button>
-                                        <a 
-                                            href="/dynex"
-                                            class="py-2.5 px-3 rounded-xl font-bold text-xs text-slate-200 hover:text-white bg-slate-900 border border-slate-700 transition flex items-center gap-1 no-underline"
-                                        >
-                                            <span>Vào Thi</span>
-                                            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- ─── TAB 2: OSCE REAL STATION (20s SPOT) ─── -->
-                            <div id="hero-view-osce" class="space-y-3.5 hidden">
+                            <!-- ─── TAB 1: OSCE REAL STATION (20s SPOT) ─── -->
+                            <div id="hero-view-osce" class="space-y-3.5 animate-fadeIn">
                                 <!-- Chapter & Module Tag -->
                                 <div class="flex items-center justify-between gap-2 flex-wrap text-xs">
                                     <div>
@@ -695,6 +622,53 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- ─── TAB 2: TREE EXPLORER VIEW ─── -->
+                            <div id="hero-view-tree" class="space-y-3 hidden">
+                                <div class="relative rounded-2xl overflow-hidden bg-slate-950 border border-indigo-500/40 shadow-inner group">
+                                    <img 
+                                        src="/dynex-tree-sample.png" 
+                                        alt="Cây Thư Mục Y Khoa Dzota" 
+                                        class="w-full h-auto object-contain transition-transform duration-500 group-hover:scale-[1.02]"
+                                    />
+                                    <div class="absolute bottom-2 left-2 right-2 px-2.5 py-1.5 rounded-xl bg-slate-950/90 backdrop-blur-md border border-white/10 flex items-center justify-between text-[10px]">
+                                        <span class="text-indigo-300 font-bold flex items-center gap-1.5">
+                                            <i data-lucide="folder-tree" class="w-3.5 h-3.5 text-indigo-400"></i>
+                                            <span>Môn Học → Chương → Chủ Đề → Bài Học</span>
+                                        </span>
+                                        <span class="text-emerald-400 font-mono font-bold">+ Tạo Nhanh Trực Tiếp</span>
+                                    </div>
+                                </div>
+                                <div class="p-3.5 rounded-2xl bg-slate-950/90 border border-white/10 space-y-2">
+                                    <h5 class="text-xs sm:text-sm font-black text-white flex items-center gap-1.5">
+                                        <i data-lucide="layers" class="w-4 h-4 text-cyan-400"></i>
+                                        <span>Quản Lý Học Liệu Độc Quyền</span>
+                                    </h5>
+                                    <p class="text-[11px] text-slate-400 leading-relaxed">
+                                        Tạo và quản lý các cây thư mục giải phẫu theo từng học phần: Đầu Mặt Cổ, Ngực Bụng, Chi Trên, Chi Dưới. Thao tác thêm ảnh tiêu bản và tạo trạm thi chỉ với một nút bấm <strong>+</strong>!
+                                    </p>
+                                    <a 
+                                        href="/dynex"
+                                        class="w-full py-2.5 rounded-xl font-bold text-xs text-white bg-indigo-600 hover:bg-indigo-500 transition flex items-center justify-center gap-1.5 no-underline shadow-md shadow-indigo-600/30"
+                                    >
+                                        <span>Khám Phá Cây Thư Mục Đầy Đủ</span>
+                                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Bottom Link to Full App -->
+                            <div class="flex items-center justify-between pt-1 text-xs">
+                                <span class="text-[11px] text-slate-400">Mô phỏng OSCE & Anki SM-2</span>
+                                <a href="/dynex" class="text-xs font-black text-cyan-400 hover:text-cyan-300 flex items-center gap-1 no-underline">
+                                    <span>Vào phòng thi 500+ trạm</span>
+                                    <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                                </a>
+                            </div>
+
+                        </div>
+
+                    </div>
 
                             <!-- ─── TAB 3: TREE EXPLORER VIEW ─── -->
                             <div id="hero-view-tree" class="space-y-3 hidden">
@@ -1758,73 +1732,31 @@
             }
         }
 
-        // --- 6. HERO SHOWCASE SWITCHER (Kaito Kid vs OSCE vs Tree Explorer) ---
+        // --- 6. HERO SHOWCASE SWITCHER (Trạm Thi OSCE vs Cây Thư Mục) ---
         function switchHeroShowcase(mode) {
-            const tabKid = document.getElementById('hero-tab-kid');
             const tabOsce = document.getElementById('hero-tab-osce');
             const tabTree = document.getElementById('hero-tab-tree');
 
-            const viewKid = document.getElementById('hero-view-kid');
             const viewOsce = document.getElementById('hero-view-osce');
             const viewTree = document.getElementById('hero-view-tree');
 
-            const activeClass = "flex-1 py-2 px-2 rounded-xl text-xs font-black transition-all cursor-pointer bg-gradient-to-r from-blue-600 via-cyan-600 to-indigo-600 text-white shadow-md shadow-cyan-600/30 flex items-center justify-center gap-1.5";
-            const inactiveClass = "flex-1 py-2 px-2 rounded-xl text-xs font-black transition-all cursor-pointer text-slate-400 hover:text-white flex items-center justify-center gap-1.5";
+            const activeClass = "flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer bg-gradient-to-r from-blue-600 via-cyan-600 to-indigo-600 text-white shadow-md shadow-cyan-600/30 flex items-center justify-center gap-1.5";
+            const inactiveClass = "flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer text-slate-400 hover:text-white flex items-center justify-center gap-1.5";
 
-            if (tabKid && tabOsce && tabTree && viewKid && viewOsce && viewTree) {
-                if (mode === 'kid') {
-                    tabKid.className = activeClass;
-                    tabOsce.className = inactiveClass;
-                    tabTree.className = inactiveClass;
-                    viewKid.classList.remove('hidden');
-                    viewOsce.classList.add('hidden');
-                    viewTree.classList.add('hidden');
-                } else if (mode === 'osce') {
-                    tabKid.className = inactiveClass;
-                    tabOsce.className = activeClass;
-                    tabTree.className = inactiveClass;
-                    viewKid.classList.add('hidden');
-                    viewOsce.classList.remove('hidden');
-                    viewTree.classList.add('hidden');
-                } else if (mode === 'tree') {
-                    tabKid.className = inactiveClass;
+            if (tabOsce && tabTree && viewOsce && viewTree) {
+                if (mode === 'tree') {
                     tabOsce.className = inactiveClass;
                     tabTree.className = activeClass;
-                    viewKid.classList.add('hidden');
                     viewOsce.classList.add('hidden');
                     viewTree.classList.remove('hidden');
+                } else {
+                    tabOsce.className = activeClass;
+                    tabTree.className = inactiveClass;
+                    viewOsce.classList.remove('hidden');
+                    viewTree.classList.add('hidden');
                 }
             }
             if (window.lucide) lucide.createIcons();
-        }
-
-        // --- 7. KAITO KID MAGIC CARD DRAW INTERACTION ---
-        const magicMedicalCards = [
-            { code: "♠ A", title: "Xương Sọ & Vòm Sọ", tip: "Xương trán khớp với xương đỉnh qua đường khớp vành (Coronal suture), tạo vòm sọ phía trước và trần ổ mắt!" },
-            { code: "♥ K", title: "Dây Thần Kinh Mặt (VII)", tip: "Đi qua lỗ ống tai trong, qua xương đá rồi thoát ra ngoài sọ tại LỖ TRÂM CHŨM!" },
-            { code: "♦ Q", title: "Tam Giác Cảnh Cổ", tip: "Giới hạn bởi cơ ức đòn chũm, bụng sau cơ hai thân, bụng trên cơ vai móng. Chứa bó mạch cảnh!" },
-            { code: "♣ J", title: "Ống Bẹn & Thoát Vị", tip: "Thoát vị bẹn gián tiếp đi qua lỗ bẹn sâu, đi trong ống bẹn, nằm ngoài động mạch thượng vị dưới!" },
-            { code: "🃏 1412", title: "Bí Kíp Đánh Cắp Điểm 10", tip: "Nguyên tắc 20s/trạm: Nhận diện mốc giải phẫu chính trước, loại suy nhánh phụ sau!" }
-        ];
-        let currentCardIdx = 0;
-        function drawKaitoKidCard() {
-            currentCardIdx = (currentCardIdx + 1) % magicMedicalCards.length;
-            const card = magicMedicalCards[currentCardIdx];
-            const codeEl = document.getElementById('kid-card-code');
-            const titleEl = document.getElementById('kid-card-title');
-            const tipEl = document.getElementById('kid-card-tip');
-            if (codeEl) codeEl.textContent = card.code;
-            if (titleEl) titleEl.textContent = card.title;
-            if (tipEl) tipEl.textContent = card.tip;
-
-            if (window.confetti) {
-                confetti({
-                    particleCount: 45,
-                    spread: 65,
-                    origin: { y: 0.5 },
-                    colors: ['#38BDF8', '#818CF8', '#FFFFFF', '#EF4444', '#F59E0B']
-                });
-            }
         }
     </script>
 
