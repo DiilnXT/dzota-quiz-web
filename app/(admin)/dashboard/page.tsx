@@ -245,9 +245,15 @@ export default async function AdminDashboard() {
 
   const formattedQuizzes = (quizzes || []).map(q => {
     let parsedConfig: any = {}
+    let questionCount = 0
     try {
       const d = JSON.parse(q.data)
       parsedConfig = d.config || {}
+      if (Array.isArray(d.questions)) {
+        questionCount = d.questions.length
+      } else if (Array.isArray(d.items)) {
+        questionCount = d.items.length
+      }
     } catch (e) {}
     return {
       id: q.id,
@@ -259,6 +265,7 @@ export default async function AdminDashboard() {
       password: parsedConfig.password || '',
       accessType: parsedConfig.accessType || (Array.isArray(parsedConfig.allowedGmails) && parsedConfig.allowedGmails.length > 0 ? 'restricted' : 'public'),
       allowedGmails: Array.isArray(parsedConfig.allowedGmails) ? parsedConfig.allowedGmails : [],
+      questionsCount: questionCount,
       author: q.author ? {
         id: q.author.id,
         username: q.author.username,
