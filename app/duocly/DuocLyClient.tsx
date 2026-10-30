@@ -764,6 +764,29 @@ https://dzota.vercel.app/duocly`;
           {/* Action Buttons */}
           <div className="flex items-center gap-1.5 sm:gap-2">
             
+            {/* Flashcard Study Mode Button (FEATURED) */}
+            <button
+              onClick={() => {
+                setFlashcardCustomIds(null);
+                setShowFlashcardModal(true);
+              }}
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold text-xs sm:text-sm shadow-md flex items-center gap-1.5 active:scale-95 transition"
+              title="Học ghi nhớ qua Flashcard 3D theo từng nhóm thuốc"
+            >
+              <BookOpen className="w-4 h-4 text-violet-200" />
+              <span className="hidden md:inline">Flashcard</span>
+            </button>
+
+            {/* Chạy Trạm OSCE Simulation Button (FEATURED) */}
+            <button
+              onClick={() => setShowChayTramModal(true)}
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-500 hover:to-rose-500 text-white font-bold text-xs sm:text-sm shadow-md flex items-center gap-1.5 active:scale-95 transition"
+              title="Mô phỏng thi Chạy Trạm Dược lý (OSCE station bell exam)"
+            >
+              <Timer className="w-4 h-4 text-amber-200" />
+              <span className="hidden md:inline">Chạy Trạm</span>
+            </button>
+
             {/* Camera AI Scan Button (FEATURED) */}
             <button
               onClick={() => {
@@ -858,14 +881,33 @@ https://dzota.vercel.app/duocly`;
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/20 text-cyan-300 border border-blue-400/30 text-[11px] sm:text-xs font-semibold mb-1">
               <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Sổ Tay Tra Cứu Dược Lý Lâm Sàng & Phân Tích Camera AI</span>
+              <span>Sổ Tay Tra Cứu Dược Lý Lâm Sàng & Ôn Thi Y Khoa</span>
             </div>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-white mb-0.5">
-              TRA CỨU 401+ THUỐC, HOẠT CHẤT & BIỆT DƯỢC
+              TRA CỨU & HỌC TẬP 423+ THUỐC, HOẠT CHẤT & BIỆT DƯỢC
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-3xl leading-relaxed">
-              Tách biệt rõ ràng <strong>Hoạt chất & Tá dược</strong> • Tra cứu mượt mà 60fps • Tích hợp nút <strong>&quot;Xem chi tiết&quot; ngay dưới tên thuốc</strong> • Hỗ trợ <strong>thêm thuốc thủ công</strong> và <strong>quét ảnh bao bì thuốc qua Camera AI Dzota</strong>.
+              Tách biệt rõ ràng <strong>Hoạt chất & Tá dược</strong> • Ôn thi ghi nhớ qua <strong>Flashcard 3D</strong> • Thi <strong>Chạy Trạm Dược lý (OSCE)</strong> chuông reo • Quét ảnh bao bì qua <strong>Camera AI Dzota</strong>.
             </p>
+            <div className="flex flex-wrap items-center gap-2 mt-2.5">
+              <button
+                onClick={() => {
+                  setFlashcardCustomIds(null);
+                  setShowFlashcardModal(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold text-xs shadow-md transition active:scale-95"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-violet-200" />
+                <span>🗂️ Học Flashcard Theo Nhóm</span>
+              </button>
+              <button
+                onClick={() => setShowChayTramModal(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs shadow-md transition active:scale-95"
+              >
+                <Timer className="w-3.5 h-3.5 text-amber-950" />
+                <span>⏱️ Vào Thi Chạy Trạm (OSCE)</span>
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 self-start md:self-auto bg-white/10 backdrop-blur-sm p-2.5 rounded-2xl border border-white/15">
@@ -2709,12 +2751,43 @@ https://dzota.vercel.app/duocly`;
       )}
 
       {/* ─────────────────────────────────────────────────────────────
+          9. FLASHCARD & OSCE CHẠY TRẠM MODALS
+      ───────────────────────────────────────────────────────────── */}
+      {showFlashcardModal && (
+        <FlashcardView
+          drugs={flashcardCustomIds ? allEnhancedDrugs.filter(d => flashcardCustomIds.includes(d.id)) : allEnhancedDrugs}
+          broadGroups={broadGroups}
+          favorites={favorites}
+          onToggleFavorite={toggleFavorite}
+          onClose={() => {
+            setShowFlashcardModal(false);
+            setFlashcardCustomIds(null);
+          }}
+          onOpenDetailModal={drug => setActiveDrug(drug as EnhancedDrugItem)}
+        />
+      )}
+
+      {showChayTramModal && (
+        <ChayTramView
+          drugs={allEnhancedDrugs}
+          broadGroups={broadGroups}
+          onClose={() => setShowChayTramModal(false)}
+          onOpenDetailModal={drug => setActiveDrug(drug as EnhancedDrugItem)}
+          onLaunchFlashcardsWithIds={ids => {
+            setShowChayTramModal(false);
+            setFlashcardCustomIds(ids);
+            setShowFlashcardModal(true);
+          }}
+        />
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
           10. FOOTER & COPYRIGHT
       ───────────────────────────────────────────────────────────── */}
       <footer className="mt-12 border-t-2 border-slate-300 dark:border-slate-800 bg-white dark:bg-[#0B1120] py-8 px-4 text-center text-xs sm:text-sm text-slate-600 dark:text-slate-400 print:text-black">
         <div className="max-w-4xl mx-auto space-y-2">
           <p className="font-bold text-slate-800 dark:text-slate-200 text-sm sm:text-base">
-            HỆ THỐNG TRA CỨU DƯỢC LÝ LÂM SÀNG DZOTA • 401+ THUỐC ĐẦY ĐỦ
+            HỆ THỐNG TRA CỨU & HỌC TẬP DƯỢC LÝ LÂM SÀNG DZOTA • 423+ THUỐC ĐẦY ĐỦ
           </p>
           <p className="font-medium">
             Bản quyền thuộc về: <strong className="text-blue-700 dark:text-cyan-400">Nhật Duy (Sinh viên Y Khoa K26)</strong>
