@@ -29,6 +29,28 @@ class SoundController {
     return this.soundEnabled;
   }
 
+  // Soft tap / option select sound
+  public playTap() {
+    if (!this.soundEnabled) return;
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, now);
+      osc.frequency.exponentialRampToValueAtTime(800, now + 0.04);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.04);
+    } catch (e) {}
+  }
+
   // Realistic OSCE Station Bell Chime (Chuông chuyển trạm thi Y Khoa)
   public playStationBell() {
     if (!this.soundEnabled) return;
