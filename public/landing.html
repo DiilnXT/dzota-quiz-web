@@ -316,15 +316,17 @@
                         <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
                         <span>Đấu Trường OSCE</span>
                     </a>
+                    <a href="/duocly" class="px-3.5 py-2 rounded-xl text-xs xl:text-sm font-extrabold text-emerald-300 hover:text-emerald-200 hover:bg-emerald-500/15 transition-all no-underline flex items-center gap-1.5 border border-emerald-500/30 bg-emerald-500/10 shadow-sm">
+                        <i data-lucide="pill" class="w-4 h-4 text-emerald-400"></i>
+                        <span>Dược Lý 401 Thuốc</span>
+                        <span class="text-[9px] px-1 py-0.2 rounded bg-emerald-400 text-slate-950 font-black">HOT</span>
+                    </a>
                     <a href="#weapons" class="px-3.5 py-2 rounded-xl text-xs xl:text-sm font-bold text-slate-300 hover:text-white hover:bg-white/5 transition-all no-underline">
                         Vũ Khí Y Khoa
                     </a>
                     <a href="#hall-of-fame" class="px-3.5 py-2 rounded-xl text-xs xl:text-sm font-bold text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 transition-all no-underline flex items-center gap-1">
                         <i data-lucide="award" class="w-4 h-4 text-amber-400"></i>
                         <span>Đại Sảnh Bảng Vàng</span>
-                    </a>
-                    <a href="#guarantee" class="px-3.5 py-2 rounded-xl text-xs xl:text-sm font-bold text-slate-300 hover:text-white hover:bg-white/5 transition-all no-underline">
-                        03 Bảo Hiểm
                     </a>
                     <a href="#pricing" class="px-3.5 py-2 rounded-xl text-xs xl:text-sm font-bold text-slate-300 hover:text-white hover:bg-white/5 transition-all no-underline">
                         Bảng Giá
@@ -1246,6 +1248,7 @@
                 <div class="space-y-2">
                     <h4 class="font-bold text-white text-xs uppercase tracking-wider">Hệ Thống Khảo Thí</h4>
                     <ul class="space-y-1.5 text-slate-400">
+                        <li><a href="/duocly" class="text-cyan-300 font-bold hover:text-cyan-200 transition no-underline flex items-center gap-1"><i data-lucide="pill" class="w-3.5 h-3.5 text-emerald-400"></i> Tra Cứu Dược Lý 401 Thuốc</a></li>
                         <li><a href="/dynex" class="hover:text-cyan-400 transition no-underline">Đấu Trường DYNEX OSCE</a></li>
                         <li><a href="/notebook" class="hover:text-cyan-400 transition no-underline">Trợ Lý NoteBook ND AI</a></li>
                         <li><a href="/creator" class="hover:text-cyan-400 transition no-underline">Thư Viện Đề Thi Chuẩn</a></li>
@@ -1763,16 +1766,20 @@
     <!-- ─────────────────────────────────────────────────────────────
          12. FIXED MOBILE QUICK ACTION BAR (DÀNH RIÊNG CHO ĐIỆN THOẠI)
     ───────────────────────────────────────────────────────────── -->
-    <div class="fixed bottom-0 left-0 right-0 z-40 bg-[#070B19]/95 backdrop-blur-xl border-t border-cyan-500/30 px-3 py-2 sm:hidden flex items-center justify-between gap-2 shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+    <div class="fixed bottom-0 left-0 right-0 z-40 bg-[#070B19]/95 backdrop-blur-xl border-t border-cyan-500/30 px-2.5 py-2 sm:hidden flex items-center justify-between gap-1.5 shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+        <a href="/duocly" class="py-2.5 px-2.5 rounded-xl bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 font-bold text-xs flex items-center gap-1 no-underline active:scale-95">
+            <i data-lucide="pill" class="w-3.5 h-3.5 text-emerald-400"></i>
+            <span>Dược Lý</span>
+        </a>
         <a href="/dynex" class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-black text-xs text-center flex items-center justify-center gap-1.5 no-underline shadow-lg shadow-cyan-600/30 active:scale-95">
             <i data-lucide="play" class="w-3.5 h-3.5"></i>
-            <span>Vào Thi OSCE Free</span>
+            <span>Thi OSCE Free</span>
         </a>
-        <a href="https://zalo.me/0914659511" target="_blank" rel="noreferrer" class="py-2.5 px-3 rounded-xl bg-blue-600/25 text-cyan-300 border border-blue-500/40 font-bold text-xs flex items-center gap-1.5 no-underline active:scale-95">
+        <a href="https://zalo.me/0914659511" target="_blank" rel="noreferrer" class="py-2.5 px-2.5 rounded-xl bg-blue-600/25 text-cyan-300 border border-blue-500/40 font-bold text-xs flex items-center gap-1 no-underline active:scale-95">
             <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
-            <span>Zalo: 0914.659.511</span>
+            <span>Zalo</span>
         </a>
-        <button onclick="openAuthModal('login')" class="py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 font-bold text-xs flex items-center justify-center active:scale-95" title="Đăng Nhập">
+        <button onclick="openAuthModal('login')" class="py-2.5 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 font-bold text-xs flex items-center justify-center active:scale-95" title="Đăng Nhập">
             <i data-lucide="log-in" class="w-3.5 h-3.5 text-cyan-400"></i>
         </button>
     </div>
