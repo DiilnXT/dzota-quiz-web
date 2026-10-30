@@ -60,22 +60,24 @@ Nhiệm vụ của bạn: Phân tích hình ảnh bao bì thuốc, vỉ thuốc,
 Hãy nhận diện và trích xuất thông tin thuốc theo ĐÚNG 12 TRƯỜNG DỮ LIỆU CHUẨN DƯỢC LÝ sau đây:
 
 1. tenThuoc: Tên thuốc (Ghi rõ Tên biệt dược kèm hoạt chất nếu có, ví dụ: "Panadol Extra (Paracetamol, Cafein)" hoặc "Augmentin (Amoxicillin / Clavulanat)")
-2. nhomPhanNhomPho: Nhóm, phân nhóm, phổ dược lý (ví dụ: "Kháng sinh - Nhóm Beta-lactam / Phân nhóm Penicillin - Phổ trung bình" hoặc "Kháng viêm không steroid (NSAID) / Dẫn xuất acid propionic")
-3. hoatChatHamLuong: Tên hoạt chất chính kèm nồng độ hàm lượng (ví dụ: "Paracetamol 500mg, Cafein 65mg")
-4. dangBaoChe: Dạng bào chế (ví dụ: "Viên nén", "Viên nang", "Dung dịch tiêm", "Hỗn dịch uống", "Thuốc nhỏ mắt"...)
-5. hoatChat: Chỉ ghi tên hoạt chất chính (ví dụ: "Paracetamol, Cafein")
-6. taDuoc: Các tá dược hoặc hệ tá dược ghi nhận (nếu ảnh không thấy ghi rõ thì ghi các tá dược thông dụng của dạng bào chế này, ví dụ: "Lactose, tinh bột bắp, magnesi stearat, povidon")
-7. chiDinh: Chỉ định điều trị chuẩn y khoa (ngắn gọn, chính xác các bệnh lý cần dùng)
-8. chongChiDinh: Chống chỉ định tuyệt đối & tương đối (ví dụ: "Quá mẫn, suy gan nặng, phụ nữ mang thai 3 tháng cuối...")
-9. tacDungPhu: Tác dụng không mong muốn (phân biệt ngắn hạn, dài hạn nếu có)
-10. lieuDungCachDung: Liều lượng và đường dùng thông thường cho người lớn và trẻ em
-11. thoiDiemDung: Thời điểm dùng vàng (ví dụ: "Uống sau khi ăn no", "Uống lúc đói trước ăn 1 giờ", "Uống buổi sáng", "Uống trước khi đi ngủ"...)
-12. ghiChu: Lưu ý dược lâm sàng quan trọng & tương tác thuốc cần tránh
-13. searchKeywords: Danh sách 4-6 từ khóa tìm kiếm (tên hoạt chất, tên biệt dược, nhóm thuốc) viết thường không dấu và có dấu để tra cứu đối chiếu trong cơ sở dữ liệu.
+2. broadGroup: Chọn 1 trong các nhóm chính sau: "Kháng Sinh", "Kháng Nấm", "Tim Mạch & Mạch Vành", "Tăng Huyết Áp", "Rối Loạn Lipid Máu", "Đái Tháo Đường", "Giảm Đau - Hạ Sốt - NSAID", "Giảm Đau Opioid", "Corticoid / Vỏ Thượng Thận", "Nội Tiết & Hormon", "Kháng Histamin & Dị Ứng", "Tiêu Hóa & Dạ Dày", "Thuốc Lợi Tiểu", "Chống Đông & Huyết Khối", "Thần Kinh Thực Vật", "Thần Kinh & Tâm Thần", "Gây Mê - Gây Tê - Giãn Cơ", "Vitamin & Khoáng Chất", "Thuốc Giải Độc", "Khác"
+3. nhomPhanNhomPho: BẮT BUỘC ghi ĐẦY ĐỦ VÀ CHI TIẾT Nhóm, phân nhóm, phổ hoặc cơ chế (ví dụ: "Kháng sinh - Nhóm Beta-lactam / Phân nhóm Cephalosporin Thế hệ 3 / Diệt khuẩn Gram âm & đường ruột" hoặc "Kháng viêm không steroid (NSAID) / Dẫn xuất acid propionic / Giảm đau, hạ sốt, kháng viêm")
+4. hoatChatHamLuong: Tên hoạt chất chính kèm nồng độ hàm lượng (ví dụ: "Paracetamol 500mg, Cafein 65mg")
+5. dangBaoChe: Dạng bào chế (ví dụ: "Viên nén", "Viên nang", "Dung dịch tiêm", "Hỗn dịch uống", "Thuốc nhỏ mắt"...)
+6. hoatChat: Chỉ ghi tên hoạt chất chính (ví dụ: "Paracetamol, Cafein")
+7. taDuoc: Các tá dược hoặc hệ tá dược ghi nhận (nếu ảnh không thấy ghi rõ thì ghi các tá dược thông dụng của dạng bào chế này, ví dụ: "Lactose, tinh bột bắp, magnesi stearat, povidon")
+8. chiDinh: Chỉ định điều trị chuẩn y khoa (ngắn gọn, chính xác các bệnh lý cần dùng)
+9. chongChiDinh: Chống chỉ định tuyệt đối & tương đối (ví dụ: "Quá mẫn, suy gan nặng, phụ nữ mang thai 3 tháng cuối...")
+10. tacDungPhu: Tác dụng không mong muốn (phân biệt ngắn hạn, dài hạn nếu có)
+11. lieuDungCachDung: Liều lượng và đường dùng thông thường cho người lớn và trẻ em
+12. thoiDiemDung: Thời điểm dùng vàng (ví dụ: "Uống sau khi ăn no", "Uống lúc đói trước ăn 1 giờ", "Uống buổi sáng", "Uống trước khi đi ngủ"...)
+13. ghiChu: Lưu ý dược lâm sàng quan trọng & tương tác thuốc cần tránh
+14. searchKeywords: Danh sách 4-6 từ khóa tìm kiếm (tên hoạt chất, tên biệt dược, nhóm thuốc) viết thường không dấu và có dấu để tra cứu đối chiếu trong cơ sở dữ liệu.
 
 BẮT BUỘC trả về duy nhất một chuỗi JSON hợp lệ theo cấu trúc sau (không kèm markdown \`\`\`json):
 {
   "tenThuoc": "...",
+  "broadGroup": "...",
   "nhomPhanNhomPho": "...",
   "hoatChatHamLuong": "...",
   "dangBaoChe": "...",

@@ -44,7 +44,8 @@ import {
   Save,
   CheckCircle,
   FilePlus,
-  HelpCircle
+  HelpCircle,
+  Globe
 } from 'lucide-react';
 import rawData from './duocly_data.json';
 import { DrugItem, ReferenceMap } from './types';
@@ -133,6 +134,12 @@ export default function DuocLyClient() {
   const [aiResult, setAiResult] = useState<any | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
   const [matchedDrug, setMatchedDrug] = useState<EnhancedDrugItem | null>(null);
+
+  // Google Fallback Search State (Tra cứu ngoài data 401 khi không tìm thấy)
+  const [isSearchingGoogle, setIsSearchingGoogle] = useState(false);
+  const [googleSearchResult, setGoogleSearchResult] = useState<DrugItem | null>(null);
+  const [googleSearchError, setGoogleSearchError] = useState<string | null>(null);
+  const [lastGoogleSearchQuery, setLastGoogleSearchQuery] = useState('');
 
   // AI Model Configuration
   const [showAiConfigModal, setShowAiConfigModal] = useState(false);
@@ -495,21 +502,23 @@ export default function DuocLyClient() {
     const nextId = allEnhancedDrugs.length > 0 ? Math.max(...allEnhancedDrugs.map(d => d.id)) + 1 : 402;
     const newDrug: DrugItem = {
       id: nextId,
-      nhomPhanNhomPho: aiResult.nhomPhanNhomPho || 'Thuốc Quét Từ Camera AI',
-      broadGroup: 'Khác',
+      nhomPhanNhomPho: aiResult.nhomPhanNhomPho || `${aiResult.broadGroup || 'Khác'} - Thuốc Quét Từ Camera AI`,
+      broadGroup: aiResult.broadGroup || 'Khác',
       tenThuoc: aiResult.tenThuoc || 'Thuốc Nhận Diện AI',
       hoatChatHamLuong: aiResult.hoatChatHamLuong || aiResult.hoatChat || '',
       dangBaoChe: aiResult.dangBaoChe || 'Chế phẩm dược',
-      thanhPhanRaw: `Hoạt chất: ${aiResult.hoatChat || aiResult.tenThuoc} ; Tá dược: ${aiResult.taDuoc || 'Chưa ghi nhận'}`,
+      thanhPhanRaw: `Hoạt chất: ${aiResult.hoatChat || aiResult.tenThuoc} ; Tá dược: ${aiResult.taDuoc || 'Chưa ghi nhận tá dược'}`,
       hoatChat: aiResult.hoatChat || aiResult.tenThuoc,
       taDuoc: aiResult.taDuoc || 'Chưa ghi nhận tá dược cụ thể',
       chiDinh: aiResult.chiDinh || 'Theo chỉ định của bác sĩ',
       chongChiDinh: aiResult.chongChiDinh || 'Quá mẫn với thành phần',
       tacDungPhu: aiResult.tacDungPhu || 'Xem hướng dẫn sử dụng',
-      lieuDungCachDung: aiResult.lieuDungCachDung || 'Đường uống',
+      lieuDungCachDung: aiResult.lieuDungCachDung || 'Đường dùng thông thường',
       thoiDiemDung: aiResult.thoiDiemDung || 'Theo hướng dẫn sử dụng',
-      nguon: 'Camera AI Scan (Dzota 2026)',
-      ghiChu: aiResult.ghiChu || 'Thuốc quét từ hình ảnh bao bì'
+      nguon: '📷 Camera AI Scan (Thuốc ngoài Data 401 gốc)',
+      ghiChu: aiResult.ghiChu || 'Thuốc quét từ hình ảnh bao bì',
+      isExternal: !matchedDrug,
+      isCustom: true
     };
 
     saveCustomDrugsToStorage([...customDrugs, newDrug]);
@@ -518,7 +527,78 @@ export default function DuocLyClient() {
     setActiveDrug({
       ...newDrug,
       isCustom: true,
-      _searchIndex: removeVietnameseTones(`${newDrug.tenThuoc} ${newDrug.hoatChat}`)
+      _searchIndex: removeVietnameseTones(`${newDrug.tenThuoc} ${newDrug.hoatChat} ${newDrug.nhomPhanNhomPho}`)
+    });
+  };
+
+  // Google Fallback Search Handler (Tra cứu tự động ngoài data 401)
+  const handleGoogleSearch = async (queryToSearch?: string) => {
+    const q = (queryToSearch || searchQuery).trim();
+    if (!q) {
+      alert('Vui lòng nhập tên thuốc hoặc hoạt chất cần tra cứu');
+      return;
+    }
+    setIsSearchingGoogle(true);
+    setGoogleSearchError(null);
+    setGoogleSearchResult(null);
+    setLastGoogleSearchQuery(q);
+
+    try {
+      const res = await fetch('/api/duocly/ai-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: q,
+          clientApiKey: clientApiKey || undefined,
+          clientModel: activeModel || undefined
+        })
+      });
+
+      const resData = await res.json();
+      if (!res.ok) {
+        throw new Error(resData.error || 'Lỗi tra cứu Google AI');
+      }
+
+      const d = resData.data;
+      const nextId = allEnhancedDrugs.length > 0 ? Math.max(...allEnhancedDrugs.map(item => item.id)) + 1 : 402;
+      const formattedDrug: DrugItem = {
+        id: nextId,
+        nhomPhanNhomPho: d.nhomPhanNhomPho || `${d.broadGroup || 'Khác'} (Tra Cứu Google)`,
+        broadGroup: d.broadGroup || 'Khác',
+        tenThuoc: d.tenThuoc || q,
+        hoatChatHamLuong: d.hoatChatHamLuong || d.hoatChat || q,
+        dangBaoChe: d.dangBaoChe || 'Chế phẩm dược',
+        thanhPhanRaw: `Hoạt chất: ${d.hoatChat || q} ; Tá dược: ${d.taDuoc || 'Chưa ghi nhận tá dược'}`,
+        hoatChat: d.hoatChat || q,
+        taDuoc: d.taDuoc || 'Chưa ghi nhận tá dược cụ thể',
+        chiDinh: d.chiDinh || 'Theo chỉ định của bác sĩ',
+        chongChiDinh: d.chongChiDinh || 'Quá mẫn với thành phần của thuốc',
+        tacDungPhu: d.tacDungPhu || 'Xem hướng dẫn sử dụng',
+        lieuDungCachDung: d.lieuDungCachDung || 'Đường dùng theo chỉ định',
+        thoiDiemDung: d.thoiDiemDung || 'Theo hướng dẫn sử dụng',
+        nguon: d.nguon || '🌐 Tra cứu Google & Dược Thư Quốc Gia (Thuốc ngoài Data 401 gốc)',
+        ghiChu: d.ghiChu || 'Thuốc ngoài danh mục 401 gốc, tra cứu tự động qua AI Google',
+        isExternal: true,
+        isCustom: true
+      };
+
+      setGoogleSearchResult(formattedDrug);
+    } catch (err: any) {
+      setGoogleSearchError(err.message || 'Lỗi kết nối tra cứu Google AI');
+    } finally {
+      setIsSearchingGoogle(false);
+    }
+  };
+
+  // Save Google Search Result to custom drugs
+  const handleSaveGoogleSearchResult = () => {
+    if (!googleSearchResult) return;
+    saveCustomDrugsToStorage([...customDrugs, googleSearchResult]);
+    alert(`Đã lưu thuốc #${googleSearchResult.id} "${googleSearchResult.tenThuoc}" vào danh mục thành công!`);
+    setActiveDrug({
+      ...googleSearchResult,
+      isCustom: true,
+      _searchIndex: removeVietnameseTones(`${googleSearchResult.tenThuoc} ${googleSearchResult.hoatChat} ${googleSearchResult.nhomPhanNhomPho}`)
     });
   };
 
@@ -809,21 +889,51 @@ https://dzota.vercel.app/duocly`;
           <input
             type="text"
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
+            onChange={e => {
+              setSearchQuery(e.target.value);
+              if (googleSearchResult) setGoogleSearchResult(null);
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && filteredDrugs.length === 0 && searchQuery.trim()) {
+                handleGoogleSearch(searchQuery);
+              }
+            }}
             placeholder="Tìm kiếm siêu tốc: Tên thuốc, hoạt chất, biệt dược, tá dược, nhóm dược lý, chỉ định, dạng bào chế... (vd: dexamethason, amoxicillin, ngua thai)"
-            className="w-full pl-11 pr-24 py-3 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 focus:border-blue-600 dark:focus:border-cyan-500 focus:ring-4 focus:ring-blue-100 dark:focus:ring-cyan-950/50 text-sm sm:text-base outline-none shadow-sm transition placeholder:text-slate-400 font-medium"
+            className="w-full pl-11 pr-36 sm:pr-48 py-3 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 focus:border-blue-600 dark:focus:border-cyan-500 focus:ring-4 focus:ring-blue-100 dark:focus:ring-cyan-950/50 text-sm sm:text-base outline-none shadow-sm transition placeholder:text-slate-400 font-medium"
           />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute inset-y-0 right-14 pr-2 flex items-center text-slate-400 hover:text-slate-600"
-              title="Xóa tìm kiếm"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-          <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-            <span className="text-[11px] font-mono px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+
+          <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center gap-1.5">
+            {/* Clear Button (✕) with distinct clickable styling and clean separation */}
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setGoogleSearchResult(null);
+                  setGoogleSearchError(null);
+                }}
+                className="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 dark:bg-slate-700 dark:hover:bg-rose-950/60 dark:hover:text-rose-300 text-slate-700 dark:text-slate-200 flex items-center justify-center transition active:scale-90 shadow-sm"
+                title="Xóa nhanh từ khóa tìm kiếm (✕)"
+                aria-label="Xóa tìm kiếm"
+              >
+                <X className="w-4 h-4 stroke-[2.5]" />
+              </button>
+            )}
+
+            {/* Quick Google Search Button directly in the search bar */}
+            {searchQuery && (
+              <button
+                onClick={() => handleGoogleSearch(searchQuery)}
+                disabled={isSearchingGoogle}
+                className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-blue-100 hover:bg-blue-200 dark:bg-blue-950/80 dark:hover:bg-blue-900 text-blue-800 dark:text-cyan-200 border border-blue-200 dark:border-blue-800 text-[11px] font-bold transition active:scale-95 disabled:opacity-50"
+                title="Tra cứu Google & Dược Thư cho từ khóa này"
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span>Google AI</span>
+              </button>
+            )}
+
+            {/* Drug count badge */}
+            <span className="text-[11px] font-mono px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-semibold whitespace-nowrap">
               {filteredDrugs.length} thuốc
             </span>
           </div>
@@ -1010,29 +1120,248 @@ https://dzota.vercel.app/duocly`;
       ───────────────────────────────────────────────────────────── */}
       <main className="max-w-7xl mx-auto px-3 sm:px-6 py-2">
         {filteredDrugs.length === 0 ? (
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-300 dark:border-slate-800 text-center my-6 shadow-sm">
-            <FlaskConical className="w-12 h-12 text-slate-400 mx-auto mb-3 stroke-[1.5]" />
-            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-1">
-              Không tìm thấy thuốc nào phù hợp
-            </h3>
-            <p className="text-sm text-slate-500 max-w-md mx-auto mb-4">
-              Vui lòng thử đổi từ khóa, kiểm tra lại bộ lọc hoặc bấm thêm thuốc mới nếu chưa có trong danh mục.
-            </p>
-            <div className="flex items-center justify-center gap-2">
-              <button
-                onClick={resetAllFilters}
-                className="px-4 py-2 rounded-xl text-sm font-semibold bg-blue-700 hover:bg-blue-800 text-white shadow transition"
-              >
-                Xem Toàn Bộ Thuốc
-              </button>
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="px-4 py-2 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow transition flex items-center gap-1.5"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Thêm Thuốc Này Thủ Công</span>
-              </button>
+          <div className="space-y-4 my-6">
+            <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-300 dark:border-slate-800 text-center shadow-sm">
+              <FlaskConical className="w-12 h-12 text-slate-400 mx-auto mb-3 stroke-[1.5]" />
+              <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-1">
+                {searchQuery.trim()
+                  ? `Không tìm thấy "${searchQuery}" trong 401 thuốc nội bộ`
+                  : 'Không tìm thấy thuốc nào phù hợp với bộ lọc'}
+              </h3>
+              <p className="text-sm text-slate-500 max-w-lg mx-auto mb-5 leading-relaxed">
+                {searchQuery.trim()
+                  ? 'Thuốc này chưa có trong file DƯỢC LÝ OF DUY (401 thuốc gốc). Bạn có thể bấm nút bên dưới để AI tự động tra cứu từ Google & Dược Thư Quốc Gia Việt Nam, hoặc thêm thuốc thủ công!'
+                  : 'Vui lòng thử đổi từ khóa, kiểm tra lại bộ lọc hoặc bấm thêm thuốc mới nếu chưa có trong danh mục.'}
+              </p>
+
+              <div className="flex flex-wrap items-center justify-center gap-2.5">
+                {searchQuery.trim() && (
+                  <button
+                    onClick={() => handleGoogleSearch(searchQuery)}
+                    disabled={isSearchingGoogle}
+                    className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-blue-700 via-indigo-600 to-cyan-600 hover:from-blue-600 hover:to-cyan-500 text-white font-extrabold text-sm shadow-md flex items-center gap-2 active:scale-95 transition disabled:opacity-50"
+                  >
+                    {isSearchingGoogle ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin text-cyan-200" />
+                        <span>Đang Tra Cứu Google & Dược Thư...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Globe className="w-4 h-4 text-cyan-200" />
+                        <span>Tra Cứu Google & Dược Thư Cho &quot;{searchQuery}&quot;</span>
+                      </>
+                    )}
+                  </button>
+                )}
+
+                <button
+                  onClick={resetAllFilters}
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 transition"
+                >
+                  Xem Toàn Bộ Thuốc
+                </button>
+
+                <button
+                  onClick={() => {
+                    setAddForm(prev => ({
+                      ...prev,
+                      tenThuoc: searchQuery.trim(),
+                      hoatChat: searchQuery.trim()
+                    }));
+                    setShowAddModal(true);
+                  }}
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow transition flex items-center gap-1.5"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Thêm Thủ Công</span>
+                </button>
+              </div>
             </div>
+
+            {/* Google Search Progress */}
+            {isSearchingGoogle && (
+              <div className="p-6 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border-2 border-blue-200 dark:border-blue-800 text-center space-y-2 max-w-xl mx-auto shadow-sm">
+                <RefreshCw className="w-8 h-8 text-blue-600 animate-spin mx-auto" />
+                <div className="font-bold text-blue-950 dark:text-cyan-200 text-base">
+                  Đang tra cứu Google & Dược Thư Quốc Gia cho &quot;{lastGoogleSearchQuery}&quot;...
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Gemini AI đang trích xuất chuẩn 12 trường thông tin: Nhóm, Hoạt chất, Tá dược, Chỉ định, Chống chỉ định, Liều dùng, Thời điểm dùng...
+                </p>
+              </div>
+            )}
+
+            {/* Google Search Error */}
+            {googleSearchError && (
+              <div className="p-4 rounded-2xl bg-rose-50 border border-rose-300 text-rose-900 text-xs sm:text-sm max-w-xl mx-auto space-y-2">
+                <div className="font-bold flex items-center gap-1.5">
+                  <AlertTriangle className="w-4 h-4 text-rose-600" />
+                  <span>Không thể tra cứu: {googleSearchError}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleGoogleSearch(lastGoogleSearchQuery)}
+                    className="px-3 py-1 rounded-lg bg-rose-600 text-white font-bold text-xs"
+                  >
+                    Thử lại
+                  </button>
+                  <button
+                    onClick={() => setShowAiConfigModal(true)}
+                    className="px-3 py-1 rounded-lg bg-slate-200 text-slate-800 font-bold text-xs"
+                  >
+                    Kiểm tra API Key
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Google Search Result Display with MANDATORY PROMINENT NOTE */}
+            {googleSearchResult && (
+              <div className="p-4 sm:p-5 rounded-3xl bg-amber-50/90 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-600 text-amber-950 dark:text-amber-100 shadow-lg text-left max-w-4xl mx-auto space-y-4">
+                {/* PROMINENT NOTE BANNER */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-300 dark:border-amber-700">
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle className="w-6 h-6 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-extrabold text-sm sm:text-base text-amber-900 dark:text-amber-200 tracking-wide">
+                        ⚠️ THUỐC NGOÀI DATA 401 GỐC • TỰ ĐỘNG TRA CỨU TỪ GOOGLE & DƯỢC THƯ LÂM SÀNG
+                      </div>
+                      <p className="text-xs text-amber-800 dark:text-amber-300 mt-0.5">
+                        Thuốc này không nằm trong file <strong>DƯỢC LÝ OF DUY (401 thuốc gốc)</strong>. Dữ liệu được AI tự động tổng hợp từ Google & Dược Thư Quốc Gia Việt Nam.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={handleSaveGoogleSearchResult}
+                      className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow flex items-center gap-1.5 active:scale-95 transition"
+                    >
+                      <Save className="w-4 h-4" />
+                      <span>Lưu Vào Data 401 (+)</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveDrug({
+                        ...googleSearchResult,
+                        isCustom: true,
+                        _searchIndex: removeVietnameseTones(`${googleSearchResult.tenThuoc} ${googleSearchResult.hoatChat}`)
+                      })}
+                      className="px-3.5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs sm:text-sm shadow flex items-center gap-1.5 active:scale-95 transition"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span>Xem Chi Tiết Đầy Đủ</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Formatted Standard Card (12 fields, Hoạt chất & Tá dược riêng biệt) */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+                    <div>
+                      <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-blue-100 dark:bg-blue-950 text-blue-900 dark:text-cyan-300 border border-blue-300 dark:border-blue-800 mb-1">
+                        {googleSearchResult.broadGroup}
+                      </span>
+                      <h3 className="text-lg sm:text-xl font-bold text-blue-950 dark:text-white">
+                        {googleSearchResult.tenThuoc}
+                      </h3>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Dạng bào chế: <strong className="text-slate-800 dark:text-slate-200">{googleSearchResult.dangBaoChe}</strong> • Hàm lượng: <strong className="text-slate-800 dark:text-slate-200">{googleSearchResult.hoatChatHamLuong}</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Nhóm phân nhóm phổ */}
+                  <div className="p-3 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800">
+                    <div className="text-[11px] font-bold text-blue-900 dark:text-cyan-300 uppercase">
+                      🏷️ Nhóm, phân nhóm, phổ:
+                    </div>
+                    <div className="text-sm font-semibold text-blue-950 dark:text-cyan-100 mt-0.5">
+                      {googleSearchResult.nhomPhanNhomPho}
+                    </div>
+                  </div>
+
+                  {/* Thành phần: Hoạt chất & Tá dược riêng biệt */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="p-3 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800">
+                      <div className="text-[11px] font-bold text-indigo-900 dark:text-indigo-300 uppercase">
+                        🧪 Hoạt chất:
+                      </div>
+                      <div className="text-sm font-bold text-indigo-950 dark:text-indigo-100 mt-0.5">
+                        {googleSearchResult.hoatChat}
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-purple-50/80 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800">
+                      <div className="text-[11px] font-bold text-purple-900 dark:text-purple-300 uppercase">
+                        💊 Tá dược:
+                      </div>
+                      <div className="text-xs sm:text-sm font-semibold text-purple-950 dark:text-purple-100 mt-0.5">
+                        {googleSearchResult.taDuoc}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Chỉ định & Chống chỉ định */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="p-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
+                      <div className="text-[11px] font-bold text-emerald-900 dark:text-emerald-300 uppercase">
+                        🎯 Chỉ định chính:
+                      </div>
+                      <div className="text-xs sm:text-sm font-medium text-emerald-950 dark:text-emerald-100 mt-0.5">
+                        {googleSearchResult.chiDinh}
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800">
+                      <div className="text-[11px] font-bold text-rose-900 dark:text-rose-300 uppercase">
+                        ⛔ Chống chỉ định & Cảnh báo:
+                      </div>
+                      <div className="text-xs sm:text-sm font-bold text-rose-950 dark:text-rose-100 mt-0.5">
+                        {googleSearchResult.chongChiDinh}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Thời điểm dùng & Liều dùng */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="p-3 rounded-xl bg-cyan-50/80 dark:bg-cyan-950/30 border border-cyan-200 dark:border-cyan-800">
+                      <div className="text-[11px] font-bold text-cyan-900 dark:text-cyan-300 uppercase">
+                        ⏰ Thời điểm dùng vàng:
+                      </div>
+                      <div className="text-xs sm:text-sm font-bold text-cyan-950 dark:text-cyan-100 mt-0.5">
+                        {googleSearchResult.thoiDiemDung}
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                      <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase">
+                        📋 Liều dùng & Cách dùng:
+                      </div>
+                      <div className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100 mt-0.5">
+                        {googleSearchResult.lieuDungCachDung}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tác dụng phụ & Ghi chú tương tác */}
+                  <div className="p-3 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/60">
+                    <div className="text-[11px] font-bold text-amber-900 dark:text-amber-300 uppercase">
+                      ⚠️ Tác dụng phụ:
+                    </div>
+                    <div className="text-xs text-amber-950 dark:text-amber-200 mt-0.5">
+                      {googleSearchResult.tacDungPhu}
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-violet-50/60 dark:bg-violet-950/20 border border-violet-200 dark:border-violet-800/60">
+                    <div className="text-[11px] font-bold text-violet-900 dark:text-violet-300 uppercase">
+                      💡 Lưu ý lâm sàng & Tương tác thuốc:
+                    </div>
+                    <div className="text-xs text-violet-950 dark:text-violet-200 mt-0.5">
+                      {googleSearchResult.ghiChu}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : viewMode === 'table' ? (
           /* TABLE VIEW: WITH BUTTON "XEM CHI TIẾT" RIGHT UNDER THE DRUG NAME */
@@ -1450,6 +1779,24 @@ https://dzota.vercel.app/duocly`;
             )}
           </div>
         )}
+
+        {/* Tra cứu bổ sung bằng Google AI nếu người dùng muốn tìm thêm thuốc ngoài data 401 */}
+        {searchQuery.trim().length > 0 && filteredDrugs.length > 0 && (
+          <div className="mt-4 p-3.5 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
+            <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+              <Globe className="w-4 h-4 text-blue-600 dark:text-cyan-400 flex-shrink-0" />
+              <span>Chưa thấy biệt dược bạn cần trong kết quả trên? Muốn tìm thêm từ Google & Dược Thư cho <strong>&quot;{searchQuery}&quot;</strong>?</span>
+            </div>
+            <button
+              onClick={() => handleGoogleSearch(searchQuery)}
+              disabled={isSearchingGoogle}
+              className="px-4 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs shadow flex items-center gap-1.5 active:scale-95 transition disabled:opacity-50"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span>{isSearchingGoogle ? 'Đang Tra Cứu...' : 'Tra Cứu Thêm Với Google AI'}</span>
+            </button>
+          </div>
+        )}
       </main>
 
       {/* ─────────────────────────────────────────────────────────────
@@ -1517,6 +1864,21 @@ https://dzota.vercel.app/duocly`;
 
             {/* Modal Body */}
             <div className="p-4 sm:p-6 overflow-y-auto space-y-4 text-slate-900 dark:text-slate-100">
+              
+              {/* Note if drug is external to 401 */}
+              {activeDrug.isExternal && (
+                <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-600 text-amber-950 dark:text-amber-100 flex items-start gap-2.5">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-extrabold text-xs sm:text-sm text-amber-900 dark:text-amber-200">
+                      ⚠️ THUỐC NGOÀI DATA 401 GỐC • TỰ ĐỘNG TRA CỨU TỪ GOOGLE & DƯỢC THƯ LÂM SÀNG
+                    </div>
+                    <div className="text-[11px] sm:text-xs text-amber-800 dark:text-amber-300 mt-0.5">
+                      Thuốc này không nằm trong danh mục 401 thuốc nội bộ (Dược lý của Duy). Dữ liệu được trích xuất tự động qua AI & Dược Thư Quốc Gia Việt Nam.
+                    </div>
+                  </div>
+                </div>
+              )}
               
               {/* SECTION 1: CÔNG THỨC THÀNH PHẦN (TÁCH BẠCH HOẠT CHẤT & TÁ DƯỢC) */}
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-800 shadow-sm">
@@ -2016,71 +2378,153 @@ https://dzota.vercel.app/duocly`;
 
                   {/* AI Results & Match Info */}
                   {aiResult && (
-                    <div className="space-y-3 pt-2">
+                    <div className="space-y-3.5 pt-2">
                       {/* Match banner if existing in 401 */}
                       {matchedDrug ? (
-                        <div className="p-3.5 rounded-2xl bg-emerald-50 border-2 border-emerald-400 text-emerald-950 space-y-2">
-                          <div className="flex items-center gap-1.5 font-extrabold text-emerald-800">
-                            <CheckCircle className="w-5 h-5 text-emerald-600" />
+                        <div className="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-500 text-emerald-950 space-y-2.5">
+                          <div className="flex items-center gap-1.5 font-extrabold text-emerald-800 text-sm">
+                            <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
                             <span>ĐÃ TÌM THẤY TRONG DATA 401 THUỐC!</span>
                           </div>
-                          <div className="text-sm font-bold text-slate-900">
+                          <div className="text-base font-bold text-slate-900">
                             Thuốc #{matchedDrug.id}: {matchedDrug.tenThuoc}
                           </div>
-                          <div className="text-xs text-slate-600">
-                            Nhóm: {matchedDrug.nhomPhanNhomPho} • Hoạt chất: {matchedDrug.hoatChat}
+                          <div className="p-2.5 rounded-xl bg-white/80 border border-emerald-200 space-y-1 text-xs">
+                            <div className="text-[11px] font-bold text-emerald-900 uppercase">
+                              🏷️ Nhóm, phân nhóm, phổ đầy đủ:
+                            </div>
+                            <div className="font-bold text-slate-800">
+                              {matchedDrug.nhomPhanNhomPho}
+                            </div>
+                            <div className="text-slate-600">
+                              Nhóm chính: <strong className="text-emerald-900">{matchedDrug.broadGroup}</strong> • Hoạt chất: <strong>{matchedDrug.hoatChat}</strong> • Dạng: <strong>{matchedDrug.dangBaoChe}</strong>
+                            </div>
                           </div>
                           <button
                             onClick={() => {
                               setShowCameraModal(false);
                               setActiveDrug(matchedDrug);
                             }}
-                            className="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow transition flex items-center gap-1"
+                            className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs sm:text-sm shadow transition flex items-center gap-1.5 active:scale-95"
                           >
-                            <Eye className="w-3.5 h-3.5" />
-                            <span>Xem Ngay Chi Tiết Thuốc Này</span>
+                            <Eye className="w-4 h-4" />
+                            <span>Xem Toàn Bộ 12 Trường Chi Tiết</span>
                           </button>
                         </div>
                       ) : (
-                        <div className="p-3 rounded-2xl bg-cyan-50 border border-cyan-300 text-cyan-950 flex items-center justify-between gap-2">
-                          <div>
-                            <div className="font-bold text-xs">✨ Thuốc mới chưa có trong 401 thuốc gốc</div>
-                            <div className="text-[11px] text-slate-600">Bạn có thể lưu ngay vào danh mục để ghi nhớ lâu dài!</div>
+                        <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-400 text-amber-950 dark:text-amber-100 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 font-extrabold text-amber-900 dark:text-amber-200 text-xs sm:text-sm">
+                              <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                              <span>⚠️ THUỐC NGOÀI DATA 401 GỐC • QUÉT TỪ CAMERA & AI TỰ ĐỘNG PHÂN TÍCH</span>
+                            </div>
+                            <button
+                              onClick={handleSaveScannedDrug}
+                              className="px-3.5 py-1.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs shadow flex items-center gap-1 whitespace-nowrap active:scale-95 transition"
+                            >
+                              <Save className="w-3.5 h-3.5" />
+                              <span>Lưu Vào Data (+)</span>
+                            </button>
                           </div>
-                          <button
-                            onClick={handleSaveScannedDrug}
-                            className="px-3 py-1.5 rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white font-bold text-xs shadow flex items-center gap-1 whitespace-nowrap"
-                          >
-                            <Save className="w-3.5 h-3.5" />
-                            <span>Lưu Vào Data (+)</span>
-                          </button>
+                          <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+                            Thuốc này không nằm trong file <strong>DƯỢC LÝ OF DUY (401 thuốc gốc)</strong>. Dữ liệu dưới đây được AI nhận diện từ ảnh bao bì và chuẩn hóa theo 12 trường dược lý:
+                          </p>
                         </div>
                       )}
 
                       {/* Extracted Details Box */}
-                      <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 space-y-2.5 text-xs">
-                        <div className="font-bold text-slate-900 dark:text-slate-100 text-sm">
-                          {aiResult.tenThuoc || 'Tên thuốc nhận diện'}
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="p-2 rounded bg-indigo-50 border border-indigo-200">
-                            <strong>🧪 Hoạt chất:</strong> {aiResult.hoatChat || aiResult.hoatChatHamLuong}
+                      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 space-y-3 text-xs">
+                        <div className="flex items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+                          <div>
+                            <div className="font-extrabold text-slate-900 dark:text-slate-100 text-base">
+                              {aiResult.tenThuoc || 'Tên thuốc nhận diện'}
+                            </div>
+                            <div className="text-[11px] text-slate-500 mt-0.5">
+                              Dạng bào chế: <strong>{aiResult.dangBaoChe || 'Chế phẩm dược'}</strong> • Hàm lượng: <strong>{aiResult.hoatChatHamLuong || aiResult.hoatChat}</strong>
+                            </div>
                           </div>
-                          <div className="p-2 rounded bg-purple-50 border border-purple-200">
-                            <strong>💊 Tá dược:</strong> {aiResult.taDuoc || 'Chưa rõ tá dược'}
+                          {aiResult.confidenceScore && (
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
+                              Độ tin cậy: {aiResult.confidenceScore}%
+                            </span>
+                          )}
+                        </div>
+
+                        {/* FULL NHÓM, PHÂN NHÓM, PHỔ AS USER REQUESTED */}
+                        <div className="p-3 rounded-xl bg-blue-50/90 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 space-y-1">
+                          <div className="text-[11px] font-bold text-blue-900 dark:text-cyan-300 uppercase tracking-wide flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-blue-600 inline-block"></span>
+                            <span>NHÓM, PHÂN NHÓM, PHỔ DƯỢC LÝ ĐẦY ĐỦ:</span>
+                          </div>
+                          <div className="text-sm font-bold text-blue-950 dark:text-cyan-100 leading-snug">
+                            {aiResult.nhomPhanNhomPho || `${aiResult.broadGroup || 'Chưa phân nhóm'} - Phân nhóm chi tiết`}
+                          </div>
+                          {aiResult.broadGroup && (
+                            <div className="flex items-center gap-2 pt-1 text-[11px]">
+                              <span className="text-slate-600 dark:text-slate-400 font-medium">Nhóm lớn chính:</span>
+                              <span className="px-2 py-0.5 rounded-md font-bold bg-blue-200 dark:bg-blue-900 text-blue-900 dark:text-cyan-200">
+                                {aiResult.broadGroup}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Thành phần: Hoạt chất & Tá dược riêng biệt */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div className="p-2.5 rounded-xl bg-indigo-50/90 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800">
+                            <div className="text-[11px] font-bold text-indigo-900 dark:text-indigo-300 uppercase">
+                              🧪 Hoạt chất:
+                            </div>
+                            <div className="text-xs sm:text-sm font-bold text-indigo-950 dark:text-indigo-100 mt-0.5">
+                              {aiResult.hoatChat || aiResult.hoatChatHamLuong}
+                            </div>
+                          </div>
+                          <div className="p-2.5 rounded-xl bg-purple-50/90 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800">
+                            <div className="text-[11px] font-bold text-purple-900 dark:text-purple-300 uppercase">
+                              💊 Tá dược:
+                            </div>
+                            <div className="text-xs sm:text-sm font-semibold text-purple-950 dark:text-purple-100 mt-0.5">
+                              {aiResult.taDuoc || 'Chưa ghi nhận tá dược cụ thể'}
+                            </div>
                           </div>
                         </div>
-                        <div>
-                          <strong className="text-emerald-700">🎯 Chỉ định:</strong> {aiResult.chiDinh}
+
+                        {/* Chỉ định & Chống chỉ định */}
+                        <div className="space-y-1.5">
+                          <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
+                            <div className="text-[11px] font-bold text-emerald-900 dark:text-emerald-300 uppercase">
+                              🎯 Chỉ định chính:
+                            </div>
+                            <div className="text-xs font-medium text-emerald-950 dark:text-emerald-100 mt-0.5">
+                              {aiResult.chiDinh}
+                            </div>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800">
+                            <div className="text-[11px] font-bold text-rose-900 dark:text-rose-300 uppercase">
+                              ⛔ Chống chỉ định & Cảnh báo:
+                            </div>
+                            <div className="text-xs font-bold text-rose-950 dark:text-rose-100 mt-0.5">
+                              {aiResult.chongChiDinh}
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <strong className="text-rose-700">⛔ Chống chỉ định:</strong> {aiResult.chongChiDinh}
+
+                        {/* Thời điểm dùng, Liều dùng, Ghi chú */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                          <div className="p-2 rounded-lg bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-200 dark:border-cyan-800">
+                            <strong className="text-cyan-800 dark:text-cyan-300">⏰ Thời điểm dùng:</strong>
+                            <div className="mt-0.5 font-bold text-cyan-950 dark:text-cyan-100">{aiResult.thoiDiemDung}</div>
+                          </div>
+                          <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                            <strong className="text-slate-700 dark:text-slate-300">📋 Liều dùng:</strong>
+                            <div className="mt-0.5 text-slate-900 dark:text-slate-100">{aiResult.lieuDungCachDung}</div>
+                          </div>
                         </div>
-                        <div>
-                          <strong className="text-cyan-700">⏰ Thời điểm:</strong> {aiResult.thoiDiemDung}
-                        </div>
-                        <div>
-                          <strong className="text-violet-700">💡 Ghi chú lâm sàng:</strong> {aiResult.ghiChu}
+
+                        <div className="p-2.5 rounded-xl bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 text-xs">
+                          <strong className="text-violet-800 dark:text-violet-300">💡 Ghi chú tương tác lâm sàng:</strong>
+                          <div className="mt-0.5 text-violet-950 dark:text-violet-100">{aiResult.ghiChu}</div>
                         </div>
                       </div>
                     </div>

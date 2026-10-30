@@ -15,6 +15,8 @@ export interface DrugItem {
   thoiDiemDung: string;
   nguon: string;
   ghiChu: string;
+  isExternal?: boolean;
+  isCustom?: boolean;
 }
 
 export type ReferenceMap = Record<string, string>;
