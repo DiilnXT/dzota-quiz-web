@@ -45,8 +45,11 @@ import {
   CheckCircle,
   FilePlus,
   HelpCircle,
-  Globe
+  Globe,
+  Timer
 } from 'lucide-react';
+import FlashcardView from './FlashcardView';
+import ChayTramView from './ChayTramView';
 import rawData from './duocly_data.json';
 import { DrugItem, ReferenceMap } from './types';
 
@@ -140,6 +143,11 @@ export default function DuocLyClient() {
   const [googleSearchResult, setGoogleSearchResult] = useState<DrugItem | null>(null);
   const [googleSearchError, setGoogleSearchError] = useState<string | null>(null);
   const [lastGoogleSearchQuery, setLastGoogleSearchQuery] = useState('');
+
+  // Flashcard & OSCE Station Run States
+  const [showFlashcardModal, setShowFlashcardModal] = useState(false);
+  const [showChayTramModal, setShowChayTramModal] = useState(false);
+  const [flashcardCustomIds, setFlashcardCustomIds] = useState<number[] | null>(null);
 
   // AI Model Configuration
   const [showAiConfigModal, setShowAiConfigModal] = useState(false);
