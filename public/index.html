@@ -2707,8 +2707,10 @@ Bảng đáp án:
 
             let localQuizzes = [];
             try { localQuizzes = JSON.parse(localStorage.getItem('myQuizzes') || '[]'); } catch (e) {}
+            if (!Array.isArray(localQuizzes)) localQuizzes = [];
             let vaultBanks = [];
             try { vaultBanks = JSON.parse(localStorage.getItem('dzota_bank_vault') || '[]'); } catch (e) {}
+            if (!Array.isArray(vaultBanks)) vaultBanks = [];
             
             const initialMap = new Map();
             localQuizzes.forEach(q => { if (q && q.id) initialMap.set(q.id, q); });
@@ -4810,10 +4812,11 @@ Bảng đáp án:
         // Danh sách chuyên mục cho Đề Thi và Ngân Hàng
         const categories = useMemo(() => {
             const cats = new Set(['Tất cả']);
-            savedQuizzes.forEach(q => { 
+            (savedQuizzes || []).forEach(q => { 
+                if (!q) return;
                 const cat = q.config?.category || q.category;
-                if (q.config?.quizType !== 'bank' && cat) {
-                    cats.add(cat); 
+                if ((q.config?.quizType || q.quizType) !== 'bank' && cat) {
+                    cats.add(String(cat).trim()); 
                 }
             });
             return Array.from(cats).sort();
@@ -4821,25 +4824,27 @@ Bảng đáp án:
 
         const bankCategories = useMemo(() => {
             const cats = new Set(['Tất cả']);
-            savedQuizzes.forEach(q => { 
+            (savedQuizzes || []).forEach(q => { 
+                if (!q) return;
                 const cat = q.config?.category || q.category;
-                if (q.config?.quizType === 'bank' && cat) {
-                    cats.add(cat); 
+                if ((q.config?.quizType || q.quizType) === 'bank' && cat) {
+                    cats.add(String(cat).trim()); 
                 }
             });
             return Array.from(cats).sort();
         }, [savedQuizzes]);
 
         const standardQuizzes = useMemo(() => {
-            return savedQuizzes.filter(q => (q.config?.quizType || q.quizType) !== 'bank');
+            return (savedQuizzes || []).filter(q => q && (q.config?.quizType || q.quizType) !== 'bank');
         }, [savedQuizzes]);
 
         const bankQuizzes = useMemo(() => {
-            return savedQuizzes.filter(q => (q.config?.quizType || q.quizType) === 'bank');
+            return (savedQuizzes || []).filter(q => q && (q.config?.quizType || q.quizType) === 'bank');
         }, [savedQuizzes]);
 
         const filteredQuizzes = useMemo(() => {
             return standardQuizzes.filter(q => {
+                if (!q) return false;
                 if (isUserAdmin && adminScope === 'mine') {
                     if (q.authorId && q.authorId !== currentUser?.id) return false;
                 }
@@ -4854,6 +4859,7 @@ Bảng đáp án:
 
         const filteredBanks = useMemo(() => {
             return bankQuizzes.filter(q => {
+                if (!q) return false;
                 if (isUserAdmin && adminScope === 'mine') {
                     if (q.authorId && q.authorId !== currentUser?.id) return false;
                 }
