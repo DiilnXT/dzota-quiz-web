@@ -7,7 +7,7 @@
     
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="Dzota Education — Nền Tảng Học Tập & Khảo Thí Thông Minh" />
-    <meta property="og:description" content="Nền tảng học tập cá nhân hóa chuẩn phong cách Apple: Dashboard thông minh, kho ngân hàng 50.000+ câu hỏi chuẩn hóa, trợ lý AI NoteBook ND và các module thực hành chuyên sâu (DYNEX OSCE, Dược Lý). Tác giả: Lê Nhật Duy Y Khoa K26 • Zalo: 0914659511." />
+    <meta property="og:description" content="Nền tảng học tập cá nhân hóa chuẩn Apple Design: Dashboard thông minh, kho ngân hàng 50.000+ câu hỏi chuẩn hóa, trợ lý AI NoteBook ND và phòng thi chạy trạm DYNEX OSCE. Tác giả: Lê Nhật Duy Y Khoa K26 • Zalo: 0914659511." />
     <meta property="og:image" content="https://i.ibb.co/tpzK0Y8Z/logo-dzota-1-1-1-1-1.png" />
     <link rel="icon" type="image/png" href="/logo-dzota.png" />
     <link rel="apple-touch-icon" href="/logo-dzota.png" />
@@ -15,12 +15,6 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Canvas Confetti -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-
-    <!-- Three.js 3D WebGL Engine for Apple Ambient Fluid Canvas -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -33,28 +27,49 @@
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"SF Pro Display"', '"Segoe UI"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
-                        display: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"', 'system-ui', 'sans-serif'],
-                        mono: ['"SF Mono"', '"JetBrains Mono"', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+                        sans: [
+                            '-apple-system',
+                            'BlinkMacSystemFont',
+                            '"SF Pro Text"',
+                            '"SF Pro Display"',
+                            '"SF Pro"',
+                            'system-ui',
+                            'sans-serif'
+                        ],
+                        display: [
+                            '-apple-system',
+                            'BlinkMacSystemFont',
+                            '"SF Pro Display"',
+                            '"SF Pro"',
+                            'system-ui',
+                            'sans-serif'
+                        ],
+                        mono: [
+                            '"SF Mono"',
+                            'Menlo',
+                            'Monaco',
+                            'Consolas',
+                            'monospace'
+                        ]
                     },
                     colors: {
                         apple: {
                             bg: '#000000',
-                            card: '#121215',
-                            border: 'rgba(255, 255, 255, 0.10)',
+                            card: '#161617',
+                            cardHover: '#1c1c1e',
+                            border: 'rgba(255, 255, 255, 0.08)',
+                            borderLight: 'rgba(255, 255, 255, 0.16)',
+                            text: '#F5F5F7',
                             subtext: '#86868B',
+                            tertiary: '#6E6E73',
                             blue: '#0071E3',
                             blueHover: '#0077ED',
-                            purple: '#AF52DE',
-                            indigo: '#5E5CE6',
-                            teal: '#30B0C7',
-                            green: '#34C759',
+                            blueActive: '#0062C4',
+                            cyan: '#2997FF',
+                            purple: '#BF5AF2',
+                            green: '#30D158',
+                            orange: '#FF9F0A'
                         }
-                    },
-                    boxShadow: {
-                        'apple-glass': '0 20px 40px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1)',
-                        'apple-glow': '0 0 50px -10px rgba(0, 113, 227, 0.35)',
-                        'apple-card': '0 30px 60px -20px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.1) inset',
                     }
                 }
             }
@@ -69,54 +84,44 @@
             background-color: #000000;
             color: #F5F5F7;
             overflow-x: hidden;
-            letter-spacing: -0.01em;
+            letter-spacing: -0.012em;
             text-rendering: optimizeLegibility;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
 
-        /* Ambient Fluid Three.js Canvas */
-        #webgl-canvas {
-            position: fixed;
-            inset: 0;
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
-            z-index: 0;
-            opacity: 0.45;
-        }
-
-        /* Apple Frosted Glass Material */
-        .apple-glass {
-            background: rgba(22, 22, 26, 0.72);
-            backdrop-filter: blur(24px) saturate(190%);
-            -webkit-backdrop-filter: blur(24px) saturate(190%);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-        }
-
-        .apple-glass-nav {
-            background: rgba(0, 0, 0, 0.75);
+        /* ─── Apple Navigation Frosted Glass ─── */
+        .apple-nav {
+            background: rgba(0, 0, 0, 0.82);
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
 
+        /* ─── Apple Frosted Card Material (macOS / iOS Material) ─── */
         .apple-card {
-            background: rgba(18, 18, 22, 0.65);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            background: #161617;
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-top: 1px solid rgba(255, 255, 255, 0.16);
+            border-top: 1px solid rgba(255, 255, 255, 0.18);
             transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         .apple-card:hover {
             transform: translateY(-4px);
             border-color: rgba(255, 255, 255, 0.22);
-            box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.7), 0 0 40px -10px rgba(0, 113, 227, 0.25);
+            box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8), 0 0 40px -10px rgba(0, 113, 227, 0.2);
         }
 
-        /* Apple Fluid Buttons */
+        .apple-glass-sheet {
+            background: rgba(26, 26, 30, 0.88);
+            backdrop-filter: blur(30px) saturate(190%);
+            -webkit-backdrop-filter: blur(30px) saturate(190%);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-top: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+
+        /* ─── Apple Buttons (WWDC Fluid Motion & Physics) ─── */
         .btn-apple-primary {
             background: #FFFFFF;
             color: #000000;
@@ -126,10 +131,26 @@
         .btn-apple-primary:hover {
             background: #E8E8ED;
             transform: scale(1.01);
-            box-shadow: 0 10px 25px -5px rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 25px -5px rgba(255, 255, 255, 0.25);
         }
         .btn-apple-primary:active {
             transform: scale(0.97);
+        }
+
+        .btn-apple-blue {
+            background: #0071E3;
+            color: #FFFFFF;
+            font-weight: 500;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .btn-apple-blue:hover {
+            background: #0077ED;
+            transform: scale(1.01);
+            box-shadow: 0 10px 25px -5px rgba(0, 113, 227, 0.45);
+        }
+        .btn-apple-blue:active {
+            transform: scale(0.97);
+            background: #0062C4;
         }
 
         .btn-apple-secondary {
@@ -137,7 +158,6 @@
             color: #FFFFFF;
             border: 1px solid rgba(255, 255, 255, 0.14);
             font-weight: 500;
-            backdrop-filter: blur(12px);
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .btn-apple-secondary:hover {
@@ -149,52 +169,41 @@
             transform: scale(0.97);
         }
 
-        .btn-apple-blue {
-            background: #0071E3;
-            color: #FFFFFF;
-            font-weight: 600;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .btn-apple-blue:hover {
-            background: #0077ED;
-            box-shadow: 0 10px 25px -5px rgba(0, 113, 227, 0.5);
-            transform: scale(1.01);
-        }
-        .btn-apple-blue:active {
-            transform: scale(0.97);
-        }
-
-        /* Apple Typography Headings with Optical Tracking */
+        /* ─── Apple Typography Classes ─── */
         .apple-headline {
-            letter-spacing: -0.035em;
-            line-height: 1.08;
+            letter-spacing: -0.04em;
+            line-height: 1.05;
             font-weight: 700;
         }
 
         .apple-title {
-            letter-spacing: -0.025em;
-            line-height: 1.15;
+            letter-spacing: -0.03em;
+            line-height: 1.12;
             font-weight: 600;
         }
 
-        .apple-text-gradient {
-            background: linear-gradient(180deg, #FFFFFF 0%, #A1A1A6 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .apple-kicker {
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            font-size: 11px;
+            font-weight: 600;
         }
 
-        .apple-text-glow {
-            background: linear-gradient(135deg, #FFFFFF 20%, #70B4FF 70%, #AF52DE 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        /* ─── Apple Link Chevron ─── */
+        .apple-link {
+            color: #2997FF;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+        }
+        .apple-link:hover {
+            text-decoration: underline;
+            gap: 7px;
         }
 
-        /* Smooth Segmented Control */
-        .apple-segmented-item {
-            transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
-
-        /* Scrollbar Apple Style */
+        /* ─── Apple Scrollbar ─── */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -203,85 +212,69 @@
             background: #000000;
         }
         ::-webkit-scrollbar-thumb {
-            background: #333336;
+            background: #2D2D2F;
             border-radius: 9999px;
             border: 2px solid #000000;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #555558;
+            background: #424245;
         }
     </style>
 </head>
 <body class="selection:bg-blue-600 selection:text-white">
 
-    <!-- WebGL Particle Canvas -->
-    <canvas id="webgl-canvas"></canvas>
-
     <div class="relative z-10 min-h-screen flex flex-col">
 
         <!-- ─────────────────────────────────────────────────────────────
-             1. APPLE-STYLE FLOATING NAVIGATION BAR
+             1. APPLE GLOBAL NAVIGATION (52px Minimal Frosted Chrome)
         ───────────────────────────────────────────────────────────── -->
-        <header class="sticky top-0 z-50 apple-glass-nav transition-all">
-            <div class="max-w-6xl mx-auto px-4 sm:px-8 h-16 sm:h-18 flex items-center justify-between gap-4">
+        <header class="sticky top-0 z-50 apple-nav">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 h-13 sm:h-14 flex items-center justify-between gap-4">
                 
-                <!-- Apple Brand Monogram & Title -->
-                <a href="/" class="flex items-center gap-3 no-underline group flex-shrink-0">
-                    <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/10 border border-white/20 p-1 flex items-center justify-center transition-transform group-hover:scale-105 shadow-inner">
+                <!-- Apple Logo & Monogram -->
+                <a href="/" class="flex items-center gap-2.5 no-underline group flex-shrink-0">
+                    <div class="w-7 h-7 rounded-full bg-white/10 border border-white/20 p-1 flex items-center justify-center transition-transform group-hover:scale-105">
                         <img src="/logo-dzota.png" alt="Dzota Education" class="w-full h-full object-contain" />
                     </div>
-                    <div class="flex items-baseline gap-1.5">
-                        <span class="text-lg sm:text-xl font-bold tracking-tight text-white font-display">Dzota</span>
-                        <span class="text-xs font-medium text-zinc-400">Education</span>
-                    </div>
+                    <span class="text-[17px] font-semibold tracking-tight text-white font-display">Dzota</span>
                 </a>
 
-                <!-- Desktop Nav Links (Clean, minimal, Apple HIG) -->
-                <nav class="hidden lg:flex items-center gap-6 text-[13px] font-medium text-zinc-300">
-                    <a href="#hero" class="hover:text-white transition-colors no-underline">Tổng quan</a>
-                    <a href="/dashboard" class="text-blue-400 hover:text-blue-300 transition-colors no-underline flex items-center gap-1.5 font-semibold">
-                        <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>
-                        <span>Dashboard</span>
-                    </a>
+                <!-- Minimalist Global Nav Links -->
+                <nav class="hidden md:flex items-center gap-7 text-[12px] font-normal text-[#86868B]">
+                    <a href="#overview" class="hover:text-white transition-colors no-underline">Tổng quan</a>
+                    <a href="/dashboard" class="text-white hover:text-[#2997FF] transition-colors no-underline font-medium">Dashboard</a>
                     <a href="/creator" class="hover:text-white transition-colors no-underline">Ngân hàng đề</a>
-                    <a href="/duocly" class="hover:text-white transition-colors no-underline flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                        <span>Dược Lý 401</span>
-                    </a>
-                    <a href="/dynex" class="hover:text-white transition-colors no-underline flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-                        <span>DYNEX OSCE</span>
-                    </a>
+                    <a href="/duocly" class="hover:text-white transition-colors no-underline">Dược Lý 401</a>
+                    <a href="/dynex" class="hover:text-white transition-colors no-underline">DYNEX OSCE</a>
                     <a href="#features" class="hover:text-white transition-colors no-underline">Tính năng</a>
                     <a href="#pricing" class="hover:text-white transition-colors no-underline">Gói học</a>
-                    <a href="#faq" class="hover:text-white transition-colors no-underline">Hỏi đáp</a>
                 </nav>
 
-                <!-- Actions Group: Zalo Support, Login & Primary Dashboard CTA -->
-                <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Actions: Zalo Hotline, Login & Pill CTA -->
+                <div class="flex items-center gap-2.5">
                     <a
                         href="https://zalo.me/0914659511"
                         target="_blank"
                         rel="noreferrer"
-                        class="hidden md:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium text-zinc-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition no-underline active:scale-95"
+                        class="hidden lg:inline-flex items-center gap-1 text-[12px] text-[#86868B] hover:text-[#2997FF] transition no-underline"
+                        title="Hỗ trợ Zalo 24/7"
                     >
-                        <i data-lucide="message-circle" class="w-3.5 h-3.5 text-blue-400"></i>
                         <span>Zalo: 0914.659.511</span>
                     </a>
 
                     <button
                         onclick="openAuthModal('login')"
-                        class="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-[13px] font-medium text-zinc-200 hover:text-white bg-white/10 hover:bg-white/15 border border-white/15 transition cursor-pointer active:scale-95"
+                        class="text-[12px] text-zinc-300 hover:text-white px-3 py-1 rounded-full bg-white/[0.08] hover:bg-white/[0.14] border border-white/[0.1] transition cursor-pointer active:scale-95"
                     >
                         Đăng Nhập
                     </button>
 
                     <a
                         href="/dashboard"
-                        class="btn-apple-primary px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-[13px] transition no-underline flex items-center gap-1.5"
+                        class="btn-apple-blue px-3.5 py-1 sm:px-4 sm:py-1.5 rounded-full text-[12px] no-underline flex items-center gap-1 active:scale-95"
                     >
                         <span>Vào Dashboard</span>
-                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
                     </a>
                 </div>
 
@@ -289,110 +282,108 @@
         </header>
 
         <!-- ─────────────────────────────────────────────────────────────
-             2. HERO SECTION — PURE APPLE PRODUCT ANNOUNCEMENT
+             2. HERO SECTION — IMMACULATE APPLE PRODUCT ANNOUNCEMENT
         ───────────────────────────────────────────────────────────── -->
-        <section id="hero" class="relative pt-20 sm:pt-28 pb-16 sm:pb-24 px-4 sm:px-8 text-center overflow-hidden">
-            <div class="max-w-4xl mx-auto space-y-6 sm:space-y-8">
+        <section id="overview" class="relative pt-24 sm:pt-36 pb-16 sm:pb-24 px-4 sm:px-8 text-center overflow-hidden">
+            <div class="max-w-4xl mx-auto space-y-5 sm:space-y-6">
                 
-                <!-- Category Eyebrow Pill -->
-                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.12] text-zinc-300 text-xs font-medium tracking-wide">
-                    <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                    <span>Thế hệ EdTech Y Khoa & Khảo Thí Thông Minh 2026</span>
+                <!-- Apple Product Kicker -->
+                <div class="apple-kicker text-[#2997FF]">
+                    Dzota Education • Thế Hệ Mới
                 </div>
 
-                <!-- Grand Headline (Apple Optical Display) -->
-                <h1 class="text-4xl sm:text-6xl md:text-7xl apple-headline text-white">
-                    Dzota Education.<br />
-                    <span class="apple-text-glow">Tri thức chuẩn mực. Học tập bứt phá.</span>
+                <!-- Monumental Display Headline -->
+                <h1 class="text-5xl sm:text-7xl md:text-8xl apple-headline text-white">
+                    Học tập chuẩn xác.<br />
+                    <span class="bg-gradient-to-b from-white via-white to-zinc-500 bg-clip-text text-transparent">Bứt phá đỉnh cao.</span>
                 </h1>
 
-                <!-- Subheadline -->
-                <p class="text-base sm:text-xl text-zinc-400 max-w-2xl mx-auto font-normal leading-relaxed">
-                    Nền tảng học tập cá nhân hóa được thiết kế tối giản, trực quan và mạnh mẽ. Khám phá kho <strong>50.000+ câu hỏi</strong>, trợ lý <strong>AI NoteBook ND</strong> và phòng thi chạy trạm <strong>DYNEX OSCE</strong> theo tiêu chuẩn y khoa quốc tế.
+                <!-- Crisp Secondary Copy -->
+                <p class="text-lg sm:text-2xl text-[#86868B] max-w-2xl mx-auto font-normal leading-relaxed">
+                    Nền tảng khảo thí và đào tạo y khoa thông minh. Tích hợp <strong>50.000+ câu hỏi</strong> chuẩn hóa, trợ lý <strong>AI NoteBook ND</strong> và phòng thi chạy trạm <strong>DYNEX OSCE</strong>.
                 </p>
 
-                <!-- Primary Action Trio -->
-                <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                <!-- Apple Action Pills -->
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-4">
                     <a
                         href="/dashboard"
-                        class="w-full sm:w-auto btn-apple-primary px-8 py-3.5 rounded-full text-sm sm:text-base flex items-center justify-center gap-2 no-underline shadow-lg"
+                        class="w-full sm:w-auto btn-apple-primary px-8 py-3.5 rounded-full text-[15px] flex items-center justify-center gap-2 no-underline"
                     >
-                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
                         <span>Vào Dashboard Học Tập</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
                     </a>
 
                     <a
                         href="/creator"
-                        class="w-full sm:w-auto btn-apple-secondary px-7 py-3.5 rounded-full text-sm sm:text-base flex items-center justify-center gap-2 no-underline"
+                        class="w-full sm:w-auto btn-apple-secondary px-7 py-3.5 rounded-full text-[15px] flex items-center justify-center gap-2 no-underline"
                     >
-                        <i data-lucide="folder-search" class="w-4 h-4 text-blue-400"></i>
-                        <span>Ngân Hàng Đề Thi</span>
-                    </a>
-
-                    <a
-                        href="https://zalo.me/0914659511?text=Xin%20chào%20bác%20sĩ%20Lê%20Nhật%20Duy%2C%20tôi%20muốn%20tìm%20hiểu%20về%20Dzota%20Education"
-                        target="_blank"
-                        rel="noreferrer"
-                        class="w-full sm:w-auto px-6 py-3.5 rounded-full text-sm sm:text-base font-medium text-sky-400 bg-sky-500/10 hover:bg-sky-500/15 border border-sky-500/25 transition flex items-center justify-center gap-2 no-underline active:scale-97"
-                    >
-                        <i data-lucide="message-circle" class="w-4 h-4"></i>
-                        <span>Tư vấn Zalo 0914.659.511</span>
+                        <i data-lucide="folder-search" class="w-4 h-4 text-[#2997FF]"></i>
+                        <span>Kho Ngân Hàng Đề</span>
                     </a>
                 </div>
 
-                <!-- Founder Subtitle Citation -->
-                <div class="pt-4 flex items-center justify-center gap-3 text-xs text-zinc-500">
-                    <span>Sáng lập bởi <strong>Lê Nhật Duy (Y Khoa K26)</strong></span>
-                    <span class="w-1 h-1 rounded-full bg-zinc-600"></span>
-                    <span>Bảo chứng y khoa chuẩn mực</span>
-                    <span class="w-1 h-1 rounded-full bg-zinc-600"></span>
-                    <span>Hotline 24/7</span>
+                <!-- Apple Text Link with Chevron -->
+                <div class="pt-2 flex items-center justify-center gap-6 text-[14px]">
+                    <a href="https://zalo.me/0914659511" target="_blank" rel="noreferrer" class="apple-link font-medium">
+                        <span>Tư vấn qua Zalo 0914.659.511</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </a>
+                    <span class="text-zinc-600">•</span>
+                    <button onclick="openAuthModal('login')" class="apple-link font-medium bg-transparent border-none cursor-pointer">
+                        <span>Đăng nhập Dzota ID</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- Author Footnote Citation -->
+                <div class="pt-4 text-[12px] text-[#6E6E73] font-normal">
+                    Nghiên cứu & Sáng lập bởi <strong>Lê Nhật Duy (Y Khoa K26)</strong> • Chuẩn mực y khoa thực tiễn
                 </div>
 
             </div>
 
             <!-- ─────────────────────────────────────────────────────────
-                 3. INTERACTIVE PRODUCT SHOWCASE WINDOW (macOS/iPadOS Style)
+                 3. APPLE STUDIO DISPLAY / IPAD PRO WINDOW MOCKUP
             ───────────────────────────────────────────────────────── -->
-            <div class="max-w-5xl mx-auto mt-12 sm:mt-16">
-                <div class="apple-card rounded-[28px] sm:rounded-[36px] overflow-hidden border border-white/15 shadow-apple-card text-left">
+            <div class="max-w-5xl mx-auto mt-14 sm:mt-20">
+                <div class="apple-card rounded-[28px] sm:rounded-[36px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.85)] text-left">
                     
-                    <!-- macOS Window Chrome Header -->
-                    <div class="px-5 py-3.5 bg-black/60 border-b border-white/10 flex flex-wrap items-center justify-between gap-3">
+                    <!-- macOS Window Frame Chrome -->
+                    <div class="px-5 py-3.5 bg-[#121214] border-b border-white/[0.08] flex flex-wrap items-center justify-between gap-3">
                         <div class="flex items-center gap-2">
                             <span class="w-3 h-3 rounded-full bg-[#FF5F56] inline-block"></span>
                             <span class="w-3 h-3 rounded-full bg-[#FFBD2E] inline-block"></span>
                             <span class="w-3 h-3 rounded-full bg-[#27C93F] inline-block"></span>
-                            <span class="text-xs font-mono text-zinc-500 ml-2">dzota.app — workspace</span>
+                            <span class="text-xs font-mono text-[#86868B] ml-2">dzota.app — workspace</span>
                         </div>
 
-                        <!-- Apple Segmented Control Switcher -->
-                        <div class="flex items-center p-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium">
+                        <!-- Segmented Control Tabs -->
+                        <div class="flex items-center p-1 rounded-full bg-white/[0.06] border border-white/[0.08] text-[12px] font-medium">
                             <button
                                 id="tab-btn-dash"
                                 onclick="switchShowcase('dash')"
-                                class="apple-segmented-item px-3.5 py-1.5 rounded-full bg-white text-black font-semibold shadow-sm"
+                                class="px-3.5 py-1 rounded-full bg-white text-black font-semibold shadow-sm transition"
                             >
                                 Dashboard
                             </button>
                             <button
                                 id="tab-btn-bank"
                                 onclick="switchShowcase('bank')"
-                                class="apple-segmented-item px-3.5 py-1.5 rounded-full text-zinc-400 hover:text-white"
+                                class="px-3.5 py-1 rounded-full text-[#86868B] hover:text-white transition"
                             >
                                 Kho Đề (50k+)
                             </button>
                             <button
                                 id="tab-btn-ai"
                                 onclick="switchShowcase('ai')"
-                                class="apple-segmented-item px-3.5 py-1.5 rounded-full text-zinc-400 hover:text-white"
+                                class="px-3.5 py-1 rounded-full text-[#86868B] hover:text-white transition"
                             >
                                 NoteBook AI
                             </button>
                             <button
                                 id="tab-btn-osce"
                                 onclick="switchShowcase('osce')"
-                                class="apple-segmented-item px-3.5 py-1.5 rounded-full text-zinc-400 hover:text-white"
+                                class="px-3.5 py-1 rounded-full text-[#86868B] hover:text-white transition"
                             >
                                 DYNEX OSCE
                             </button>
@@ -400,151 +391,148 @@
                     </div>
 
                     <!-- Showcase View Container -->
-                    <div class="p-6 sm:p-8 bg-gradient-to-b from-zinc-950/80 to-black/90 min-h-[380px] sm:min-h-[440px] flex items-center">
+                    <div class="p-6 sm:p-10 bg-[#0A0A0C] min-h-[400px] flex items-center">
                         
-                        <!-- TAB 1: DASHBOARD VIEW -->
-                        <div id="view-dash" class="w-full space-y-6 animate-fade-in">
-                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
+                        <!-- TAB 1: DASHBOARD VIEW (Active by default) -->
+                        <div id="view-dash" class="w-full space-y-6">
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-5">
                                 <div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-xs font-semibold uppercase tracking-wider text-blue-400">Không Gian Cá Nhân Hóa</span>
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] bg-blue-500/20 text-blue-300 font-mono">Real-time</span>
-                                    </div>
-                                    <h3 class="text-xl sm:text-2xl font-bold text-white mt-1">Xin chào, Bác sĩ tương lai</h3>
-                                    <p class="text-xs sm:text-sm text-zinc-400">Theo dõi tiến độ, nhiệm vụ ôn thi và chuỗi học tập hàng ngày.</p>
+                                    <div class="apple-kicker text-[#2997FF]">Không Gian Cá Nhân Hóa</div>
+                                    <h3 class="text-2xl sm:text-3xl font-semibold text-white tracking-tight mt-1">Xin chào, Bác sĩ tương lai</h3>
+                                    <p class="text-xs sm:text-sm text-[#86868B]">Theo dõi chuỗi học tập hàng ngày và bài tập được phân công.</p>
                                 </div>
-                                <a href="/dashboard" class="btn-apple-primary px-4 py-2 rounded-full text-xs no-underline flex items-center gap-1.5 self-start sm:self-auto">
-                                    <span>Mở toàn màn hình</span>
-                                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                                <a href="/dashboard" class="btn-apple-blue px-4 py-2 rounded-full text-xs no-underline flex items-center gap-1.5 self-start sm:self-auto">
+                                    <span>Mở Dashboard Toàn Màn Hình</span>
+                                    <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
                                 </a>
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <div class="p-5 rounded-2xl bg-white/[0.04] border border-white/10 space-y-2">
-                                    <div class="text-xs font-medium text-zinc-400 flex items-center justify-between">
-                                        <span>Chuỗi học tập (Streak)</span>
-                                        <span class="text-orange-400">🔥 14 ngày</span>
+                                <div class="p-5 rounded-2xl bg-[#161617] border border-white/[0.08] space-y-2">
+                                    <div class="text-xs font-medium text-[#86868B] flex items-center justify-between">
+                                        <span>Chuỗi học (Streak)</span>
+                                        <span class="text-orange-400 font-semibold">🔥 14 ngày</span>
                                     </div>
-                                    <div class="text-3xl font-bold text-white">94.8%</div>
-                                    <p class="text-xs text-zinc-500">Độ chính xác trung bình 30 bài gần nhất</p>
+                                    <div class="text-3xl font-bold text-white tracking-tight">94.8%</div>
+                                    <p class="text-xs text-[#86868B]">Độ chính xác trung bình 30 bài gần nhất</p>
                                     <div class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
-                                        <div class="h-full bg-blue-500 rounded-full" style="width: 94.8%"></div>
+                                        <div class="h-full bg-[#0071E3] rounded-full" style="width: 94.8%"></div>
                                     </div>
                                 </div>
 
-                                <div class="p-5 rounded-2xl bg-white/[0.04] border border-white/10 space-y-2">
-                                    <div class="text-xs font-medium text-zinc-400 flex items-center justify-between">
+                                <div class="p-5 rounded-2xl bg-[#161617] border border-white/[0.08] space-y-2">
+                                    <div class="text-xs font-medium text-[#86868B] flex items-center justify-between">
                                         <span>Bài tập hoàn thành</span>
-                                        <span class="text-emerald-400">Đạt mục tiêu</span>
+                                        <span class="text-[#30D158] font-semibold">Đạt chuẩn</span>
                                     </div>
-                                    <div class="text-3xl font-bold text-white">128/140</div>
-                                    <p class="text-xs text-zinc-500">Thuộc 6 chuyên khoa y học trọng điểm</p>
+                                    <div class="text-3xl font-bold text-white tracking-tight">128/140</div>
+                                    <p class="text-xs text-[#86868B]">Thuộc 6 chuyên khoa y học trọng điểm</p>
                                     <div class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
-                                        <div class="h-full bg-emerald-500 rounded-full" style="width: 91%"></div>
+                                        <div class="h-full bg-[#30D158] rounded-full" style="width: 91%"></div>
                                     </div>
                                 </div>
 
-                                <div class="p-5 rounded-2xl bg-white/[0.04] border border-white/10 space-y-2">
-                                    <div class="text-xs font-medium text-zinc-400 flex items-center justify-between">
+                                <div class="p-5 rounded-2xl bg-[#161617] border border-white/[0.08] space-y-2">
+                                    <div class="text-xs font-medium text-[#86868B] flex items-center justify-between">
                                         <span>Thuật toán Anki SM-2</span>
-                                        <span class="text-purple-400">Flashcard</span>
+                                        <span class="text-[#BF5AF2] font-semibold">Flashcard</span>
                                     </div>
-                                    <div class="text-3xl font-bold text-white">420 Thẻ</div>
-                                    <p class="text-xs text-zinc-500">Đã ghi nhớ vào vùng trí nhớ dài hạn</p>
+                                    <div class="text-3xl font-bold text-white tracking-tight">420 Thẻ</div>
+                                    <p class="text-xs text-[#86868B]">Đã chuyển vào trí nhớ dài hạn</p>
                                     <div class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
-                                        <div class="h-full bg-purple-500 rounded-full" style="width: 82%"></div>
+                                        <div class="h-full bg-[#BF5AF2] rounded-full" style="width: 82%"></div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-between gap-4">
+                            <div class="p-4 rounded-2xl bg-[#161617] border border-white/[0.08] flex items-center justify-between gap-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center flex-shrink-0">
-                                        <i data-lucide="play-circle" class="w-5 h-5"></i>
+                                    <div class="w-10 h-10 rounded-xl bg-blue-500/15 text-[#2997FF] flex items-center justify-center flex-shrink-0">
+                                        <i data-lucide="play" class="w-4 h-4 fill-current"></i>
                                     </div>
                                     <div>
-                                        <div class="text-sm font-semibold text-white">Đề thi gợi ý hôm nay: Ôn tập Dược Lý Kháng Sinh Nhóm Beta-Lactam</div>
-                                        <div class="text-xs text-zinc-400">Thời gian 30 phút • 40 câu hỏi trích từ ngân hàng đề thi nội trú</div>
+                                        <div class="text-sm font-semibold text-white">Đề xuất hôm nay: Ôn tập Dược Lý Kháng Sinh Nhóm Beta-Lactam</div>
+                                        <div class="text-xs text-[#86868B]">Thời gian: 30 phút • 40 câu hỏi trích từ ngân hàng đề thi nội trú</div>
                                     </div>
                                 </div>
-                                <a href="/dashboard" class="btn-apple-blue px-4 py-2 rounded-full text-xs no-underline flex items-center gap-1 flex-shrink-0">
-                                    <span>Bắt đầu ngay</span>
+                                <a href="/dashboard" class="btn-apple-primary px-4 py-2 rounded-full text-xs no-underline flex items-center gap-1 flex-shrink-0">
+                                    <span>Bắt đầu</span>
                                 </a>
                             </div>
                         </div>
 
                         <!-- TAB 2: BANK VIEW (Hidden by default) -->
-                        <div id="view-bank" class="w-full space-y-6 hidden animate-fade-in">
-                            <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                        <div id="view-bank" class="w-full space-y-6 hidden">
+                            <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
                                 <div>
-                                    <div class="text-xs font-semibold uppercase text-emerald-400">Ngân Hàng Câu Hỏi Chuẩn Hóa</div>
-                                    <h3 class="text-xl sm:text-2xl font-bold text-white mt-1">Kho Đề Thi & Ma Trận Trắc Nghiệm</h3>
+                                    <div class="apple-kicker text-[#30D158]">Ngân Hàng Câu Hỏi Chuẩn Hóa</div>
+                                    <h3 class="text-2xl sm:text-3xl font-semibold text-white tracking-tight mt-1">Kho Đề Thi & Ma Trận Trắc Nghiệm</h3>
                                 </div>
                                 <a href="/creator" class="btn-apple-primary px-4 py-2 rounded-full text-xs no-underline">Vào Trình Tạo Đề</a>
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div class="p-4 rounded-2xl bg-white/[0.04] border border-white/10 space-y-2">
+                                <div class="p-5 rounded-2xl bg-[#161617] border border-white/[0.08] space-y-2">
                                     <div class="flex items-center justify-between text-xs">
-                                        <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold">Kho Môn Học</span>
-                                        <span class="text-zinc-500 font-mono">50.000+ Câu</span>
+                                        <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-[#30D158] font-semibold">Kho Môn Học</span>
+                                        <span class="text-[#86868B] font-mono">50.000+ Câu</span>
                                     </div>
-                                    <div class="text-base font-bold text-white">Giải Phẫu Học & Sinh Lý Y Khoa</div>
-                                    <p class="text-xs text-zinc-400">Phân tầng nhận biết, thông hiểu, vận dụng theo thang đo chuẩn Bloom.</p>
+                                    <div class="text-base font-semibold text-white">Giải Phẫu Học & Sinh Lý Y Khoa</div>
+                                    <p class="text-xs text-[#86868B]">Phân loại nhận biết, thông hiểu và vận dụng theo khung đo chuẩn Bloom.</p>
                                 </div>
 
-                                <div class="p-4 rounded-2xl bg-white/[0.04] border border-white/10 space-y-2">
+                                <div class="p-5 rounded-2xl bg-[#161617] border border-white/[0.08] space-y-2">
                                     <div class="flex items-center justify-between text-xs">
-                                        <span class="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-semibold">Sinh Đề Tự Động</span>
-                                        <span class="text-zinc-500 font-mono">Ma Trận Không Trùng</span>
+                                        <span class="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-[#2997FF] font-semibold">Sinh Đề Tự Động</span>
+                                        <span class="text-[#86868B] font-mono">Ma Trận Không Trùng</span>
                                     </div>
-                                    <div class="text-base font-bold text-white">Sinh Đề Thi Từ Ngân Hàng</div>
-                                    <p class="text-xs text-zinc-400">Mỗi lượt làm bài bốc ngẫu nhiên biến thể câu hỏi con, chống trùng lặp tuyệt đối.</p>
+                                    <div class="text-base font-semibold text-white">Sinh Đề Thi Từ Ngân Hàng</div>
+                                    <p class="text-xs text-[#86868B]">Mỗi lượt làm bài tự động bốc ngẫu nhiên biến thể câu hỏi con, đảm bảo công bằng.</p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- TAB 3: NOTEBOOK AI VIEW (Hidden by default) -->
-                        <div id="view-ai" class="w-full space-y-6 hidden animate-fade-in">
-                            <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                        <div id="view-ai" class="w-full space-y-6 hidden">
+                            <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
                                 <div>
-                                    <div class="text-xs font-semibold uppercase text-purple-400">Trợ Lý Thông Minh Gemini Flash</div>
-                                    <h3 class="text-xl sm:text-2xl font-bold text-white mt-1">NoteBook AI Y Khoa</h3>
+                                    <div class="apple-kicker text-[#BF5AF2]">Trợ Lý Y Khoa Gemini Flash</div>
+                                    <h3 class="text-2xl sm:text-3xl font-semibold text-white tracking-tight mt-1">NoteBook AI Y Khoa</h3>
                                 </div>
                                 <a href="/notebook" class="btn-apple-primary px-4 py-2 rounded-full text-xs no-underline">Mở NoteBook</a>
                             </div>
 
-                            <div class="p-5 rounded-2xl bg-purple-500/10 border border-purple-500/20 space-y-3">
-                                <div class="flex items-center gap-2 text-xs font-semibold text-purple-300">
+                            <div class="p-5 rounded-2xl bg-[#161617] border border-white/[0.08] space-y-3">
+                                <div class="flex items-center gap-2 text-xs font-semibold text-[#BF5AF2]">
                                     <i data-lucide="sparkles" class="w-4 h-4"></i>
-                                    <span>Tóm tắt bài giảng & sinh câu hỏi lâm sàng tự động</span>
+                                    <span>Tự động phân tích slide & trích xuất câu hỏi tức thời</span>
                                 </div>
                                 <p class="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-                                    Tải lên slide bài giảng PDF, tài liệu Word hoặc văn bản ca bệnh. Gemini AI sẽ phân tích cấu trúc, trích xuất điểm mấu chốt và tạo ngay bộ 30 câu hỏi trắc nghiệm kiểm tra độ hiểu bài trong 3 giây.
+                                    Tải lên slide bài giảng PDF, tài liệu Word hoặc hồ sơ bệnh án. Gemini AI phân tích cấu trúc, nhận diện điểm mấu chốt và tạo ngay bộ 30 câu hỏi trắc nghiệm kiểm tra độ hiểu bài trong 3 giây.
                                 </p>
                             </div>
                         </div>
 
                         <!-- TAB 4: DYNEX OSCE VIEW (Hidden by default) -->
-                        <div id="view-osce" class="w-full space-y-6 hidden animate-fade-in">
-                            <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                        <div id="view-osce" class="w-full space-y-6 hidden">
+                            <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
                                 <div>
-                                    <div class="text-xs font-semibold uppercase text-cyan-400">Thi Chạy Trạm Lâm Sàng</div>
-                                    <h3 class="text-xl sm:text-2xl font-bold text-white mt-1">DYNEX OSCE Simulation</h3>
+                                    <div class="apple-kicker text-[#2997FF]">Mô Phỏng Chạy Trạm Lâm Sàng</div>
+                                    <h3 class="text-2xl sm:text-3xl font-semibold text-white tracking-tight mt-1">DYNEX OSCE Simulation</h3>
                                 </div>
                                 <a href="/dynex" class="btn-apple-primary px-4 py-2 rounded-full text-xs no-underline">Vào Phòng Chạy Trạm</a>
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div class="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 space-y-2">
-                                    <div class="text-xs font-semibold text-cyan-300">⏱️ Đồng hồ đếm ngược 20s/trạm</div>
-                                    <div class="text-base font-bold text-white">Mô phỏng áp lực phòng thi thật</div>
-                                    <p class="text-xs text-zinc-400">Rèn luyện phản xạ nhận diện chi tiết giải phẫu dưới áp lực thời gian chính xác.</p>
+                                <div class="p-5 rounded-2xl bg-[#161617] border border-white/[0.08] space-y-2">
+                                    <div class="text-xs font-semibold text-[#2997FF]">⏱️ Đồng hồ đếm ngược 20s/trạm</div>
+                                    <div class="text-base font-semibold text-white">Mô phỏng áp lực phòng thi thật</div>
+                                    <p class="text-xs text-[#86868B]">Rèn luyện phản xạ nhận diện chi tiết giải phẫu dưới áp lực thời gian chính xác.</p>
                                 </div>
-                                <div class="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 space-y-2">
-                                    <div class="text-xs font-semibold text-cyan-300">🏷️ Công nghệ Masking che nhãn</div>
-                                    <div class="text-base font-bold text-white">Che nhãn tự động không lộ đáp án</div>
-                                    <p class="text-xs text-zinc-400">Tự do phóng to, thu nhỏ tiêu bản 4K không vỡ hạt trên cả máy tính và điện thoại.</p>
+                                <div class="p-5 rounded-2xl bg-[#161617] border border-white/[0.08] space-y-2">
+                                    <div class="text-xs font-semibold text-[#2997FF]">🏷️ Công nghệ Masking che nhãn</div>
+                                    <div class="text-base font-semibold text-white">Che nhãn không lộ chữ</div>
+                                    <p class="text-xs text-[#86868B]">Tự do phóng to, thu nhỏ tiêu bản 4K không vỡ hạt trên cả máy tính và điện thoại.</p>
                                 </div>
                             </div>
                         </div>
@@ -556,157 +544,157 @@
         </section>
 
         <!-- ─────────────────────────────────────────────────────────────
-             4. METRICS BAR (APPLE MINIMALIST STATS)
+             4. APPLE METRICS (Minimalist High-Impact Stats)
         ───────────────────────────────────────────────────────────── -->
-        <section class="py-12 border-y border-white/10 bg-black/40">
-            <div class="max-w-6xl mx-auto px-4 sm:px-8">
+        <section class="py-14 border-y border-white/[0.08] bg-[#0A0A0C]">
+            <div class="max-w-5xl mx-auto px-4 sm:px-8">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
                     <div class="space-y-1">
-                        <div class="text-3xl sm:text-4xl font-bold tracking-tight text-white font-mono">15.200+</div>
-                        <div class="text-xs sm:text-sm text-zinc-400">Học viên tích cực</div>
+                        <div class="text-4xl sm:text-5xl font-bold tracking-tight text-white font-mono">15.200+</div>
+                        <div class="text-xs text-[#86868B]">Học viên đang học</div>
                     </div>
                     <div class="space-y-1">
-                        <div class="text-3xl sm:text-4xl font-bold tracking-tight text-blue-400 font-mono">50.000+</div>
-                        <div class="text-xs sm:text-sm text-zinc-400">Câu hỏi chuẩn hóa</div>
+                        <div class="text-4xl sm:text-5xl font-bold tracking-tight text-[#2997FF] font-mono">50.000+</div>
+                        <div class="text-xs text-[#86868B]">Câu hỏi trong kho đề</div>
                     </div>
                     <div class="space-y-1">
-                        <div class="text-3xl sm:text-4xl font-bold tracking-tight text-emerald-400 font-mono">99.4%</div>
-                        <div class="text-xs sm:text-sm text-zinc-400">Tỷ lệ qua môn & đạt điểm A</div>
+                        <div class="text-4xl sm:text-5xl font-bold tracking-tight text-[#30D158] font-mono">99.4%</div>
+                        <div class="text-xs text-[#86868B]">Tỷ lệ đạt điểm A/A+</div>
                     </div>
                     <div class="space-y-1">
-                        <div class="text-3xl sm:text-4xl font-bold tracking-tight text-purple-400 font-mono">24/7</div>
-                        <div class="text-xs sm:text-sm text-zinc-400">Đồng hành qua Zalo</div>
+                        <div class="text-4xl sm:text-5xl font-bold tracking-tight text-[#BF5AF2] font-mono">24/7</div>
+                        <div class="text-xs text-[#86868B]">Đồng hành qua Zalo</div>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- ─────────────────────────────────────────────────────────────
-             5. BENTO GRID (THE 6 PILLARS OF DZOTA — APPLE KEYNOTE STYLE)
+             5. BENTO GRID — THE 6 CORE PILLARS (Apple Keynote Layout)
         ───────────────────────────────────────────────────────────── -->
         <section id="features" class="py-24 sm:py-32 px-4 sm:px-8">
-            <div class="max-w-6xl mx-auto space-y-16">
+            <div class="max-w-5xl mx-auto space-y-16">
                 
                 <!-- Section Header -->
-                <div class="text-center space-y-4 max-w-3xl mx-auto">
-                    <div class="text-xs font-semibold uppercase tracking-widest text-blue-400">Kiến Trúc Hệ Thống</div>
-                    <h2 class="text-3xl sm:text-5xl apple-title text-white">Sức mạnh vượt trội.<br />Thiết kế để dẫn đầu.</h2>
-                    <p class="text-base sm:text-lg text-zinc-400">Mỗi công cụ tại Dzota được chế tác tỉ mỉ để giải quyết trọn vẹn từng khâu trong chu trình tiếp thu, củng cố và thi cử.</p>
+                <div class="text-center space-y-4 max-w-2xl mx-auto">
+                    <div class="apple-kicker text-[#2997FF]">Kiến Trúc Nền Tảng</div>
+                    <h2 class="text-4xl sm:text-5xl apple-title text-white">Mạnh mẽ từ bên trong.</h2>
+                    <p class="text-base sm:text-lg text-[#86868B]">Mỗi tính năng tại Dzota được chế tác có chủ đích, phục vụ toàn diện chu trình tiếp thu, củng cố và thi cử.</p>
                 </div>
 
-                <!-- Bento Grid Container -->
+                <!-- Bento Grid (Apple Style 3-Column / Asymmetric) -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     
-                    <!-- Card 1: Dashboard Học Tập (Span 2 cols on md) -->
-                    <div class="md:col-span-2 apple-card rounded-[32px] p-8 sm:p-10 flex flex-col justify-between space-y-6">
+                    <!-- Card 1: Dashboard (Col span 2) -->
+                    <div class="md:col-span-2 apple-card rounded-[28px] p-8 sm:p-10 flex flex-col justify-between space-y-6">
                         <div class="space-y-3">
-                            <div class="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center">
-                                <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
+                            <div class="w-10 h-10 rounded-xl bg-blue-500/15 text-[#2997FF] flex items-center justify-center">
+                                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
                             </div>
-                            <h3 class="text-2xl sm:text-3xl font-bold text-white">Dashboard Học Tập Cá Nhân Hóa</h3>
-                            <p class="text-sm sm:text-base text-zinc-400 leading-relaxed max-w-xl">
-                                Không gian tổng quan trực quan hiển thị mục tiêu ôn tập, tiến độ hoàn thành, chuỗi ngày streak và đề thi được phân công riêng biệt cho từng sinh viên.
+                            <h3 class="text-2xl sm:text-3xl font-semibold text-white tracking-tight">Dashboard Học Tập Cá Nhân Hóa</h3>
+                            <p class="text-sm sm:text-base text-[#86868B] leading-relaxed max-w-lg">
+                                Bảng điều khiển trực quan hiển thị mục tiêu, tiến độ hoàn thành, chuỗi ngày streak và đề thi được phân công riêng biệt cho từng sinh viên.
                             </p>
                         </div>
-                        <div class="pt-4 flex items-center gap-3">
-                            <a href="/dashboard" class="btn-apple-primary px-5 py-2.5 rounded-full text-xs font-semibold no-underline inline-flex items-center gap-1.5">
+                        <div class="pt-4">
+                            <a href="/dashboard" class="apple-link font-medium text-sm">
                                 <span>Khám phá Dashboard</span>
-                                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
                             </a>
                         </div>
                     </div>
 
-                    <!-- Card 2: Kho Ngân Hàng Đề (Span 1 col) -->
-                    <div class="apple-card rounded-[32px] p-8 sm:p-10 flex flex-col justify-between space-y-6">
+                    <!-- Card 2: Kho Đề 50.000+ Câu -->
+                    <div class="apple-card rounded-[28px] p-8 sm:p-10 flex flex-col justify-between space-y-6">
                         <div class="space-y-3">
-                            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                                <i data-lucide="database" class="w-6 h-6"></i>
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-[#30D158] flex items-center justify-center">
+                                <i data-lucide="database" class="w-5 h-5"></i>
                             </div>
-                            <h3 class="text-xl sm:text-2xl font-bold text-white">Kho Đề 50.000+ Câu</h3>
-                            <p class="text-sm text-zinc-400 leading-relaxed">
+                            <h3 class="text-xl sm:text-2xl font-semibold text-white tracking-tight">Kho Đề 50.000+ Câu</h3>
+                            <p class="text-sm text-[#86868B] leading-relaxed">
                                 Trắc nghiệm phân loại chi tiết theo chuyên khoa, chương mục và độ khó chuẩn hóa Bộ Y tế.
                             </p>
                         </div>
                         <div class="pt-4">
-                            <a href="/creator" class="text-xs font-semibold text-emerald-400 hover:text-emerald-300 no-underline inline-flex items-center gap-1">
-                                <span>Vào kho đề thi</span>
-                                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                            <a href="/creator" class="apple-link font-medium text-sm">
+                                <span>Xem ngân hàng đề</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
                             </a>
                         </div>
                     </div>
 
-                    <!-- Card 3: NoteBook AI (Span 1 col) -->
-                    <div class="apple-card rounded-[32px] p-8 sm:p-10 flex flex-col justify-between space-y-6">
+                    <!-- Card 3: NoteBook AI -->
+                    <div class="apple-card rounded-[28px] p-8 sm:p-10 flex flex-col justify-between space-y-6">
                         <div class="space-y-3">
-                            <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center">
-                                <i data-lucide="sparkles" class="w-6 h-6"></i>
+                            <div class="w-10 h-10 rounded-xl bg-purple-500/15 text-[#BF5AF2] flex items-center justify-center">
+                                <i data-lucide="sparkles" class="w-5 h-5"></i>
                             </div>
-                            <h3 class="text-xl sm:text-2xl font-bold text-white">NoteBook AI Y Khoa</h3>
-                            <p class="text-sm text-zinc-400 leading-relaxed">
+                            <h3 class="text-xl sm:text-2xl font-semibold text-white tracking-tight">NoteBook AI Y Khoa</h3>
+                            <p class="text-sm text-[#86868B] leading-relaxed">
                                 Đọc hiểu tài liệu y khoa PDF/Word và trích xuất ma trận câu hỏi thông minh với Gemini 3.8 Flash.
                             </p>
                         </div>
                         <div class="pt-4">
-                            <a href="/notebook" class="text-xs font-semibold text-purple-400 hover:text-purple-300 no-underline inline-flex items-center gap-1">
+                            <a href="/notebook" class="apple-link font-medium text-sm">
                                 <span>Trải nghiệm AI</span>
-                                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
                             </a>
                         </div>
                     </div>
 
-                    <!-- Card 4: DYNEX OSCE (Span 2 cols on md) -->
-                    <div class="md:col-span-2 apple-card rounded-[32px] p-8 sm:p-10 flex flex-col justify-between space-y-6">
+                    <!-- Card 4: DYNEX OSCE (Col span 2) -->
+                    <div class="md:col-span-2 apple-card rounded-[28px] p-8 sm:p-10 flex flex-col justify-between space-y-6">
                         <div class="space-y-3">
-                            <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">
-                                <i data-lucide="activity" class="w-6 h-6"></i>
+                            <div class="w-10 h-10 rounded-xl bg-blue-500/15 text-[#2997FF] flex items-center justify-center">
+                                <i data-lucide="activity" class="w-5 h-5"></i>
                             </div>
-                            <h3 class="text-2xl sm:text-3xl font-bold text-white">DYNEX OSCE — Mô Phỏng Thi Chạy Trạm 20s</h3>
-                            <p class="text-sm sm:text-base text-zinc-400 leading-relaxed max-w-xl">
-                                Đột phá công nghệ che nhãn tiêu bản giải phẫu (Masking), tự động hóa đồng hồ 20 giây mỗi trạm và tích hợp thuật toán lặp lại ngắt quãng (Spaced Repetition SM-2).
-                            </p>
-                        </div>
-                        <div class="pt-4 flex items-center gap-3">
-                            <a href="/dynex" class="btn-apple-primary px-5 py-2.5 rounded-full text-xs font-semibold no-underline inline-flex items-center gap-1.5">
-                                <span>Thực hành OSCE ngay</span>
-                                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Card 5: Dược Lý 401 Chuyên Khảo -->
-                    <div class="apple-card rounded-[32px] p-8 sm:p-10 flex flex-col justify-between space-y-6">
-                        <div class="space-y-3">
-                            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                                <i data-lucide="pill" class="w-6 h-6"></i>
-                            </div>
-                            <h3 class="text-xl sm:text-2xl font-bold text-white">Dược Lý 401 Thuốc</h3>
-                            <p class="text-sm text-zinc-400 leading-relaxed">
-                                Tra cứu 423 chuyên khảo dược lý lâm sàng, cơ chế tác dụng, liều dùng và chống chỉ định tức thời.
+                            <h3 class="text-2xl sm:text-3xl font-semibold text-white tracking-tight">DYNEX OSCE — Chạy Trạm 20 Giây</h3>
+                            <p class="text-sm sm:text-base text-[#86868B] leading-relaxed max-w-lg">
+                                Công nghệ che nhãn tiêu bản (Masking), tự động hóa đồng hồ đếm ngược 20s mỗi trạm và thuật toán Spaced Repetition (Anki SM-2).
                             </p>
                         </div>
                         <div class="pt-4">
-                            <a href="/duocly" class="text-xs font-semibold text-emerald-400 hover:text-emerald-300 no-underline inline-flex items-center gap-1">
+                            <a href="/dynex" class="apple-link font-medium text-sm">
+                                <span>Vào phòng chạy trạm</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Card 5: Dược Lý 401 -->
+                    <div class="apple-card rounded-[28px] p-8 sm:p-10 flex flex-col justify-between space-y-6">
+                        <div class="space-y-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-[#30D158] flex items-center justify-center">
+                                <i data-lucide="pill" class="w-5 h-5"></i>
+                            </div>
+                            <h3 class="text-xl sm:text-2xl font-semibold text-white tracking-tight">Dược Lý 401 Thuốc</h3>
+                            <p class="text-sm text-[#86868B] leading-relaxed">
+                                Tra cứu 423 chuyên khảo dược lý lâm sàng, cơ chế tác dụng, liều dùng và chống chỉ định.
+                            </p>
+                        </div>
+                        <div class="pt-4">
+                            <a href="/duocly" class="apple-link font-medium text-sm">
                                 <span>Tra cứu dược lý</span>
-                                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
                             </a>
                         </div>
                     </div>
 
-                    <!-- Card 6: Đấu Trường Trực Tuyến -->
-                    <div class="md:col-span-2 apple-card rounded-[32px] p-8 sm:p-10 flex flex-col justify-between space-y-6">
+                    <!-- Card 6: Đấu Trường Realtime (Col span 2) -->
+                    <div class="md:col-span-2 apple-card rounded-[28px] p-8 sm:p-10 flex flex-col justify-between space-y-6">
                         <div class="space-y-3">
-                            <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
-                                <i data-lucide="swords" class="w-6 h-6"></i>
+                            <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center">
+                                <i data-lucide="swords" class="w-5 h-5"></i>
                             </div>
-                            <h3 class="text-2xl sm:text-3xl font-bold text-white">Đấu Trường Realtime Đối Kháng</h3>
-                            <p class="text-sm sm:text-base text-zinc-400 leading-relaxed max-w-xl">
-                                Thi đấu trắc nghiệm trực tiếp giữa các sinh viên, bảng xếp hạng vinh danh theo tuần, học tập qua cạnh tranh lành mạnh.
+                            <h3 class="text-2xl sm:text-3xl font-semibold text-white tracking-tight">Đấu Trường Realtime Đối Kháng</h3>
+                            <p class="text-sm sm:text-base text-[#86868B] leading-relaxed max-w-lg">
+                                Thi đấu trắc nghiệm trực tiếp giữa các sinh viên, bảng xếp hạng vinh danh theo tuần, học tập qua thử thách tương tác.
                             </p>
                         </div>
                         <div class="pt-4">
-                            <a href="/dashboard" class="btn-apple-secondary px-5 py-2.5 rounded-full text-xs font-semibold no-underline inline-flex items-center gap-1.5">
-                                <span>Tham gia Đấu Trường</span>
-                                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                            <a href="/dashboard" class="apple-link font-medium text-sm">
+                                <span>Vào Đấu Trường</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
                             </a>
                         </div>
                     </div>
@@ -717,30 +705,30 @@
         </section>
 
         <!-- ─────────────────────────────────────────────────────────────
-             6. PRICING TIERS (APPLE MINIMALIST PRICING)
+             6. PRICING TIERS — APPLE STORE STYLE
         ───────────────────────────────────────────────────────────── -->
-        <section id="pricing" class="py-24 sm:py-32 px-4 sm:px-8 border-t border-white/10 bg-black/60">
+        <section id="pricing" class="py-24 sm:py-32 px-4 sm:px-8 border-t border-white/[0.08] bg-[#0A0A0C]">
             <div class="max-w-5xl mx-auto space-y-16">
                 
                 <div class="text-center space-y-4 max-w-2xl mx-auto">
-                    <div class="text-xs font-semibold uppercase tracking-widest text-blue-400">Gói Học Tập</div>
-                    <h2 class="text-3xl sm:text-5xl apple-title text-white">Đầu tư xứng tầm cho sự nghiệp y khoa.</h2>
-                    <p class="text-base text-zinc-400">Mở khóa toàn bộ ngân hàng câu hỏi và công nghệ khảo thí hiện đại nhất.</p>
+                    <div class="apple-kicker text-[#2997FF]">Gói Học Tập</div>
+                    <h2 class="text-4xl sm:text-5xl apple-title text-white">Chọn gói học phù hợp.</h2>
+                    <p class="text-base text-[#86868B]">Đầu tư hiệu quả cho toàn bộ chặng đường đại học y khoa và sau đại học.</p>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     
                     <!-- Tier 1: Free -->
-                    <div class="apple-card rounded-[32px] p-8 flex flex-col justify-between space-y-6">
+                    <div class="apple-card rounded-[28px] p-8 flex flex-col justify-between space-y-6">
                         <div class="space-y-4">
-                            <div class="text-xs font-semibold uppercase text-zinc-400 tracking-wider">Trải Nghiệm</div>
-                            <div class="text-3xl font-bold text-white">Miễn Phí</div>
-                            <p class="text-xs text-zinc-500">Dành cho học viên mới bắt đầu tìm hiểu nền tảng.</p>
+                            <div class="text-xs font-semibold uppercase text-[#86868B] tracking-wider">Trải Nghiệm</div>
+                            <div class="text-3xl font-bold text-white">0đ</div>
+                            <p class="text-xs text-[#86868B]">Dành cho học viên mới bắt đầu khám phá nền tảng.</p>
                             
                             <ul class="space-y-3 pt-4 text-xs text-zinc-300">
-                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Truy cập 1.000 câu hỏi cơ bản</li>
-                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Làm bài thi thử nghiệm</li>
-                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Xem kết quả và đáp án</li>
+                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#30D158]"></i> 1.000 câu hỏi cơ bản</li>
+                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#30D158]"></i> Làm bài thi thử nghiệm</li>
+                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#30D158]"></i> Xem kết quả & đáp án</li>
                             </ul>
                         </div>
                         <a href="/dashboard" class="btn-apple-secondary w-full py-3 rounded-full text-xs text-center no-underline">
@@ -748,39 +736,39 @@
                         </a>
                     </div>
 
-                    <!-- Tier 2: Pro (Featured Apple Glass) -->
-                    <div class="apple-card rounded-[32px] p-8 flex flex-col justify-between space-y-6 border-blue-500/50 bg-blue-500/[0.04] relative">
-                        <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-bold uppercase tracking-wider">
-                            Phổ Biến Nhất
+                    <!-- Tier 2: Pro (Apple Blue Ring) -->
+                    <div class="apple-card rounded-[28px] p-8 flex flex-col justify-between space-y-6 border-[#0071E3]/50 relative">
+                        <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#0071E3] text-white text-[10px] font-bold uppercase tracking-wider">
+                            Khuyên Dùng
                         </div>
                         <div class="space-y-4">
-                            <div class="text-xs font-semibold uppercase text-blue-400 tracking-wider">Sinh Viên Pro</div>
-                            <div class="text-3xl font-bold text-white">199.000đ <span class="text-xs font-normal text-zinc-500">/ học kỳ</span></div>
-                            <p class="text-xs text-zinc-400">Trọn bộ công cụ ôn thi chuyên sâu và bứt phá điểm số.</p>
+                            <div class="text-xs font-semibold uppercase text-[#2997FF] tracking-wider">Sinh Viên Pro</div>
+                            <div class="text-3xl font-bold text-white">199.000đ <span class="text-xs font-normal text-[#86868B]">/ học kỳ</span></div>
+                            <p class="text-xs text-[#86868B]">Trọn bộ công cụ ôn thi chuyên sâu và bứt phá điểm số.</p>
                             
                             <ul class="space-y-3 pt-4 text-xs text-zinc-300">
-                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-blue-400"></i> Trọn bộ 50.000+ câu hỏi chuẩn hóa</li>
-                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-blue-400"></i> Không giới hạn DYNEX OSCE & Dược Lý</li>
-                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-blue-400"></i> Trợ lý NoteBook AI phân tích tài liệu</li>
-                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-blue-400"></i> Hỗ trợ học tập 24/7 qua Zalo</li>
+                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#2997FF]"></i> 50.000+ câu hỏi chuẩn hóa</li>
+                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#2997FF]"></i> Không giới hạn DYNEX OSCE & Dược Lý</li>
+                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#2997FF]"></i> NoteBook AI phân tích tài liệu</li>
+                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#2997FF]"></i> Hỗ trợ học tập 24/7 qua Zalo</li>
                             </ul>
                         </div>
                         <a href="https://zalo.me/0914659511?text=Tôi%20muốn%20đăng%20ký%20gói%20Dzota%20Pro%20199k" target="_blank" rel="noreferrer" class="btn-apple-blue w-full py-3 rounded-full text-xs text-center no-underline">
-                            Nâng Cấp Pro Qua Zalo
+                            Đăng Ký Gói Pro Qua Zalo
                         </a>
                     </div>
 
                     <!-- Tier 3: VIP Lifetime -->
-                    <div class="apple-card rounded-[32px] p-8 flex flex-col justify-between space-y-6">
+                    <div class="apple-card rounded-[28px] p-8 flex flex-col justify-between space-y-6">
                         <div class="space-y-4">
-                            <div class="text-xs font-semibold uppercase text-purple-400 tracking-wider">VIP Trọn Đời</div>
-                            <div class="text-3xl font-bold text-white">399.000đ <span class="text-xs font-normal text-zinc-500">/ trọn đời</span></div>
-                            <p class="text-xs text-zinc-500">Đồng hành suốt 6 năm đại học y khoa và sau đại học.</p>
+                            <div class="text-xs font-semibold uppercase text-[#BF5AF2] tracking-wider">VIP Trọn Đời</div>
+                            <div class="text-3xl font-bold text-white">399.000đ <span class="text-xs font-normal text-[#86868B]">/ trọn đời</span></div>
+                            <p class="text-xs text-[#86868B]">Đồng hành suốt 6 năm đại học y khoa và kỳ thi nội trú.</p>
                             
                             <ul class="space-y-3 pt-4 text-xs text-zinc-300">
-                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-purple-400"></i> Quyền truy cập vĩnh viễn tất cả module</li>
-                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-purple-400"></i> Tự động cập nhật ngân hàng đề thi mới nhất</li>
-                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-purple-400"></i> Hỗ trợ riêng từ Lê Nhật Duy (Y Khoa K26)</li>
+                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#BF5AF2]"></i> Quyền truy cập vĩnh viễn mọi môn học</li>
+                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#BF5AF2]"></i> Cập nhật ngân hàng đề thi mới nhất</li>
+                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#BF5AF2]"></i> Hỗ trợ từ Lê Nhật Duy (Y Khoa K26)</li>
                             </ul>
                         </div>
                         <a href="https://zalo.me/0914659511?text=Tôi%20muốn%20đăng%20ký%20gói%20VIP%20Trọn%20Đời%20399k" target="_blank" rel="noreferrer" class="btn-apple-secondary w-full py-3 rounded-full text-xs text-center no-underline">
@@ -794,44 +782,44 @@
         </section>
 
         <!-- ─────────────────────────────────────────────────────────────
-             7. FAQ ACCORDION (APPLE STYLE)
+             7. FAQ ACCORDION (Apple Minimalist Disclosure)
         ───────────────────────────────────────────────────────────── -->
-        <section id="faq" class="py-24 sm:py-32 px-4 sm:px-8 border-t border-white/10">
+        <section id="faq" class="py-24 sm:py-32 px-4 sm:px-8 border-t border-white/[0.08]">
             <div class="max-w-3xl mx-auto space-y-12">
                 
                 <div class="text-center space-y-3">
-                    <div class="text-xs font-semibold uppercase tracking-widest text-blue-400">Giải Đáp Thắc Mắc</div>
-                    <h2 class="text-3xl sm:text-4xl apple-title text-white">Những câu hỏi thường gặp</h2>
+                    <div class="apple-kicker text-[#2997FF]">Giải Đáp Thắc Mắc</div>
+                    <h2 class="text-3xl sm:text-4xl apple-title text-white">Câu hỏi thường gặp</h2>
                 </div>
 
                 <div class="space-y-4">
                     
-                    <div class="apple-card rounded-2xl overflow-hidden border border-white/10">
+                    <div class="apple-card rounded-2xl overflow-hidden">
                         <button onclick="toggleFaq(this)" class="w-full p-5 text-left flex items-center justify-between text-sm sm:text-base font-semibold text-white cursor-pointer">
                             <span>Dzota Education có dùng tốt trên điện thoại không?</span>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-zinc-400 transition-transform"></i>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-[#86868B] transition-transform"></i>
                         </button>
-                        <div class="faq-content hidden px-5 pb-5 text-xs sm:text-sm text-zinc-400 leading-relaxed border-t border-white/5 pt-3">
+                        <div class="faq-content hidden px-5 pb-5 text-xs sm:text-sm text-[#86868B] leading-relaxed border-t border-white/[0.06] pt-3">
                             Hoàn toàn tối ưu. Giao diện Dzota được thiết kế chuẩn Responsive theo phong cách iOS và iPadOS, đảm bảo thao tác mượt mà, cảm ứng nhạy trên mọi dòng iPhone, iPad và smartphone Android.
                         </div>
                     </div>
 
-                    <div class="apple-card rounded-2xl overflow-hidden border border-white/10">
+                    <div class="apple-card rounded-2xl overflow-hidden">
                         <button onclick="toggleFaq(this)" class="w-full p-5 text-left flex items-center justify-between text-sm sm:text-base font-semibold text-white cursor-pointer">
                             <span>Ngân hàng câu hỏi có nguồn gốc từ đâu và độ chính xác thế nào?</span>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-zinc-400 transition-transform"></i>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-[#86868B] transition-transform"></i>
                         </button>
-                        <div class="faq-content hidden px-5 pb-5 text-xs sm:text-sm text-zinc-400 leading-relaxed border-t border-white/5 pt-3">
+                        <div class="faq-content hidden px-5 pb-5 text-xs sm:text-sm text-[#86868B] leading-relaxed border-t border-white/[0.06] pt-3">
                             Tất cả 50.000+ câu hỏi được tuyển chọn, rà soát và biên soạn bởi đội ngũ sinh viên Y Khoa K26 và cố vấn chuyên môn, dựa trên giáo trình chuẩn của các trường đại học y dược hàng đầu Việt Nam.
                         </div>
                     </div>
 
-                    <div class="apple-card rounded-2xl overflow-hidden border border-white/10">
+                    <div class="apple-card rounded-2xl overflow-hidden">
                         <button onclick="toggleFaq(this)" class="w-full p-5 text-left flex items-center justify-between text-sm sm:text-base font-semibold text-white cursor-pointer">
                             <span>Làm thế nào để kích hoạt tài khoản hoặc nhận hỗ trợ?</span>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-zinc-400 transition-transform"></i>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-[#86868B] transition-transform"></i>
                         </button>
-                        <div class="faq-content hidden px-5 pb-5 text-xs sm:text-sm text-zinc-400 leading-relaxed border-t border-white/5 pt-3">
+                        <div class="faq-content hidden px-5 pb-5 text-xs sm:text-sm text-[#86868B] leading-relaxed border-t border-white/[0.06] pt-3">
                             Bạn có thể liên hệ trực tiếp qua số Zalo <strong>0914.659.511</strong> của bác sĩ Lê Nhật Duy để được hỗ trợ kích hoạt tài khoản ngay trong vòng 2 phút.
                         </div>
                     </div>
@@ -842,127 +830,170 @@
         </section>
 
         <!-- ─────────────────────────────────────────────────────────────
-             8. FINAL CALL TO ACTION (APPLE MINIMALIST CLOSE)
+             8. FINAL CALL TO ACTION (Apple Closing Statement)
         ───────────────────────────────────────────────────────────── -->
-        <section class="py-24 sm:py-32 px-4 sm:px-8 text-center border-t border-white/10 bg-gradient-to-b from-black to-zinc-950">
-            <div class="max-w-3xl mx-auto space-y-8">
-                <h2 class="text-3xl sm:text-5xl apple-headline text-white">
-                    Sẵn sàng bứt phá cùng Dzota?
+        <section class="py-24 sm:py-32 px-4 sm:px-8 text-center border-t border-white/[0.08] bg-[#0A0A0C]">
+            <div class="max-w-3xl mx-auto space-y-6">
+                <h2 class="text-4xl sm:text-6xl apple-headline text-white">
+                    Sẵn sàng bứt phá cùng Dzota.
                 </h2>
-                <p class="text-base sm:text-lg text-zinc-400 max-w-xl mx-auto">
+                <p class="text-base sm:text-lg text-[#86868B] max-w-xl mx-auto">
                     Gia nhập cộng đồng hơn 15.000 sinh viên y khoa và học viên đang dẫn đầu kết quả học tập mỗi ngày.
                 </p>
-                <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <a href="/dashboard" class="btn-apple-primary px-8 py-3.5 rounded-full text-base no-underline flex items-center gap-2">
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+                    <a href="/dashboard" class="btn-apple-primary px-8 py-3.5 rounded-full text-[15px] no-underline flex items-center gap-2">
                         <span>Vào Dashboard Học Tập</span>
                         <i data-lucide="arrow-right" class="w-4 h-4"></i>
                     </a>
-                    <a href="https://zalo.me/0914659511" target="_blank" rel="noreferrer" class="btn-apple-secondary px-7 py-3.5 rounded-full text-base no-underline flex items-center gap-2">
-                        <i data-lucide="message-circle" class="w-4 h-4 text-blue-400"></i>
-                        <span>Liên Hệ Zalo 0914.659.511</span>
+                    <a href="https://zalo.me/0914659511" target="_blank" rel="noreferrer" class="btn-apple-secondary px-7 py-3.5 rounded-full text-[15px] no-underline flex items-center gap-2">
+                        <i data-lucide="message-circle" class="w-4 h-4 text-[#2997FF]"></i>
+                        <span>Zalo 0914.659.511</span>
                     </a>
                 </div>
             </div>
         </section>
 
         <!-- ─────────────────────────────────────────────────────────────
-             9. FOOTER (APPLE HIG STANDARDS)
+             9. APPLE GLOBAL DIRECTORY FOOTER
         ───────────────────────────────────────────────────────────── -->
-        <footer class="py-12 border-t border-white/10 text-xs text-zinc-500 bg-black">
-            <div class="max-w-6xl mx-auto px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
-                <div class="space-y-1">
-                    <div class="text-sm font-semibold text-zinc-300">Dzota Education System</div>
-                    <div>Tác giả & Bản quyền: <strong class="text-zinc-200">Lê Nhật Duy (Y Khoa K26)</strong></div>
-                    <div>Hotline / Zalo hỗ trợ: <a href="https://zalo.me/0914659511" target="_blank" rel="noreferrer" class="text-blue-400 hover:underline">0914.659.511</a></div>
+        <footer class="py-14 border-t border-white/[0.08] text-[12px] text-[#86868B] bg-black">
+            <div class="max-w-5xl mx-auto px-4 sm:px-8 space-y-8">
+                
+                <!-- 4 Columns Directory -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                    <div class="space-y-3">
+                        <div class="font-semibold text-white">Khám phá</div>
+                        <ul class="space-y-2 text-[#86868B]">
+                            <li><a href="/dashboard" class="hover:text-white transition no-underline">Dashboard Học Tập</a></li>
+                            <li><a href="/creator" class="hover:text-white transition no-underline">Ngân Hàng Đề Thi</a></li>
+                            <li><a href="/notebook" class="hover:text-white transition no-underline">NoteBook AI Y Khoa</a></li>
+                            <li><a href="/dynex" class="hover:text-white transition no-underline">DYNEX OSCE</a></li>
+                            <li><a href="/duocly" class="hover:text-white transition no-underline">Dược Lý 401</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="font-semibold text-white">Tài khoản & Hỗ trợ</div>
+                        <ul class="space-y-2 text-[#86868B]">
+                            <li><button onclick="openAuthModal('login')" class="hover:text-white transition bg-transparent border-none p-0 cursor-pointer text-[#86868B]">Đăng nhập Dzota ID</button></li>
+                            <li><button onclick="openAuthModal('register')" class="hover:text-white transition bg-transparent border-none p-0 cursor-pointer text-[#86868B]">Tạo tài khoản mới</button></li>
+                            <li><a href="https://zalo.me/0914659511" target="_blank" rel="noreferrer" class="hover:text-white transition no-underline">Hỗ trợ Zalo 24/7</a></li>
+                            <li><a href="#pricing" class="hover:text-white transition no-underline">Bảng giá gói học</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="font-semibold text-white">Chuyên khoa Y học</div>
+                        <ul class="space-y-2 text-[#86868B]">
+                            <li>Giải phẫu & Sinh lý học</li>
+                            <li>Dược lý lâm sàng</li>
+                            <li>Nội khoa & Ngoại khoa</li>
+                            <li>Sản phụ khoa & Nhi khoa</li>
+                        </ul>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="font-semibold text-white">Thông tin bản quyền</div>
+                        <p class="text-xs text-[#86868B] leading-relaxed">
+                            Nghiên cứu & phát triển bởi <strong>Lê Nhật Duy (Y Khoa K26)</strong>. Toàn bộ nội dung và hệ sinh thái học tập được bảo vệ bản quyền.
+                        </p>
+                    </div>
                 </div>
-                <div class="flex items-center gap-6 text-zinc-400">
-                    <a href="/dashboard" class="hover:text-white transition no-underline">Dashboard</a>
-                    <a href="/creator" class="hover:text-white transition no-underline">Ngân Hàng Đề</a>
-                    <a href="/dynex" class="hover:text-white transition no-underline">DYNEX OSCE</a>
-                    <a href="/duocly" class="hover:text-white transition no-underline">Dược Lý 401</a>
+
+                <!-- Legal Line -->
+                <div class="pt-6 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left text-[#6E6E73]">
+                    <div>
+                        Bản quyền © 2026 Dzota Education System. Bảo lưu mọi quyền.
+                    </div>
+                    <div class="flex items-center gap-4 text-[#86868B]">
+                        <span>Hotline / Zalo: <strong class="text-white">0914.659.511</strong></span>
+                    </div>
                 </div>
+
             </div>
         </footer>
 
     </div>
 
     <!-- ─────────────────────────────────────────────────────────────
-         10. APPLE-STYLE AUTHENTICATION SHEET / MODAL (macOS/iOS Style)
+         10. APPLE ID LOGIN SHEET / MODAL (appleid.apple.com Design)
     ───────────────────────────────────────────────────────────── -->
-    <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-2xl hidden animate-fade-in">
-        <div class="apple-glass rounded-[32px] p-6 sm:p-8 max-w-md w-full shadow-apple-card border border-white/20 relative space-y-6" onclick="event.stopPropagation()">
+    <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-3xl hidden">
+        <div class="apple-glass-sheet rounded-[32px] p-7 sm:p-9 max-w-[420px] w-full relative space-y-6" onclick="event.stopPropagation()">
             
-            <!-- Apple Close Button -->
-            <button onclick="closeAuthModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-zinc-400 hover:text-white flex items-center justify-center transition cursor-pointer">
+            <!-- Apple Circular Close Button -->
+            <button onclick="closeAuthModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/[0.08] hover:bg-white/[0.16] text-[#86868B] hover:text-white flex items-center justify-center transition cursor-pointer">
                 <i data-lucide="x" class="w-4 h-4"></i>
             </button>
 
-            <!-- Brand Header -->
-            <div class="text-center space-y-2 pt-2">
-                <div class="w-12 h-12 rounded-full bg-white/10 border border-white/20 p-2 mx-auto flex items-center justify-center shadow-inner">
+            <!-- Apple ID Monogram & Header -->
+            <div class="text-center space-y-2.5 pt-1">
+                <div class="w-14 h-14 rounded-full bg-white/[0.08] border border-white/[0.14] p-3 mx-auto flex items-center justify-center shadow-inner">
                     <img src="/logo-dzota.png" alt="Dzota Education" class="w-full h-full object-contain" />
                 </div>
-                <h3 class="text-xl sm:text-2xl font-bold tracking-tight text-white">Dzota ID</h3>
-                <p class="text-xs text-zinc-400">Đăng nhập để đồng bộ kết quả học tập và kho đề thi của bạn.</p>
+                <h3 class="text-2xl font-semibold tracking-tight text-white">Dzota ID</h3>
+                <p class="text-xs text-[#86868B] max-w-xs mx-auto">
+                    Đăng nhập bằng tài khoản Dzota ID của bạn để tiếp tục đồng bộ dữ liệu học tập.
+                </p>
             </div>
 
-            <!-- Apple Segmented Control for Login vs Register -->
-            <div class="p-1 rounded-full bg-white/10 border border-white/10 flex items-center text-xs font-semibold">
+            <!-- Apple Segmented Control: Login vs Register -->
+            <div class="p-1 rounded-full bg-white/[0.08] border border-white/[0.08] flex items-center text-xs font-semibold">
                 <button
                     id="tab-btn-login"
                     onclick="switchAuthTab('login')"
-                    class="flex-1 py-2 rounded-full bg-white text-black shadow-sm transition"
+                    class="flex-1 py-1.5 rounded-full bg-white text-black shadow-sm transition"
                 >
                     Đăng Nhập
                 </button>
                 <button
                     id="tab-btn-register"
                     onclick="switchAuthTab('register')"
-                    class="flex-1 py-2 rounded-full text-zinc-400 hover:text-white transition"
+                    class="flex-1 py-1.5 rounded-full text-[#86868B] hover:text-white transition"
                 >
-                    Đăng Ký
+                    Tạo Dzota ID
                 </button>
             </div>
 
-            <!-- 1-Click Google Sign-In (Apple Pure Clean Button) -->
+            <!-- 1-Click Google Sign-In (Apple Pure Clean Minimalist) -->
             <button
                 type="button"
                 onclick="handleGoogleSignIn()"
-                class="w-full py-3 px-4 rounded-2xl bg-white text-zinc-900 font-semibold text-sm hover:bg-zinc-100 transition active:scale-97 flex items-center justify-center gap-3 shadow-md cursor-pointer"
+                class="w-full py-3 px-4 rounded-2xl bg-white text-black font-semibold text-xs sm:text-sm hover:bg-[#E8E8ED] transition active:scale-[0.98] flex items-center justify-center gap-3 cursor-pointer shadow-md"
             >
-                <svg class="w-5 h-5" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                 </svg>
-                <span>Tiếp tục với Google 1-Click</span>
+                <span>Đăng nhập nhanh với Google</span>
             </button>
 
-            <!-- Divider -->
+            <!-- Subtle Divider -->
             <div class="flex items-center gap-3">
-                <div class="flex-1 h-px bg-white/10"></div>
-                <span class="text-[11px] uppercase tracking-wider text-zinc-500 font-medium">hoặc tài khoản</span>
-                <div class="flex-1 h-px bg-white/10"></div>
+                <div class="flex-1 h-px bg-white/[0.08]"></div>
+                <span class="text-[11px] uppercase tracking-wider text-[#6E6E73] font-medium">hoặc tài khoản</span>
+                <div class="flex-1 h-px bg-white/[0.08]"></div>
             </div>
 
-            <!-- Account Credentials Form -->
+            <!-- Apple ID Credentials Form -->
             <form onsubmit="handleAccountFormSubmit(event)" class="space-y-4">
-                <div class="space-y-1">
-                    <label class="block text-xs font-medium text-zinc-400">Tên đăng nhập hoặc Email</label>
+                <div class="space-y-1 text-left">
+                    <label class="block text-xs font-medium text-[#86868B]">Tên tài khoản hoặc Email</label>
                     <input
                         type="text"
                         id="login-username"
                         required
-                        placeholder="Nhập username hoặc email..."
-                        class="w-full px-4 py-3 rounded-2xl bg-white/[0.06] border border-white/15 text-sm text-white placeholder-zinc-500 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 outline-none transition"
+                        placeholder="Nhập tên tài khoản..."
+                        class="w-full px-4 py-3 rounded-2xl bg-white/[0.05] border border-white/[0.12] text-sm text-white placeholder-[#6E6E73] focus:border-[#0071E3] focus:ring-4 focus:ring-[#0071E3]/20 outline-none transition"
                     />
                 </div>
 
-                <div class="space-y-1">
+                <div class="space-y-1 text-left">
                     <div class="flex items-center justify-between text-xs">
-                        <label class="font-medium text-zinc-400">Mật khẩu</label>
-                        <button type="button" onclick="togglePasswordVisibility()" class="text-blue-400 hover:text-blue-300 transition">Hiện/Ẩn</button>
+                        <label class="font-medium text-[#86868B]">Mật khẩu</label>
+                        <button type="button" onclick="togglePasswordVisibility()" class="text-[#2997FF] hover:underline transition">Hiện/Ẩn</button>
                     </div>
                     <div class="relative">
                         <input
@@ -970,9 +1001,9 @@
                             id="login-password"
                             required
                             placeholder="Nhập mật khẩu..."
-                            class="w-full px-4 py-3 rounded-2xl bg-white/[0.06] border border-white/15 text-sm text-white placeholder-zinc-500 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 outline-none transition pr-10"
+                            class="w-full px-4 py-3 rounded-2xl bg-white/[0.05] border border-white/[0.12] text-sm text-white placeholder-[#6E6E73] focus:border-[#0071E3] focus:ring-4 focus:ring-[#0071E3]/20 outline-none transition pr-10"
                         />
-                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white">
+                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#86868B] hover:text-white">
                             <i id="eye-icon" data-lucide="eye" class="w-4 h-4"></i>
                         </button>
                     </div>
@@ -981,43 +1012,48 @@
                 <button
                     type="submit"
                     id="btn-submit-account"
-                    class="w-full py-3.5 px-4 rounded-2xl btn-apple-blue font-semibold text-sm transition active:scale-97 flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+                    class="w-full py-3.5 px-4 rounded-2xl btn-apple-blue font-semibold text-sm transition active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer shadow-lg"
                 >
                     <span>Vào Dashboard Học Tập</span>
                     <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </button>
             </form>
 
-            <!-- Support Hotline Zalo Direct Link -->
-            <div class="pt-2 border-t border-white/10 text-center">
-                <a href="https://zalo.me/0914659511?text=Tôi%20cần%20hỗ%20trợ%20kích%20hoạt%20tài%20khoản%20Dzota" target="_blank" rel="noreferrer" class="text-xs text-blue-400 hover:text-blue-300 font-medium no-underline inline-flex items-center gap-1.5">
-                    <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
-                    <span>Cần trợ giúp đăng nhập? Nhắn Zalo: 0914.659.511</span>
-                </a>
+            <!-- Security & Support Footnote -->
+            <div class="pt-3 border-t border-white/[0.08] space-y-2 text-center">
+                <div class="flex items-center justify-center gap-1.5 text-[11px] text-[#6E6E73]">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-[#30D158]"></i>
+                    <span>Bảo mật dữ liệu học tập theo chuẩn mã hóa riêng tư.</span>
+                </div>
+                <div>
+                    <a href="https://zalo.me/0914659511?text=Tôi%20cần%20hỗ%20trợ%20kích%20hoạt%20tài%20khoản%20Dzota" target="_blank" rel="noreferrer" class="text-xs text-[#2997FF] hover:underline font-medium no-underline inline-flex items-center gap-1">
+                        <span>Cần trợ giúp kích hoạt? Nhắn Zalo: 0914.659.511</span>
+                    </a>
+                </div>
             </div>
 
         </div>
     </div>
 
     <!-- ─────────────────────────────────────────────────────────────
-         11. MOBILE FLOATING APPLE DOCK QUICK BAR
+         11. MOBILE FLOATING APPLE DOCK
     ───────────────────────────────────────────────────────────── -->
-    <div class="fixed bottom-4 inset-x-4 max-w-sm mx-auto z-40 sm:hidden apple-glass rounded-full px-4 py-2.5 flex items-center justify-between gap-3 shadow-2xl border border-white/20">
-        <a href="/dashboard" class="flex-1 py-2 px-4 rounded-full btn-apple-primary text-xs font-semibold text-center flex items-center justify-center gap-1.5 no-underline">
+    <div class="fixed bottom-4 inset-x-4 max-w-xs mx-auto z-40 sm:hidden apple-nav rounded-full px-4 py-2 flex items-center justify-between gap-3 shadow-2xl border border-white/[0.14]">
+        <a href="/dashboard" class="flex-1 py-2 px-3 rounded-full btn-apple-primary text-xs font-semibold text-center flex items-center justify-center gap-1.5 no-underline">
             <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>
             <span>Dashboard</span>
         </a>
-        <a href="https://zalo.me/0914659511" target="_blank" rel="noreferrer" class="py-2 px-3 rounded-full bg-white/10 text-white font-medium text-xs flex items-center gap-1 no-underline active:scale-95">
-            <i data-lucide="message-circle" class="w-3.5 h-3.5 text-blue-400"></i>
+        <a href="https://zalo.me/0914659511" target="_blank" rel="noreferrer" class="py-2 px-3 rounded-full bg-white/[0.08] text-white text-xs flex items-center gap-1 no-underline active:scale-95">
+            <i data-lucide="message-circle" class="w-3.5 h-3.5 text-[#2997FF]"></i>
             <span>Zalo</span>
         </a>
-        <button onclick="openAuthModal('login')" class="w-9 h-9 rounded-full bg-white/10 text-white flex items-center justify-center active:scale-95" title="Đăng Nhập">
-            <i data-lucide="log-in" class="w-4 h-4 text-zinc-300"></i>
+        <button onclick="openAuthModal('login')" class="w-8 h-8 rounded-full bg-white/[0.08] text-white flex items-center justify-center active:scale-95" title="Đăng Nhập">
+            <i data-lucide="log-in" class="w-3.5 h-3.5 text-zinc-300"></i>
         </button>
     </div>
 
     <!-- ─────────────────────────────────────────────────────────────
-         12. JAVASCRIPT: THREE.JS FLUID CANVAS & AUTH LOGIC
+         12. JAVASCRIPT LOGIC
     ───────────────────────────────────────────────────────────── -->
     <script>
         // Init Lucide Icons
@@ -1025,90 +1061,7 @@
             lucide.createIcons();
         }
 
-        // --- 1. THREE.JS APPLE AMBIENT FLUID PARTICLES ---
-        (function initAppleCanvas() {
-            try {
-                const canvas = document.getElementById('webgl-canvas');
-                if (!canvas || !window.THREE) return;
-
-                const scene = new THREE.Scene();
-                const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
-                camera.position.z = 400;
-
-                const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-                const particlesCount = window.innerWidth < 768 ? 350 : 750;
-                const geometry = new THREE.BufferGeometry();
-                const positions = new Float32Array(particlesCount * 3);
-                const colors = new Float32Array(particlesCount * 3);
-
-                // Apple Ambient Color Palette: Apple Blue, Deep Cyan, Electric Indigo, Pure Platinum
-                const palette = [
-                    new THREE.Color(0x0071E3),
-                    new THREE.Color(0x30B0C7),
-                    new THREE.Color(0x5E5CE6),
-                    new THREE.Color(0xAF52DE),
-                    new THREE.Color(0xEEEEF0)
-                ];
-
-                for (let i = 0; i < particlesCount; i++) {
-                    positions[i * 3] = (Math.random() - 0.5) * 1000;
-                    positions[i * 3 + 1] = (Math.random() - 0.5) * 800;
-                    positions[i * 3 + 2] = (Math.random() - 0.5) * 600;
-
-                    const clr = palette[Math.floor(Math.random() * palette.length)];
-                    colors[i * 3] = clr.r;
-                    colors[i * 3 + 1] = clr.g;
-                    colors[i * 3 + 2] = clr.b;
-                }
-
-                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-                const material = new THREE.PointsMaterial({
-                    size: 2.8,
-                    vertexColors: true,
-                    transparent: true,
-                    opacity: 0.65,
-                    blending: THREE.AdditiveBlending
-                });
-
-                const particleSystem = new THREE.Points(geometry, material);
-                scene.add(particleSystem);
-
-                let mouseX = 0;
-                let mouseY = 0;
-                window.addEventListener('mousemove', (e) => {
-                    mouseX = (e.clientX - window.innerWidth / 2) * 0.03;
-                    mouseY = (e.clientY - window.innerHeight / 2) * 0.03;
-                }, { passive: true });
-
-                function animate() {
-                    requestAnimationFrame(animate);
-                    particleSystem.rotation.y += 0.0008;
-                    particleSystem.rotation.x += 0.0004;
-
-                    camera.position.x += (mouseX - camera.position.x) * 0.02;
-                    camera.position.y += (-mouseY - camera.position.y) * 0.02;
-                    camera.lookAt(scene.position);
-
-                    renderer.render(scene, camera);
-                }
-                animate();
-
-                window.addEventListener('resize', () => {
-                    camera.aspect = window.innerWidth / window.innerHeight;
-                    camera.updateProjectionMatrix();
-                    renderer.setSize(window.innerWidth, window.innerHeight);
-                });
-            } catch (err) {
-                console.warn('Three.js initialization skipped:', err);
-            }
-        })();
-
-        // --- 2. FAQ ACCORDION LOGIC ---
+        // --- 1. FAQ ACCORDION LOGIC ---
         function toggleFaq(btn) {
             const content = btn.nextElementSibling;
             const icon = btn.querySelector('i');
@@ -1123,11 +1076,11 @@
             }
         }
 
-        // --- 3. SHOWCASE TABS SWITCHER ---
+        // --- 2. SHOWCASE TABS SWITCHER ---
         function switchShowcase(mode) {
             const tabs = ['dash', 'bank', 'ai', 'osce'];
-            const activeClass = "apple-segmented-item px-3.5 py-1.5 rounded-full bg-white text-black font-semibold shadow-sm";
-            const inactiveClass = "apple-segmented-item px-3.5 py-1.5 rounded-full text-zinc-400 hover:text-white";
+            const activeClass = "px-3.5 py-1 rounded-full bg-white text-black font-semibold shadow-sm transition";
+            const inactiveClass = "px-3.5 py-1 rounded-full text-[#86868B] hover:text-white transition";
 
             tabs.forEach(t => {
                 const btn = document.getElementById(`tab-btn-${t}`);
@@ -1145,7 +1098,7 @@
             if (window.lucide) lucide.createIcons();
         }
 
-        // --- 4. AUTH MODAL CONTROL ---
+        // --- 3. AUTH MODAL CONTROL ---
         function openAuthModal(mode) {
             const modal = document.getElementById('auth-modal');
             if (modal) modal.classList.remove('hidden');
@@ -1163,12 +1116,12 @@
             const btnSubmit = document.getElementById('btn-submit-account');
 
             if (tab === 'register') {
-                btnRegister.className = "flex-1 py-2 rounded-full bg-white text-black shadow-sm font-semibold transition";
-                btnLogin.className = "flex-1 py-2 rounded-full text-zinc-400 hover:text-white transition";
-                if (btnSubmit) btnSubmit.innerHTML = `<span>Đăng Ký Tài Khoản</span><i data-lucide="arrow-right" class="w-4 h-4"></i>`;
+                btnRegister.className = "flex-1 py-1.5 rounded-full bg-white text-black shadow-sm font-semibold transition";
+                btnLogin.className = "flex-1 py-1.5 rounded-full text-[#86868B] hover:text-white transition";
+                if (btnSubmit) btnSubmit.innerHTML = `<span>Tạo Dzota ID Mới</span><i data-lucide="arrow-right" class="w-4 h-4"></i>`;
             } else {
-                btnLogin.className = "flex-1 py-2 rounded-full bg-white text-black shadow-sm font-semibold transition";
-                btnRegister.className = "flex-1 py-2 rounded-full text-zinc-400 hover:text-white transition";
+                btnLogin.className = "flex-1 py-1.5 rounded-full bg-white text-black shadow-sm font-semibold transition";
+                btnRegister.className = "flex-1 py-1.5 rounded-full text-[#86868B] hover:text-white transition";
                 if (btnSubmit) btnSubmit.innerHTML = `<span>Vào Dashboard Học Tập</span><i data-lucide="arrow-right" class="w-4 h-4"></i>`;
             }
             if (window.lucide) lucide.createIcons();
@@ -1204,7 +1157,7 @@
             if (e.target.id === 'auth-modal') closeAuthModal();
         });
 
-        // --- 5. GOOGLE AUTH & CREDENTIALS API ---
+        // --- 4. GOOGLE AUTH & CREDENTIALS API ---
         let googleClientId = '';
         async function fetchGoogleConfig() {
             try {
