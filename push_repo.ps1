@@ -34,4 +34,6 @@ if (-not $pass) {
 }
 Write-Host "Credentials found. Pushing to GitHub main branch..."
 $env:GIT_TERMINAL_PROMPT = "0"
-& "C:\Users\lenha\AppData\Local\GitHubDesktop\app-3.6.6\resources\app\git\cmd\git.exe" -c credential.helper= push "https://x-access-token:${pass}@github.com/DiilnXT/dzota-quiz-web.git" main
+$gitPath = (Get-ChildItem -Path "$env:LOCALAPPDATA\GitHubDesktop" -Filter "git.exe" -Recurse | Where-Object { $_.FullName -like "*cmd\git.exe" } | Select-Object -First 1).FullName
+if (-not $gitPath) { $gitPath = "C:\Users\lenha\AppData\Local\GitHubDesktop\app-3.6.10\resources\app\git\cmd\git.exe" }
+& $gitPath -c credential.helper= push "https://x-access-token:${pass}@github.com/DiilnXT/dzota-quiz-web.git" main
