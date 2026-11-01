@@ -7,7 +7,7 @@
     
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="Dzota Education — Nền Tảng Học Tập & Khảo Thí Thông Minh" />
-    <meta property="og:description" content="Nền tảng học tập cá nhân hóa chuẩn Apple Design: Dashboard thông minh, kho ngân hàng 50.000+ câu hỏi chuẩn hóa, trợ lý AI NoteBook ND và phòng thi chạy trạm DYNEX OSCE. Tác giả: Lê Nhật Duy Y Khoa K26 • Zalo: 0914659511." />
+    <meta property="og:description" content="Nền tảng học tập cá nhân hóa chuẩn Apple Design System đỉnh cao: Dashboard thông minh, kho ngân hàng 50.000+ câu hỏi chuẩn hóa, trợ lý AI NoteBook ND và phòng thi chạy trạm DYNEX OSCE. Tác giả: Lê Nhật Duy Y Khoa K26 • Zalo: 0914659511." />
     <meta property="og:image" content="https://i.ibb.co/tpzK0Y8Z/logo-dzota-1-1-1-1-1.png" />
     <link rel="icon" type="image/png" href="/logo-dzota.png" />
     <link rel="apple-touch-icon" href="/logo-dzota.png" />
@@ -15,6 +15,12 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+    <!-- Three.js 3D WebGL Engine for Interactive Spatial Background -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -56,7 +62,7 @@
                         apple: {
                             bg: '#000000',
                             card: '#161617',
-                            cardHover: '#1c1c1e',
+                            cardHover: '#1D1D1F',
                             border: 'rgba(255, 255, 255, 0.08)',
                             borderLight: 'rgba(255, 255, 255, 0.16)',
                             text: '#F5F5F7',
@@ -70,6 +76,11 @@
                             green: '#30D158',
                             orange: '#FF9F0A'
                         }
+                    },
+                    boxShadow: {
+                        'apple-glow': '0 0 60px -15px rgba(0, 113, 227, 0.35)',
+                        'apple-card': '0 30px 60px -20px rgba(0, 0, 0, 0.85), 0 1px 0 rgba(255, 255, 255, 0.12) inset',
+                        'apple-sheet': '0 40px 100px -20px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.15)',
                     }
                 }
             }
@@ -90,48 +101,85 @@
             -moz-osx-font-smoothing: grayscale;
         }
 
+        /* ─── 3D WebGL Canvas Background ─── */
+        #webgl-canvas {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.65;
+            transition: opacity 0.5s ease;
+        }
+
         /* ─── Apple Navigation Frosted Glass ─── */
         .apple-nav {
             background: rgba(0, 0, 0, 0.82);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            backdrop-filter: blur(24px) saturate(190%);
+            -webkit-backdrop-filter: blur(24px) saturate(190%);
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            transition: background 0.3s ease, border-color 0.3s ease;
         }
 
-        /* ─── Apple Frosted Card Material (macOS / iOS Material) ─── */
+        /* ─── Apple Frosted Card Material & Spotlight ─── */
         .apple-card {
+            position: relative;
             background: #161617;
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-top: 1px solid rgba(255, 255, 255, 0.18);
-            transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+            border-radius: 28px;
+            overflow: hidden;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                        border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                        box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .apple-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(255, 255, 255, 0.22);
-            box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8), 0 0 40px -10px rgba(0, 113, 227, 0.2);
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.85), 0 0 45px -10px rgba(0, 113, 227, 0.25);
         }
 
-        .apple-glass-sheet {
-            background: rgba(26, 26, 30, 0.88);
-            backdrop-filter: blur(30px) saturate(190%);
-            -webkit-backdrop-filter: blur(30px) saturate(190%);
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            border-top: 1px solid rgba(255, 255, 255, 0.25);
-            box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.05);
+        /* Cursor Spotlight Overlay */
+        .apple-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.07), transparent 40%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1;
         }
 
-        /* ─── Apple Buttons (WWDC Fluid Motion & Physics) ─── */
+        .apple-card:hover::before {
+            opacity: 1;
+        }
+
+        /* ─── Apple Spatial Sheet Modal ─── */
+        .apple-spatial-sheet {
+            background: rgba(22, 22, 26, 0.88);
+            backdrop-filter: blur(40px) saturate(200%);
+            -webkit-backdrop-filter: blur(40px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.95), 0 0 80px -20px rgba(0, 113, 227, 0.3);
+            border-radius: 32px;
+        }
+
+        /* ─── Apple Buttons (WWDC Fluid Motion & Spring Physics) ─── */
         .btn-apple-primary {
             background: #FFFFFF;
             color: #000000;
             font-weight: 600;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .btn-apple-primary:hover {
             background: #E8E8ED;
-            transform: scale(1.01);
-            box-shadow: 0 10px 25px -5px rgba(255, 255, 255, 0.25);
+            transform: scale(1.015);
+            box-shadow: 0 12px 30px -5px rgba(255, 255, 255, 0.3);
         }
         .btn-apple-primary:active {
             transform: scale(0.97);
@@ -140,13 +188,13 @@
         .btn-apple-blue {
             background: #0071E3;
             color: #FFFFFF;
-            font-weight: 500;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            font-weight: 600;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .btn-apple-blue:hover {
             background: #0077ED;
-            transform: scale(1.01);
-            box-shadow: 0 10px 25px -5px rgba(0, 113, 227, 0.45);
+            transform: scale(1.015);
+            box-shadow: 0 12px 30px -5px rgba(0, 113, 227, 0.5);
         }
         .btn-apple-blue:active {
             transform: scale(0.97);
@@ -156,14 +204,15 @@
         .btn-apple-secondary {
             background: rgba(255, 255, 255, 0.08);
             color: #FFFFFF;
-            border: 1px solid rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             font-weight: 500;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(12px);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .btn-apple-secondary:hover {
-            background: rgba(255, 255, 255, 0.14);
-            border-color: rgba(255, 255, 255, 0.25);
-            transform: scale(1.01);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: scale(1.015);
         }
         .btn-apple-secondary:active {
             transform: scale(0.97);
@@ -172,7 +221,7 @@
         /* ─── Apple Typography Classes ─── */
         .apple-headline {
             letter-spacing: -0.04em;
-            line-height: 1.05;
+            line-height: 1.04;
             font-weight: 700;
         }
 
@@ -183,10 +232,24 @@
         }
 
         .apple-kicker {
-            letter-spacing: 0.12em;
+            letter-spacing: 0.14em;
             text-transform: uppercase;
             font-size: 11px;
-            font-weight: 600;
+            font-weight: 700;
+        }
+
+        /* ─── Apple Text Shimmer ─── */
+        .text-shimmer {
+            background: linear-gradient(110deg, #FFFFFF 20%, #A5C8FF 50%, #FFFFFF 80%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: textShimmerAnim 4s linear infinite;
+        }
+
+        @keyframes textShimmerAnim {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
         }
 
         /* ─── Apple Link Chevron ─── */
@@ -223,17 +286,20 @@
 </head>
 <body class="selection:bg-blue-600 selection:text-white">
 
+    <!-- 3D WebGL Three.js Ambient Spatial Canvas -->
+    <canvas id="webgl-canvas"></canvas>
+
     <div class="relative z-10 min-h-screen flex flex-col">
 
         <!-- ─────────────────────────────────────────────────────────────
-             1. APPLE GLOBAL NAVIGATION (52px Minimal Frosted Chrome)
+             1. APPLE GLOBAL NAVIGATION BAR (52px Minimal Frosted Chrome)
         ───────────────────────────────────────────────────────────── -->
         <header class="sticky top-0 z-50 apple-nav">
             <div class="max-w-5xl mx-auto px-4 sm:px-6 h-13 sm:h-14 flex items-center justify-between gap-4">
                 
                 <!-- Apple Logo & Monogram -->
                 <a href="/" class="flex items-center gap-2.5 no-underline group flex-shrink-0">
-                    <div class="w-7 h-7 rounded-full bg-white/10 border border-white/20 p-1 flex items-center justify-center transition-transform group-hover:scale-105">
+                    <div class="w-7 h-7 rounded-full bg-white/10 border border-white/20 p-1 flex items-center justify-center transition-transform group-hover:scale-105 shadow-inner">
                         <img src="/logo-dzota.png" alt="Dzota Education" class="w-full h-full object-contain" />
                     </div>
                     <span class="text-[17px] font-semibold tracking-tight text-white font-display">Dzota</span>
@@ -242,7 +308,10 @@
                 <!-- Minimalist Global Nav Links -->
                 <nav class="hidden md:flex items-center gap-7 text-[12px] font-normal text-[#86868B]">
                     <a href="#overview" class="hover:text-white transition-colors no-underline">Tổng quan</a>
-                    <a href="/dashboard" class="text-white hover:text-[#2997FF] transition-colors no-underline font-medium">Dashboard</a>
+                    <a href="/dashboard" class="text-white hover:text-[#2997FF] transition-colors no-underline font-medium flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#2997FF] animate-pulse"></span>
+                        <span>Dashboard</span>
+                    </a>
                     <a href="/creator" class="hover:text-white transition-colors no-underline">Ngân hàng đề</a>
                     <a href="/duocly" class="hover:text-white transition-colors no-underline">Dược Lý 401</a>
                     <a href="/dynex" class="hover:text-white transition-colors no-underline">DYNEX OSCE</a>
@@ -257,21 +326,21 @@
                         target="_blank"
                         rel="noreferrer"
                         class="hidden lg:inline-flex items-center gap-1 text-[12px] text-[#86868B] hover:text-[#2997FF] transition no-underline"
-                        title="Hỗ trợ Zalo 24/7"
+                        title="Bác sĩ Lê Nhật Duy online Zalo 24/7"
                     >
                         <span>Zalo: 0914.659.511</span>
                     </a>
 
                     <button
                         onclick="openAuthModal('login')"
-                        class="text-[12px] text-zinc-300 hover:text-white px-3 py-1 rounded-full bg-white/[0.08] hover:bg-white/[0.14] border border-white/[0.1] transition cursor-pointer active:scale-95"
+                        class="text-[12px] text-zinc-300 hover:text-white px-3.5 py-1.5 rounded-full bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.12] transition cursor-pointer active:scale-95 font-medium"
                     >
                         Đăng Nhập
                     </button>
 
                     <a
                         href="/dashboard"
-                        class="btn-apple-blue px-3.5 py-1 sm:px-4 sm:py-1.5 rounded-full text-[12px] no-underline flex items-center gap-1 active:scale-95"
+                        class="btn-apple-blue px-3.5 py-1.5 sm:px-4 sm:py-1.5 rounded-full text-[12px] no-underline flex items-center gap-1 active:scale-95"
                     >
                         <span>Vào Dashboard</span>
                         <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
@@ -282,32 +351,33 @@
         </header>
 
         <!-- ─────────────────────────────────────────────────────────────
-             2. HERO SECTION — IMMACULATE APPLE PRODUCT ANNOUNCEMENT
+             2. HERO SECTION — MONUMENTAL APPLE PRODUCT ANNOUNCEMENT
         ───────────────────────────────────────────────────────────── -->
         <section id="overview" class="relative pt-24 sm:pt-36 pb-16 sm:pb-24 px-4 sm:px-8 text-center overflow-hidden">
-            <div class="max-w-4xl mx-auto space-y-5 sm:space-y-6">
+            <div class="max-w-4xl mx-auto space-y-6">
                 
                 <!-- Apple Product Kicker -->
-                <div class="apple-kicker text-[#2997FF]">
-                    Dzota Education • Thế Hệ Mới
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.12] text-xs font-semibold tracking-wide text-zinc-300">
+                    <span class="w-2 h-2 rounded-full bg-[#2997FF] animate-ping"></span>
+                    <span class="apple-kicker text-[#2997FF]">DZOTA EDUCATION 2026 • SPATIAL LEARNING</span>
                 </div>
 
                 <!-- Monumental Display Headline -->
                 <h1 class="text-5xl sm:text-7xl md:text-8xl apple-headline text-white">
                     Học tập chuẩn xác.<br />
-                    <span class="bg-gradient-to-b from-white via-white to-zinc-500 bg-clip-text text-transparent">Bứt phá đỉnh cao.</span>
+                    <span class="text-shimmer">Bứt phá mọi kỳ thi.</span>
                 </h1>
 
                 <!-- Crisp Secondary Copy -->
                 <p class="text-lg sm:text-2xl text-[#86868B] max-w-2xl mx-auto font-normal leading-relaxed">
-                    Nền tảng khảo thí và đào tạo y khoa thông minh. Tích hợp <strong>50.000+ câu hỏi</strong> chuẩn hóa, trợ lý <strong>AI NoteBook ND</strong> và phòng thi chạy trạm <strong>DYNEX OSCE</strong>.
+                    Nền tảng khảo thí và đào tạo y khoa thông minh. Tích hợp <strong>50.000+ câu hỏi</strong> chuẩn hóa, trợ lý <strong>AI NoteBook ND</strong> và phòng thi chạy trạm <strong>DYNEX OSCE</strong> theo tiêu chuẩn quốc tế.
                 </p>
 
-                <!-- Apple Action Pills -->
+                <!-- Apple Action Pills Trio -->
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-4">
                     <a
                         href="/dashboard"
-                        class="w-full sm:w-auto btn-apple-primary px-8 py-3.5 rounded-full text-[15px] flex items-center justify-center gap-2 no-underline"
+                        class="w-full sm:w-auto btn-apple-primary px-8 py-3.5 rounded-full text-[15px] flex items-center justify-center gap-2 no-underline shadow-lg"
                     >
                         <span>Vào Dashboard Học Tập</span>
                         <i data-lucide="arrow-right" class="w-4 h-4"></i>
@@ -323,12 +393,12 @@
                 </div>
 
                 <!-- Apple Text Link with Chevron -->
-                <div class="pt-2 flex items-center justify-center gap-6 text-[14px]">
+                <div class="pt-3 flex flex-wrap items-center justify-center gap-6 text-[14px]">
                     <a href="https://zalo.me/0914659511" target="_blank" rel="noreferrer" class="apple-link font-medium">
                         <span>Tư vấn qua Zalo 0914.659.511</span>
                         <i data-lucide="chevron-right" class="w-4 h-4"></i>
                     </a>
-                    <span class="text-zinc-600">•</span>
+                    <span class="text-zinc-700 hidden sm:inline">•</span>
                     <button onclick="openAuthModal('login')" class="apple-link font-medium bg-transparent border-none cursor-pointer">
                         <span>Đăng nhập Dzota ID</span>
                         <i data-lucide="chevron-right" class="w-4 h-4"></i>
@@ -336,28 +406,29 @@
                 </div>
 
                 <!-- Author Footnote Citation -->
-                <div class="pt-4 text-[12px] text-[#6E6E73] font-normal">
-                    Nghiên cứu & Sáng lập bởi <strong>Lê Nhật Duy (Y Khoa K26)</strong> • Chuẩn mực y khoa thực tiễn
+                <div class="pt-4 text-[12px] text-[#6E6E73] font-normal flex items-center justify-center gap-2">
+                    <i data-lucide="award" class="w-4 h-4 text-[#2997FF]"></i>
+                    <span>Nghiên cứu & Sáng lập bởi <strong>Lê Nhật Duy (Y Khoa K26)</strong> • Hotline 24/7: <strong>0914.659.511</strong></span>
                 </div>
 
             </div>
 
             <!-- ─────────────────────────────────────────────────────────
-                 3. APPLE STUDIO DISPLAY / IPAD PRO WINDOW MOCKUP
+                 3. INTERACTIVE 3D IPAD PRO / STUDIO DISPLAY CANVAS SHOWCASE
             ───────────────────────────────────────────────────────── -->
             <div class="max-w-5xl mx-auto mt-14 sm:mt-20">
-                <div class="apple-card rounded-[28px] sm:rounded-[36px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.85)] text-left">
+                <div class="apple-card rounded-[32px] sm:rounded-[36px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.9)] text-left border border-white/15">
                     
                     <!-- macOS Window Frame Chrome -->
                     <div class="px-5 py-3.5 bg-[#121214] border-b border-white/[0.08] flex flex-wrap items-center justify-between gap-3">
                         <div class="flex items-center gap-2">
-                            <span class="w-3 h-3 rounded-full bg-[#FF5F56] inline-block"></span>
-                            <span class="w-3 h-3 rounded-full bg-[#FFBD2E] inline-block"></span>
-                            <span class="w-3 h-3 rounded-full bg-[#27C93F] inline-block"></span>
+                            <span class="w-3 h-3 rounded-full bg-[#FF5F56] inline-block shadow-sm"></span>
+                            <span class="w-3 h-3 rounded-full bg-[#FFBD2E] inline-block shadow-sm"></span>
+                            <span class="w-3 h-3 rounded-full bg-[#27C93F] inline-block shadow-sm"></span>
                             <span class="text-xs font-mono text-[#86868B] ml-2">dzota.app — workspace</span>
                         </div>
 
-                        <!-- Segmented Control Tabs -->
+                        <!-- Apple Sliding Segmented Control Tabs -->
                         <div class="flex items-center p-1 rounded-full bg-white/[0.06] border border-white/[0.08] text-[12px] font-medium">
                             <button
                                 id="tab-btn-dash"
@@ -391,7 +462,7 @@
                     </div>
 
                     <!-- Showcase View Container -->
-                    <div class="p-6 sm:p-10 bg-[#0A0A0C] min-h-[400px] flex items-center">
+                    <div class="p-6 sm:p-10 bg-[#0A0A0C] min-h-[420px] flex items-center">
                         
                         <!-- TAB 1: DASHBOARD VIEW (Active by default) -->
                         <div id="view-dash" class="w-full space-y-6">
@@ -402,7 +473,7 @@
                                     <p class="text-xs sm:text-sm text-[#86868B]">Theo dõi chuỗi học tập hàng ngày và bài tập được phân công.</p>
                                 </div>
                                 <a href="/dashboard" class="btn-apple-blue px-4 py-2 rounded-full text-xs no-underline flex items-center gap-1.5 self-start sm:self-auto">
-                                    <span>Mở Dashboard Toàn Màn Hình</span>
+                                    <span>Mở Toàn Màn Hình</span>
                                     <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
                                 </a>
                             </div>
@@ -586,8 +657,8 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     
                     <!-- Card 1: Dashboard (Col span 2) -->
-                    <div class="md:col-span-2 apple-card rounded-[28px] p-8 sm:p-10 flex flex-col justify-between space-y-6">
-                        <div class="space-y-3">
+                    <div class="md:col-span-2 apple-card p-8 sm:p-10 flex flex-col justify-between space-y-6">
+                        <div class="space-y-3 relative z-10">
                             <div class="w-10 h-10 rounded-xl bg-blue-500/15 text-[#2997FF] flex items-center justify-center">
                                 <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
                             </div>
@@ -596,7 +667,7 @@
                                 Bảng điều khiển trực quan hiển thị mục tiêu, tiến độ hoàn thành, chuỗi ngày streak và đề thi được phân công riêng biệt cho từng sinh viên.
                             </p>
                         </div>
-                        <div class="pt-4">
+                        <div class="pt-4 relative z-10">
                             <a href="/dashboard" class="apple-link font-medium text-sm">
                                 <span>Khám phá Dashboard</span>
                                 <i data-lucide="chevron-right" class="w-4 h-4"></i>
@@ -605,8 +676,8 @@
                     </div>
 
                     <!-- Card 2: Kho Đề 50.000+ Câu -->
-                    <div class="apple-card rounded-[28px] p-8 sm:p-10 flex flex-col justify-between space-y-6">
-                        <div class="space-y-3">
+                    <div class="apple-card p-8 sm:p-10 flex flex-col justify-between space-y-6">
+                        <div class="space-y-3 relative z-10">
                             <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-[#30D158] flex items-center justify-center">
                                 <i data-lucide="database" class="w-5 h-5"></i>
                             </div>
@@ -615,7 +686,7 @@
                                 Trắc nghiệm phân loại chi tiết theo chuyên khoa, chương mục và độ khó chuẩn hóa Bộ Y tế.
                             </p>
                         </div>
-                        <div class="pt-4">
+                        <div class="pt-4 relative z-10">
                             <a href="/creator" class="apple-link font-medium text-sm">
                                 <span>Xem ngân hàng đề</span>
                                 <i data-lucide="chevron-right" class="w-4 h-4"></i>
@@ -624,8 +695,8 @@
                     </div>
 
                     <!-- Card 3: NoteBook AI -->
-                    <div class="apple-card rounded-[28px] p-8 sm:p-10 flex flex-col justify-between space-y-6">
-                        <div class="space-y-3">
+                    <div class="apple-card p-8 sm:p-10 flex flex-col justify-between space-y-6">
+                        <div class="space-y-3 relative z-10">
                             <div class="w-10 h-10 rounded-xl bg-purple-500/15 text-[#BF5AF2] flex items-center justify-center">
                                 <i data-lucide="sparkles" class="w-5 h-5"></i>
                             </div>
@@ -634,7 +705,7 @@
                                 Đọc hiểu tài liệu y khoa PDF/Word và trích xuất ma trận câu hỏi thông minh với Gemini 3.8 Flash.
                             </p>
                         </div>
-                        <div class="pt-4">
+                        <div class="pt-4 relative z-10">
                             <a href="/notebook" class="apple-link font-medium text-sm">
                                 <span>Trải nghiệm AI</span>
                                 <i data-lucide="chevron-right" class="w-4 h-4"></i>
@@ -643,8 +714,8 @@
                     </div>
 
                     <!-- Card 4: DYNEX OSCE (Col span 2) -->
-                    <div class="md:col-span-2 apple-card rounded-[28px] p-8 sm:p-10 flex flex-col justify-between space-y-6">
-                        <div class="space-y-3">
+                    <div class="md:col-span-2 apple-card p-8 sm:p-10 flex flex-col justify-between space-y-6">
+                        <div class="space-y-3 relative z-10">
                             <div class="w-10 h-10 rounded-xl bg-blue-500/15 text-[#2997FF] flex items-center justify-center">
                                 <i data-lucide="activity" class="w-5 h-5"></i>
                             </div>
@@ -653,7 +724,7 @@
                                 Công nghệ che nhãn tiêu bản (Masking), tự động hóa đồng hồ đếm ngược 20s mỗi trạm và thuật toán Spaced Repetition (Anki SM-2).
                             </p>
                         </div>
-                        <div class="pt-4">
+                        <div class="pt-4 relative z-10">
                             <a href="/dynex" class="apple-link font-medium text-sm">
                                 <span>Vào phòng chạy trạm</span>
                                 <i data-lucide="chevron-right" class="w-4 h-4"></i>
@@ -662,8 +733,8 @@
                     </div>
 
                     <!-- Card 5: Dược Lý 401 -->
-                    <div class="apple-card rounded-[28px] p-8 sm:p-10 flex flex-col justify-between space-y-6">
-                        <div class="space-y-3">
+                    <div class="apple-card p-8 sm:p-10 flex flex-col justify-between space-y-6">
+                        <div class="space-y-3 relative z-10">
                             <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-[#30D158] flex items-center justify-center">
                                 <i data-lucide="pill" class="w-5 h-5"></i>
                             </div>
@@ -672,7 +743,7 @@
                                 Tra cứu 423 chuyên khảo dược lý lâm sàng, cơ chế tác dụng, liều dùng và chống chỉ định.
                             </p>
                         </div>
-                        <div class="pt-4">
+                        <div class="pt-4 relative z-10">
                             <a href="/duocly" class="apple-link font-medium text-sm">
                                 <span>Tra cứu dược lý</span>
                                 <i data-lucide="chevron-right" class="w-4 h-4"></i>
@@ -681,8 +752,8 @@
                     </div>
 
                     <!-- Card 6: Đấu Trường Realtime (Col span 2) -->
-                    <div class="md:col-span-2 apple-card rounded-[28px] p-8 sm:p-10 flex flex-col justify-between space-y-6">
-                        <div class="space-y-3">
+                    <div class="md:col-span-2 apple-card p-8 sm:p-10 flex flex-col justify-between space-y-6">
+                        <div class="space-y-3 relative z-10">
                             <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center">
                                 <i data-lucide="swords" class="w-5 h-5"></i>
                             </div>
@@ -691,7 +762,7 @@
                                 Thi đấu trắc nghiệm trực tiếp giữa các sinh viên, bảng xếp hạng vinh danh theo tuần, học tập qua thử thách tương tác.
                             </p>
                         </div>
-                        <div class="pt-4">
+                        <div class="pt-4 relative z-10">
                             <a href="/dashboard" class="apple-link font-medium text-sm">
                                 <span>Vào Đấu Trường</span>
                                 <i data-lucide="chevron-right" class="w-4 h-4"></i>
@@ -719,8 +790,8 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     
                     <!-- Tier 1: Free -->
-                    <div class="apple-card rounded-[28px] p-8 flex flex-col justify-between space-y-6">
-                        <div class="space-y-4">
+                    <div class="apple-card p-8 flex flex-col justify-between space-y-6">
+                        <div class="space-y-4 relative z-10">
                             <div class="text-xs font-semibold uppercase text-[#86868B] tracking-wider">Trải Nghiệm</div>
                             <div class="text-3xl font-bold text-white">0đ</div>
                             <p class="text-xs text-[#86868B]">Dành cho học viên mới bắt đầu khám phá nền tảng.</p>
@@ -731,17 +802,17 @@
                                 <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#30D158]"></i> Xem kết quả & đáp án</li>
                             </ul>
                         </div>
-                        <a href="/dashboard" class="btn-apple-secondary w-full py-3 rounded-full text-xs text-center no-underline">
+                        <a href="/dashboard" class="btn-apple-secondary w-full py-3 rounded-full text-xs text-center no-underline relative z-10">
                             Học Miễn Phí
                         </a>
                     </div>
 
                     <!-- Tier 2: Pro (Apple Blue Ring) -->
-                    <div class="apple-card rounded-[28px] p-8 flex flex-col justify-between space-y-6 border-[#0071E3]/50 relative">
-                        <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#0071E3] text-white text-[10px] font-bold uppercase tracking-wider">
+                    <div class="apple-card p-8 flex flex-col justify-between space-y-6 border-[#0071E3]/50 relative">
+                        <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#0071E3] text-white text-[10px] font-bold uppercase tracking-wider z-20">
                             Khuyên Dùng
                         </div>
-                        <div class="space-y-4">
+                        <div class="space-y-4 relative z-10">
                             <div class="text-xs font-semibold uppercase text-[#2997FF] tracking-wider">Sinh Viên Pro</div>
                             <div class="text-3xl font-bold text-white">199.000đ <span class="text-xs font-normal text-[#86868B]">/ học kỳ</span></div>
                             <p class="text-xs text-[#86868B]">Trọn bộ công cụ ôn thi chuyên sâu và bứt phá điểm số.</p>
@@ -753,14 +824,14 @@
                                 <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#2997FF]"></i> Hỗ trợ học tập 24/7 qua Zalo</li>
                             </ul>
                         </div>
-                        <a href="https://zalo.me/0914659511?text=Tôi%20muốn%20đăng%20ký%20gói%20Dzota%20Pro%20199k" target="_blank" rel="noreferrer" class="btn-apple-blue w-full py-3 rounded-full text-xs text-center no-underline">
+                        <a href="https://zalo.me/0914659511?text=Tôi%20muốn%20đăng%20ký%20gói%20Dzota%20Pro%20199k" target="_blank" rel="noreferrer" class="btn-apple-blue w-full py-3 rounded-full text-xs text-center no-underline relative z-10">
                             Đăng Ký Gói Pro Qua Zalo
                         </a>
                     </div>
 
                     <!-- Tier 3: VIP Lifetime -->
-                    <div class="apple-card rounded-[28px] p-8 flex flex-col justify-between space-y-6">
-                        <div class="space-y-4">
+                    <div class="apple-card p-8 flex flex-col justify-between space-y-6">
+                        <div class="space-y-4 relative z-10">
                             <div class="text-xs font-semibold uppercase text-[#BF5AF2] tracking-wider">VIP Trọn Đời</div>
                             <div class="text-3xl font-bold text-white">399.000đ <span class="text-xs font-normal text-[#86868B]">/ trọn đời</span></div>
                             <p class="text-xs text-[#86868B]">Đồng hành suốt 6 năm đại học y khoa và kỳ thi nội trú.</p>
@@ -771,7 +842,7 @@
                                 <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#BF5AF2]"></i> Hỗ trợ từ Lê Nhật Duy (Y Khoa K26)</li>
                             </ul>
                         </div>
-                        <a href="https://zalo.me/0914659511?text=Tôi%20muốn%20đăng%20ký%20gói%20VIP%20Trọn%20Đời%20399k" target="_blank" rel="noreferrer" class="btn-apple-secondary w-full py-3 rounded-full text-xs text-center no-underline">
+                        <a href="https://zalo.me/0914659511?text=Tôi%20muốn%20đăng%20ký%20gói%20VIP%20Trọn%20Đời%20399k" target="_blank" rel="noreferrer" class="btn-apple-secondary w-full py-3 rounded-full text-xs text-center no-underline relative z-10">
                             Đăng Ký VIP Trọn Đời
                         </a>
                     </div>
@@ -794,32 +865,32 @@
 
                 <div class="space-y-4">
                     
-                    <div class="apple-card rounded-2xl overflow-hidden">
-                        <button onclick="toggleFaq(this)" class="w-full p-5 text-left flex items-center justify-between text-sm sm:text-base font-semibold text-white cursor-pointer">
+                    <div class="apple-card overflow-hidden">
+                        <button onclick="toggleFaq(this)" class="w-full p-5 text-left flex items-center justify-between text-sm sm:text-base font-semibold text-white cursor-pointer relative z-10">
                             <span>Dzota Education có dùng tốt trên điện thoại không?</span>
                             <i data-lucide="chevron-down" class="w-4 h-4 text-[#86868B] transition-transform"></i>
                         </button>
-                        <div class="faq-content hidden px-5 pb-5 text-xs sm:text-sm text-[#86868B] leading-relaxed border-t border-white/[0.06] pt-3">
+                        <div class="faq-content hidden px-5 pb-5 text-xs sm:text-sm text-[#86868B] leading-relaxed border-t border-white/[0.06] pt-3 relative z-10">
                             Hoàn toàn tối ưu. Giao diện Dzota được thiết kế chuẩn Responsive theo phong cách iOS và iPadOS, đảm bảo thao tác mượt mà, cảm ứng nhạy trên mọi dòng iPhone, iPad và smartphone Android.
                         </div>
                     </div>
 
-                    <div class="apple-card rounded-2xl overflow-hidden">
-                        <button onclick="toggleFaq(this)" class="w-full p-5 text-left flex items-center justify-between text-sm sm:text-base font-semibold text-white cursor-pointer">
+                    <div class="apple-card overflow-hidden">
+                        <button onclick="toggleFaq(this)" class="w-full p-5 text-left flex items-center justify-between text-sm sm:text-base font-semibold text-white cursor-pointer relative z-10">
                             <span>Ngân hàng câu hỏi có nguồn gốc từ đâu và độ chính xác thế nào?</span>
                             <i data-lucide="chevron-down" class="w-4 h-4 text-[#86868B] transition-transform"></i>
                         </button>
-                        <div class="faq-content hidden px-5 pb-5 text-xs sm:text-sm text-[#86868B] leading-relaxed border-t border-white/[0.06] pt-3">
+                        <div class="faq-content hidden px-5 pb-5 text-xs sm:text-sm text-[#86868B] leading-relaxed border-t border-white/[0.06] pt-3 relative z-10">
                             Tất cả 50.000+ câu hỏi được tuyển chọn, rà soát và biên soạn bởi đội ngũ sinh viên Y Khoa K26 và cố vấn chuyên môn, dựa trên giáo trình chuẩn của các trường đại học y dược hàng đầu Việt Nam.
                         </div>
                     </div>
 
-                    <div class="apple-card rounded-2xl overflow-hidden">
-                        <button onclick="toggleFaq(this)" class="w-full p-5 text-left flex items-center justify-between text-sm sm:text-base font-semibold text-white cursor-pointer">
+                    <div class="apple-card overflow-hidden">
+                        <button onclick="toggleFaq(this)" class="w-full p-5 text-left flex items-center justify-between text-sm sm:text-base font-semibold text-white cursor-pointer relative z-10">
                             <span>Làm thế nào để kích hoạt tài khoản hoặc nhận hỗ trợ?</span>
                             <i data-lucide="chevron-down" class="w-4 h-4 text-[#86868B] transition-transform"></i>
                         </button>
-                        <div class="faq-content hidden px-5 pb-5 text-xs sm:text-sm text-[#86868B] leading-relaxed border-t border-white/[0.06] pt-3">
+                        <div class="faq-content hidden px-5 pb-5 text-xs sm:text-sm text-[#86868B] leading-relaxed border-t border-white/[0.06] pt-3 relative z-10">
                             Bạn có thể liên hệ trực tiếp qua số Zalo <strong>0914.659.511</strong> của bác sĩ Lê Nhật Duy để được hỗ trợ kích hoạt tài khoản ngay trong vòng 2 phút.
                         </div>
                     </div>
@@ -918,8 +989,8 @@
     <!-- ─────────────────────────────────────────────────────────────
          10. APPLE ID LOGIN SHEET / MODAL (appleid.apple.com Design)
     ───────────────────────────────────────────────────────────── -->
-    <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-3xl hidden">
-        <div class="apple-glass-sheet rounded-[32px] p-7 sm:p-9 max-w-[420px] w-full relative space-y-6" onclick="event.stopPropagation()">
+    <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-3xl hidden">
+        <div class="apple-spatial-sheet p-7 sm:p-9 max-w-[420px] w-full relative space-y-6" onclick="event.stopPropagation()">
             
             <!-- Apple Circular Close Button -->
             <button onclick="closeAuthModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/[0.08] hover:bg-white/[0.16] text-[#86868B] hover:text-white flex items-center justify-center transition cursor-pointer">
@@ -1053,7 +1124,7 @@
     </div>
 
     <!-- ─────────────────────────────────────────────────────────────
-         12. JAVASCRIPT LOGIC
+         12. JAVASCRIPT: THREE.JS 3D ENGINE & SPOTLIGHT INTERACTION
     ───────────────────────────────────────────────────────────── -->
     <script>
         // Init Lucide Icons
@@ -1061,7 +1132,169 @@
             lucide.createIcons();
         }
 
-        // --- 1. FAQ ACCORDION LOGIC ---
+        // --- 1. THREE.JS 3D SPATIAL KNOWLEDGE CORE & GYROSCOPE ---
+        (function initApple3DCanvas() {
+            try {
+                const canvas = document.getElementById('webgl-canvas');
+                if (!canvas || !window.THREE) return;
+
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2000);
+                camera.position.z = 450;
+
+                const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true, powerPreference: "high-performance" });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+                // Group containing the entire 3D Gyroscope & Floating Spatial Nodes
+                const coreGroup = new THREE.Group();
+                scene.add(coreGroup);
+
+                // Central Iridescent Icosahedron Mesh
+                const innerGeometry = new THREE.IcosahedronGeometry(75, 2);
+                const innerMaterial = new THREE.MeshPhongMaterial({
+                    color: 0x0071E3,
+                    emissive: 0x0a1930,
+                    specular: 0x2997FF,
+                    shininess: 90,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.35
+                });
+                const innerMesh = new THREE.Mesh(innerGeometry, innerMaterial);
+                coreGroup.add(innerMesh);
+
+                // Orbital Torus Rings (Concentric Gyroscopic Rings)
+                const ring1Geo = new THREE.TorusGeometry(125, 1.2, 16, 100);
+                const ring1Mat = new THREE.MeshBasicMaterial({ color: 0x2997FF, transparent: true, opacity: 0.45 });
+                const ring1 = new THREE.Mesh(ring1Geo, ring1Mat);
+                ring1.rotation.x = Math.PI / 3;
+                coreGroup.add(ring1);
+
+                const ring2Geo = new THREE.TorusGeometry(160, 1.0, 16, 100);
+                const ring2Mat = new THREE.MeshBasicMaterial({ color: 0xBF5AF2, transparent: true, opacity: 0.35 });
+                const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);
+                ring2.rotation.y = Math.PI / 4;
+                coreGroup.add(ring2);
+
+                const ring3Geo = new THREE.TorusGeometry(195, 0.8, 16, 120);
+                const ring3Mat = new THREE.MeshBasicMaterial({ color: 0x30D158, transparent: true, opacity: 0.25 });
+                const ring3 = new THREE.Mesh(ring3Geo, ring3Mat);
+                ring3.rotation.z = Math.PI / 6;
+                coreGroup.add(ring3);
+
+                // Floating Spatial Star Points Cloud
+                const starsCount = window.innerWidth < 768 ? 400 : 850;
+                const starPositions = new Float32Array(starsCount * 3);
+                const starColors = new Float32Array(starsCount * 3);
+
+                const palette = [
+                    new THREE.Color(0x0071E3), // Apple Blue
+                    new THREE.Color(0x2997FF), // Apple Cyan
+                    new THREE.Color(0xBF5AF2), // Apple Purple
+                    new THREE.Color(0xFFFFFF)  // Platinum White
+                ];
+
+                for (let i = 0; i < starsCount; i++) {
+                    starPositions[i * 3] = (Math.random() - 0.5) * 1200;
+                    starPositions[i * 3 + 1] = (Math.random() - 0.5) * 900;
+                    starPositions[i * 3 + 2] = (Math.random() - 0.5) * 800;
+
+                    const clr = palette[Math.floor(Math.random() * palette.length)];
+                    starColors[i * 3] = clr.r;
+                    starColors[i * 3 + 1] = clr.g;
+                    starColors[i * 3 + 2] = clr.b;
+                }
+
+                const starGeo = new THREE.BufferGeometry();
+                starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+                starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+
+                const starMat = new THREE.PointsMaterial({
+                    size: 2.4,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.6,
+                    blending: THREE.AdditiveBlending
+                });
+
+                const starField = new THREE.Points(starGeo, starMat);
+                scene.add(starField);
+
+                // Point Light & Ambient Light
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+                scene.add(ambientLight);
+
+                const pointLight = new THREE.PointLight(0x0071E3, 2, 800);
+                pointLight.position.set(0, 0, 200);
+                scene.add(pointLight);
+
+                // Mouse Parallax Physics
+                let mouseX = 0;
+                let mouseY = 0;
+                let targetX = 0;
+                let targetY = 0;
+
+                window.addEventListener('mousemove', (e) => {
+                    mouseX = (e.clientX - window.innerWidth / 2) * 0.05;
+                    mouseY = (e.clientY - window.innerHeight / 2) * 0.05;
+                }, { passive: true });
+
+                // Render Loop with Fluid Damping
+                function animate() {
+                    requestAnimationFrame(animate);
+
+                    innerMesh.rotation.x += 0.002;
+                    innerMesh.rotation.y += 0.003;
+
+                    ring1.rotation.x += 0.0015;
+                    ring1.rotation.y += 0.002;
+
+                    ring2.rotation.y -= 0.0018;
+                    ring2.rotation.z += 0.0012;
+
+                    ring3.rotation.z += 0.001;
+                    ring3.rotation.x -= 0.0014;
+
+                    starField.rotation.y += 0.0003;
+
+                    targetX += (mouseX - targetX) * 0.04;
+                    targetY += (mouseY - targetY) * 0.04;
+
+                    coreGroup.rotation.y = targetX * 0.02;
+                    coreGroup.rotation.x = -targetY * 0.02;
+
+                    camera.position.x += (targetX * 0.8 - camera.position.x) * 0.04;
+                    camera.position.y += (-targetY * 0.8 - camera.position.y) * 0.04;
+                    camera.lookAt(scene.position);
+
+                    renderer.render(scene, camera);
+                }
+                animate();
+
+                window.addEventListener('resize', () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                }, { passive: true });
+
+            } catch (err) {
+                console.warn('Three.js initialization gracefully skipped:', err);
+            }
+        })();
+
+        // --- 2. APPLE CURSOR SPOTLIGHT TRACKING ---
+        document.querySelectorAll('.apple-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            }, { passive: true });
+        });
+
+        // --- 3. FAQ ACCORDION LOGIC ---
         function toggleFaq(btn) {
             const content = btn.nextElementSibling;
             const icon = btn.querySelector('i');
@@ -1076,7 +1309,7 @@
             }
         }
 
-        // --- 2. SHOWCASE TABS SWITCHER ---
+        // --- 4. SHOWCASE TABS SWITCHER ---
         function switchShowcase(mode) {
             const tabs = ['dash', 'bank', 'ai', 'osce'];
             const activeClass = "px-3.5 py-1 rounded-full bg-white text-black font-semibold shadow-sm transition";
@@ -1098,7 +1331,7 @@
             if (window.lucide) lucide.createIcons();
         }
 
-        // --- 3. AUTH MODAL CONTROL ---
+        // --- 5. AUTH MODAL CONTROL ---
         function openAuthModal(mode) {
             const modal = document.getElementById('auth-modal');
             if (modal) modal.classList.remove('hidden');
@@ -1157,7 +1390,7 @@
             if (e.target.id === 'auth-modal') closeAuthModal();
         });
 
-        // --- 4. GOOGLE AUTH & CREDENTIALS API ---
+        // --- 6. GOOGLE AUTH & CREDENTIALS API ---
         let googleClientId = '';
         async function fetchGoogleConfig() {
             try {
