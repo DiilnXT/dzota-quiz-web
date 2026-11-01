@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-    <title>Dzota Education — Nền Tảng Học Tập & Khảo Thí Thông Minh</title>
+    <title>Dzota Academy — Hệ Thống E-Learning Y Khoa & Khảo Thí Chạy Trạm OSCE Đỉnh Cao</title>
     
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="Dzota Education — Nền Tảng Học Tập & Khảo Thí Thông Minh" />
-    <meta property="og:description" content="Nền tảng học tập cá nhân hóa chuẩn Apple Design System đỉnh cao: Dashboard thông minh, kho ngân hàng 50.000+ câu hỏi chuẩn hóa, trợ lý AI NoteBook ND và phòng thi chạy trạm DYNEX OSCE. Tác giả: Lê Nhật Duy Y Khoa K26 • Zalo: 0914659511." />
+    <meta property="og:title" content="Dzota Academy — Hệ Thống E-Learning Y Khoa & Chạy Trạm OSCE Đỉnh Cao" />
+    <meta property="og:description" content="Nền tảng E-Learning Y Khoa thông minh: Hệ thống luyện thi chạy trạm DYNEX OSCE, Ngân hàng 50.000+ câu trắc nghiệm chuẩn Bloom, Não bộ Anki SM-2 và Trợ lý AI NoteBook ND. Tác giả: Lê Nhật Duy (Y Khoa K26) • Zalo: 0914659511." />
     <meta property="og:image" content="https://i.ibb.co/tpzK0Y8Z/logo-dzota-1-1-1-1-1.png" />
     <link rel="icon" type="image/png" href="/logo-dzota.png" />
     <link rel="apple-touch-icon" href="/logo-dzota.png" />
@@ -15,14 +15,16 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- Google Fonts: Plus Jakarta Sans & Lexend -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome 6 Free -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
     <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-
-    <!-- Three.js 3D WebGL Engine for Interactive Spatial Background -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
 
     <!-- Google Identity Services for Google OAuth -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -33,54 +35,41 @@
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: [
-                            '-apple-system',
-                            'BlinkMacSystemFont',
-                            '"SF Pro Text"',
-                            '"SF Pro Display"',
-                            '"SF Pro"',
-                            'system-ui',
-                            'sans-serif'
-                        ],
-                        display: [
-                            '-apple-system',
-                            'BlinkMacSystemFont',
-                            '"SF Pro Display"',
-                            '"SF Pro"',
-                            'system-ui',
-                            'sans-serif'
-                        ],
-                        mono: [
-                            '"SF Mono"',
-                            'Menlo',
-                            'Monaco',
-                            'Consolas',
-                            'monospace'
-                        ]
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        heading: ['"Lexend"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
                     },
                     colors: {
-                        apple: {
-                            bg: '#000000',
-                            card: '#161617',
-                            cardHover: '#1D1D1F',
-                            border: 'rgba(255, 255, 255, 0.08)',
-                            borderLight: 'rgba(255, 255, 255, 0.16)',
-                            text: '#F5F5F7',
-                            subtext: '#86868B',
-                            tertiary: '#6E6E73',
-                            blue: '#0071E3',
-                            blueHover: '#0077ED',
-                            blueActive: '#0062C4',
-                            cyan: '#2997FF',
-                            purple: '#BF5AF2',
-                            green: '#30D158',
-                            orange: '#FF9F0A'
+                        navy: {
+                            950: '#070b19',
+                            900: '#0b132b',
+                            850: '#0f1a3a',
+                            800: '#14224c',
+                            700: '#1c2f66',
+                        },
+                        flame: {
+                            400: '#ff8a3d',
+                            500: '#ff6600',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                        },
+                        gold: {
+                            300: '#ffe885',
+                            400: '#fecd1f',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        },
+                        neonPurple: {
+                            500: '#8b5cf6',
+                            600: '#710ebe',
+                            700: '#581c87',
                         }
                     },
                     boxShadow: {
-                        'apple-glow': '0 0 60px -15px rgba(0, 113, 227, 0.35)',
-                        'apple-card': '0 30px 60px -20px rgba(0, 0, 0, 0.85), 0 1px 0 rgba(255, 255, 255, 0.12) inset',
-                        'apple-sheet': '0 40px 100px -20px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.15)',
+                        'neon-flame': '0 0 25px -4px rgba(255, 102, 0, 0.45)',
+                        'neon-gold': '0 0 30px -5px rgba(254, 205, 31, 0.45)',
+                        'neon-purple': '0 0 25px -4px rgba(139, 92, 246, 0.45)',
+                        'card-luxury': '0 20px 45px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08)',
                     }
                 }
             }
@@ -88,1376 +77,1409 @@
     </script>
 
     <style>
-        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-        
+        /* Custom Khanh Hung Academy Aesthetic Styles */
+        :root {
+            --color-primary: #ff6600;
+            --color-gold: #fecd1f;
+            --color-bg-dark: #070b19;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", -apple-system-body, system-ui, sans-serif;
-            background-color: #000000;
-            color: #F5F5F7;
+            background-color: #070b19;
+            color: #f1f5f9;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             overflow-x: hidden;
-            letter-spacing: -0.012em;
-            text-rendering: optimizeLegibility;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
         }
 
-        /* ─── 3D WebGL Canvas Background ─── */
-        #webgl-canvas {
-            position: fixed;
-            inset: 0;
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
-            z-index: 0;
-            opacity: 0.65;
-            transition: opacity 0.5s ease;
+        h1, h2, h3, h4, .font-heading {
+            font-family: 'Lexend', sans-serif;
         }
 
-        /* ─── Apple Navigation Frosted Glass ─── */
-        .apple-nav {
-            background: rgba(0, 0, 0, 0.82);
-            backdrop-filter: blur(24px) saturate(190%);
-            -webkit-backdrop-filter: blur(24px) saturate(190%);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            transition: background 0.3s ease, border-color 0.3s ease;
+        /* Top Bar Ticker Animation */
+        @keyframes ticker {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .ticker-inner {
+            display: inline-flex;
+            white-space: nowrap;
+            animation: ticker 28s linear infinite;
+        }
+        .ticker-inner:hover {
+            animation-play-state: paused;
         }
 
-        /* ─── Apple Frosted Card Material & Spotlight ─── */
-        .apple-card {
-            position: relative;
-            background: #161617;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-top: 1px solid rgba(255, 255, 255, 0.18);
-            border-radius: 28px;
-            overflow: hidden;
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
-                        border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-                        box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .apple-card:hover {
-            transform: translateY(-5px);
-            border-color: rgba(255, 255, 255, 0.25);
-            box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.85), 0 0 45px -10px rgba(0, 113, 227, 0.25);
-        }
-
-        /* Cursor Spotlight Overlay */
-        .apple-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.07), transparent 40%);
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            z-index: 1;
-        }
-
-        .apple-card:hover::before {
-            opacity: 1;
-        }
-
-        /* ─── Apple Spatial Sheet Modal ─── */
-        .apple-spatial-sheet {
-            background: rgba(22, 22, 26, 0.88);
-            backdrop-filter: blur(40px) saturate(200%);
-            -webkit-backdrop-filter: blur(40px) saturate(200%);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-top: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.95), 0 0 80px -20px rgba(0, 113, 227, 0.3);
-            border-radius: 32px;
-        }
-
-        /* ─── Apple Buttons (WWDC Fluid Motion & Spring Physics) ─── */
-        .btn-apple-primary {
-            background: #FFFFFF;
-            color: #000000;
-            font-weight: 600;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .btn-apple-primary:hover {
-            background: #E8E8ED;
-            transform: scale(1.015);
-            box-shadow: 0 12px 30px -5px rgba(255, 255, 255, 0.3);
-        }
-        .btn-apple-primary:active {
-            transform: scale(0.97);
-        }
-
-        .btn-apple-blue {
-            background: #0071E3;
-            color: #FFFFFF;
-            font-weight: 600;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .btn-apple-blue:hover {
-            background: #0077ED;
-            transform: scale(1.015);
-            box-shadow: 0 12px 30px -5px rgba(0, 113, 227, 0.5);
-        }
-        .btn-apple-blue:active {
-            transform: scale(0.97);
-            background: #0062C4;
-        }
-
-        .btn-apple-secondary {
-            background: rgba(255, 255, 255, 0.08);
-            color: #FFFFFF;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            font-weight: 500;
-            backdrop-filter: blur(12px);
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .btn-apple-secondary:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.3);
-            transform: scale(1.015);
-        }
-        .btn-apple-secondary:active {
-            transform: scale(0.97);
-        }
-
-        /* ─── Apple Typography Classes ─── */
-        .apple-headline {
-            letter-spacing: -0.04em;
-            line-height: 1.04;
-            font-weight: 700;
-        }
-
-        .apple-title {
-            letter-spacing: -0.03em;
-            line-height: 1.12;
-            font-weight: 600;
-        }
-
-        .apple-kicker {
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            font-size: 11px;
-            font-weight: 700;
-        }
-
-        /* ─── Apple Text Shimmer ─── */
-        .text-shimmer {
-            background: linear-gradient(110deg, #FFFFFF 20%, #A5C8FF 50%, #FFFFFF 80%);
-            background-size: 200% auto;
+        /* Shining Gold / Flame Gradient Text */
+        .txt-gradient-flame {
+            background: linear-gradient(135deg, #fff275 0%, #ff8e3c 45%, #ff4500 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            animation: textShimmerAnim 4s linear infinite;
         }
 
-        @keyframes textShimmerAnim {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
+        .txt-gradient-gold {
+            background: linear-gradient(135deg, #ffffff 0%, #fecd1f 40%, #ff9900 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        /* ─── Apple Link Chevron ─── */
-        .apple-link {
-            color: #2997FF;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            transition: all 0.2s ease;
-        }
-        .apple-link:hover {
-            text-decoration: underline;
-            gap: 7px;
+        .txt-gradient-purple {
+            background: linear-gradient(135deg, #c084fc 0%, #8b5cf6 50%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        /* ─── Apple Scrollbar ─── */
+        /* Khanh Hung Banner CTA Buttons */
+        .btn-kha-primary {
+            background: linear-gradient(135deg, #ff7a00 0%, #ff4d00 100%);
+            color: #ffffff;
+            font-weight: 700;
+            box-shadow: 0 10px 25px -5px rgba(255, 77, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-kha-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+            transition: left 0.6s ease;
+        }
+        .btn-kha-primary:hover::before {
+            left: 100%;
+        }
+        .btn-kha-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 30px -4px rgba(255, 77, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        .btn-kha-gold {
+            background: linear-gradient(135deg, #ffe066 0%, #fecd1f 50%, #f59e0b 100%);
+            color: #0b132b;
+            font-weight: 800;
+            box-shadow: 0 10px 25px -5px rgba(254, 205, 31, 0.45);
+            transition: all 0.3s ease;
+        }
+        .btn-kha-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 32px -4px rgba(254, 205, 31, 0.65);
+        }
+
+        /* Khanh Hung Card Border & Glow */
+        .kha-card {
+            background: linear-gradient(180deg, rgba(15, 26, 58, 0.85) 0%, rgba(11, 19, 43, 0.95) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.6);
+            position: relative;
+            transition: all 0.35s ease;
+        }
+        .kha-card:hover {
+            border-color: rgba(255, 102, 0, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 0 25px -5px rgba(255, 102, 0, 0.15);
+        }
+
+        .kha-card-gold {
+            background: linear-gradient(180deg, rgba(28, 47, 102, 0.6) 0%, rgba(11, 19, 43, 0.95) 100%);
+            border: 1px solid rgba(254, 205, 31, 0.3);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.6), 0 0 20px -5px rgba(254, 205, 31, 0.15);
+        }
+
+        /* Floating Ringing Hotline Button */
+        @keyframes phoneRing {
+            0% { transform: rotate(0) scale(1) skew(1deg); }
+            10% { transform: rotate(-22deg) scale(1.05) skew(1deg); }
+            20% { transform: rotate(22deg) scale(1.05) skew(1deg); }
+            30% { transform: rotate(-22deg) scale(1.05) skew(1deg); }
+            40% { transform: rotate(22deg) scale(1.05) skew(1deg); }
+            50% { transform: rotate(0) scale(1) skew(1deg); }
+            100% { transform: rotate(0) scale(1) skew(1deg); }
+        }
+        .ring-phone {
+            animation: phoneRing 2s infinite ease-in-out;
+        }
+
+        /* Pulse glow */
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(255, 102, 0, 0.4); }
+            50% { box-shadow: 0 0 30px rgba(255, 102, 0, 0.85); }
+        }
+        .animate-pulse-glow {
+            animation: pulseGlow 2.5s infinite;
+        }
+
+        /* Glassmorphism Navigation */
+        .kha-header {
+            background: rgba(7, 11, 25, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Input styling */
+        .kha-input {
+            background: rgba(7, 11, 25, 0.7);
+            border: 1.5px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: #ffffff;
+            font-size: 15px;
+            transition: all 0.25s ease;
+            width: 100%;
+        }
+        .kha-input:focus {
+            outline: none;
+            border-color: #ff6600;
+            background: rgba(11, 19, 43, 0.95);
+            box-shadow: 0 0 0 4px rgba(255, 102, 0, 0.18);
+        }
+
+        /* Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
-            height: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #000000;
+            background: #070b19;
         }
         ::-webkit-scrollbar-thumb {
-            background: #2D2D2F;
-            border-radius: 9999px;
-            border: 2px solid #000000;
+            background: #1c2f66;
+            border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #424245;
+            background: #ff6600;
         }
     </style>
 </head>
-<body class="selection:bg-blue-600 selection:text-white">
+<body class="selection:bg-flame-500 selection:text-white">
 
-    <!-- 3D WebGL Three.js Ambient Spatial Canvas -->
-    <canvas id="webgl-canvas"></canvas>
-
-    <div class="relative z-10 min-h-screen flex flex-col">
-
-        <!-- ─────────────────────────────────────────────────────────────
-             1. APPLE GLOBAL NAVIGATION BAR (52px Minimal Frosted Chrome)
-        ───────────────────────────────────────────────────────────── -->
-        <header class="sticky top-0 z-50 apple-nav">
-            <div class="max-w-5xl mx-auto px-4 sm:px-6 h-13 sm:h-14 flex items-center justify-between gap-4">
-                
-                <!-- Apple Logo & Monogram -->
-                <a href="/" class="flex items-center gap-2.5 no-underline group flex-shrink-0">
-                    <div class="w-7 h-7 rounded-full bg-white/10 border border-white/20 p-1 flex items-center justify-center transition-transform group-hover:scale-105 shadow-inner">
-                        <img src="/logo-dzota.png" alt="Dzota Education" class="w-full h-full object-contain" />
-                    </div>
-                    <span class="text-[17px] font-semibold tracking-tight text-white font-display">Dzota</span>
-                </a>
-
-                <!-- Minimalist Global Nav Links -->
-                <nav class="hidden md:flex items-center gap-7 text-[12px] font-normal text-[#86868B]">
-                    <a href="#overview" class="hover:text-white transition-colors no-underline">Tổng quan</a>
-                    <a href="/dashboard" class="text-white hover:text-[#2997FF] transition-colors no-underline font-medium flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-[#2997FF] animate-pulse"></span>
-                        <span>Dashboard</span>
-                    </a>
-                    <a href="/creator" class="hover:text-white transition-colors no-underline">Ngân hàng đề</a>
-                    <a href="/duocly" class="hover:text-white transition-colors no-underline">Dược Lý 401</a>
-                    <a href="/dynex" class="hover:text-white transition-colors no-underline">DYNEX OSCE</a>
-                    <a href="#features" class="hover:text-white transition-colors no-underline">Tính năng</a>
-                    <a href="#pricing" class="hover:text-white transition-colors no-underline">Gói học</a>
-                </nav>
-
-                <!-- Actions: Zalo Hotline, Login & Pill CTA -->
-                <div class="flex items-center gap-2.5">
-                    <a
-                        href="https://zalo.me/0914659511"
-                        target="_blank"
-                        rel="noreferrer"
-                        class="hidden lg:inline-flex items-center gap-1 text-[12px] text-[#86868B] hover:text-[#2997FF] transition no-underline"
-                        title="Bác sĩ Lê Nhật Duy online Zalo 24/7"
-                    >
-                        <span>Zalo: 0914.659.511</span>
-                    </a>
-
-                    <button
-                        onclick="openAuthModal('login')"
-                        class="text-[12px] text-zinc-300 hover:text-white px-3.5 py-1.5 rounded-full bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.12] transition cursor-pointer active:scale-95 font-medium"
-                    >
-                        Đăng Nhập
-                    </button>
-
-                    <a
-                        href="/dashboard"
-                        class="btn-apple-blue px-3.5 py-1.5 sm:px-4 sm:py-1.5 rounded-full text-[12px] no-underline flex items-center gap-1 active:scale-95"
-                    >
-                        <span>Vào Dashboard</span>
-                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-                    </a>
-                </div>
-
-            </div>
-        </header>
-
-        <!-- ─────────────────────────────────────────────────────────────
-             2. HERO SECTION — MONUMENTAL APPLE PRODUCT ANNOUNCEMENT
-        ───────────────────────────────────────────────────────────── -->
-        <section id="overview" class="relative pt-24 sm:pt-36 pb-16 sm:pb-24 px-4 sm:px-8 text-center overflow-hidden">
-            <div class="max-w-4xl mx-auto space-y-6">
-                
-                <!-- Apple Product Kicker -->
-                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.12] text-xs font-semibold tracking-wide text-zinc-300">
-                    <span class="w-2 h-2 rounded-full bg-[#2997FF] animate-ping"></span>
-                    <span class="apple-kicker text-[#2997FF]">DZOTA EDUCATION 2026 • SPATIAL LEARNING</span>
-                </div>
-
-                <!-- Monumental Display Headline -->
-                <h1 class="text-5xl sm:text-7xl md:text-8xl apple-headline text-white">
-                    Học tập chuẩn xác.<br />
-                    <span class="text-shimmer">Bứt phá mọi kỳ thi.</span>
-                </h1>
-
-                <!-- Crisp Secondary Copy -->
-                <p class="text-lg sm:text-2xl text-[#86868B] max-w-2xl mx-auto font-normal leading-relaxed">
-                    Nền tảng khảo thí và đào tạo y khoa thông minh. Tích hợp <strong>50.000+ câu hỏi</strong> chuẩn hóa, trợ lý <strong>AI NoteBook ND</strong> và phòng thi chạy trạm <strong>DYNEX OSCE</strong> theo tiêu chuẩn quốc tế.
-                </p>
-
-                <!-- Apple Action Pills Trio -->
-                <div class="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-4">
-                    <a
-                        href="/dashboard"
-                        class="w-full sm:w-auto btn-apple-primary px-8 py-3.5 rounded-full text-[15px] flex items-center justify-center gap-2 no-underline shadow-lg"
-                    >
-                        <span>Vào Dashboard Học Tập</span>
-                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                    </a>
-
-                    <a
-                        href="/creator"
-                        class="w-full sm:w-auto btn-apple-secondary px-7 py-3.5 rounded-full text-[15px] flex items-center justify-center gap-2 no-underline"
-                    >
-                        <i data-lucide="folder-search" class="w-4 h-4 text-[#2997FF]"></i>
-                        <span>Kho Ngân Hàng Đề</span>
-                    </a>
-                </div>
-
-                <!-- Apple Text Link with Chevron -->
-                <div class="pt-3 flex flex-wrap items-center justify-center gap-6 text-[14px]">
-                    <a href="https://zalo.me/0914659511" target="_blank" rel="noreferrer" class="apple-link font-medium">
-                        <span>Tư vấn qua Zalo 0914.659.511</span>
-                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                    </a>
-                    <span class="text-zinc-700 hidden sm:inline">•</span>
-                    <button onclick="openAuthModal('login')" class="apple-link font-medium bg-transparent border-none cursor-pointer">
-                        <span>Đăng nhập Dzota ID</span>
-                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                    </button>
-                </div>
-
-                <!-- Author Footnote Citation -->
-                <div class="pt-4 text-[12px] text-[#6E6E73] font-normal flex items-center justify-center gap-2">
-                    <i data-lucide="award" class="w-4 h-4 text-[#2997FF]"></i>
-                    <span>Nghiên cứu & Sáng lập bởi <strong>Lê Nhật Duy (Y Khoa K26)</strong> • Hotline 24/7: <strong>0914.659.511</strong></span>
-                </div>
-
-            </div>
-
-            <!-- ─────────────────────────────────────────────────────────
-                 3. INTERACTIVE 3D IPAD PRO / STUDIO DISPLAY CANVAS SHOWCASE
-            ───────────────────────────────────────────────────────── -->
-            <div class="max-w-5xl mx-auto mt-14 sm:mt-20">
-                <div class="apple-card rounded-[32px] sm:rounded-[36px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.9)] text-left border border-white/15">
-                    
-                    <!-- macOS Window Frame Chrome -->
-                    <div class="px-5 py-3.5 bg-[#121214] border-b border-white/[0.08] flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex items-center gap-2">
-                            <span class="w-3 h-3 rounded-full bg-[#FF5F56] inline-block shadow-sm"></span>
-                            <span class="w-3 h-3 rounded-full bg-[#FFBD2E] inline-block shadow-sm"></span>
-                            <span class="w-3 h-3 rounded-full bg-[#27C93F] inline-block shadow-sm"></span>
-                            <span class="text-xs font-mono text-[#86868B] ml-2">dzota.app — workspace</span>
-                        </div>
-
-                        <!-- Apple Sliding Segmented Control Tabs -->
-                        <div class="flex items-center p-1 rounded-full bg-white/[0.06] border border-white/[0.08] text-[12px] font-medium">
-                            <button
-                                id="tab-btn-dash"
-                                onclick="switchShowcase('dash')"
-                                class="px-3.5 py-1 rounded-full bg-white text-black font-semibold shadow-sm transition"
-                            >
-                                Dashboard
-                            </button>
-                            <button
-                                id="tab-btn-bank"
-                                onclick="switchShowcase('bank')"
-                                class="px-3.5 py-1 rounded-full text-[#86868B] hover:text-white transition"
-                            >
-                                Kho Đề (50k+)
-                            </button>
-                            <button
-                                id="tab-btn-ai"
-                                onclick="switchShowcase('ai')"
-                                class="px-3.5 py-1 rounded-full text-[#86868B] hover:text-white transition"
-                            >
-                                NoteBook AI
-                            </button>
-                            <button
-                                id="tab-btn-osce"
-                                onclick="switchShowcase('osce')"
-                                class="px-3.5 py-1 rounded-full text-[#86868B] hover:text-white transition"
-                            >
-                                DYNEX OSCE
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Showcase View Container -->
-                    <div class="p-6 sm:p-10 bg-[#0A0A0C] min-h-[420px] flex items-center">
-                        
-                        <!-- TAB 1: DASHBOARD VIEW (Active by default) -->
-                        <div id="view-dash" class="w-full space-y-6">
-                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-5">
-                                <div>
-                                    <div class="apple-kicker text-[#2997FF]">Không Gian Cá Nhân Hóa</div>
-                                    <h3 class="text-2xl sm:text-3xl font-semibold text-white tracking-tight mt-1">Xin chào, Bác sĩ tương lai</h3>
-                                    <p class="text-xs sm:text-sm text-[#86868B]">Theo dõi chuỗi học tập hàng ngày và bài tập được phân công.</p>
-                                </div>
-                                <a href="/dashboard" class="btn-apple-blue px-4 py-2 rounded-full text-xs no-underline flex items-center gap-1.5 self-start sm:self-auto">
-                                    <span>Mở Toàn Màn Hình</span>
-                                    <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
-                                </a>
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <div class="p-5 rounded-2xl bg-[#161617] border border-white/[0.08] space-y-2">
-                                    <div class="text-xs font-medium text-[#86868B] flex items-center justify-between">
-                                        <span>Chuỗi học (Streak)</span>
-                                        <span class="text-orange-400 font-semibold">🔥 14 ngày</span>
-                                    </div>
-                                    <div class="text-3xl font-bold text-white tracking-tight">94.8%</div>
-                                    <p class="text-xs text-[#86868B]">Độ chính xác trung bình 30 bài gần nhất</p>
-                                    <div class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
-                                        <div class="h-full bg-[#0071E3] rounded-full" style="width: 94.8%"></div>
-                                    </div>
-                                </div>
-
-                                <div class="p-5 rounded-2xl bg-[#161617] border border-white/[0.08] space-y-2">
-                                    <div class="text-xs font-medium text-[#86868B] flex items-center justify-between">
-                                        <span>Bài tập hoàn thành</span>
-                                        <span class="text-[#30D158] font-semibold">Đạt chuẩn</span>
-                                    </div>
-                                    <div class="text-3xl font-bold text-white tracking-tight">128/140</div>
-                                    <p class="text-xs text-[#86868B]">Thuộc 6 chuyên khoa y học trọng điểm</p>
-                                    <div class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
-                                        <div class="h-full bg-[#30D158] rounded-full" style="width: 91%"></div>
-                                    </div>
-                                </div>
-
-                                <div class="p-5 rounded-2xl bg-[#161617] border border-white/[0.08] space-y-2">
-                                    <div class="text-xs font-medium text-[#86868B] flex items-center justify-between">
-                                        <span>Thuật toán Anki SM-2</span>
-                                        <span class="text-[#BF5AF2] font-semibold">Flashcard</span>
-                                    </div>
-                                    <div class="text-3xl font-bold text-white tracking-tight">420 Thẻ</div>
-                                    <p class="text-xs text-[#86868B]">Đã chuyển vào trí nhớ dài hạn</p>
-                                    <div class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
-                                        <div class="h-full bg-[#BF5AF2] rounded-full" style="width: 82%"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="p-4 rounded-2xl bg-[#161617] border border-white/[0.08] flex items-center justify-between gap-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-xl bg-blue-500/15 text-[#2997FF] flex items-center justify-center flex-shrink-0">
-                                        <i data-lucide="play" class="w-4 h-4 fill-current"></i>
-                                    </div>
-                                    <div>
-                                        <div class="text-sm font-semibold text-white">Đề xuất hôm nay: Ôn tập Dược Lý Kháng Sinh Nhóm Beta-Lactam</div>
-                                        <div class="text-xs text-[#86868B]">Thời gian: 30 phút • 40 câu hỏi trích từ ngân hàng đề thi nội trú</div>
-                                    </div>
-                                </div>
-                                <a href="/dashboard" class="btn-apple-primary px-4 py-2 rounded-full text-xs no-underline flex items-center gap-1 flex-shrink-0">
-                                    <span>Bắt đầu</span>
-                                </a>
-                            </div>
-                        </div>
-
-                        <!-- TAB 2: BANK VIEW (Hidden by default) -->
-                        <div id="view-bank" class="w-full space-y-6 hidden">
-                            <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
-                                <div>
-                                    <div class="apple-kicker text-[#30D158]">Ngân Hàng Câu Hỏi Chuẩn Hóa</div>
-                                    <h3 class="text-2xl sm:text-3xl font-semibold text-white tracking-tight mt-1">Kho Đề Thi & Ma Trận Trắc Nghiệm</h3>
-                                </div>
-                                <a href="/creator" class="btn-apple-primary px-4 py-2 rounded-full text-xs no-underline">Vào Trình Tạo Đề</a>
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div class="p-5 rounded-2xl bg-[#161617] border border-white/[0.08] space-y-2">
-                                    <div class="flex items-center justify-between text-xs">
-                                        <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-[#30D158] font-semibold">Kho Môn Học</span>
-                                        <span class="text-[#86868B] font-mono">50.000+ Câu</span>
-                                    </div>
-                                    <div class="text-base font-semibold text-white">Giải Phẫu Học & Sinh Lý Y Khoa</div>
-                                    <p class="text-xs text-[#86868B]">Phân loại nhận biết, thông hiểu và vận dụng theo khung đo chuẩn Bloom.</p>
-                                </div>
-
-                                <div class="p-5 rounded-2xl bg-[#161617] border border-white/[0.08] space-y-2">
-                                    <div class="flex items-center justify-between text-xs">
-                                        <span class="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-[#2997FF] font-semibold">Sinh Đề Tự Động</span>
-                                        <span class="text-[#86868B] font-mono">Ma Trận Không Trùng</span>
-                                    </div>
-                                    <div class="text-base font-semibold text-white">Sinh Đề Thi Từ Ngân Hàng</div>
-                                    <p class="text-xs text-[#86868B]">Mỗi lượt làm bài tự động bốc ngẫu nhiên biến thể câu hỏi con, đảm bảo công bằng.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- TAB 3: NOTEBOOK AI VIEW (Hidden by default) -->
-                        <div id="view-ai" class="w-full space-y-6 hidden">
-                            <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
-                                <div>
-                                    <div class="apple-kicker text-[#BF5AF2]">Trợ Lý Y Khoa Gemini Flash</div>
-                                    <h3 class="text-2xl sm:text-3xl font-semibold text-white tracking-tight mt-1">NoteBook AI Y Khoa</h3>
-                                </div>
-                                <a href="/notebook" class="btn-apple-primary px-4 py-2 rounded-full text-xs no-underline">Mở NoteBook</a>
-                            </div>
-
-                            <div class="p-5 rounded-2xl bg-[#161617] border border-white/[0.08] space-y-3">
-                                <div class="flex items-center gap-2 text-xs font-semibold text-[#BF5AF2]">
-                                    <i data-lucide="sparkles" class="w-4 h-4"></i>
-                                    <span>Tự động phân tích slide & trích xuất câu hỏi tức thời</span>
-                                </div>
-                                <p class="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-                                    Tải lên slide bài giảng PDF, tài liệu Word hoặc hồ sơ bệnh án. Gemini AI phân tích cấu trúc, nhận diện điểm mấu chốt và tạo ngay bộ 30 câu hỏi trắc nghiệm kiểm tra độ hiểu bài trong 3 giây.
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- TAB 4: DYNEX OSCE VIEW (Hidden by default) -->
-                        <div id="view-osce" class="w-full space-y-6 hidden">
-                            <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
-                                <div>
-                                    <div class="apple-kicker text-[#2997FF]">Mô Phỏng Chạy Trạm Lâm Sàng</div>
-                                    <h3 class="text-2xl sm:text-3xl font-semibold text-white tracking-tight mt-1">DYNEX OSCE Simulation</h3>
-                                </div>
-                                <a href="/dynex" class="btn-apple-primary px-4 py-2 rounded-full text-xs no-underline">Vào Phòng Chạy Trạm</a>
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div class="p-5 rounded-2xl bg-[#161617] border border-white/[0.08] space-y-2">
-                                    <div class="text-xs font-semibold text-[#2997FF]">⏱️ Đồng hồ đếm ngược 20s/trạm</div>
-                                    <div class="text-base font-semibold text-white">Mô phỏng áp lực phòng thi thật</div>
-                                    <p class="text-xs text-[#86868B]">Rèn luyện phản xạ nhận diện chi tiết giải phẫu dưới áp lực thời gian chính xác.</p>
-                                </div>
-                                <div class="p-5 rounded-2xl bg-[#161617] border border-white/[0.08] space-y-2">
-                                    <div class="text-xs font-semibold text-[#2997FF]">🏷️ Công nghệ Masking che nhãn</div>
-                                    <div class="text-base font-semibold text-white">Che nhãn không lộ chữ</div>
-                                    <p class="text-xs text-[#86868B]">Tự do phóng to, thu nhỏ tiêu bản 4K không vỡ hạt trên cả máy tính và điện thoại.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
-        </section>
-
-        <!-- ─────────────────────────────────────────────────────────────
-             4. APPLE METRICS (Minimalist High-Impact Stats)
-        ───────────────────────────────────────────────────────────── -->
-        <section class="py-14 border-y border-white/[0.08] bg-[#0A0A0C]">
-            <div class="max-w-5xl mx-auto px-4 sm:px-8">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-                    <div class="space-y-1">
-                        <div class="text-4xl sm:text-5xl font-bold tracking-tight text-white font-mono">15.200+</div>
-                        <div class="text-xs text-[#86868B]">Học viên đang học</div>
-                    </div>
-                    <div class="space-y-1">
-                        <div class="text-4xl sm:text-5xl font-bold tracking-tight text-[#2997FF] font-mono">50.000+</div>
-                        <div class="text-xs text-[#86868B]">Câu hỏi trong kho đề</div>
-                    </div>
-                    <div class="space-y-1">
-                        <div class="text-4xl sm:text-5xl font-bold tracking-tight text-[#30D158] font-mono">99.4%</div>
-                        <div class="text-xs text-[#86868B]">Tỷ lệ đạt điểm A/A+</div>
-                    </div>
-                    <div class="space-y-1">
-                        <div class="text-4xl sm:text-5xl font-bold tracking-tight text-[#BF5AF2] font-mono">24/7</div>
-                        <div class="text-xs text-[#86868B]">Đồng hành qua Zalo</div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ─────────────────────────────────────────────────────────────
-             5. BENTO GRID — THE 6 CORE PILLARS (Apple Keynote Layout)
-        ───────────────────────────────────────────────────────────── -->
-        <section id="features" class="py-24 sm:py-32 px-4 sm:px-8">
-            <div class="max-w-5xl mx-auto space-y-16">
-                
-                <!-- Section Header -->
-                <div class="text-center space-y-4 max-w-2xl mx-auto">
-                    <div class="apple-kicker text-[#2997FF]">Kiến Trúc Nền Tảng</div>
-                    <h2 class="text-4xl sm:text-5xl apple-title text-white">Mạnh mẽ từ bên trong.</h2>
-                    <p class="text-base sm:text-lg text-[#86868B]">Mỗi tính năng tại Dzota được chế tác có chủ đích, phục vụ toàn diện chu trình tiếp thu, củng cố và thi cử.</p>
-                </div>
-
-                <!-- Bento Grid (Apple Style 3-Column / Asymmetric) -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    
-                    <!-- Card 1: Dashboard (Col span 2) -->
-                    <div class="md:col-span-2 apple-card p-8 sm:p-10 flex flex-col justify-between space-y-6">
-                        <div class="space-y-3 relative z-10">
-                            <div class="w-10 h-10 rounded-xl bg-blue-500/15 text-[#2997FF] flex items-center justify-center">
-                                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-                            </div>
-                            <h3 class="text-2xl sm:text-3xl font-semibold text-white tracking-tight">Dashboard Học Tập Cá Nhân Hóa</h3>
-                            <p class="text-sm sm:text-base text-[#86868B] leading-relaxed max-w-lg">
-                                Bảng điều khiển trực quan hiển thị mục tiêu, tiến độ hoàn thành, chuỗi ngày streak và đề thi được phân công riêng biệt cho từng sinh viên.
-                            </p>
-                        </div>
-                        <div class="pt-4 relative z-10">
-                            <a href="/dashboard" class="apple-link font-medium text-sm">
-                                <span>Khám phá Dashboard</span>
-                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Card 2: Kho Đề 50.000+ Câu -->
-                    <div class="apple-card p-8 sm:p-10 flex flex-col justify-between space-y-6">
-                        <div class="space-y-3 relative z-10">
-                            <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-[#30D158] flex items-center justify-center">
-                                <i data-lucide="database" class="w-5 h-5"></i>
-                            </div>
-                            <h3 class="text-xl sm:text-2xl font-semibold text-white tracking-tight">Kho Đề 50.000+ Câu</h3>
-                            <p class="text-sm text-[#86868B] leading-relaxed">
-                                Trắc nghiệm phân loại chi tiết theo chuyên khoa, chương mục và độ khó chuẩn hóa Bộ Y tế.
-                            </p>
-                        </div>
-                        <div class="pt-4 relative z-10">
-                            <a href="/creator" class="apple-link font-medium text-sm">
-                                <span>Xem ngân hàng đề</span>
-                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Card 3: NoteBook AI -->
-                    <div class="apple-card p-8 sm:p-10 flex flex-col justify-between space-y-6">
-                        <div class="space-y-3 relative z-10">
-                            <div class="w-10 h-10 rounded-xl bg-purple-500/15 text-[#BF5AF2] flex items-center justify-center">
-                                <i data-lucide="sparkles" class="w-5 h-5"></i>
-                            </div>
-                            <h3 class="text-xl sm:text-2xl font-semibold text-white tracking-tight">NoteBook AI Y Khoa</h3>
-                            <p class="text-sm text-[#86868B] leading-relaxed">
-                                Đọc hiểu tài liệu y khoa PDF/Word và trích xuất ma trận câu hỏi thông minh với Gemini 3.8 Flash.
-                            </p>
-                        </div>
-                        <div class="pt-4 relative z-10">
-                            <a href="/notebook" class="apple-link font-medium text-sm">
-                                <span>Trải nghiệm AI</span>
-                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Card 4: DYNEX OSCE (Col span 2) -->
-                    <div class="md:col-span-2 apple-card p-8 sm:p-10 flex flex-col justify-between space-y-6">
-                        <div class="space-y-3 relative z-10">
-                            <div class="w-10 h-10 rounded-xl bg-blue-500/15 text-[#2997FF] flex items-center justify-center">
-                                <i data-lucide="activity" class="w-5 h-5"></i>
-                            </div>
-                            <h3 class="text-2xl sm:text-3xl font-semibold text-white tracking-tight">DYNEX OSCE — Chạy Trạm 20 Giây</h3>
-                            <p class="text-sm sm:text-base text-[#86868B] leading-relaxed max-w-lg">
-                                Công nghệ che nhãn tiêu bản (Masking), tự động hóa đồng hồ đếm ngược 20s mỗi trạm và thuật toán Spaced Repetition (Anki SM-2).
-                            </p>
-                        </div>
-                        <div class="pt-4 relative z-10">
-                            <a href="/dynex" class="apple-link font-medium text-sm">
-                                <span>Vào phòng chạy trạm</span>
-                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Card 5: Dược Lý 401 -->
-                    <div class="apple-card p-8 sm:p-10 flex flex-col justify-between space-y-6">
-                        <div class="space-y-3 relative z-10">
-                            <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-[#30D158] flex items-center justify-center">
-                                <i data-lucide="pill" class="w-5 h-5"></i>
-                            </div>
-                            <h3 class="text-xl sm:text-2xl font-semibold text-white tracking-tight">Dược Lý 401 Thuốc</h3>
-                            <p class="text-sm text-[#86868B] leading-relaxed">
-                                Tra cứu 423 chuyên khảo dược lý lâm sàng, cơ chế tác dụng, liều dùng và chống chỉ định.
-                            </p>
-                        </div>
-                        <div class="pt-4 relative z-10">
-                            <a href="/duocly" class="apple-link font-medium text-sm">
-                                <span>Tra cứu dược lý</span>
-                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Card 6: Đấu Trường Realtime (Col span 2) -->
-                    <div class="md:col-span-2 apple-card p-8 sm:p-10 flex flex-col justify-between space-y-6">
-                        <div class="space-y-3 relative z-10">
-                            <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center">
-                                <i data-lucide="swords" class="w-5 h-5"></i>
-                            </div>
-                            <h3 class="text-2xl sm:text-3xl font-semibold text-white tracking-tight">Đấu Trường Realtime Đối Kháng</h3>
-                            <p class="text-sm sm:text-base text-[#86868B] leading-relaxed max-w-lg">
-                                Thi đấu trắc nghiệm trực tiếp giữa các sinh viên, bảng xếp hạng vinh danh theo tuần, học tập qua thử thách tương tác.
-                            </p>
-                        </div>
-                        <div class="pt-4 relative z-10">
-                            <a href="/dashboard" class="apple-link font-medium text-sm">
-                                <span>Vào Đấu Trường</span>
-                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                            </a>
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
-        </section>
-
-        <!-- ─────────────────────────────────────────────────────────────
-             6. PRICING TIERS — APPLE STORE STYLE
-        ───────────────────────────────────────────────────────────── -->
-        <section id="pricing" class="py-24 sm:py-32 px-4 sm:px-8 border-t border-white/[0.08] bg-[#0A0A0C]">
-            <div class="max-w-5xl mx-auto space-y-16">
-                
-                <div class="text-center space-y-4 max-w-2xl mx-auto">
-                    <div class="apple-kicker text-[#2997FF]">Gói Học Tập</div>
-                    <h2 class="text-4xl sm:text-5xl apple-title text-white">Chọn gói học phù hợp.</h2>
-                    <p class="text-base text-[#86868B]">Đầu tư hiệu quả cho toàn bộ chặng đường đại học y khoa và sau đại học.</p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    
-                    <!-- Tier 1: Free -->
-                    <div class="apple-card p-8 flex flex-col justify-between space-y-6">
-                        <div class="space-y-4 relative z-10">
-                            <div class="text-xs font-semibold uppercase text-[#86868B] tracking-wider">Trải Nghiệm</div>
-                            <div class="text-3xl font-bold text-white">0đ</div>
-                            <p class="text-xs text-[#86868B]">Dành cho học viên mới bắt đầu khám phá nền tảng.</p>
-                            
-                            <ul class="space-y-3 pt-4 text-xs text-zinc-300">
-                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#30D158]"></i> 1.000 câu hỏi cơ bản</li>
-                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#30D158]"></i> Làm bài thi thử nghiệm</li>
-                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#30D158]"></i> Xem kết quả & đáp án</li>
-                            </ul>
-                        </div>
-                        <a href="/dashboard" class="btn-apple-secondary w-full py-3 rounded-full text-xs text-center no-underline relative z-10">
-                            Học Miễn Phí
-                        </a>
-                    </div>
-
-                    <!-- Tier 2: Pro (Apple Blue Ring) -->
-                    <div class="apple-card p-8 flex flex-col justify-between space-y-6 border-[#0071E3]/50 relative">
-                        <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#0071E3] text-white text-[10px] font-bold uppercase tracking-wider z-20">
-                            Khuyên Dùng
-                        </div>
-                        <div class="space-y-4 relative z-10">
-                            <div class="text-xs font-semibold uppercase text-[#2997FF] tracking-wider">Sinh Viên Pro</div>
-                            <div class="text-3xl font-bold text-white">199.000đ <span class="text-xs font-normal text-[#86868B]">/ học kỳ</span></div>
-                            <p class="text-xs text-[#86868B]">Trọn bộ công cụ ôn thi chuyên sâu và bứt phá điểm số.</p>
-                            
-                            <ul class="space-y-3 pt-4 text-xs text-zinc-300">
-                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#2997FF]"></i> 50.000+ câu hỏi chuẩn hóa</li>
-                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#2997FF]"></i> Không giới hạn DYNEX OSCE & Dược Lý</li>
-                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#2997FF]"></i> NoteBook AI phân tích tài liệu</li>
-                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#2997FF]"></i> Hỗ trợ học tập 24/7 qua Zalo</li>
-                            </ul>
-                        </div>
-                        <a href="https://zalo.me/0914659511?text=Tôi%20muốn%20đăng%20ký%20gói%20Dzota%20Pro%20199k" target="_blank" rel="noreferrer" class="btn-apple-blue w-full py-3 rounded-full text-xs text-center no-underline relative z-10">
-                            Đăng Ký Gói Pro Qua Zalo
-                        </a>
-                    </div>
-
-                    <!-- Tier 3: VIP Lifetime -->
-                    <div class="apple-card p-8 flex flex-col justify-between space-y-6">
-                        <div class="space-y-4 relative z-10">
-                            <div class="text-xs font-semibold uppercase text-[#BF5AF2] tracking-wider">VIP Trọn Đời</div>
-                            <div class="text-3xl font-bold text-white">399.000đ <span class="text-xs font-normal text-[#86868B]">/ trọn đời</span></div>
-                            <p class="text-xs text-[#86868B]">Đồng hành suốt 6 năm đại học y khoa và kỳ thi nội trú.</p>
-                            
-                            <ul class="space-y-3 pt-4 text-xs text-zinc-300">
-                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#BF5AF2]"></i> Quyền truy cập vĩnh viễn mọi môn học</li>
-                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#BF5AF2]"></i> Cập nhật ngân hàng đề thi mới nhất</li>
-                                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-[#BF5AF2]"></i> Hỗ trợ từ Lê Nhật Duy (Y Khoa K26)</li>
-                            </ul>
-                        </div>
-                        <a href="https://zalo.me/0914659511?text=Tôi%20muốn%20đăng%20ký%20gói%20VIP%20Trọn%20Đời%20399k" target="_blank" rel="noreferrer" class="btn-apple-secondary w-full py-3 rounded-full text-xs text-center no-underline relative z-10">
-                            Đăng Ký VIP Trọn Đời
-                        </a>
-                    </div>
-
-                </div>
-
-            </div>
-        </section>
-
-        <!-- ─────────────────────────────────────────────────────────────
-             7. FAQ ACCORDION (Apple Minimalist Disclosure)
-        ───────────────────────────────────────────────────────────── -->
-        <section id="faq" class="py-24 sm:py-32 px-4 sm:px-8 border-t border-white/[0.08]">
-            <div class="max-w-3xl mx-auto space-y-12">
-                
-                <div class="text-center space-y-3">
-                    <div class="apple-kicker text-[#2997FF]">Giải Đáp Thắc Mắc</div>
-                    <h2 class="text-3xl sm:text-4xl apple-title text-white">Câu hỏi thường gặp</h2>
-                </div>
-
-                <div class="space-y-4">
-                    
-                    <div class="apple-card overflow-hidden">
-                        <button onclick="toggleFaq(this)" class="w-full p-5 text-left flex items-center justify-between text-sm sm:text-base font-semibold text-white cursor-pointer relative z-10">
-                            <span>Dzota Education có dùng tốt trên điện thoại không?</span>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-[#86868B] transition-transform"></i>
-                        </button>
-                        <div class="faq-content hidden px-5 pb-5 text-xs sm:text-sm text-[#86868B] leading-relaxed border-t border-white/[0.06] pt-3 relative z-10">
-                            Hoàn toàn tối ưu. Giao diện Dzota được thiết kế chuẩn Responsive theo phong cách iOS và iPadOS, đảm bảo thao tác mượt mà, cảm ứng nhạy trên mọi dòng iPhone, iPad và smartphone Android.
-                        </div>
-                    </div>
-
-                    <div class="apple-card overflow-hidden">
-                        <button onclick="toggleFaq(this)" class="w-full p-5 text-left flex items-center justify-between text-sm sm:text-base font-semibold text-white cursor-pointer relative z-10">
-                            <span>Ngân hàng câu hỏi có nguồn gốc từ đâu và độ chính xác thế nào?</span>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-[#86868B] transition-transform"></i>
-                        </button>
-                        <div class="faq-content hidden px-5 pb-5 text-xs sm:text-sm text-[#86868B] leading-relaxed border-t border-white/[0.06] pt-3 relative z-10">
-                            Tất cả 50.000+ câu hỏi được tuyển chọn, rà soát và biên soạn bởi đội ngũ sinh viên Y Khoa K26 và cố vấn chuyên môn, dựa trên giáo trình chuẩn của các trường đại học y dược hàng đầu Việt Nam.
-                        </div>
-                    </div>
-
-                    <div class="apple-card overflow-hidden">
-                        <button onclick="toggleFaq(this)" class="w-full p-5 text-left flex items-center justify-between text-sm sm:text-base font-semibold text-white cursor-pointer relative z-10">
-                            <span>Làm thế nào để kích hoạt tài khoản hoặc nhận hỗ trợ?</span>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-[#86868B] transition-transform"></i>
-                        </button>
-                        <div class="faq-content hidden px-5 pb-5 text-xs sm:text-sm text-[#86868B] leading-relaxed border-t border-white/[0.06] pt-3 relative z-10">
-                            Bạn có thể liên hệ trực tiếp qua số Zalo <strong>0914.659.511</strong> của bác sĩ Lê Nhật Duy để được hỗ trợ kích hoạt tài khoản ngay trong vòng 2 phút.
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
-        </section>
-
-        <!-- ─────────────────────────────────────────────────────────────
-             8. FINAL CALL TO ACTION (Apple Closing Statement)
-        ───────────────────────────────────────────────────────────── -->
-        <section class="py-24 sm:py-32 px-4 sm:px-8 text-center border-t border-white/[0.08] bg-[#0A0A0C]">
-            <div class="max-w-3xl mx-auto space-y-6">
-                <h2 class="text-4xl sm:text-6xl apple-headline text-white">
-                    Sẵn sàng bứt phá cùng Dzota.
-                </h2>
-                <p class="text-base sm:text-lg text-[#86868B] max-w-xl mx-auto">
-                    Gia nhập cộng đồng hơn 15.000 sinh viên y khoa và học viên đang dẫn đầu kết quả học tập mỗi ngày.
-                </p>
-                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-                    <a href="/dashboard" class="btn-apple-primary px-8 py-3.5 rounded-full text-[15px] no-underline flex items-center gap-2">
-                        <span>Vào Dashboard Học Tập</span>
-                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                    </a>
-                    <a href="https://zalo.me/0914659511" target="_blank" rel="noreferrer" class="btn-apple-secondary px-7 py-3.5 rounded-full text-[15px] no-underline flex items-center gap-2">
-                        <i data-lucide="message-circle" class="w-4 h-4 text-[#2997FF]"></i>
-                        <span>Zalo 0914.659.511</span>
-                    </a>
-                </div>
-            </div>
-        </section>
-
-        <!-- ─────────────────────────────────────────────────────────────
-             9. APPLE GLOBAL DIRECTORY FOOTER
-        ───────────────────────────────────────────────────────────── -->
-        <footer class="py-14 border-t border-white/[0.08] text-[12px] text-[#86868B] bg-black">
-            <div class="max-w-5xl mx-auto px-4 sm:px-8 space-y-8">
-                
-                <!-- 4 Columns Directory -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-                    <div class="space-y-3">
-                        <div class="font-semibold text-white">Khám phá</div>
-                        <ul class="space-y-2 text-[#86868B]">
-                            <li><a href="/dashboard" class="hover:text-white transition no-underline">Dashboard Học Tập</a></li>
-                            <li><a href="/creator" class="hover:text-white transition no-underline">Ngân Hàng Đề Thi</a></li>
-                            <li><a href="/notebook" class="hover:text-white transition no-underline">NoteBook AI Y Khoa</a></li>
-                            <li><a href="/dynex" class="hover:text-white transition no-underline">DYNEX OSCE</a></li>
-                            <li><a href="/duocly" class="hover:text-white transition no-underline">Dược Lý 401</a></li>
-                        </ul>
-                    </div>
-
-                    <div class="space-y-3">
-                        <div class="font-semibold text-white">Tài khoản & Hỗ trợ</div>
-                        <ul class="space-y-2 text-[#86868B]">
-                            <li><button onclick="openAuthModal('login')" class="hover:text-white transition bg-transparent border-none p-0 cursor-pointer text-[#86868B]">Đăng nhập Dzota ID</button></li>
-                            <li><button onclick="openAuthModal('register')" class="hover:text-white transition bg-transparent border-none p-0 cursor-pointer text-[#86868B]">Tạo tài khoản mới</button></li>
-                            <li><a href="https://zalo.me/0914659511" target="_blank" rel="noreferrer" class="hover:text-white transition no-underline">Hỗ trợ Zalo 24/7</a></li>
-                            <li><a href="#pricing" class="hover:text-white transition no-underline">Bảng giá gói học</a></li>
-                        </ul>
-                    </div>
-
-                    <div class="space-y-3">
-                        <div class="font-semibold text-white">Chuyên khoa Y học</div>
-                        <ul class="space-y-2 text-[#86868B]">
-                            <li>Giải phẫu & Sinh lý học</li>
-                            <li>Dược lý lâm sàng</li>
-                            <li>Nội khoa & Ngoại khoa</li>
-                            <li>Sản phụ khoa & Nhi khoa</li>
-                        </ul>
-                    </div>
-
-                    <div class="space-y-3">
-                        <div class="font-semibold text-white">Thông tin bản quyền</div>
-                        <p class="text-xs text-[#86868B] leading-relaxed">
-                            Nghiên cứu & phát triển bởi <strong>Lê Nhật Duy (Y Khoa K26)</strong>. Toàn bộ nội dung và hệ sinh thái học tập được bảo vệ bản quyền.
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Legal Line -->
-                <div class="pt-6 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left text-[#6E6E73]">
-                    <div>
-                        Bản quyền © 2026 Dzota Education System. Bảo lưu mọi quyền.
-                    </div>
-                    <div class="flex items-center gap-4 text-[#86868B]">
-                        <span>Hotline / Zalo: <strong class="text-white">0914.659.511</strong></span>
-                    </div>
-                </div>
-
-            </div>
-        </footer>
-
+    <!-- ========================================== -->
+    <!-- 1. TOP ANNOUNCEMENT TICKER (KHANHHUNG STYLE) -->
+    <!-- ========================================== -->
+    <div class="bg-gradient-to-r from-flame-600 via-gold-500 to-flame-600 text-navy-950 font-bold text-xs sm:text-sm py-2 px-4 overflow-hidden relative shadow-md">
+        <div class="ticker-inner flex items-center gap-12 font-heading tracking-wide uppercase">
+            <span>🔥 HỆ THỐNG E-LEARNING Y KHOA DZOTA — NỀN TẢNG THI CHẠY TRẠM OSCE & NÃO BỘ ANKI HÀNG ĐẦU VIỆT NAM</span>
+            <span>⚡ TÁC GIẢ BẢN QUYỀN: LÊ NHẬT DUY (Y KHOA K26)</span>
+            <span>📞 TƯ VẤN & HỖ TRỢ HỌC VIÊN ZALO 24/7: 0914659511</span>
+            <span>🎁 ĐĂNG KÝ HỌC THỬ MIỄN PHÍ — TRẢI NGHIỆM ĐỀ THI BỘ Y TẾ MỚI NHẤT</span>
+            <span>🔥 HỆ THỐNG E-LEARNING Y KHOA DZOTA — NỀN TẢNG THI CHẠY TRẠM OSCE & NÃO BỘ ANKI HÀNG ĐẦU VIỆT NAM</span>
+            <span>⚡ TÁC GIẢ BẢN QUYỀN: LÊ NHẬT DUY (Y KHOA K26)</span>
+            <span>📞 TƯ VẤN & HỖ TRỢ HỌC VIÊN ZALO 24/7: 0914659511</span>
+            <span>🎁 ĐĂNG KÝ HỌC THỬ MIỄN PHÍ — TRẢI NGHIỆM ĐỀ THI BỘ Y TẾ MỚI NHẤT</span>
+        </div>
     </div>
 
-    <!-- ─────────────────────────────────────────────────────────────
-         10. APPLE ID LOGIN SHEET / MODAL (appleid.apple.com Design)
-    ───────────────────────────────────────────────────────────── -->
-    <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-3xl hidden">
-        <div class="apple-spatial-sheet p-7 sm:p-9 max-w-[420px] w-full relative space-y-6" onclick="event.stopPropagation()">
-            
-            <!-- Apple Circular Close Button -->
-            <button onclick="closeAuthModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/[0.08] hover:bg-white/[0.16] text-[#86868B] hover:text-white flex items-center justify-center transition cursor-pointer">
-                <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
+    <!-- ========================================== -->
+    <!-- 2. TOP CONTACT & QUICK ACTION BAR           -->
+    <!-- ========================================== -->
+    <div class="bg-navy-950/90 border-b border-white/5 py-2 px-4 sm:px-8 text-xs text-slate-300 hidden md:block">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-6">
+                <a href="https://zalo.me/0914659511" target="_blank" class="flex items-center gap-2 text-gold-400 hover:text-white transition">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <i class="fa-solid fa-phone-volume text-flame-500 ring-phone"></i>
+                    <span>Hotline Zalo: <strong class="text-white">0914659511</strong> (Bác sĩ Duy Y Khoa)</span>
+                </a>
+                <span class="text-slate-600">|</span>
+                <span class="text-slate-400 flex items-center gap-1">
+                    <i class="fa-solid fa-graduation-cap text-gold-400"></i>
+                    Hơn 15.000+ sinh viên Y Dược toàn quốc tin dùng
+                </span>
+            </div>
+            <div class="flex items-center gap-5">
+                <a href="#chuong-trinh" class="hover:text-gold-400 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-book-medical text-flame-500"></i> Các Module E-Learning
+                </a>
+                <a href="https://zalo.me/0914659511" target="_blank" class="hover:text-gold-400 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-calendar-check text-emerald-400"></i> Đặt lịch Mentor 1-1
+                </a>
+                <a href="/dashboard" class="text-flame-400 hover:text-flame-300 font-semibold flex items-center gap-1 transition">
+                    <i class="fa-solid fa-rocket"></i> Dashboard Cá Nhân
+                </a>
+            </div>
+        </div>
+    </div>
 
-            <!-- Apple ID Monogram & Header -->
-            <div class="text-center space-y-2.5 pt-1">
-                <div class="w-14 h-14 rounded-full bg-white/[0.08] border border-white/[0.14] p-3 mx-auto flex items-center justify-center shadow-inner">
-                    <img src="/logo-dzota.png" alt="Dzota Education" class="w-full h-full object-contain" />
+    <!-- ========================================== -->
+    <!-- 3. MAIN NAVIGATION BAR (KHANHHUNG STYLE)   -->
+    <!-- ========================================== -->
+    <header class="kha-header sticky top-0 z-50 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-8 h-20 flex items-center justify-between">
+            <!-- Brand Logo -->
+            <a href="/" class="flex items-center gap-3.5 group">
+                <div class="relative w-12 h-12 rounded-2xl bg-gradient-to-tr from-flame-600 to-gold-400 p-[2px] shadow-neon-flame group-hover:scale-105 transition-transform duration-300">
+                    <div class="w-full h-full bg-navy-950 rounded-[14px] flex items-center justify-center overflow-hidden">
+                        <img src="/logo-dzota.png" alt="Dzota Academy" class="w-9 h-9 object-contain" onerror="this.src='https://i.ibb.co/tpzK0Y8Z/logo-dzota-1-1-1-1-1.png'">
+                    </div>
                 </div>
-                <h3 class="text-2xl font-semibold tracking-tight text-white">Dzota ID</h3>
-                <p class="text-xs text-[#86868B] max-w-xs mx-auto">
-                    Đăng nhập bằng tài khoản Dzota ID của bạn để tiếp tục đồng bộ dữ liệu học tập.
+                <div class="flex flex-col">
+                    <div class="flex items-center gap-2">
+                        <span class="font-heading font-extrabold text-2xl tracking-tight text-white">DZOTA</span>
+                        <span class="bg-gradient-to-r from-flame-500 to-gold-500 text-navy-950 font-black text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">ACADEMY</span>
+                    </div>
+                    <span class="text-[11px] text-slate-400 tracking-wide font-medium">Hệ Thống E-Learning Y Khoa</span>
+                </div>
+            </a>
+
+            <!-- Desktop Nav Menu -->
+            <nav class="hidden lg:flex items-center gap-7 text-sm font-semibold text-slate-200">
+                <a href="#quyen-loi" class="hover:text-gold-400 transition">Quyền Lợi</a>
+                <a href="#chuong-trinh" class="hover:text-gold-400 transition">Chương Trình Học</a>
+                <a href="#dynex-osce" class="flex items-center gap-1.5 text-flame-400 hover:text-flame-300 transition">
+                    <i class="fa-solid fa-heart-pulse"></i> Thi Chạy Trạm DYNEX
+                </a>
+                <a href="#bao-hiem" class="hover:text-gold-400 transition">03 Bảo Hiểm</a>
+                <a href="#bang-gia" class="hover:text-gold-400 transition">Bảng Giá</a>
+                <a href="#danh-vong" class="hover:text-gold-400 transition">Đại Sảnh Danh Vọng</a>
+                <a href="#faqs" class="hover:text-gold-400 transition">FAQs</a>
+            </nav>
+
+            <!-- Nav Actions -->
+            <div class="flex items-center gap-3">
+                <!-- User session status or Login Button -->
+                <div id="navAuthContainer" class="flex items-center gap-2">
+                    <button onclick="openLoginModal('login')" class="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/15 bg-navy-850 hover:bg-navy-800 text-white text-sm font-semibold transition hover:border-gold-400/50">
+                        <i class="fa-regular fa-user text-gold-400"></i>
+                        <span>Đăng Nhập</span>
+                    </button>
+                    <a href="/dashboard" class="btn-kha-primary px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2">
+                        <span>Vào Học Ngay</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <button onclick="toggleMobileMenu()" class="lg:hidden w-10 h-10 rounded-xl bg-navy-850 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white">
+                    <i class="fa-solid fa-bars-staggered text-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Dropdown Menu -->
+        <div id="mobileMenu" class="hidden lg:hidden bg-navy-950/95 border-b border-white/10 px-6 py-6 space-y-4">
+            <a href="#quyen-loi" onclick="toggleMobileMenu()" class="block text-slate-200 hover:text-gold-400 font-medium py-1">Quyền Lợi Học Viên</a>
+            <a href="#chuong-trinh" onclick="toggleMobileMenu()" class="block text-slate-200 hover:text-gold-400 font-medium py-1">Chương Trình E-Learning</a>
+            <a href="#dynex-osce" onclick="toggleMobileMenu()" class="block text-flame-400 font-bold py-1">⚡ Thi Chạy Trạm DYNEX OSCE</a>
+            <a href="#bao-hiem" onclick="toggleMobileMenu()" class="block text-slate-200 hover:text-gold-400 font-medium py-1">03 Bảo Hiểm Đào Tạo</a>
+            <a href="#bang-gia" onclick="toggleMobileMenu()" class="block text-slate-200 hover:text-gold-400 font-medium py-1">Báo Giá Khóa Học</a>
+            <a href="#danh-vong" onclick="toggleMobileMenu()" class="block text-slate-200 hover:text-gold-400 font-medium py-1">Đại Sảnh Danh Vọng</a>
+            <a href="#faqs" onclick="toggleMobileMenu()" class="block text-slate-200 hover:text-gold-400 font-medium py-1">Hỏi Đáp FAQs</a>
+            <div class="pt-4 border-t border-white/10 flex flex-col gap-2">
+                <button onclick="openLoginModal('login'); toggleMobileMenu()" class="w-full py-3 rounded-xl bg-navy-850 border border-white/15 text-white font-bold text-center">
+                    Đăng Nhập Tài Khoản
+                </button>
+                <a href="/dashboard" class="w-full py-3 rounded-xl btn-kha-primary text-white font-bold text-center flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-rocket"></i> Vào Dashboard Học Tập
+                </a>
+                <a href="https://zalo.me/0914659511" target="_blank" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-center flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-phone"></i> Zalo Mentor: 0914659511
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ============================================================== -->
+    <!-- 4. HERO BANNER: 2-COLUMN KHANHHUNG LAYOUT (CONTENT + FORM BANNER)-->
+    <!-- ============================================================== -->
+    <section class="relative pt-8 pb-20 overflow-hidden">
+        <!-- Ambient Background Lights & Grid -->
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(255,102,0,0.18),rgba(7,11,25,0))] pointer-events-none"></div>
+        <div class="absolute top-1/4 right-0 w-96 h-96 bg-flame-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-10 left-0 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-8 relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                
+                <!-- LEFT COLUMN: TITLES, FOUNDER QUOTE, VALUE PROPOSITIONS (COL-7) -->
+                <div class="lg:col-span-7 space-y-7 text-left">
+                    
+                    <!-- Top Pill Badge -->
+                    <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-flame-500/10 border border-flame-500/30 text-flame-400 text-xs sm:text-sm font-bold uppercase tracking-wider shadow-neon-flame">
+                        <span class="w-2 h-2 rounded-full bg-flame-500 animate-ping"></span>
+                        <i class="fa-solid fa-fire text-flame-500"></i>
+                        <span>E-Learning Y Khoa Độc Quyền Tại Việt Nam</span>
+                    </div>
+
+                    <!-- Main Monumental Heading -->
+                    <div class="space-y-3">
+                        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-heading font-black tracking-tight leading-[1.15] text-white">
+                            E-Learning Y Khoa <br>
+                            <span class="txt-gradient-flame">Dzota Academy</span>
+                        </h1>
+                        <p class="text-lg sm:text-xl font-heading font-bold text-gold-400">
+                            NỀN TẢNG THI CHẠY TRẠM OSCE & NÃO BỘ ANKI HÀNG ĐẦU DÀNH CHO SINH VIÊN Y DƯỢC
+                        </p>
+                    </div>
+
+                    <!-- Subtitle / Mission -->
+                    <p class="text-slate-300 text-base sm:text-lg leading-relaxed max-w-2xl">
+                        Không còn nỗi sợ thi rớt chạy trạm giải phẫu hay học vẹt ngàn trang sách dày cộm. Dzota trang bị cho bạn hệ thống phản xạ mô phỏng phòng thi thật, ngân hàng 50.000+ câu trắc nghiệm chuẩn Bộ Y Tế và thuật toán Spaced Repetition ghi nhớ vĩnh viễn.
+                    </p>
+
+                    <!-- Founder / Lead Mentor Quote Card (Lê Nhật Duy - Y Khoa K26) -->
+                    <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-navy-850 to-navy-900 border border-gold-400/25 flex items-start gap-4 shadow-lg">
+                        <div class="relative flex-shrink-0">
+                            <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-flame-500 to-gold-400 p-[2px]">
+                                <div class="w-full h-full rounded-full bg-navy-950 flex items-center justify-center font-heading font-black text-gold-400 text-lg overflow-hidden">
+                                    <i class="fa-solid fa-user-doctor text-2xl text-gold-400"></i>
+                                </div>
+                            </div>
+                            <span class="absolute -bottom-1 -right-1 bg-emerald-500 text-[9px] font-bold text-white px-1.5 py-0.2 rounded-full border border-navy-950">Active</span>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-heading font-extrabold text-white text-base">Lê Nhật Duy</h3>
+                                <span class="text-xs text-gold-400 font-semibold px-2 py-0.5 rounded bg-gold-400/10 border border-gold-400/20">Y Khoa K26 • Founder</span>
+                            </div>
+                            <p class="text-xs sm:text-sm text-slate-300 italic leading-snug">
+                                "Tôi xây dựng Dzota từ chính kinh nghiệm xương máu của sinh viên Y. Học đúng phương pháp, thi chuẩn phản xạ thì 9.0 hay 10.0 trạm OSCE không hề xa vời!"
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Key Pillars Checkmarks (Khanh Hung Style) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 h-6 rounded-lg bg-flame-500/20 text-flame-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <i class="fa-solid fa-check text-xs font-black"></i>
+                            </div>
+                            <span class="text-sm text-slate-200 font-medium">Hệ thống chạy trạm <strong>DYNEX OSCE 3D</strong> đếm ngược 20s chuẩn phòng thi</span>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 h-6 rounded-lg bg-flame-500/20 text-flame-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <i class="fa-solid fa-check text-xs font-black"></i>
+                            </div>
+                            <span class="text-sm text-slate-200 font-medium"><strong>50.000+ câu trắc nghiệm</strong> phân loại theo Bloom & ca lâm sàng</span>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 h-6 rounded-lg bg-gold-400/20 text-gold-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <i class="fa-solid fa-check text-xs font-black"></i>
+                            </div>
+                            <span class="text-sm text-slate-200 font-medium">Thuật toán <strong>Não bộ Anki SM-2</strong> chống quên chi tiết giải phẫu</span>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 h-6 rounded-lg bg-gold-400/20 text-gold-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <i class="fa-solid fa-check text-xs font-black"></i>
+                            </div>
+                            <span class="text-sm text-slate-200 font-medium">Trợ lý <strong>AI NoteBook ND</strong> tóm tắt slide y khoa & sinh đề thi tự động</span>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Numbers Counter Row -->
+                    <div class="pt-4 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center sm:text-left">
+                        <div class="space-y-0.5">
+                            <div class="text-2xl sm:text-3xl font-heading font-black text-white">15.000+</div>
+                            <div class="text-xs text-slate-400 font-medium">Sinh Viên Y Dược</div>
+                        </div>
+                        <div class="space-y-0.5">
+                            <div class="text-2xl sm:text-3xl font-heading font-black text-gold-400">98.6%</div>
+                            <div class="text-xs text-slate-400 font-medium">Đỗ Trạm Điểm A</div>
+                        </div>
+                        <div class="space-y-0.5">
+                            <div class="text-2xl sm:text-3xl font-heading font-black text-flame-400">50.000+</div>
+                            <div class="text-xs text-slate-400 font-medium">Câu Hỏi Trắc Nghiệm</div>
+                        </div>
+                        <div class="space-y-0.5">
+                            <div class="text-2xl sm:text-3xl font-heading font-black text-emerald-400">24/7</div>
+                            <div class="text-xs text-slate-400 font-medium">Hỗ Trợ Zalo 0914659511</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT COLUMN: THE FAMOUS KHANHHUNG EMBEDDED AUTH FORM BANNER (COL-5) -->
+                <div class="lg:col-span-5">
+                    <div class="kha-card-gold p-6 sm:p-8 relative overflow-hidden backdrop-blur-xl">
+                        
+                        <!-- Top Glowing Crown / Badge -->
+                        <div class="flex items-center justify-between pb-5 border-b border-white/10">
+                            <div>
+                                <span class="text-[11px] font-bold uppercase tracking-wider text-gold-400 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-bolt-lightning text-flame-500"></i> CỔNG E-LEARNING DZOTA
+                                </span>
+                                <h2 class="text-xl sm:text-2xl font-heading font-extrabold text-white mt-1">Bắt Đầu Học Ngay</h2>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-flame-500/15 border border-flame-500/30 flex items-center justify-center text-flame-400 shadow-neon-flame">
+                                <i class="fa-solid fa-graduation-cap text-lg"></i>
+                            </div>
+                        </div>
+
+                        <!-- LOGGED-IN STATE (SHOW WELCOME & DASHBOARD CTA IF SESSION ACTIVE) -->
+                        <div id="heroWelcomeState" class="hidden py-6 text-center space-y-5">
+                            <div class="w-20 h-20 mx-auto rounded-full bg-gradient-to-tr from-flame-500 to-gold-400 p-[3px] shadow-neon-gold">
+                                <div class="w-full h-full rounded-full bg-navy-950 flex items-center justify-center overflow-hidden">
+                                    <i class="fa-solid fa-user-doctor text-3xl text-gold-400"></i>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> ĐÃ ĐĂNG NHẬP THÀNH CÔNG
+                                </div>
+                                <h3 id="heroWelcomeName" class="text-2xl font-heading font-black text-white">Chào Đồng Nghiệp!</h3>
+                                <p class="text-sm text-slate-300">
+                                    Hệ thống bài thi chạy trạm OSCE và flashcard Anki đã sẵn sàng. Đừng trì hoãn nữa, hãy tiếp tục học ngay!
+                                </p>
+                            </div>
+                            <div class="p-4 rounded-xl bg-navy-950/70 border border-white/10 text-left space-y-2">
+                                <div class="flex justify-between text-xs font-semibold">
+                                    <span class="text-slate-400">Tiến độ bài học:</span>
+                                    <span class="text-gold-400">128/140 bài học hoàn thành</span>
+                                </div>
+                                <div class="w-full h-2.5 rounded-full bg-navy-800 overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-flame-500 to-gold-400 rounded-full" style="width: 91%"></div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-3">
+                                <a href="/dashboard" class="btn-kha-primary py-3.5 px-6 rounded-xl font-bold text-center flex items-center justify-center gap-2">
+                                    <span>Vào Bàn Học / Dashboard</span>
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                </a>
+                                <button onclick="handleLogout()" class="text-xs text-slate-400 hover:text-rose-400 font-medium py-1 transition">
+                                    <i class="fa-solid fa-arrow-right-from-bracket mr-1"></i> Đăng xuất tài khoản
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- GUEST STATE: TABBED LOGIN & REGISTER FORM (KHANHHUNG STYLE) -->
+                        <div id="heroAuthState" class="pt-5 space-y-5">
+                            
+                            <!-- Google 1-Click Fast Sign-In -->
+                            <div class="space-y-2">
+                                <div id="heroGoogleSignInBtn" class="flex justify-center w-full"></div>
+                                <div class="relative flex py-2 items-center">
+                                    <div class="flex-grow border-t border-white/10"></div>
+                                    <span class="flex-shrink mx-4 text-xs uppercase tracking-wider text-slate-400 font-bold">hoặc tài khoản Dzota ID</span>
+                                    <div class="flex-grow border-t border-white/10"></div>
+                                </div>
+                            </div>
+
+                            <!-- Tabs: Đăng Nhập vs Tạo Tài Khoản -->
+                            <div class="flex p-1 bg-navy-950/80 rounded-xl border border-white/10">
+                                <button id="heroTabLogin" onclick="switchHeroTab('login')" class="flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all bg-gradient-to-r from-flame-500 to-flame-600 text-white shadow-sm">
+                                    Đăng Nhập
+                                </button>
+                                <button id="heroTabRegister" onclick="switchHeroTab('register')" class="flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-300 hover:text-white">
+                                    Tạo Tài Khoản
+                                </button>
+                            </div>
+
+                            <!-- Form Component -->
+                            <form id="heroAuthForm" onsubmit="handleHeroSubmit(event)" class="space-y-3.5">
+                                <div class="space-y-1">
+                                    <label class="text-xs font-semibold text-slate-300 flex items-center justify-between">
+                                        <span>Tài khoản / Email / Số điện thoại:</span>
+                                    </label>
+                                    <div class="relative">
+                                        <i class="fa-regular fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                                        <input type="text" id="heroUsername" required placeholder="Nhập tên đăng nhập hoặc email" class="kha-input pl-11 text-sm">
+                                    </div>
+                                </div>
+
+                                <div class="space-y-1">
+                                    <label class="text-xs font-semibold text-slate-300 flex items-center justify-between">
+                                        <span>Mật khẩu:</span>
+                                        <a href="https://zalo.me/0914659511" target="_blank" class="text-xs text-gold-400 hover:underline">Quên mật khẩu?</a>
+                                    </label>
+                                    <div class="relative">
+                                        <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                                        <input type="password" id="heroPassword" required placeholder="Nhập mật khẩu của bạn" class="kha-input pl-11 pr-11 text-sm">
+                                        <button type="button" onclick="togglePasswordVisibility('heroPassword', this)" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                                            <i class="fa-regular fa-eye text-sm"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Feedback message box -->
+                                <div id="heroAuthMessage" class="hidden text-xs py-2 px-3 rounded-lg font-medium"></div>
+
+                                <!-- Submit Button -->
+                                <button type="submit" id="heroSubmitBtn" class="w-full btn-kha-primary py-3.5 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2 mt-2">
+                                    <span id="heroSubmitBtnText">ĐĂNG NHẬP VÀO HỆ THỐNG</span>
+                                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                                </button>
+                            </form>
+
+                            <!-- Micro-footer info -->
+                            <div class="pt-3 border-t border-white/5 text-center">
+                                <p class="text-[12px] text-slate-400">
+                                    Cần kích hoạt tài khoản hoặc hỗ trợ đề thi? <br>
+                                    Nhắn Zalo: <a href="https://zalo.me/0914659511" target="_blank" class="text-gold-400 font-bold hover:underline">0914659511</a> (Bác sĩ Lê Nhật Duy)
+                                </p>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- 5. ĐẠI SẢNH DANH VỌNG (HALL OF FAME - KHANHHUNG SIGNATURE)     -->
+    <!-- ============================================================== -->
+    <section id="danh-vong" class="py-20 relative bg-navy-900/60 border-y border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-8 text-center space-y-12">
+            
+            <div class="space-y-3">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gold-400/10 border border-gold-400/30 text-gold-400 text-xs font-bold uppercase tracking-wider">
+                    <i class="fa-solid fa-trophy text-gold-400"></i> Thành Tích & Chứng Thực Thực Tế
+                </div>
+                <h2 class="text-2xl sm:text-4xl font-heading font-black text-white">
+                    ĐẠI SẢNH DANH VỌNG <span class="txt-gradient-gold">DZOTA E-LEARNING</span>
+                </h2>
+                <p class="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto">
+                    Hàng ngàn sinh viên Đại học Y Hà Nội, ĐHYD TP.HCM, Y Khoa Phạm Ngọc Thạch, ĐHYD Huế, ĐHYD Cần Thơ đã bứt phá điểm số chạy trạm OSCE và vượt qua kỳ thi lâm sàng.
                 </p>
             </div>
 
-            <!-- Apple Segmented Control: Login vs Register -->
-            <div class="p-1 rounded-full bg-white/[0.08] border border-white/[0.08] flex items-center text-xs font-semibold">
-                <button
-                    id="tab-btn-login"
-                    onclick="switchAuthTab('login')"
-                    class="flex-1 py-1.5 rounded-full bg-white text-black shadow-sm transition"
-                >
-                    Đăng Nhập
-                </button>
-                <button
-                    id="tab-btn-register"
-                    onclick="switchAuthTab('register')"
-                    class="flex-1 py-1.5 rounded-full text-[#86868B] hover:text-white transition"
-                >
-                    Tạo Dzota ID
-                </button>
-            </div>
-
-            <!-- 1-Click Google Sign-In (Apple Pure Clean Minimalist) -->
-            <button
-                type="button"
-                onclick="handleGoogleSignIn()"
-                class="w-full py-3 px-4 rounded-2xl bg-white text-black font-semibold text-xs sm:text-sm hover:bg-[#E8E8ED] transition active:scale-[0.98] flex items-center justify-center gap-3 cursor-pointer shadow-md"
-            >
-                <svg class="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                </svg>
-                <span>Đăng nhập nhanh với Google</span>
-            </button>
-
-            <!-- Subtle Divider -->
-            <div class="flex items-center gap-3">
-                <div class="flex-1 h-px bg-white/[0.08]"></div>
-                <span class="text-[11px] uppercase tracking-wider text-[#6E6E73] font-medium">hoặc tài khoản</span>
-                <div class="flex-1 h-px bg-white/[0.08]"></div>
-            </div>
-
-            <!-- Apple ID Credentials Form -->
-            <form onsubmit="handleAccountFormSubmit(event)" class="space-y-4">
-                <div class="space-y-1 text-left">
-                    <label class="block text-xs font-medium text-[#86868B]">Tên tài khoản hoặc Email</label>
-                    <input
-                        type="text"
-                        id="login-username"
-                        required
-                        placeholder="Nhập tên tài khoản..."
-                        class="w-full px-4 py-3 rounded-2xl bg-white/[0.05] border border-white/[0.12] text-sm text-white placeholder-[#6E6E73] focus:border-[#0071E3] focus:ring-4 focus:ring-[#0071E3]/20 outline-none transition"
-                    />
+            <!-- Hall of Fame Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                
+                <!-- Student 1 -->
+                <div class="kha-card p-6 space-y-4 border-gold-400/30">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-flame-500 to-gold-400 p-[2px]">
+                                <div class="w-full h-full rounded-full bg-navy-950 flex items-center justify-center font-bold text-white text-base">
+                                    TH
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-heading font-bold text-white text-base">Trần Hoàng Long</h4>
+                                <p class="text-xs text-gold-400 font-semibold">Y Đa Khoa K25 • ĐHYD TP.HCM</p>
+                            </div>
+                        </div>
+                        <span class="text-xl font-heading font-black text-gold-400 bg-gold-400/10 px-2.5 py-1 rounded-lg border border-gold-400/30">
+                            10.0 OSCE
+                        </span>
+                    </div>
+                    <p class="text-slate-300 text-sm leading-relaxed italic">
+                        "Trước đây mình rất run khi thi chạy trạm giải phẫu vì chỉ có 20 giây mỗi trạm để ghi tên cấu trúc. Luyện trên DYNEX của Dzota 1 tuần là mắt vừa nhìn là tay viết được ngay lập tức. Kết quả trạm giải phẫu 1 mình đạt 10.0 tuyệt đối!"
+                    </p>
+                    <div class="text-[11px] text-slate-400 font-mono flex items-center gap-2">
+                        <i class="fa-solid fa-certificate text-emerald-400"></i> Đã hoàn thành 140/140 bài học Dzota
+                    </div>
                 </div>
 
-                <div class="space-y-1 text-left">
-                    <div class="flex items-center justify-between text-xs">
-                        <label class="font-medium text-[#86868B]">Mật khẩu</label>
-                        <button type="button" onclick="togglePasswordVisibility()" class="text-[#2997FF] hover:underline transition">Hiện/Ẩn</button>
+                <!-- Student 2 -->
+                <div class="kha-card p-6 space-y-4 border-flame-500/30">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-flame-500 to-gold-400 p-[2px]">
+                                <div class="w-full h-full rounded-full bg-navy-950 flex items-center justify-center font-bold text-white text-base">
+                                    MA
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-heading font-bold text-white text-base">Nguyễn Mai Anh</h4>
+                                <p class="text-xs text-flame-400 font-semibold">Y Khoa K24 • ĐH Y Hà Nội</p>
+                            </div>
+                        </div>
+                        <span class="text-xl font-heading font-black text-flame-400 bg-flame-500/10 px-2.5 py-1 rounded-lg border border-flame-500/30">
+                            9.6 Dược Lý
+                        </span>
                     </div>
-                    <div class="relative">
-                        <input
-                            type="password"
-                            id="login-password"
-                            required
-                            placeholder="Nhập mật khẩu..."
-                            class="w-full px-4 py-3 rounded-2xl bg-white/[0.05] border border-white/[0.12] text-sm text-white placeholder-[#6E6E73] focus:border-[#0071E3] focus:ring-4 focus:ring-[#0071E3]/20 outline-none transition pr-10"
-                        />
-                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#86868B] hover:text-white">
-                            <i id="eye-icon" data-lucide="eye" class="w-4 h-4"></i>
+                    <p class="text-slate-300 text-sm leading-relaxed italic">
+                        "NoteBook AI và ngân hàng câu trắc nghiệm của Dzota thực sự cứu cánh mình trong môn Dược Lý. Mỗi câu hỏi đều có phân tích cơ chế rõ ràng chứ không phải đưa đáp án suông. Cảm ơn anh Duy đã hỗ trợ nhiệt tình qua Zalo!"
+                    </p>
+                    <div class="text-[11px] text-slate-400 font-mono flex items-center gap-2">
+                        <i class="fa-solid fa-certificate text-emerald-400"></i> Thành viên VIP Trọn Đời
+                    </div>
+                </div>
+
+                <!-- Student 3 -->
+                <div class="kha-card p-6 space-y-4 border-purple-500/30">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-purple-500 to-flame-500 p-[2px]">
+                                <div class="w-full h-full rounded-full bg-navy-950 flex items-center justify-center font-bold text-white text-base">
+                                    QV
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-heading font-bold text-white text-base">Đặng Quang Vũ</h4>
+                                <p class="text-xs text-purple-400 font-semibold">Bác Sĩ Nội Trú Khóa 48</p>
+                            </div>
+                        </div>
+                        <span class="text-xl font-heading font-black text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded-lg border border-purple-500/30">
+                            Top 5 BSNT
+                        </span>
+                    </div>
+                    <p class="text-slate-300 text-sm leading-relaxed italic">
+                        "Hệ thống lặp lại ngắt quãng Anki SM-2 của Dzota giúp mình duy trì lượng kiến thức khổng lồ để thi Bác sĩ nội trú. Đây là nền tảng e-learning Y khoa thiết thực và sát với đề thi nhất mà mình từng sử dụng."
+                    </p>
+                    <div class="text-[11px] text-slate-400 font-mono flex items-center gap-2">
+                        <i class="fa-solid fa-certificate text-emerald-400"></i> Luyện hơn 22.000 lượt trắc nghiệm
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- 6. SHOWCASE MODULES: DYNEX OSCE, ANKI, KHO ĐỀ, NOTEBOOK AI    -->
+    <!-- ============================================================== -->
+    <section id="chuong-trinh" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-8 space-y-16">
+            
+            <div class="text-center space-y-3 max-w-3xl mx-auto">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-flame-500/10 border border-flame-500/30 text-flame-400 text-xs font-bold uppercase tracking-wider">
+                    <i class="fa-solid fa-microchip text-flame-500"></i> Công Nghệ Học Tập Tương Tác
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-heading font-black text-white">
+                    4 PHÂN HỆ E-LEARNING <span class="txt-gradient-flame">ĐỘT PHÁ CỦA DZOTA</span>
+                </h2>
+                <p class="text-slate-300 text-sm sm:text-base">
+                    Tích hợp toàn diện từ luyện phản xạ chạy trạm mô phỏng phòng thi thật đến đào sâu phân tích lâm sàng thông minh.
+                </p>
+            </div>
+
+            <!-- MODULE 1: DYNEX OSCE (IMAGE TIÊU BẢN GIẢI PHẪU + TIMER 20S THỰC CHIẾN) -->
+            <div id="dynex-osce" class="kha-card p-6 sm:p-10 border-flame-500/40 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                
+                <div class="lg:col-span-6 space-y-5">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-flame-500/20 text-flame-400 text-xs font-bold uppercase">
+                        <i class="fa-solid fa-bolt"></i> Module Trọng Tâm Số 1
+                    </div>
+                    <h3 class="text-2xl sm:text-3xl font-heading font-extrabold text-white">
+                        DYNEX — Hệ Thống Thi Chạy Trạm Giải Phẫu AI (OSCE)
+                    </h3>
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+                        Mô phỏng 100% áp lực phòng thi chạy trạm tại các trường Đại học Y Dược: chuông báo đổi trạm, bộ đếm ngược 20 giây, che giấu cấu trúc chỉ điểm (ví dụ: Vị trí #1 là cấu trúc gì?), và tự đánh giá độ nhớ não bộ với phím cách Space.
+                    </p>
+                    <ul class="space-y-2.5 text-sm text-slate-200">
+                        <li class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-circle-check text-flame-500"></i>
+                            <span>Tiêu bản giải phẫu thực tế: Xương đầu mặt cổ, lồng ngực, chi trên, chi dưới.</span>
+                        </li>
+                        <li class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-circle-check text-flame-500"></i>
+                            <span>Chế độ trắc nghiệm 4 đáp án & gõ trực tiếp tên cấu trúc chuẩn danh pháp quốc tế.</span>
+                        </li>
+                        <li class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-circle-check text-flame-500"></i>
+                            <span>Bản quyền nội dung: Lê Nhật Duy (Y Khoa K26).</span>
+                        </li>
+                    </ul>
+                    <div class="pt-2 flex flex-wrap gap-3">
+                        <a href="/dynex" class="btn-kha-primary px-6 py-3 rounded-xl font-bold text-sm inline-flex items-center gap-2">
+                            <span>Vào Phòng Thi Chạy Trạm</span>
+                            <i class="fa-solid fa-play text-xs"></i>
+                        </a>
+                        <button onclick="revealDemoAnswer()" class="px-5 py-3 rounded-xl bg-navy-850 hover:bg-navy-800 text-gold-400 font-bold text-sm border border-gold-400/30 transition">
+                            <i class="fa-regular fa-lightbulb mr-1.5"></i> Thử Lật Đáp Án (#1)
                         </button>
                     </div>
                 </div>
 
-                <button
-                    type="submit"
-                    id="btn-submit-account"
-                    class="w-full py-3.5 px-4 rounded-2xl btn-apple-blue font-semibold text-sm transition active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer shadow-lg"
-                >
-                    <span>Vào Dashboard Học Tập</span>
-                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                <!-- LIVE INTERACTIVE ANATOMICAL PREVIEW CARD (DƯÃ TRÊN ẢNH TIÊU BẢN XƯƠNG ĐẦU MẶT CỔ CỦA DZOTA) -->
+                <div class="lg:col-span-6">
+                    <div class="bg-navy-950 rounded-2xl p-4 sm:p-5 border border-white/10 shadow-2xl relative">
+                        <!-- Top Bar of OSCE Station -->
+                        <div class="flex items-center justify-between pb-3 border-b border-white/10 text-xs">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-rose-500 animate-ping"></span>
+                                <span class="font-heading font-bold text-white uppercase">GIẢI PHẪU 1 • ĐẦU MẶT CỔ</span>
+                            </div>
+                            <div class="flex items-center gap-2 bg-rose-500/15 border border-rose-500/30 text-rose-400 px-2.5 py-1 rounded-full font-mono font-bold">
+                                <i class="fa-regular fa-clock"></i>
+                                <span id="demoTimer">18.4s</span>
+                            </div>
+                        </div>
+
+                        <!-- OSCE Anatomical Station Graphic -->
+                        <div class="my-4 relative rounded-xl overflow-hidden bg-navy-900 border border-white/10 flex flex-col items-center justify-center p-3 text-center">
+                            <div class="w-full flex justify-between items-center px-2 py-1 text-[11px] text-slate-400">
+                                <span>Tiêu bản số 01: 4 xương đơn & 2 xương đôi</span>
+                                <span class="text-gold-400 font-bold">CHỈ ĐIỂM: ? #1</span>
+                            </div>
+                            
+                            <!-- Diagram Mock with Pin -->
+                            <div class="w-full h-48 bg-gradient-to-b from-navy-850 to-navy-900 rounded-lg flex items-center justify-center relative overflow-hidden my-2">
+                                <div class="text-center p-4">
+                                    <i class="fa-solid fa-skull text-5xl text-slate-600 mb-2"></i>
+                                    <p class="text-xs text-slate-400">Sơ đồ xương đầu mặt cổ (Chuẩn đề thi chạy trạm)</p>
+                                </div>
+                                <!-- Interactive Masked Pin #1 -->
+                                <div class="absolute top-1/3 left-1/2 -translate-x-1/2 bg-gold-400 text-navy-950 font-black px-4 py-2 rounded-lg shadow-neon-gold border-2 border-white animate-bounce cursor-pointer" onclick="revealDemoAnswer()">
+                                    <div class="text-[10px] uppercase tracking-wider">Chỉ điểm</div>
+                                    <div class="text-sm">? VỊ TRÍ #1</div>
+                                </div>
+                            </div>
+
+                            <!-- Reveal box -->
+                            <div id="demoAnswerBox" class="w-full p-3 bg-navy-850 rounded-xl border border-white/10 text-left text-xs transition-all">
+                                <span class="text-slate-400">Câu hỏi trạm: </span>
+                                <strong class="text-white">Vị trí #1 là cấu trúc giải phẫu gì?</strong>
+                                <div id="demoAnswerText" class="mt-2 p-2 rounded bg-navy-950 text-gold-400 font-mono font-bold hidden border border-gold-400/30">
+                                    ✓ ĐÁP ÁN: XƯƠNG BƯỚM (Thân và cánh lớn xương bướm - Sphenoid bone)
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bottom OSCE Controls -->
+                        <div class="flex items-center justify-between pt-2 text-xs text-slate-400">
+                            <span class="flex items-center gap-1.5">
+                                <i class="fa-solid fa-brain text-gold-400"></i>
+                                Hàng đợi: 6 thẻ trạm
+                            </span>
+                            <span class="text-emerald-400 font-bold">
+                                Đã thuộc: 5/6 (83%)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- MODULE 2 & 3 & 4 IN 3-COLUMN BENTO GRID -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <!-- Module 2: 50.000+ Trắc Nghiệm Y Khoa -->
+                <div class="kha-card p-6 space-y-4">
+                    <div class="w-12 h-12 rounded-xl bg-flame-500/15 border border-flame-500/30 text-flame-400 flex items-center justify-center text-xl shadow-neon-flame">
+                        <i class="fa-solid fa-clipboard-question"></i>
+                    </div>
+                    <h3 class="font-heading font-extrabold text-xl text-white">
+                        Ngân Hàng 50.000+ Câu Trắc Nghiệm Chuẩn Bloom
+                    </h3>
+                    <p class="text-sm text-slate-300 leading-relaxed">
+                        Phân loại chi tiết từ Nhận biết, Thông hiểu đến Phân tích ca lâm sàng. Đầy đủ các bộ môn: Giải Phẫu, Sinh Lý, Hóa Sinh, Dược Lý, Ngoại Bệnh Lý, Nội Khoa, Sản Nhi.
+                    </p>
+                    <a href="/tests" class="text-xs font-bold text-flame-400 hover:text-flame-300 inline-flex items-center gap-1 transition">
+                        Làm đề thi trắc nghiệm <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                    </a>
+                </div>
+
+                <!-- Module 3: Não Bộ Anki SM-2 -->
+                <div class="kha-card p-6 space-y-4">
+                    <div class="w-12 h-12 rounded-xl bg-gold-400/15 border border-gold-400/30 text-gold-400 flex items-center justify-center text-xl shadow-neon-gold">
+                        <i class="fa-solid fa-brain"></i>
+                    </div>
+                    <h3 class="font-heading font-extrabold text-xl text-white">
+                        Thuật Toán Lặp Lại Ngắt Quãng Anki SM-2
+                    </h3>
+                    <p class="text-sm text-slate-300 leading-relaxed">
+                        Hệ thống tự động tính toán thời gian vàng não bộ chuẩn bị quên để nhắc bạn ôn lại (1 ngày, 3 ngày, 7 ngày, 14 ngày). Biến kiến thức thi cử thành trí nhớ dài hạn vĩnh viễn.
+                    </p>
+                    <a href="/dashboard" class="text-xs font-bold text-gold-400 hover:text-gold-300 inline-flex items-center gap-1 transition">
+                        Khám phá thẻ Anki <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                    </a>
+                </div>
+
+                <!-- Module 4: NoteBook AI Y Khoa -->
+                <div class="kha-card p-6 space-y-4">
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-400 flex items-center justify-center text-xl shadow-neon-purple">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <h3 class="font-heading font-extrabold text-xl text-white">
+                        Trợ Lý NoteBook AI Y Khoa (Gemini)
+                    </h3>
+                    <p class="text-sm text-slate-300 leading-relaxed">
+                        Chỉ cần tải lên file slide bài giảng hoặc tài liệu PDF, NoteBook AI sẽ tự động phân tích ca bệnh lâm sàng, trích xuất điểm mấu chốt và tạo bộ câu hỏi ôn thi tương ứng.
+                    </p>
+                    <a href="/notebook" class="text-xs font-bold text-purple-400 hover:text-purple-300 inline-flex items-center gap-1 transition">
+                        Mở Trợ lý NoteBook AI <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- 7. 03 BẢO HIỂM CHO QUYẾT ĐỊNH CỦA BẠN (KHANHHUNG TRADEMARK)    -->
+    <!-- ============================================================== -->
+    <section id="bao-hiem" class="py-20 relative bg-gradient-to-b from-navy-950 via-navy-900 to-navy-950 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-8 space-y-14">
+            
+            <div class="text-center space-y-3 max-w-3xl mx-auto">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gold-400/10 border border-gold-400/30 text-gold-400 text-xs font-bold uppercase tracking-wider">
+                    <i class="fa-solid fa-shield-halved text-gold-400"></i> Cam Kết Tuyệt Đối
+                </div>
+                <h2 class="text-3xl sm:text-5xl font-heading font-black text-white leading-tight">
+                    Để Dễ Dàng Hơn Cho Quyết Định Của Bạn, <br>
+                    <span class="txt-gradient-gold">Dzota Cung Cấp 03 BẢO HIỂM:</span>
+                </h2>
+                <p class="text-slate-300 text-sm sm:text-base">
+                    Chúng tôi thấu hiểu những khó khăn và áp lực học tập của sinh viên Y. Đây là 3 cam kết danh dự từ Tác giả Lê Nhật Duy (Y Khoa K26).
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                
+                <!-- BẢO HIỂM 01 -->
+                <div class="kha-card p-8 space-y-5 border-flame-500/40 relative">
+                    <div class="text-4xl font-heading font-black text-flame-500/20 absolute top-4 right-6">01</div>
+                    <div class="w-14 h-14 rounded-2xl bg-flame-500/20 text-flame-400 flex items-center justify-center text-2xl shadow-neon-flame">
+                        <i class="fa-solid fa-medal"></i>
+                    </div>
+                    <h3 class="font-heading font-black text-xl text-white">
+                        Bảo Hiểm 01: <br><span class="text-flame-400">BẢO HIỂM ĐIỂM SỐ CHẠY TRẠM</span>
+                    </h3>
+                    <p class="text-slate-300 text-sm leading-relaxed">
+                        Luyện tập đủ các trạm tiêu bản trên DYNEX theo đúng hướng dẫn, nếu bạn không tự tin nhận diện cấu trúc giải phẫu dưới 15 giây khi vào phòng thi thực tế, chúng tôi sẽ hoàn trả 100% học phí hoặc cấp quyền học lại miễn phí.
+                    </p>
+                </div>
+
+                <!-- BẢO HIỂM 02 -->
+                <div class="kha-card-gold p-8 space-y-5 relative">
+                    <div class="text-4xl font-heading font-black text-gold-400/20 absolute top-4 right-6">02</div>
+                    <div class="w-14 h-14 rounded-2xl bg-gold-400/20 text-gold-400 flex items-center justify-center text-2xl shadow-neon-gold">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                    </div>
+                    <h3 class="font-heading font-black text-xl text-white">
+                        Bảo Hiểm 02: <br><span class="text-gold-400">CẬP NHẬT ĐỀ THI LIÊN TỤC</span>
+                    </h3>
+                    <p class="text-slate-300 text-sm leading-relaxed">
+                        Không chỉ dừng lại ở ngân hàng có sẵn, toàn bộ đề thi chạy trạm và trắc nghiệm từ các trường Y Hà Nội, ĐHYD TP.HCM, ĐHYD Huế... luôn được bổ sung và cập nhật miễn phí theo từng đợt thi mới nhất trong năm học.
+                    </p>
+                </div>
+
+                <!-- BẢO HIỂM 03 -->
+                <div class="kha-card p-8 space-y-5 border-emerald-500/40 relative">
+                    <div class="text-4xl font-heading font-black text-emerald-500/20 absolute top-4 right-6">03</div>
+                    <div class="w-14 h-14 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl">
+                        <i class="fa-solid fa-headset"></i>
+                    </div>
+                    <h3 class="font-heading font-black text-xl text-white">
+                        Bảo Hiểm 03: <br><span class="text-emerald-400">ĐỒNG HÀNH 1-1 QUA ZALO</span>
+                    </h3>
+                    <p class="text-slate-300 text-sm leading-relaxed">
+                        Bạn không bao giờ phải học một mình. Mọi vướng mắc về cấu trúc giải phẫu, cơ chế thuốc hay phương pháp ôn thi đều được chính tác giả Lê Nhật Duy và đội ngũ mentor hỗ trợ trực tiếp qua Zalo Hotline <strong>0914659511</strong>.
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- 8. PRICING & MEMBERSHIP (KHANHHUNG STYLE)                      -->
+    <!-- ============================================================== -->
+    <section id="bang-gia" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-8 space-y-16">
+            
+            <div class="text-center space-y-3 max-w-2xl mx-auto">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-flame-500/10 border border-flame-500/30 text-flame-400 text-xs font-bold uppercase tracking-wider">
+                    <i class="fa-solid fa-tags text-flame-500"></i> Bảng Giá Siêu Ưu Đãi
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-heading font-black text-white">
+                    GÓI E-LEARNING <span class="txt-gradient-flame">DZOTA ACADEMY</span>
+                </h2>
+                <p class="text-slate-300 text-sm sm:text-base">
+                    Chi phí cực kỳ sinh viên, chất lượng đào tạo và công nghệ vượt trội. Đầu tư nhỏ cho thành tích học tập và sự nghiệp Y khoa vững chắc.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+                
+                <!-- GÓI MIỄN PHÍ -->
+                <div class="kha-card p-8 flex flex-col justify-between space-y-6">
+                    <div class="space-y-4">
+                        <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Trải Nghiệm</div>
+                        <h3 class="font-heading font-extrabold text-2xl text-white">Miễn Phí</h3>
+                        <div class="text-3xl font-heading font-black text-white">0đ</div>
+                        <p class="text-xs text-slate-400">Thích hợp cho sinh viên bắt đầu trải nghiệm giao diện và thi thử.</p>
+                        
+                        <div class="pt-4 border-t border-white/10 space-y-3 text-xs text-slate-300">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-check text-emerald-400"></i>
+                                <span>Trải nghiệm 20 trạm thi DYNEX OSCE mẫu</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-check text-emerald-400"></i>
+                                <span>500 câu trắc nghiệm Y khoa cơ bản</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-check text-emerald-400"></i>
+                                <span>Thẻ ghi nhớ Anki cơ bản</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="openLoginModal('register')" class="w-full py-3 rounded-xl border border-white/15 bg-navy-850 hover:bg-navy-800 text-white font-bold text-sm transition">
+                        Đăng Ký Học Thử
+                    </button>
+                </div>
+
+                <!-- GÓI PRO Y KHOA (HOT) -->
+                <div class="kha-card-gold p-8 flex flex-col justify-between space-y-6 relative scale-105 z-10 shadow-neon-flame">
+                    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-flame-500 to-gold-400 text-navy-950 text-[11px] font-black uppercase tracking-wider px-4 py-1 rounded-full shadow-lg">
+                        🔥 GÓI ĐƯỢC CHỌN NHIỀU NHẤT
+                    </div>
+                    <div class="space-y-4 pt-2">
+                        <div class="text-xs font-bold uppercase tracking-wider text-gold-400">1 Năm Học Tập</div>
+                        <h3 class="font-heading font-black text-2xl text-white">Pro Y Khoa</h3>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-4xl font-heading font-black text-gold-400">199.000đ</span>
+                            <span class="text-xs text-slate-400 line-through">499.000đ</span>
+                        </div>
+                        <p class="text-xs text-slate-300">Đầy đủ tính năng bứt phá trạm thi giải phẫu và trắc nghiệm trong cả năm học.</p>
+                        
+                        <div class="pt-4 border-t border-white/10 space-y-3 text-xs text-slate-200">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-circle-check text-gold-400"></i>
+                                <span>Mở khóa toàn bộ <strong>DYNEX OSCE 3D</strong> (đầy đủ các vùng)</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-circle-check text-gold-400"></i>
+                                <span>50.000+ câu trắc nghiệm chuẩn Bloom có giải thích</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-circle-check text-gold-400"></i>
+                                <span>Không giới hạn thuật toán Não bộ Anki SM-2</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-circle-check text-gold-400"></i>
+                                <span>NoteBook AI đọc và phân tích slide</span>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="https://zalo.me/0914659511?text=Toi%20muon%20dang%20ky%20Goi%20Pro%20Y%20Khoa%20199k" target="_blank" class="w-full btn-kha-primary py-3.5 rounded-xl text-center text-white font-extrabold text-sm block">
+                        ĐĂNG KÝ GÓI PRO 🚀
+                    </a>
+                </div>
+
+                <!-- GÓI VIP TRỌN ĐỜI -->
+                <div class="kha-card p-8 flex flex-col justify-between space-y-6 border-purple-500/40">
+                    <div class="space-y-4">
+                        <div class="text-xs font-bold uppercase tracking-wider text-purple-400">Suốt Cả 6 Năm Y</div>
+                        <h3 class="font-heading font-extrabold text-2xl text-white">VIP Trọn Đời</h3>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-4xl font-heading font-black text-purple-400">399.000đ</span>
+                            <span class="text-xs text-slate-400 line-through">999.000đ</span>
+                        </div>
+                        <p class="text-xs text-slate-400">Dành cho sinh viên muốn sở hữu vĩnh viễn kho tàng đề thi từ Y1 đến Bác sĩ nội trú.</p>
+                        
+                        <div class="pt-4 border-t border-white/10 space-y-3 text-xs text-slate-300">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-crown text-purple-400"></i>
+                                <span>Toàn bộ quyền lợi của gói Pro <strong>TRỌN ĐỜI</strong></span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-crown text-purple-400"></i>
+                                <span>Hỗ trợ ôn thi Bác sĩ Nội trú & Chuyển cấp</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-crown text-purple-400"></i>
+                                <span>Nhóm Zalo VIP hỗ trợ 1-1 trực tiếp cùng Lê Nhật Duy</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-crown text-purple-400"></i>
+                                <span>Miễn phí mọi tính năng mới trọn đời</span>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="https://zalo.me/0914659511?text=Toi%20muon%20dang%20ky%20Goi%20VIP%20Tron%20Doi%20399k" target="_blank" class="w-full btn-kha-gold py-3 rounded-xl text-center text-navy-950 font-black text-sm block">
+                        ĐĂNG KÝ GÓI VIP 👑
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- 9. Q&A - GIẢI ĐÁP THẮC MẮC (FAQS - KHANHHUNG ACCORDION)        -->
+    <!-- ============================================================== -->
+    <section id="faqs" class="py-20 relative bg-navy-900/60 border-t border-white/5">
+        <div class="max-w-4xl mx-auto px-4 sm:px-8 space-y-12">
+            
+            <div class="text-center space-y-3">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gold-400/10 border border-gold-400/30 text-gold-400 text-xs font-bold uppercase tracking-wider">
+                    <i class="fa-solid fa-circle-question text-gold-400"></i> Hỏi & Đáp
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-heading font-black text-white">
+                    Q&A — GIẢI ĐÁP CÂU HỎI THẮC MẮC
+                </h2>
+                <p class="text-slate-300 text-sm">
+                    Mọi thắc mắc của bạn về nền tảng E-Learning Dzota đều được giải đáp chi tiết tại đây.
+                </p>
+            </div>
+
+            <!-- Accordion items -->
+            <div class="space-y-4">
+                
+                <!-- FAQ 1 -->
+                <div class="kha-card overflow-hidden border-white/10">
+                    <button onclick="toggleFaq(this)" class="w-full p-5 text-left flex items-center justify-between font-heading font-bold text-base text-white hover:text-gold-400 transition">
+                        <span>1. Dzota có khác gì so với việc học trong sách giáo trình hay tài liệu photocopy?</span>
+                        <i class="fa-solid fa-chevron-down text-sm transition-transform duration-300"></i>
+                    </button>
+                    <div class="faq-content hidden px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-white/5 pt-3">
+                        Giáo trình hay tài liệu thông thường chỉ giúp bạn đọc thụ động. Nhưng kỳ thi chạy trạm OSCE yêu cầu bạn phải phản xạ nhìn tiêu bản và viết tên cấu trúc trong vòng 20 giây! Dzota tái hiện áp lực phòng thi thật, kèm thuật toán ngắt quãng Anki và AI giải thích chi tiết, giúp bạn thuộc bài ngay và đạt điểm tối đa.
+                    </div>
+                </div>
+
+                <!-- FAQ 2 -->
+                <div class="kha-card overflow-hidden border-white/10">
+                    <button onclick="toggleFaq(this)" class="w-full p-5 text-left flex items-center justify-between font-heading font-bold text-base text-white hover:text-gold-400 transition">
+                        <span>2. Hệ thống DYNEX OSCE chạy trạm hỗ trợ những môn học nào?</span>
+                        <i class="fa-solid fa-chevron-down text-sm transition-transform duration-300"></i>
+                    </button>
+                    <div class="faq-content hidden px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-white/5 pt-3">
+                        DYNEX hiện đang tập trung mạnh nhất cho Giải phẫu 1 & 2 (Đầu mặt cổ, Lồng ngực, Ổ bụng, Chi trên, Chi dưới), Ký sinh trùng, Mô học - Phôi thai học và Tiền lâm sàng. Ngân hàng đề liên tục được cập nhật từ đề thi của các trường Y Dược lớn trên toàn quốc.
+                    </div>
+                </div>
+
+                <!-- FAQ 3 -->
+                <div class="kha-card overflow-hidden border-white/10">
+                    <button onclick="toggleFaq(this)" class="w-full p-5 text-left flex items-center justify-between font-heading font-bold text-base text-white hover:text-gold-400 transition">
+                        <span>3. Tôi có thể học trên điện thoại hay iPad không?</span>
+                        <i class="fa-solid fa-chevron-down text-sm transition-transform duration-300"></i>
+                    </button>
+                    <div class="faq-content hidden px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-white/5 pt-3">
+                        Hoàn toàn được! Dzota được tối ưu 100% responsive cho điện thoại (iOS, Android), máy tính bảng (iPad) và laptop. Bạn có thể mở web và làm bài chạy trạm mọi lúc mọi nơi ngay cả khi đang trực bệnh viện hay ngồi trên xe buýt.
+                    </div>
+                </div>
+
+                <!-- FAQ 4 -->
+                <div class="kha-card overflow-hidden border-white/10">
+                    <button onclick="toggleFaq(this)" class="w-full p-5 text-left flex items-center justify-between font-heading font-bold text-base text-white hover:text-gold-400 transition">
+                        <span>4. Làm thế nào để được Tác giả Lê Nhật Duy hỗ trợ trực tiếp?</span>
+                        <i class="fa-solid fa-chevron-down text-sm transition-transform duration-300"></i>
+                    </button>
+                    <div class="faq-content hidden px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-white/5 pt-3">
+                        Bạn chỉ cần liên hệ Zalo cá nhân của tác giả: <strong>0914659511</strong>. Anh Duy (Y Khoa K26) sẽ trực tiếp lắng nghe, giải đáp các câu hỏi học tập và tư vấn phương pháp ôn thi chạy trạm phù hợp nhất với trường của bạn.
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- 10. FOOTER: BẢN QUYỀN LÊ NHẬT DUY & HOTLINE ZALO               -->
+    <!-- ============================================================== -->
+    <footer class="bg-navy-950 border-t border-white/10 pt-16 pb-12 text-slate-400 text-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-8 space-y-12">
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                
+                <!-- Col 1: Brand & Bio -->
+                <div class="md:col-span-2 space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-flame-500 to-gold-400 p-[2px]">
+                            <div class="w-full h-full bg-navy-950 rounded-[10px] flex items-center justify-center">
+                                <img src="/logo-dzota.png" alt="Dzota" class="w-7 h-7 object-contain" onerror="this.src='https://i.ibb.co/tpzK0Y8Z/logo-dzota-1-1-1-1-1.png'">
+                            </div>
+                        </div>
+                        <span class="font-heading font-black text-2xl text-white">DZOTA ACADEMY</span>
+                    </div>
+                    <p class="text-slate-300 text-sm leading-relaxed max-w-md">
+                        Nền tảng E-Learning Y Khoa thông minh hàng đầu tại Việt Nam. Xây dựng bởi tác giả <strong>Lê Nhật Duy (Y Khoa K26)</strong> với sứ mệnh nâng cao chất lượng học tập và giảm bớt áp lực thi cử cho toàn bộ sinh viên Y Dược.
+                    </p>
+                    <div class="flex items-center gap-4 text-xs font-semibold text-slate-300">
+                        <span>Bản quyền © 2026 Dzota Education</span>
+                        <span>•</span>
+                        <a href="https://zalo.me/0914659511" target="_blank" class="text-gold-400 hover:underline">Zalo: 0914659511</a>
+                    </div>
+                </div>
+
+                <!-- Col 2: Liên kết học tập -->
+                <div class="space-y-3">
+                    <h4 class="font-heading font-bold text-white text-sm uppercase tracking-wider">Hệ Thống Đào Tạo</h4>
+                    <ul class="space-y-2 text-xs">
+                        <li><a href="/dynex" class="hover:text-gold-400 transition">Thi Chạy Trạm DYNEX OSCE</a></li>
+                        <li><a href="/tests" class="hover:text-gold-400 transition">50.000+ Câu Trắc Nghiệm Y Khoa</a></li>
+                        <li><a href="/dashboard" class="hover:text-gold-400 transition">Thẻ Não Bộ Anki (SM-2)</a></li>
+                        <li><a href="/notebook" class="hover:text-gold-400 transition">Trợ Lý AI NoteBook ND</a></li>
+                        <li><a href="/duocly" class="hover:text-gold-400 transition">Tra Cứu Dược Lý 401 Thuốc</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 3: Hỗ trợ & Liên hệ -->
+                <div class="space-y-3">
+                    <h4 class="font-heading font-bold text-white text-sm uppercase tracking-wider">Liên Hệ & Hỗ Trợ</h4>
+                    <ul class="space-y-2 text-xs">
+                        <li class="flex items-center gap-2 text-gold-400 font-bold">
+                            <i class="fa-solid fa-phone"></i> Hotline Zalo: 0914659511
+                        </li>
+                        <li>Mentor chuyên môn: Lê Nhật Duy</li>
+                        <li>Khóa: Bác Sĩ Đa Khoa K26</li>
+                        <li>Hỗ trợ học viên: 24/7 qua Zalo & Ticket</li>
+                        <li><a href="https://zalo.me/0914659511" target="_blank" class="text-flame-400 hover:underline">Đăng ký tham gia câu lạc bộ</a></li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <div class="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+                <p>Dzota Academy — All rights reserved. Thiết kế và phát triển chuẩn E-Learning Quốc tế.</p>
+                <div class="flex items-center gap-4">
+                    <a href="#quyen-loi" class="hover:text-slate-400">Điều khoản sử dụng</a>
+                    <a href="#bao-hiem" class="hover:text-slate-400">Chính sách bảo mật</a>
+                    <a href="https://zalo.me/0914659511" target="_blank" class="text-gold-400 hover:underline">Hotline: 0914659511</a>
+                </div>
+            </div>
+
+        </div>
+    </footer>
+
+    <!-- ============================================================== -->
+    <!-- 11. FLOATING ZALO HOTLINE BUTTON (RINGING ANIMATION)           -->
+    <!-- ============================================================== -->
+    <div class="fixed bottom-6 right-6 z-50 flex items-center gap-3">
+        <a href="https://zalo.me/0914659511" target="_blank" class="group flex items-center gap-3 bg-gradient-to-r from-flame-600 to-gold-500 text-navy-950 font-extrabold px-4 py-3 rounded-full shadow-neon-flame hover:scale-105 transition-all duration-300">
+            <div class="w-8 h-8 rounded-full bg-navy-950 text-gold-400 flex items-center justify-center ring-phone">
+                <i class="fa-solid fa-phone text-sm"></i>
+            </div>
+            <div class="flex flex-col text-left">
+                <span class="text-[10px] uppercase font-bold text-navy-900 tracking-wider">Hỗ Trợ Zalo 24/7</span>
+                <span class="text-sm font-black text-navy-950">0914659511</span>
+            </div>
+        </a>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 12. POPUP MODAL LOGIN / REGISTER (AUTO-TRIGGER OR VIA HEADER)   -->
+    <!-- ============================================================== -->
+    <div id="loginModal" class="fixed inset-0 z-50 hidden bg-navy-950/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="kha-card-gold max-w-md w-full p-6 sm:p-8 relative animate-in fade-in zoom-in-95 duration-200">
+            
+            <!-- Close button -->
+            <button onclick="closeLoginModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-navy-850 hover:bg-navy-800 text-slate-400 hover:text-white flex items-center justify-center">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+
+            <!-- Modal Header -->
+            <div class="text-center space-y-1 mb-5">
+                <div class="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-tr from-flame-500 to-gold-400 p-[2px] shadow-neon-flame mb-2">
+                    <div class="w-full h-full bg-navy-950 rounded-[14px] flex items-center justify-center">
+                        <img src="/logo-dzota.png" alt="Dzota" class="w-8 h-8 object-contain" onerror="this.src='https://i.ibb.co/tpzK0Y8Z/logo-dzota-1-1-1-1-1.png'">
+                    </div>
+                </div>
+                <h3 id="modalTitle" class="text-xl font-heading font-extrabold text-white">Đăng Nhập Dzota Academy</h3>
+                <p class="text-xs text-slate-400">Truy cập toàn bộ hệ sinh thái E-Learning Y Khoa</p>
+            </div>
+
+            <!-- Google Sign-in inside Modal -->
+            <div id="modalGoogleSignInBtn" class="flex justify-center w-full mb-3"></div>
+
+            <div class="relative flex py-2 items-center">
+                <div class="flex-grow border-t border-white/10"></div>
+                <span class="flex-shrink mx-3 text-[11px] uppercase tracking-wider text-slate-400 font-bold">hoặc tài khoản</span>
+                <div class="flex-grow border-t border-white/10"></div>
+            </div>
+
+            <!-- Modal Switcher -->
+            <div class="flex p-1 bg-navy-950/80 rounded-xl border border-white/10 mb-4">
+                <button id="modalTabLogin" onclick="switchModalTab('login')" class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-flame-500 text-white">
+                    Đăng Nhập
+                </button>
+                <button id="modalTabRegister" onclick="switchModalTab('register')" class="flex-1 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white">
+                    Đăng Ký Mới
+                </button>
+            </div>
+
+            <!-- Modal Form -->
+            <form onsubmit="handleModalSubmit(event)" class="space-y-3.5">
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">Tài khoản / Email / SĐT:</label>
+                    <input type="text" id="modalUsername" required placeholder="Nhập tên đăng nhập hoặc email" class="kha-input text-sm">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300 flex justify-between">
+                        <span>Mật khẩu:</span>
+                        <a href="https://zalo.me/0914659511" target="_blank" class="text-gold-400 hover:underline">Quên mật khẩu?</a>
+                    </label>
+                    <div class="relative">
+                        <input type="password" id="modalPassword" required placeholder="Nhập mật khẩu" class="kha-input pr-10 text-sm">
+                        <button type="button" onclick="togglePasswordVisibility('modalPassword', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                            <i class="fa-regular fa-eye text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="modalAuthMessage" class="hidden text-xs py-2 px-3 rounded-lg font-medium"></div>
+
+                <button type="submit" id="modalSubmitBtn" class="w-full btn-kha-primary py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
+                    <span id="modalSubmitText">ĐĂNG NHẬP NGAY</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
                 </button>
             </form>
 
-            <!-- Security & Support Footnote -->
-            <div class="pt-3 border-t border-white/[0.08] space-y-2 text-center">
-                <div class="flex items-center justify-center gap-1.5 text-[11px] text-[#6E6E73]">
-                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-[#30D158]"></i>
-                    <span>Bảo mật dữ liệu học tập theo chuẩn mã hóa riêng tư.</span>
-                </div>
-                <div>
-                    <a href="https://zalo.me/0914659511?text=Tôi%20cần%20hỗ%20trợ%20kích%20hoạt%20tài%20khoản%20Dzota" target="_blank" rel="noreferrer" class="text-xs text-[#2997FF] hover:underline font-medium no-underline inline-flex items-center gap-1">
-                        <span>Cần trợ giúp kích hoạt? Nhắn Zalo: 0914.659.511</span>
-                    </a>
-                </div>
+            <div class="mt-4 pt-3 border-t border-white/10 text-center">
+                <a href="https://zalo.me/0914659511" target="_blank" class="text-xs text-gold-400 hover:underline font-semibold">
+                    Cần hỗ trợ? Zalo: 0914659511 (Bác sĩ Duy)
+                </a>
             </div>
 
         </div>
     </div>
 
-    <!-- ─────────────────────────────────────────────────────────────
-         11. MOBILE FLOATING APPLE DOCK
-    ───────────────────────────────────────────────────────────── -->
-    <div class="fixed bottom-4 inset-x-4 max-w-xs mx-auto z-40 sm:hidden apple-nav rounded-full px-4 py-2 flex items-center justify-between gap-3 shadow-2xl border border-white/[0.14]">
-        <a href="/dashboard" class="flex-1 py-2 px-3 rounded-full btn-apple-primary text-xs font-semibold text-center flex items-center justify-center gap-1.5 no-underline">
-            <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>
-            <span>Dashboard</span>
-        </a>
-        <a href="https://zalo.me/0914659511" target="_blank" rel="noreferrer" class="py-2 px-3 rounded-full bg-white/[0.08] text-white text-xs flex items-center gap-1 no-underline active:scale-95">
-            <i data-lucide="message-circle" class="w-3.5 h-3.5 text-[#2997FF]"></i>
-            <span>Zalo</span>
-        </a>
-        <button onclick="openAuthModal('login')" class="w-8 h-8 rounded-full bg-white/[0.08] text-white flex items-center justify-center active:scale-95" title="Đăng Nhập">
-            <i data-lucide="log-in" class="w-3.5 h-3.5 text-zinc-300"></i>
-        </button>
-    </div>
-
-    <!-- ─────────────────────────────────────────────────────────────
-         12. JAVASCRIPT: THREE.JS 3D ENGINE & SPOTLIGHT INTERACTION
-    ───────────────────────────────────────────────────────────── -->
+    <!-- ============================================================== -->
+    <!-- JAVASCRIPT LOGIC (AUTH, GOOGLE GSI, SESSION, OSCE DEMO, FAQS) -->
+    <!-- ============================================================== -->
     <script>
-        // Init Lucide Icons
-        if (window.lucide) {
-            lucide.createIcons();
-        }
+        // Check for session injected by server
+        let currentUser = window.__DZOTA_SESSION__ || null;
+        let heroActiveTab = 'login';
+        let modalActiveTab = 'login';
 
-        // --- 1. THREE.JS 3D SPATIAL KNOWLEDGE CORE & GYROSCOPE ---
-        (function initApple3DCanvas() {
-            try {
-                const canvas = document.getElementById('webgl-canvas');
-                if (!canvas || !window.THREE) return;
-
-                const scene = new THREE.Scene();
-                const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2000);
-                camera.position.z = 450;
-
-                const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true, powerPreference: "high-performance" });
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-                // Group containing the entire 3D Gyroscope & Floating Spatial Nodes
-                const coreGroup = new THREE.Group();
-                scene.add(coreGroup);
-
-                // Central Iridescent Icosahedron Mesh
-                const innerGeometry = new THREE.IcosahedronGeometry(75, 2);
-                const innerMaterial = new THREE.MeshPhongMaterial({
-                    color: 0x0071E3,
-                    emissive: 0x0a1930,
-                    specular: 0x2997FF,
-                    shininess: 90,
-                    wireframe: true,
-                    transparent: true,
-                    opacity: 0.35
-                });
-                const innerMesh = new THREE.Mesh(innerGeometry, innerMaterial);
-                coreGroup.add(innerMesh);
-
-                // Orbital Torus Rings (Concentric Gyroscopic Rings)
-                const ring1Geo = new THREE.TorusGeometry(125, 1.2, 16, 100);
-                const ring1Mat = new THREE.MeshBasicMaterial({ color: 0x2997FF, transparent: true, opacity: 0.45 });
-                const ring1 = new THREE.Mesh(ring1Geo, ring1Mat);
-                ring1.rotation.x = Math.PI / 3;
-                coreGroup.add(ring1);
-
-                const ring2Geo = new THREE.TorusGeometry(160, 1.0, 16, 100);
-                const ring2Mat = new THREE.MeshBasicMaterial({ color: 0xBF5AF2, transparent: true, opacity: 0.35 });
-                const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);
-                ring2.rotation.y = Math.PI / 4;
-                coreGroup.add(ring2);
-
-                const ring3Geo = new THREE.TorusGeometry(195, 0.8, 16, 120);
-                const ring3Mat = new THREE.MeshBasicMaterial({ color: 0x30D158, transparent: true, opacity: 0.25 });
-                const ring3 = new THREE.Mesh(ring3Geo, ring3Mat);
-                ring3.rotation.z = Math.PI / 6;
-                coreGroup.add(ring3);
-
-                // Floating Spatial Star Points Cloud
-                const starsCount = window.innerWidth < 768 ? 400 : 850;
-                const starPositions = new Float32Array(starsCount * 3);
-                const starColors = new Float32Array(starsCount * 3);
-
-                const palette = [
-                    new THREE.Color(0x0071E3), // Apple Blue
-                    new THREE.Color(0x2997FF), // Apple Cyan
-                    new THREE.Color(0xBF5AF2), // Apple Purple
-                    new THREE.Color(0xFFFFFF)  // Platinum White
-                ];
-
-                for (let i = 0; i < starsCount; i++) {
-                    starPositions[i * 3] = (Math.random() - 0.5) * 1200;
-                    starPositions[i * 3 + 1] = (Math.random() - 0.5) * 900;
-                    starPositions[i * 3 + 2] = (Math.random() - 0.5) * 800;
-
-                    const clr = palette[Math.floor(Math.random() * palette.length)];
-                    starColors[i * 3] = clr.r;
-                    starColors[i * 3 + 1] = clr.g;
-                    starColors[i * 3 + 2] = clr.b;
-                }
-
-                const starGeo = new THREE.BufferGeometry();
-                starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-                starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
-
-                const starMat = new THREE.PointsMaterial({
-                    size: 2.4,
-                    vertexColors: true,
-                    transparent: true,
-                    opacity: 0.6,
-                    blending: THREE.AdditiveBlending
-                });
-
-                const starField = new THREE.Points(starGeo, starMat);
-                scene.add(starField);
-
-                // Point Light & Ambient Light
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-                scene.add(ambientLight);
-
-                const pointLight = new THREE.PointLight(0x0071E3, 2, 800);
-                pointLight.position.set(0, 0, 200);
-                scene.add(pointLight);
-
-                // Mouse Parallax Physics
-                let mouseX = 0;
-                let mouseY = 0;
-                let targetX = 0;
-                let targetY = 0;
-
-                window.addEventListener('mousemove', (e) => {
-                    mouseX = (e.clientX - window.innerWidth / 2) * 0.05;
-                    mouseY = (e.clientY - window.innerHeight / 2) * 0.05;
-                }, { passive: true });
-
-                // Render Loop with Fluid Damping
-                function animate() {
-                    requestAnimationFrame(animate);
-
-                    innerMesh.rotation.x += 0.002;
-                    innerMesh.rotation.y += 0.003;
-
-                    ring1.rotation.x += 0.0015;
-                    ring1.rotation.y += 0.002;
-
-                    ring2.rotation.y -= 0.0018;
-                    ring2.rotation.z += 0.0012;
-
-                    ring3.rotation.z += 0.001;
-                    ring3.rotation.x -= 0.0014;
-
-                    starField.rotation.y += 0.0003;
-
-                    targetX += (mouseX - targetX) * 0.04;
-                    targetY += (mouseY - targetY) * 0.04;
-
-                    coreGroup.rotation.y = targetX * 0.02;
-                    coreGroup.rotation.x = -targetY * 0.02;
-
-                    camera.position.x += (targetX * 0.8 - camera.position.x) * 0.04;
-                    camera.position.y += (-targetY * 0.8 - camera.position.y) * 0.04;
-                    camera.lookAt(scene.position);
-
-                    renderer.render(scene, camera);
-                }
-                animate();
-
-                window.addEventListener('resize', () => {
-                    camera.aspect = window.innerWidth / window.innerHeight;
-                    camera.updateProjectionMatrix();
-                    renderer.setSize(window.innerWidth, window.innerHeight);
-                }, { passive: true });
-
-            } catch (err) {
-                console.warn('Three.js initialization gracefully skipped:', err);
-            }
-        })();
-
-        // --- 2. APPLE CURSOR SPOTLIGHT TRACKING ---
-        document.querySelectorAll('.apple-card').forEach(card => {
-            card.addEventListener('mousemove', (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                card.style.setProperty('--mouse-x', `${x}px`);
-                card.style.setProperty('--mouse-y', `${y}px`);
-            }, { passive: true });
+        document.addEventListener('DOMContentLoaded', () => {
+            initSessionState();
+            initGoogleAuth();
+            checkUrlForLoginIntent();
+            startDemoTimer();
         });
 
-        // --- 3. FAQ ACCORDION LOGIC ---
-        function toggleFaq(btn) {
-            const content = btn.nextElementSibling;
-            const icon = btn.querySelector('i');
-            const isHidden = content.classList.contains('hidden');
-            
-            document.querySelectorAll('.faq-content').forEach(c => c.classList.add('hidden'));
-            document.querySelectorAll('#faq button i').forEach(i => i.style.transform = 'rotate(0deg)');
-
-            if (isHidden) {
-                content.classList.remove('hidden');
-                if (icon) icon.style.transform = 'rotate(180deg)';
-            }
-        }
-
-        // --- 4. SHOWCASE TABS SWITCHER ---
-        function switchShowcase(mode) {
-            const tabs = ['dash', 'bank', 'ai', 'osce'];
-            const activeClass = "px-3.5 py-1 rounded-full bg-white text-black font-semibold shadow-sm transition";
-            const inactiveClass = "px-3.5 py-1 rounded-full text-[#86868B] hover:text-white transition";
-
-            tabs.forEach(t => {
-                const btn = document.getElementById(`tab-btn-${t}`);
-                const view = document.getElementById(`view-${t}`);
-                if (btn && view) {
-                    if (t === mode) {
-                        btn.className = activeClass;
-                        view.classList.remove('hidden');
-                    } else {
-                        btn.className = inactiveClass;
-                        view.classList.add('hidden');
+        // 1. Session State Handler
+        function initSessionState() {
+            if (currentUser && currentUser.username) {
+                // Update Hero view to Khanh Hung "Chào Đồng Nghiệp" state
+                const heroAuth = document.getElementById('heroAuthState');
+                const heroWelcome = document.getElementById('heroWelcomeState');
+                const heroWelcomeName = document.getElementById('heroWelcomeName');
+                
+                if (heroAuth && heroWelcome) {
+                    heroAuth.classList.add('hidden');
+                    heroWelcome.classList.remove('hidden');
+                    if (heroWelcomeName) {
+                        heroWelcomeName.textContent = `Chào Đồng Nghiệp ${currentUser.fullName || currentUser.username}!`;
                     }
                 }
-            });
-            if (window.lucide) lucide.createIcons();
-        }
 
-        // --- 5. AUTH MODAL CONTROL ---
-        function openAuthModal(mode) {
-            const modal = document.getElementById('auth-modal');
-            if (modal) modal.classList.remove('hidden');
-            switchAuthTab(mode || 'login');
-        }
-
-        function closeAuthModal() {
-            const modal = document.getElementById('auth-modal');
-            if (modal) modal.classList.add('hidden');
-        }
-
-        function switchAuthTab(tab) {
-            const btnLogin = document.getElementById('tab-btn-login');
-            const btnRegister = document.getElementById('tab-btn-register');
-            const btnSubmit = document.getElementById('btn-submit-account');
-
-            if (tab === 'register') {
-                btnRegister.className = "flex-1 py-1.5 rounded-full bg-white text-black shadow-sm font-semibold transition";
-                btnLogin.className = "flex-1 py-1.5 rounded-full text-[#86868B] hover:text-white transition";
-                if (btnSubmit) btnSubmit.innerHTML = `<span>Tạo Dzota ID Mới</span><i data-lucide="arrow-right" class="w-4 h-4"></i>`;
-            } else {
-                btnLogin.className = "flex-1 py-1.5 rounded-full bg-white text-black shadow-sm font-semibold transition";
-                btnRegister.className = "flex-1 py-1.5 rounded-full text-[#86868B] hover:text-white transition";
-                if (btnSubmit) btnSubmit.innerHTML = `<span>Vào Dashboard Học Tập</span><i data-lucide="arrow-right" class="w-4 h-4"></i>`;
-            }
-            if (window.lucide) lucide.createIcons();
-        }
-
-        function togglePasswordVisibility() {
-            const passInput = document.getElementById('login-password');
-            const eyeIcon = document.getElementById('eye-icon');
-            if (passInput) {
-                if (passInput.type === 'password') {
-                    passInput.type = 'text';
-                    if (eyeIcon) eyeIcon.setAttribute('data-lucide', 'eye-off');
-                } else {
-                    passInput.type = 'password';
-                    if (eyeIcon) eyeIcon.setAttribute('data-lucide', 'eye');
+                // Update Header Nav Auth Container
+                const navAuth = document.getElementById('navAuthContainer');
+                if (navAuth) {
+                    navAuth.innerHTML = `
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-flame-500 to-gold-400 p-[2px]">
+                                <div class="w-full h-full rounded-full bg-navy-950 flex items-center justify-center text-xs font-bold text-gold-400">
+                                    ${(currentUser.fullName || currentUser.username).slice(0, 2).toUpperCase()}
+                                </div>
+                            </div>
+                            <span class="text-sm font-bold text-white hidden md:inline">${currentUser.fullName || currentUser.username}</span>
+                            <a href="/dashboard" class="btn-kha-primary px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5">
+                                <span>Vào Bàn Học</span>
+                                <i class="fa-solid fa-arrow-right text-xs"></i>
+                            </a>
+                        </div>
+                    `;
                 }
-                if (window.lucide) lucide.createIcons();
             }
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
-            try {
-                const params = new URLSearchParams(window.location.search);
-                if (params.get('view') === 'login' || window.location.pathname === '/login') {
-                    openAuthModal('login');
-                } else if (params.get('view') === 'register') {
-                    openAuthModal('register');
-                }
-            } catch (e) {}
-        });
+        // 2. Google OAuth Initialization
+        function initGoogleAuth() {
+            fetch('/api/auth/google-config')
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.clientId && window.google) {
+                        google.accounts.id.initialize({
+                            client_id: data.clientId,
+                            callback: handleGoogleCredentialResponse,
+                            auto_select: false
+                        });
 
-        document.getElementById('auth-modal')?.addEventListener('click', (e) => {
-            if (e.target.id === 'auth-modal') closeAuthModal();
-        });
-
-        // --- 6. GOOGLE AUTH & CREDENTIALS API ---
-        let googleClientId = '';
-        async function fetchGoogleConfig() {
-            try {
-                const res = await fetch('/api/auth/google-config');
-                const data = await res.json();
-                if (data.clientId) googleClientId = data.clientId;
-            } catch (e) {}
-        }
-        fetchGoogleConfig();
-
-        function handleGoogleSignIn() {
-            if (window.google?.accounts?.oauth2 && googleClientId) {
-                try {
-                    const client = window.google.accounts.oauth2.initTokenClient({
-                        client_id: googleClientId,
-                        scope: 'email profile openid',
-                        callback: async (tokenResponse) => {
-                            if (tokenResponse?.access_token) {
-                                try {
-                                    const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                                        headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
-                                    });
-                                    const userInfo = await userRes.json();
-                                    const loginRes = await fetch('/api/auth/login', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ googleUser: userInfo })
-                                    });
-                                    if (loginRes.ok) {
-                                        window.location.href = '/dashboard';
-                                    } else {
-                                        const errData = await loginRes.json();
-                                        alert(errData.error || 'Đăng nhập Google thất bại');
-                                    }
-                                } catch (err) {
-                                    alert('Không thể xác thực thông tin tài khoản Google.');
-                                }
-                            }
+                        const heroBtn = document.getElementById('heroGoogleSignInBtn');
+                        if (heroBtn) {
+                            google.accounts.id.renderButton(heroBtn, {
+                                theme: 'filled_black',
+                                size: 'large',
+                                shape: 'pill',
+                                width: '320',
+                                text: 'continue_with',
+                                logo_alignment: 'left'
+                            });
                         }
-                    });
-                    client.requestAccessToken({ prompt: 'select_account' });
-                    return;
-                } catch (e) {
-                    console.error('Google Auth Init Error:', e);
-                }
-            }
-            alert('Đang kết nối cổng Google, vui lòng thử lại sau 2 giây.');
+
+                        const modalBtn = document.getElementById('modalGoogleSignInBtn');
+                        if (modalBtn) {
+                            google.accounts.id.renderButton(modalBtn, {
+                                theme: 'filled_black',
+                                size: 'large',
+                                shape: 'pill',
+                                width: '280',
+                                text: 'continue_with'
+                            });
+                        }
+                    }
+                })
+                .catch(err => console.log('Google Auth Config:', err));
         }
 
-        async function handleAccountFormSubmit(e) {
+        async function handleGoogleCredentialResponse(response) {
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ credential: response.credential })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                    setTimeout(() => { window.location.href = '/dashboard'; }, 700);
+                } else {
+                    alert(data.error || 'Đăng nhập Google không thành công.');
+                }
+            } catch (e) {
+                alert('Lỗi kết nối máy chủ khi đăng nhập Google.');
+            }
+        }
+
+        // 3. Tab Switchers
+        function switchHeroTab(tab) {
+            heroActiveTab = tab;
+            const tabLogin = document.getElementById('heroTabLogin');
+            const tabReg = document.getElementById('heroTabRegister');
+            const submitText = document.getElementById('heroSubmitBtnText');
+
+            if (tab === 'login') {
+                tabLogin.className = "flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all bg-gradient-to-r from-flame-500 to-flame-600 text-white shadow-sm";
+                tabReg.className = "flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-300 hover:text-white";
+                if (submitText) submitText.textContent = "ĐĂNG NHẬP VÀO HỆ THỐNG";
+            } else {
+                tabReg.className = "flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all bg-gradient-to-r from-flame-500 to-flame-600 text-white shadow-sm";
+                tabLogin.className = "flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-300 hover:text-white";
+                if (submitText) submitText.textContent = "TẠO TÀI KHOẢN HỌC MIỄN PHÍ";
+            }
+        }
+
+        function switchModalTab(tab) {
+            modalActiveTab = tab;
+            const tabLogin = document.getElementById('modalTabLogin');
+            const tabReg = document.getElementById('modalTabRegister');
+            const submitText = document.getElementById('modalSubmitText');
+            const title = document.getElementById('modalTitle');
+
+            if (tab === 'login') {
+                tabLogin.className = "flex-1 py-1.5 rounded-lg text-xs font-bold bg-flame-500 text-white";
+                tabReg.className = "flex-1 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white";
+                if (submitText) submitText.textContent = "ĐĂNG NHẬP NGAY";
+                if (title) title.textContent = "Đăng Nhập Dzota Academy";
+            } else {
+                tabReg.className = "flex-1 py-1.5 rounded-lg text-xs font-bold bg-flame-500 text-white";
+                tabLogin.className = "flex-1 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white";
+                if (submitText) submitText.textContent = "TẠO TÀI KHOẢN MỚI";
+                if (title) title.textContent = "Tạo Tài Khoản Dzota Academy";
+            }
+        }
+
+        // 4. Form Submit Handlers
+        async function handleHeroSubmit(e) {
             e.preventDefault();
-            const usernameInput = document.getElementById('login-username');
-            const passwordInput = document.getElementById('login-password');
-            const btnSubmit = document.getElementById('btn-submit-account');
+            const username = document.getElementById('heroUsername').value.trim();
+            const password = document.getElementById('heroPassword').value;
+            const msgBox = document.getElementById('heroAuthMessage');
+            const submitBtn = document.getElementById('heroSubmitBtn');
 
-            const username = usernameInput ? usernameInput.value.trim() : '';
-            const password = passwordInput ? passwordInput.value : '';
-
-            if (!username || !password) {
-                alert('Vui lòng điền đầy đủ thông tin');
-                return;
-            }
-
-            if (btnSubmit) {
-                btnSubmit.disabled = true;
-                btnSubmit.textContent = "Đang xử lý...";
-            }
+            msgBox.className = "hidden text-xs py-2 px-3 rounded-lg font-medium";
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-70');
 
             try {
                 const res = await fetch('/api/auth/login', {
@@ -1466,18 +1488,137 @@
                     body: JSON.stringify({ username, password })
                 });
                 const data = await res.json();
-                if (res.ok) {
-                    window.location.href = '/dashboard';
+                if (res.ok && data.success) {
+                    msgBox.className = "text-xs py-2 px-3 rounded-lg font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 block";
+                    msgBox.textContent = "Đăng nhập thành công! Đang chuyển hướng vào bài học...";
+                    confetti({ particleCount: 80, spread: 60 });
+                    setTimeout(() => { window.location.href = '/dashboard'; }, 600);
                 } else {
-                    alert(data.error || 'Tài khoản hoặc mật khẩu không chính xác');
+                    msgBox.className = "text-xs py-2 px-3 rounded-lg font-medium bg-rose-500/20 text-rose-400 border border-rose-500/30 block";
+                    msgBox.textContent = data.error || "Sai tên đăng nhập hoặc mật khẩu.";
                 }
             } catch (err) {
-                alert('Lỗi kết nối máy chủ.');
+                msgBox.className = "text-xs py-2 px-3 rounded-lg font-medium bg-rose-500/20 text-rose-400 border border-rose-500/30 block";
+                msgBox.textContent = "Không thể kết nối đến máy chủ. Vui lòng thử lại.";
             } finally {
-                if (btnSubmit) {
-                    btnSubmit.disabled = false;
-                    btnSubmit.innerHTML = `<span>Vào Dashboard Học Tập</span><i data-lucide="arrow-right" class="w-4 h-4"></i>`;
-                    if (window.lucide) lucide.createIcons();
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-70');
+            }
+        }
+
+        async function handleModalSubmit(e) {
+            e.preventDefault();
+            const username = document.getElementById('modalUsername').value.trim();
+            const password = document.getElementById('modalPassword').value;
+            const msgBox = document.getElementById('modalAuthMessage');
+            const submitBtn = document.getElementById('modalSubmitBtn');
+
+            msgBox.className = "hidden text-xs py-2 px-3 rounded-lg font-medium";
+            submitBtn.disabled = true;
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    msgBox.className = "text-xs py-2 px-3 rounded-lg font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 block";
+                    msgBox.textContent = "Thành công! Đang vào hệ thống...";
+                    confetti({ particleCount: 80, spread: 60 });
+                    setTimeout(() => { window.location.href = '/dashboard'; }, 600);
+                } else {
+                    msgBox.className = "text-xs py-2 px-3 rounded-lg font-medium bg-rose-500/20 text-rose-400 border border-rose-500/30 block";
+                    msgBox.textContent = data.error || "Đăng nhập thất bại.";
+                }
+            } catch (err) {
+                msgBox.className = "text-xs py-2 px-3 rounded-lg font-medium bg-rose-500/20 text-rose-400 border border-rose-500/30 block";
+                msgBox.textContent = "Lỗi kết nối máy chủ.";
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+                window.location.reload();
+            } catch (e) {
+                window.location.href = '/login';
+            }
+        }
+
+        // 5. Modal and URL Routing Controls
+        function openLoginModal(tab = 'login') {
+            const modal = document.getElementById('loginModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                switchModalTab(tab);
+            }
+        }
+
+        function closeLoginModal() {
+            const modal = document.getElementById('loginModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function checkUrlForLoginIntent() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('view') === 'login' || window.location.pathname === '/login') {
+                openLoginModal('login');
+            }
+        }
+
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (input) {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    btn.innerHTML = '<i class="fa-solid fa-eye-slash text-sm"></i>';
+                } else {
+                    input.type = 'password';
+                    btn.innerHTML = '<i class="fa-regular fa-eye text-sm"></i>';
+                }
+            }
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            if (menu) menu.classList.toggle('hidden');
+        }
+
+        // 6. Interactive OSCE Anatomical Station Demo
+        function revealDemoAnswer() {
+            const answerText = document.getElementById('demoAnswerText');
+            if (answerText) {
+                answerText.classList.toggle('hidden');
+            }
+        }
+
+        function startDemoTimer() {
+            const timerEl = document.getElementById('demoTimer');
+            if (!timerEl) return;
+            let time = 20.0;
+            setInterval(() => {
+                time -= 0.1;
+                if (time <= 0) time = 20.0;
+                timerEl.textContent = time.toFixed(1) + 's';
+            }, 100);
+        }
+
+        // 7. Accordion FAQs
+        function toggleFaq(btn) {
+            const content = btn.nextElementSibling;
+            const icon = btn.querySelector('.fa-chevron-down');
+            if (content) {
+                const isHidden = content.classList.contains('hidden');
+                document.querySelectorAll('.faq-content').forEach(c => c.classList.add('hidden'));
+                document.querySelectorAll('.fa-chevron-down').forEach(i => i.style.transform = 'rotate(0deg)');
+                
+                if (isHidden) {
+                    content.classList.remove('hidden');
+                    if (icon) icon.style.transform = 'rotate(180deg)';
                 }
             }
         }
