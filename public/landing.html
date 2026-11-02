@@ -15,7 +15,7 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Google Fonts: Plus Jakarta Sans & Lexend -->
+    <!-- Google Fonts: Plus Jakarta Sans, Lexend, JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -41,11 +41,11 @@
                     },
                     colors: {
                         navy: {
-                            950: '#070b19',
-                            900: '#0b132b',
-                            850: '#0f1a3a',
-                            800: '#14224c',
-                            700: '#1c2f66',
+                            950: '#050814',
+                            900: '#090e24',
+                            850: '#0e1638',
+                            800: '#14204d',
+                            700: '#1c2d6b',
                         },
                         flame: {
                             400: '#ff8a3d',
@@ -60,6 +60,7 @@
                             600: '#d97706',
                         },
                         neonPurple: {
+                            400: '#a855f7',
                             500: '#8b5cf6',
                             600: '#710ebe',
                             700: '#581c87',
@@ -77,25 +78,59 @@
     </script>
 
     <style>
-        /* Custom Khanh Hung Academy Aesthetic Styles */
         :root {
             --color-primary: #ff6600;
             --color-gold: #fecd1f;
-            --color-bg-dark: #070b19;
+            --color-bg-dark: #050814;
         }
 
         body {
-            background-color: #070b19;
+            background-color: #050814;
             color: #f1f5f9;
             font-family: 'Plus Jakarta Sans', sans-serif;
             overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
 
         h1, h2, h3, h4, .font-heading {
             font-family: 'Lexend', sans-serif;
         }
 
-        /* Top Bar Ticker Animation */
+        /* ─── SCROLL REVEAL ANIMATIONS ─── */
+        .reveal-init {
+            opacity: 0;
+            transform: translateY(32px);
+            transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: opacity, transform;
+        }
+        .reveal-init.reveal-left {
+            transform: translateX(-40px);
+        }
+        .reveal-init.reveal-right {
+            transform: translateX(40px);
+        }
+        .reveal-init.reveal-zoom {
+            transform: scale(0.92);
+        }
+        .reveal-visible {
+            opacity: 1 !important;
+            transform: translate(0, 0) scale(1) !important;
+        }
+
+        /* ─── AURORA GRADIENT MESH ─── */
+        @keyframes auroraMove {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-30px, 20px) scale(1.08); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+        .aurora-orb-1 {
+            animation: auroraMove 16s ease-in-out infinite;
+        }
+        .aurora-orb-2 {
+            animation: auroraMove 20s ease-in-out infinite reverse;
+        }
+
+        /* ─── TICKER ANIMATION ─── */
         @keyframes ticker {
             0% { transform: translateX(0); }
             100% { transform: translateX(-50%); }
@@ -103,32 +138,30 @@
         .ticker-inner {
             display: inline-flex;
             white-space: nowrap;
-            animation: ticker 28s linear infinite;
+            animation: ticker 25s linear infinite;
         }
         .ticker-inner:hover {
             animation-play-state: paused;
         }
 
-        /* Shining Gold / Flame Gradient Text */
+        /* ─── GRADIENT TYPOGRAPHY ─── */
         .txt-gradient-flame {
             background: linear-gradient(135deg, #fff275 0%, #ff8e3c 45%, #ff4500 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
         .txt-gradient-gold {
             background: linear-gradient(135deg, #ffffff 0%, #fecd1f 40%, #ff9900 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
         .txt-gradient-purple {
             background: linear-gradient(135deg, #c084fc 0%, #8b5cf6 50%, #3b82f6 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        /* Khanh Hung Banner CTA Buttons */
+        /* ─── KHANH HUNG INTERACTIVE BUTTONS WITH SHINE & RIPPLE ─── */
         .btn-kha-primary {
             background: linear-gradient(135deg, #ff7a00 0%, #ff4d00 100%);
             color: #ffffff;
@@ -137,6 +170,7 @@
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
             overflow: hidden;
+            user-select: none;
         }
         .btn-kha-primary::before {
             content: '';
@@ -155,6 +189,9 @@
             transform: translateY(-2px);
             box-shadow: 0 14px 30px -4px rgba(255, 77, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.5);
         }
+        .btn-kha-primary:active {
+            transform: translateY(1px) scale(0.98);
+        }
 
         .btn-kha-gold {
             background: linear-gradient(135deg, #ffe066 0%, #fecd1f 50%, #f59e0b 100%);
@@ -162,105 +199,153 @@
             font-weight: 800;
             box-shadow: 0 10px 25px -5px rgba(254, 205, 31, 0.45);
             transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
         .btn-kha-gold:hover {
             transform: translateY(-2px);
             box-shadow: 0 14px 32px -4px rgba(254, 205, 31, 0.65);
         }
+        .btn-kha-gold:active {
+            transform: translateY(1px) scale(0.98);
+        }
 
-        /* Khanh Hung Card Border & Glow */
+        /* ─── 3D TILT CARDS & SPOTLIGHT HOVER ─── */
         .kha-card {
-            background: linear-gradient(180deg, rgba(15, 26, 58, 0.85) 0%, rgba(11, 19, 43, 0.95) 100%);
+            background: linear-gradient(180deg, rgba(14, 22, 56, 0.85) 0%, rgba(9, 14, 36, 0.95) 100%);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 20px;
             box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.6);
             position: relative;
-            transition: all 0.35s ease;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+            overflow: hidden;
+        }
+        .kha-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle 350px at var(--mouse-x, -500px) var(--mouse-y, -500px), rgba(255, 102, 0, 0.14), transparent 80%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: inherit;
+        }
+        .kha-card:hover::after {
+            opacity: 1;
         }
         .kha-card:hover {
             border-color: rgba(255, 102, 0, 0.4);
             transform: translateY(-4px);
-            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 0 25px -5px rgba(255, 102, 0, 0.15);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 0 25px -5px rgba(255, 102, 0, 0.18);
         }
 
         .kha-card-gold {
-            background: linear-gradient(180deg, rgba(28, 47, 102, 0.6) 0%, rgba(11, 19, 43, 0.95) 100%);
-            border: 1px solid rgba(254, 205, 31, 0.3);
+            background: linear-gradient(180deg, rgba(28, 47, 102, 0.6) 0%, rgba(9, 14, 36, 0.95) 100%);
+            border: 1px solid rgba(254, 205, 31, 0.35);
             border-radius: 20px;
-            box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.6), 0 0 20px -5px rgba(254, 205, 31, 0.15);
+            box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.6), 0 0 20px -5px rgba(254, 205, 31, 0.2);
+            position: relative;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+            overflow: hidden;
+        }
+        .kha-card-gold::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle 350px at var(--mouse-x, -500px) var(--mouse-y, -500px), rgba(254, 205, 31, 0.16), transparent 80%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: inherit;
+        }
+        .kha-card-gold:hover::after {
+            opacity: 1;
         }
 
-        /* Floating Ringing Hotline Button */
+        /* ─── CLICK RIPPLE EFFECT ─── */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(0);
+            animation: rippleEffect 0.6s linear;
+            pointer-events: none;
+        }
+        @keyframes rippleEffect {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        /* ─── FLOATING PHYSICS ANIMATION ─── */
+        @keyframes floatY {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        .float-slow {
+            animation: floatY 4s ease-in-out infinite;
+        }
+        .float-delayed {
+            animation: floatY 4.5s ease-in-out 1.5s infinite;
+        }
+
+        /* ─── PHONE RING ─── */
         @keyframes phoneRing {
-            0% { transform: rotate(0) scale(1) skew(1deg); }
-            10% { transform: rotate(-22deg) scale(1.05) skew(1deg); }
-            20% { transform: rotate(22deg) scale(1.05) skew(1deg); }
-            30% { transform: rotate(-22deg) scale(1.05) skew(1deg); }
-            40% { transform: rotate(22deg) scale(1.05) skew(1deg); }
-            50% { transform: rotate(0) scale(1) skew(1deg); }
-            100% { transform: rotate(0) scale(1) skew(1deg); }
+            0% { transform: rotate(0) scale(1); }
+            10% { transform: rotate(-20deg) scale(1.08); }
+            20% { transform: rotate(20deg) scale(1.08); }
+            30% { transform: rotate(-20deg) scale(1.08); }
+            40% { transform: rotate(20deg) scale(1.08); }
+            50% { transform: rotate(0) scale(1); }
+            100% { transform: rotate(0) scale(1); }
         }
         .ring-phone {
             animation: phoneRing 2s infinite ease-in-out;
         }
 
-        /* Pulse glow */
-        @keyframes pulseGlow {
-            0%, 100% { box-shadow: 0 0 15px rgba(255, 102, 0, 0.4); }
-            50% { box-shadow: 0 0 30px rgba(255, 102, 0, 0.85); }
-        }
-        .animate-pulse-glow {
-            animation: pulseGlow 2.5s infinite;
-        }
-
-        /* Glassmorphism Navigation */
-        .kha-header {
-            background: rgba(7, 11, 25, 0.88);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        /* Input styling */
+        /* ─── INPUT FIELDS ─── */
         .kha-input {
-            background: rgba(7, 11, 25, 0.7);
+            background: rgba(5, 8, 20, 0.75);
             border: 1.5px solid rgba(255, 255, 255, 0.12);
             border-radius: 12px;
             padding: 12px 16px;
             color: #ffffff;
-            font-size: 15px;
+            font-size: 16px; /* 16px avoids iOS zoom on focus */
             transition: all 0.25s ease;
             width: 100%;
         }
         .kha-input:focus {
             outline: none;
             border-color: #ff6600;
-            background: rgba(11, 19, 43, 0.95);
-            box-shadow: 0 0 0 4px rgba(255, 102, 0, 0.18);
+            background: rgba(9, 14, 36, 0.95);
+            box-shadow: 0 0 0 4px rgba(255, 102, 0, 0.2);
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
+        /* ─── MOBILE BOTTOM BAR DOCK ─── */
+        .mobile-dock {
+            background: rgba(5, 8, 20, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
-        ::-webkit-scrollbar-track {
-            background: #070b19;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #1c2f66;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #ff6600;
+
+        /* ─── CODE / COUNTER DISPLAY ─── */
+        .stat-number {
+            display: inline-block;
+            font-variant-numeric: tabular-nums;
         }
     </style>
 </head>
-<body class="selection:bg-flame-500 selection:text-white">
+<body class="selection:bg-flame-500 selection:text-white pb-20 md:pb-0">
+
+    <!-- CANVAS BACKGROUND PARTICLES -->
+    <canvas id="bgParticlesCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
 
     <!-- ========================================== -->
-    <!-- 1. TOP ANNOUNCEMENT TICKER (KHANHHUNG STYLE) -->
+    <!-- 1. TOP ANNOUNCEMENT TICKER                -->
     <!-- ========================================== -->
-    <div class="bg-gradient-to-r from-flame-600 via-gold-500 to-flame-600 text-navy-950 font-bold text-xs sm:text-sm py-2 px-4 overflow-hidden relative shadow-md">
+    <div class="bg-gradient-to-r from-flame-600 via-gold-500 to-flame-600 text-navy-950 font-bold text-xs sm:text-sm py-2 px-4 overflow-hidden relative shadow-md z-30">
         <div class="ticker-inner flex items-center gap-12 font-heading tracking-wide uppercase">
             <span>🔥 HỆ THỐNG E-LEARNING Y KHOA DZOTA — NỀN TẢNG THI CHẠY TRẠM OSCE & NÃO BỘ ANKI HÀNG ĐẦU VIỆT NAM</span>
             <span>⚡ TÁC GIẢ BẢN QUYỀN: LÊ NHẬT DUY (Y KHOA K26)</span>
@@ -274,9 +359,9 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- 2. TOP CONTACT & QUICK ACTION BAR           -->
+    <!-- 2. TOP CONTACT BAR (DESKTOP)               -->
     <!-- ========================================== -->
-    <div class="bg-navy-950/90 border-b border-white/5 py-2 px-4 sm:px-8 text-xs text-slate-300 hidden md:block">
+    <div class="bg-navy-950/90 border-b border-white/5 py-2 px-4 sm:px-8 text-xs text-slate-300 hidden md:block relative z-20">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <div class="flex items-center gap-6">
                 <a href="https://zalo.me/0914659511" target="_blank" class="flex items-center gap-2 text-gold-400 hover:text-white transition">
@@ -285,12 +370,17 @@
                     <span>Hotline Zalo: <strong class="text-white">0914659511</strong> (Bác sĩ Duy Y Khoa)</span>
                 </a>
                 <span class="text-slate-600">|</span>
-                <span class="text-slate-400 flex items-center gap-1">
+                <span class="text-slate-400 flex items-center gap-1.5">
                     <i class="fa-solid fa-graduation-cap text-gold-400"></i>
                     Hơn 15.000+ sinh viên Y Dược toàn quốc tin dùng
                 </span>
             </div>
             <div class="flex items-center gap-5">
+                <button id="soundToggleBtn" onclick="toggleSound()" class="text-slate-400 hover:text-gold-400 flex items-center gap-1.5 transition">
+                    <i id="soundIcon" class="fa-solid fa-volume-high text-xs"></i>
+                    <span id="soundText">Âm thanh: BẬT</span>
+                </button>
+                <span class="text-slate-600">|</span>
                 <a href="#chuong-trinh" class="hover:text-gold-400 transition flex items-center gap-1.5">
                     <i class="fa-solid fa-book-medical text-flame-500"></i> Các Module E-Learning
                 </a>
@@ -305,23 +395,23 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- 3. MAIN NAVIGATION BAR (KHANHHUNG STYLE)   -->
+    <!-- 3. MAIN NAVIGATION BAR                     -->
     <!-- ========================================== -->
-    <header class="kha-header sticky top-0 z-50 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-8 h-20 flex items-center justify-between">
+    <header class="sticky top-0 z-40 bg-navy-950/85 backdrop-blur-xl border-b border-white/10 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-8 h-18 sm:h-20 flex items-center justify-between">
             <!-- Brand Logo -->
-            <a href="/" class="flex items-center gap-3.5 group">
-                <div class="relative w-12 h-12 rounded-2xl bg-gradient-to-tr from-flame-600 to-gold-400 p-[2px] shadow-neon-flame group-hover:scale-105 transition-transform duration-300">
+            <a href="/" class="flex items-center gap-3 group">
+                <div class="relative w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-flame-600 to-gold-400 p-[2px] shadow-neon-flame group-hover:scale-105 transition-transform duration-300">
                     <div class="w-full h-full bg-navy-950 rounded-[14px] flex items-center justify-center overflow-hidden">
-                        <img src="/logo-dzota.png" alt="Dzota Academy" class="w-9 h-9 object-contain" onerror="this.src='https://i.ibb.co/tpzK0Y8Z/logo-dzota-1-1-1-1-1.png'">
+                        <img src="/logo-dzota.png" alt="Dzota Academy" class="w-8 h-8 sm:w-9 sm:h-9 object-contain" onerror="this.src='https://i.ibb.co/tpzK0Y8Z/logo-dzota-1-1-1-1-1.png'">
                     </div>
                 </div>
                 <div class="flex flex-col">
                     <div class="flex items-center gap-2">
-                        <span class="font-heading font-extrabold text-2xl tracking-tight text-white">DZOTA</span>
-                        <span class="bg-gradient-to-r from-flame-500 to-gold-500 text-navy-950 font-black text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">ACADEMY</span>
+                        <span class="font-heading font-black text-xl sm:text-2xl tracking-tight text-white">DZOTA</span>
+                        <span class="bg-gradient-to-r from-flame-500 to-gold-500 text-navy-950 font-black text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">ACADEMY</span>
                     </div>
-                    <span class="text-[11px] text-slate-400 tracking-wide font-medium">Hệ Thống E-Learning Y Khoa</span>
+                    <span class="text-[10px] sm:text-[11px] text-slate-400 tracking-wide font-medium">Hệ Thống E-Learning Y Khoa</span>
                 </div>
             </a>
 
@@ -339,40 +429,53 @@
             </nav>
 
             <!-- Nav Actions -->
-            <div class="flex items-center gap-3">
-                <!-- User session status or Login Button -->
+            <div class="flex items-center gap-2.5 sm:gap-3">
                 <div id="navAuthContainer" class="flex items-center gap-2">
                     <button onclick="openLoginModal('login')" class="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/15 bg-navy-850 hover:bg-navy-800 text-white text-sm font-semibold transition hover:border-gold-400/50">
                         <i class="fa-regular fa-user text-gold-400"></i>
                         <span>Đăng Nhập</span>
                     </button>
-                    <a href="/dashboard" class="btn-kha-primary px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2">
+                    <a href="/dashboard" class="btn-kha-primary px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2">
                         <span>Vào Học Ngay</span>
                         <i class="fa-solid fa-arrow-right text-xs"></i>
                     </a>
                 </div>
 
                 <!-- Mobile Menu Button -->
-                <button onclick="toggleMobileMenu()" class="lg:hidden w-10 h-10 rounded-xl bg-navy-850 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white">
-                    <i class="fa-solid fa-bars-staggered text-lg"></i>
+                <button onclick="toggleMobileMenu()" aria-label="Menu" class="lg:hidden w-10 h-10 rounded-xl bg-navy-850 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white active:scale-95 transition">
+                    <i id="mobileMenuIcon" class="fa-solid fa-bars-staggered text-lg"></i>
                 </button>
             </div>
         </div>
 
-        <!-- Mobile Dropdown Menu -->
-        <div id="mobileMenu" class="hidden lg:hidden bg-navy-950/95 border-b border-white/10 px-6 py-6 space-y-4">
-            <a href="#quyen-loi" onclick="toggleMobileMenu()" class="block text-slate-200 hover:text-gold-400 font-medium py-1">Quyền Lợi Học Viên</a>
-            <a href="#chuong-trinh" onclick="toggleMobileMenu()" class="block text-slate-200 hover:text-gold-400 font-medium py-1">Chương Trình E-Learning</a>
-            <a href="#dynex-osce" onclick="toggleMobileMenu()" class="block text-flame-400 font-bold py-1">⚡ Thi Chạy Trạm DYNEX OSCE</a>
-            <a href="#bao-hiem" onclick="toggleMobileMenu()" class="block text-slate-200 hover:text-gold-400 font-medium py-1">03 Bảo Hiểm Đào Tạo</a>
-            <a href="#bang-gia" onclick="toggleMobileMenu()" class="block text-slate-200 hover:text-gold-400 font-medium py-1">Báo Giá Khóa Học</a>
-            <a href="#danh-vong" onclick="toggleMobileMenu()" class="block text-slate-200 hover:text-gold-400 font-medium py-1">Đại Sảnh Danh Vọng</a>
-            <a href="#faqs" onclick="toggleMobileMenu()" class="block text-slate-200 hover:text-gold-400 font-medium py-1">Hỏi Đáp FAQs</a>
-            <div class="pt-4 border-t border-white/10 flex flex-col gap-2">
+        <!-- Mobile Drawer Menu -->
+        <div id="mobileMenu" class="hidden lg:hidden bg-navy-950/98 border-b border-white/10 px-6 py-6 space-y-4 backdrop-blur-2xl transition-all">
+            <a href="#quyen-loi" onclick="toggleMobileMenu()" class="block text-slate-200 hover:text-gold-400 font-semibold py-1.5 flex items-center justify-between">
+                <span>Quyền Lợi Học Viên</span> <i class="fa-solid fa-chevron-right text-xs text-slate-600"></i>
+            </a>
+            <a href="#chuong-trinh" onclick="toggleMobileMenu()" class="block text-slate-200 hover:text-gold-400 font-semibold py-1.5 flex items-center justify-between">
+                <span>Chương Trình E-Learning</span> <i class="fa-solid fa-chevron-right text-xs text-slate-600"></i>
+            </a>
+            <a href="#dynex-osce" onclick="toggleMobileMenu()" class="block text-flame-400 font-bold py-1.5 flex items-center justify-between">
+                <span>⚡ Thi Chạy Trạm DYNEX OSCE</span> <i class="fa-solid fa-chevron-right text-xs text-flame-400"></i>
+            </a>
+            <a href="#bao-hiem" onclick="toggleMobileMenu()" class="block text-slate-200 hover:text-gold-400 font-semibold py-1.5 flex items-center justify-between">
+                <span>03 Bảo Hiểm Đào Tạo</span> <i class="fa-solid fa-chevron-right text-xs text-slate-600"></i>
+            </a>
+            <a href="#bang-gia" onclick="toggleMobileMenu()" class="block text-slate-200 hover:text-gold-400 font-semibold py-1.5 flex items-center justify-between">
+                <span>Báo Giá Khóa Học</span> <i class="fa-solid fa-chevron-right text-xs text-slate-600"></i>
+            </a>
+            <a href="#danh-vong" onclick="toggleMobileMenu()" class="block text-slate-200 hover:text-gold-400 font-semibold py-1.5 flex items-center justify-between">
+                <span>Đại Sảnh Danh Vọng</span> <i class="fa-solid fa-chevron-right text-xs text-slate-600"></i>
+            </a>
+            <a href="#faqs" onclick="toggleMobileMenu()" class="block text-slate-200 hover:text-gold-400 font-semibold py-1.5 flex items-center justify-between">
+                <span>Hỏi Đáp FAQs</span> <i class="fa-solid fa-chevron-right text-xs text-slate-600"></i>
+            </a>
+            <div class="pt-4 border-t border-white/10 flex flex-col gap-2.5">
                 <button onclick="openLoginModal('login'); toggleMobileMenu()" class="w-full py-3 rounded-xl bg-navy-850 border border-white/15 text-white font-bold text-center">
                     Đăng Nhập Tài Khoản
                 </button>
-                <a href="/dashboard" class="w-full py-3 rounded-xl btn-kha-primary text-white font-bold text-center flex items-center justify-center gap-2">
+                <a href="/dashboard" class="w-full py-3.5 rounded-xl btn-kha-primary text-white font-bold text-center flex items-center justify-center gap-2">
                     <i class="fa-solid fa-rocket"></i> Vào Dashboard Học Tập
                 </a>
                 <a href="https://zalo.me/0914659511" target="_blank" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-center flex items-center justify-center gap-2">
@@ -383,22 +486,21 @@
     </header>
 
     <!-- ============================================================== -->
-    <!-- 4. HERO BANNER: 2-COLUMN KHANHHUNG LAYOUT (CONTENT + FORM BANNER)-->
+    <!-- 4. HERO BANNER: 2-COLUMN KHANHHUNG LAYOUT                      -->
     <!-- ============================================================== -->
-    <section class="relative pt-8 pb-20 overflow-hidden">
-        <!-- Ambient Background Lights & Grid -->
-        <div class="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(255,102,0,0.18),rgba(7,11,25,0))] pointer-events-none"></div>
-        <div class="absolute top-1/4 right-0 w-96 h-96 bg-flame-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute bottom-10 left-0 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
-        
+    <section class="relative pt-6 sm:pt-10 pb-16 sm:pb-24 overflow-hidden z-10">
+        <!-- Floating Aurora Background Blobs -->
+        <div class="aurora-orb-1 absolute top-0 right-10 w-80 sm:w-96 h-80 sm:h-96 bg-flame-500/15 rounded-full blur-[110px] pointer-events-none"></div>
+        <div class="aurora-orb-2 absolute bottom-10 left-5 w-80 sm:w-96 h-80 sm:h-96 bg-purple-600/15 rounded-full blur-[120px] pointer-events-none"></div>
+
         <div class="max-w-7xl mx-auto px-4 sm:px-8 relative z-10">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
                 
                 <!-- LEFT COLUMN: TITLES, FOUNDER QUOTE, VALUE PROPOSITIONS (COL-7) -->
-                <div class="lg:col-span-7 space-y-7 text-left">
+                <div class="lg:col-span-7 space-y-6 sm:space-y-7 text-left reveal-init">
                     
                     <!-- Top Pill Badge -->
-                    <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-flame-500/10 border border-flame-500/30 text-flame-400 text-xs sm:text-sm font-bold uppercase tracking-wider shadow-neon-flame">
+                    <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-flame-500/10 border border-flame-500/30 text-flame-400 text-xs sm:text-sm font-bold uppercase tracking-wider shadow-neon-flame float-slow">
                         <span class="w-2 h-2 rounded-full bg-flame-500 animate-ping"></span>
                         <i class="fa-solid fa-fire text-flame-500"></i>
                         <span>E-Learning Y Khoa Độc Quyền Tại Việt Nam</span>
@@ -406,24 +508,24 @@
 
                     <!-- Main Monumental Heading -->
                     <div class="space-y-3">
-                        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-heading font-black tracking-tight leading-[1.15] text-white">
+                        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-heading font-black tracking-tight leading-[1.12] text-white">
                             E-Learning Y Khoa <br>
                             <span class="txt-gradient-flame">Dzota Academy</span>
                         </h1>
-                        <p class="text-lg sm:text-xl font-heading font-bold text-gold-400">
+                        <p class="text-base sm:text-xl font-heading font-bold text-gold-400 leading-snug">
                             NỀN TẢNG THI CHẠY TRẠM OSCE & NÃO BỘ ANKI HÀNG ĐẦU DÀNH CHO SINH VIÊN Y DƯỢC
                         </p>
                     </div>
 
                     <!-- Subtitle / Mission -->
-                    <p class="text-slate-300 text-base sm:text-lg leading-relaxed max-w-2xl">
+                    <p class="text-slate-300 text-sm sm:text-base lg:text-lg leading-relaxed max-w-2xl">
                         Không còn nỗi sợ thi rớt chạy trạm giải phẫu hay học vẹt ngàn trang sách dày cộm. Dzota trang bị cho bạn hệ thống phản xạ mô phỏng phòng thi thật, ngân hàng 50.000+ câu trắc nghiệm chuẩn Bộ Y Tế và thuật toán Spaced Repetition ghi nhớ vĩnh viễn.
                     </p>
 
-                    <!-- Founder / Lead Mentor Quote Card (Lê Nhật Duy - Y Khoa K26) -->
-                    <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-navy-850 to-navy-900 border border-gold-400/25 flex items-start gap-4 shadow-lg">
+                    <!-- Founder / Lead Mentor Quote Card -->
+                    <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-navy-850 to-navy-900 border border-gold-400/25 flex items-start gap-3.5 sm:gap-4 shadow-lg hover:border-gold-400/50 transition duration-300">
                         <div class="relative flex-shrink-0">
-                            <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-flame-500 to-gold-400 p-[2px]">
+                            <div class="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-flame-500 to-gold-400 p-[2px]">
                                 <div class="w-full h-full rounded-full bg-navy-950 flex items-center justify-center font-heading font-black text-gold-400 text-lg overflow-hidden">
                                     <i class="fa-solid fa-user-doctor text-2xl text-gold-400"></i>
                                 </div>
@@ -431,9 +533,9 @@
                             <span class="absolute -bottom-1 -right-1 bg-emerald-500 text-[9px] font-bold text-white px-1.5 py-0.2 rounded-full border border-navy-950">Active</span>
                         </div>
                         <div class="space-y-1">
-                            <div class="flex items-center gap-2">
-                                <h3 class="font-heading font-extrabold text-white text-base">Lê Nhật Duy</h3>
-                                <span class="text-xs text-gold-400 font-semibold px-2 py-0.5 rounded bg-gold-400/10 border border-gold-400/20">Y Khoa K26 • Founder</span>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h3 class="font-heading font-extrabold text-white text-sm sm:text-base">Lê Nhật Duy</h3>
+                                <span class="text-[11px] text-gold-400 font-semibold px-2 py-0.5 rounded bg-gold-400/10 border border-gold-400/20">Y Khoa K26 • Founder</span>
                             </div>
                             <p class="text-xs sm:text-sm text-slate-300 italic leading-snug">
                                 "Tôi xây dựng Dzota từ chính kinh nghiệm xương máu của sinh viên Y. Học đúng phương pháp, thi chuẩn phản xạ thì 9.0 hay 10.0 trạm OSCE không hề xa vời!"
@@ -441,59 +543,65 @@
                         </div>
                     </div>
 
-                    <!-- Key Pillars Checkmarks (Khanh Hung Style) -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
-                        <div class="flex items-start gap-3">
-                            <div class="w-6 h-6 rounded-lg bg-flame-500/20 text-flame-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <!-- Key Pillars Checkmarks -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <div class="flex items-start gap-2.5">
+                            <div class="w-5 h-5 rounded-md bg-flame-500/20 text-flame-400 flex items-center justify-center flex-shrink-0 mt-0.5">
                                 <i class="fa-solid fa-check text-xs font-black"></i>
                             </div>
-                            <span class="text-sm text-slate-200 font-medium">Hệ thống chạy trạm <strong>DYNEX OSCE 3D</strong> đếm ngược 20s chuẩn phòng thi</span>
+                            <span class="text-xs sm:text-sm text-slate-200">Hệ thống chạy trạm <strong>DYNEX OSCE 3D</strong> đếm ngược 20s chuẩn phòng thi</span>
                         </div>
-                        <div class="flex items-start gap-3">
-                            <div class="w-6 h-6 rounded-lg bg-flame-500/20 text-flame-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <div class="flex items-start gap-2.5">
+                            <div class="w-5 h-5 rounded-md bg-flame-500/20 text-flame-400 flex items-center justify-center flex-shrink-0 mt-0.5">
                                 <i class="fa-solid fa-check text-xs font-black"></i>
                             </div>
-                            <span class="text-sm text-slate-200 font-medium"><strong>50.000+ câu trắc nghiệm</strong> phân loại theo Bloom & ca lâm sàng</span>
+                            <span class="text-xs sm:text-sm text-slate-200"><strong>50.000+ câu trắc nghiệm</strong> phân loại theo Bloom & ca lâm sàng</span>
                         </div>
-                        <div class="flex items-start gap-3">
-                            <div class="w-6 h-6 rounded-lg bg-gold-400/20 text-gold-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <div class="flex items-start gap-2.5">
+                            <div class="w-5 h-5 rounded-md bg-gold-400/20 text-gold-400 flex items-center justify-center flex-shrink-0 mt-0.5">
                                 <i class="fa-solid fa-check text-xs font-black"></i>
                             </div>
-                            <span class="text-sm text-slate-200 font-medium">Thuật toán <strong>Não bộ Anki SM-2</strong> chống quên chi tiết giải phẫu</span>
+                            <span class="text-xs sm:text-sm text-slate-200">Thuật toán <strong>Não bộ Anki SM-2</strong> chống quên chi tiết giải phẫu</span>
                         </div>
-                        <div class="flex items-start gap-3">
-                            <div class="w-6 h-6 rounded-lg bg-gold-400/20 text-gold-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <div class="flex items-start gap-2.5">
+                            <div class="w-5 h-5 rounded-md bg-gold-400/20 text-gold-400 flex items-center justify-center flex-shrink-0 mt-0.5">
                                 <i class="fa-solid fa-check text-xs font-black"></i>
                             </div>
-                            <span class="text-sm text-slate-200 font-medium">Trợ lý <strong>AI NoteBook ND</strong> tóm tắt slide y khoa & sinh đề thi tự động</span>
+                            <span class="text-xs sm:text-sm text-slate-200">Trợ lý <strong>AI NoteBook ND</strong> tóm tắt slide y khoa & sinh đề thi tự động</span>
                         </div>
                     </div>
 
-                    <!-- Statistics Numbers Counter Row -->
-                    <div class="pt-4 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center sm:text-left">
+                    <!-- Statistics Numbers Counter Row (Animated on Scroll) -->
+                    <div id="statsSection" class="pt-4 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center sm:text-left">
                         <div class="space-y-0.5">
-                            <div class="text-2xl sm:text-3xl font-heading font-black text-white">15.000+</div>
+                            <div class="text-2xl sm:text-3xl font-heading font-black text-white">
+                                <span class="stat-number" data-target="15000">0</span>+
+                            </div>
                             <div class="text-xs text-slate-400 font-medium">Sinh Viên Y Dược</div>
                         </div>
                         <div class="space-y-0.5">
-                            <div class="text-2xl sm:text-3xl font-heading font-black text-gold-400">98.6%</div>
+                            <div class="text-2xl sm:text-3xl font-heading font-black text-gold-400">
+                                <span class="stat-number" data-target="98.6" data-decimal="1">0</span>%
+                            </div>
                             <div class="text-xs text-slate-400 font-medium">Đỗ Trạm Điểm A</div>
                         </div>
                         <div class="space-y-0.5">
-                            <div class="text-2xl sm:text-3xl font-heading font-black text-flame-400">50.000+</div>
+                            <div class="text-2xl sm:text-3xl font-heading font-black text-flame-400">
+                                <span class="stat-number" data-target="50000">0</span>+
+                            </div>
                             <div class="text-xs text-slate-400 font-medium">Câu Hỏi Trắc Nghiệm</div>
                         </div>
                         <div class="space-y-0.5">
                             <div class="text-2xl sm:text-3xl font-heading font-black text-emerald-400">24/7</div>
-                            <div class="text-xs text-slate-400 font-medium">Hỗ Trợ Zalo 0914659511</div>
+                            <div class="text-xs text-slate-400 font-medium">Hotline 0914659511</div>
                         </div>
                     </div>
 
                 </div>
 
-                <!-- RIGHT COLUMN: THE FAMOUS KHANHHUNG EMBEDDED AUTH FORM BANNER (COL-5) -->
-                <div class="lg:col-span-5">
-                    <div class="kha-card-gold p-6 sm:p-8 relative overflow-hidden backdrop-blur-xl">
+                <!-- RIGHT COLUMN: THE FAMOUS EMBEDDED AUTH FORM BANNER (COL-5) -->
+                <div class="lg:col-span-5 reveal-init reveal-zoom">
+                    <div class="kha-card-gold p-6 sm:p-8 relative backdrop-blur-2xl">
                         
                         <!-- Top Glowing Crown / Badge -->
                         <div class="flex items-center justify-between pb-5 border-b border-white/10">
@@ -503,7 +611,7 @@
                                 </span>
                                 <h2 class="text-xl sm:text-2xl font-heading font-extrabold text-white mt-1">Bắt Đầu Học Ngay</h2>
                             </div>
-                            <div class="w-10 h-10 rounded-xl bg-flame-500/15 border border-flame-500/30 flex items-center justify-center text-flame-400 shadow-neon-flame">
+                            <div class="w-10 h-10 rounded-xl bg-flame-500/15 border border-flame-500/30 flex items-center justify-center text-flame-400 shadow-neon-flame float-slow">
                                 <i class="fa-solid fa-graduation-cap text-lg"></i>
                             </div>
                         </div>
@@ -544,7 +652,7 @@
                             </div>
                         </div>
 
-                        <!-- GUEST STATE: TABBED LOGIN & REGISTER FORM (KHANHHUNG STYLE) -->
+                        <!-- GUEST STATE: TABBED LOGIN & REGISTER FORM -->
                         <div id="heroAuthState" class="pt-5 space-y-5">
                             
                             <!-- Google 1-Click Fast Sign-In -->
@@ -559,10 +667,10 @@
 
                             <!-- Tabs: Đăng Nhập vs Tạo Tài Khoản -->
                             <div class="flex p-1 bg-navy-950/80 rounded-xl border border-white/10">
-                                <button id="heroTabLogin" onclick="switchHeroTab('login')" class="flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all bg-gradient-to-r from-flame-500 to-flame-600 text-white shadow-sm">
+                                <button id="heroTabLogin" onclick="switchHeroTab('login')" class="flex-1 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all bg-gradient-to-r from-flame-500 to-flame-600 text-white shadow-sm">
                                     Đăng Nhập
                                 </button>
-                                <button id="heroTabRegister" onclick="switchHeroTab('register')" class="flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-300 hover:text-white">
+                                <button id="heroTabRegister" onclick="switchHeroTab('register')" class="flex-1 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-300 hover:text-white">
                                     Tạo Tài Khoản
                                 </button>
                             </div>
@@ -571,7 +679,7 @@
                             <form id="heroAuthForm" onsubmit="handleHeroSubmit(event)" class="space-y-3.5">
                                 <div class="space-y-1">
                                     <label class="text-xs font-semibold text-slate-300 flex items-center justify-between">
-                                        <span>Tài khoản / Email / Số điện thoại:</span>
+                                        <span>Tài khoản / Email / SĐT:</span>
                                     </label>
                                     <div class="relative">
                                         <i class="fa-regular fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
@@ -596,7 +704,7 @@
                                 <!-- Feedback message box -->
                                 <div id="heroAuthMessage" class="hidden text-xs py-2 px-3 rounded-lg font-medium"></div>
 
-                                <!-- Submit Button -->
+                                <!-- Submit Button with interactive Ripple -->
                                 <button type="submit" id="heroSubmitBtn" class="w-full btn-kha-primary py-3.5 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2 mt-2">
                                     <span id="heroSubmitBtnText">ĐĂNG NHẬP VÀO HỆ THỐNG</span>
                                     <i class="fa-solid fa-arrow-right text-xs"></i>
@@ -621,19 +729,19 @@
     </section>
 
     <!-- ============================================================== -->
-    <!-- 5. ĐẠI SẢNH DANH VỌNG (HALL OF FAME - KHANHHUNG SIGNATURE)     -->
+    <!-- 5. ĐẠI SẢNH DANH VỌNG (HALL OF FAME)                           -->
     <!-- ============================================================== -->
-    <section id="danh-vong" class="py-20 relative bg-navy-900/60 border-y border-white/5">
+    <section id="danh-vong" class="py-16 sm:py-24 relative bg-navy-900/60 border-y border-white/5 z-10">
         <div class="max-w-7xl mx-auto px-4 sm:px-8 text-center space-y-12">
             
-            <div class="space-y-3">
+            <div class="space-y-3 reveal-init">
                 <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gold-400/10 border border-gold-400/30 text-gold-400 text-xs font-bold uppercase tracking-wider">
                     <i class="fa-solid fa-trophy text-gold-400"></i> Thành Tích & Chứng Thực Thực Tế
                 </div>
                 <h2 class="text-2xl sm:text-4xl font-heading font-black text-white">
                     ĐẠI SẢNH DANH VỌNG <span class="txt-gradient-gold">DZOTA E-LEARNING</span>
                 </h2>
-                <p class="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto">
+                <p class="text-slate-300 text-xs sm:text-base max-w-2xl mx-auto">
                     Hàng ngàn sinh viên Đại học Y Hà Nội, ĐHYD TP.HCM, Y Khoa Phạm Ngọc Thạch, ĐHYD Huế, ĐHYD Cần Thơ đã bứt phá điểm số chạy trạm OSCE và vượt qua kỳ thi lâm sàng.
                 </p>
             </div>
@@ -642,7 +750,7 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
                 
                 <!-- Student 1 -->
-                <div class="kha-card p-6 space-y-4 border-gold-400/30">
+                <div class="kha-card p-6 space-y-4 border-gold-400/30 reveal-init">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-flame-500 to-gold-400 p-[2px]">
@@ -655,11 +763,11 @@
                                 <p class="text-xs text-gold-400 font-semibold">Y Đa Khoa K25 • ĐHYD TP.HCM</p>
                             </div>
                         </div>
-                        <span class="text-xl font-heading font-black text-gold-400 bg-gold-400/10 px-2.5 py-1 rounded-lg border border-gold-400/30">
+                        <span class="text-lg sm:text-xl font-heading font-black text-gold-400 bg-gold-400/10 px-2.5 py-1 rounded-lg border border-gold-400/30">
                             10.0 OSCE
                         </span>
                     </div>
-                    <p class="text-slate-300 text-sm leading-relaxed italic">
+                    <p class="text-slate-300 text-xs sm:text-sm leading-relaxed italic">
                         "Trước đây mình rất run khi thi chạy trạm giải phẫu vì chỉ có 20 giây mỗi trạm để ghi tên cấu trúc. Luyện trên DYNEX của Dzota 1 tuần là mắt vừa nhìn là tay viết được ngay lập tức. Kết quả trạm giải phẫu 1 mình đạt 10.0 tuyệt đối!"
                     </p>
                     <div class="text-[11px] text-slate-400 font-mono flex items-center gap-2">
@@ -668,7 +776,7 @@
                 </div>
 
                 <!-- Student 2 -->
-                <div class="kha-card p-6 space-y-4 border-flame-500/30">
+                <div class="kha-card p-6 space-y-4 border-flame-500/30 reveal-init">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-flame-500 to-gold-400 p-[2px]">
@@ -681,11 +789,11 @@
                                 <p class="text-xs text-flame-400 font-semibold">Y Khoa K24 • ĐH Y Hà Nội</p>
                             </div>
                         </div>
-                        <span class="text-xl font-heading font-black text-flame-400 bg-flame-500/10 px-2.5 py-1 rounded-lg border border-flame-500/30">
+                        <span class="text-lg sm:text-xl font-heading font-black text-flame-400 bg-flame-500/10 px-2.5 py-1 rounded-lg border border-flame-500/30">
                             9.6 Dược Lý
                         </span>
                     </div>
-                    <p class="text-slate-300 text-sm leading-relaxed italic">
+                    <p class="text-slate-300 text-xs sm:text-sm leading-relaxed italic">
                         "NoteBook AI và ngân hàng câu trắc nghiệm của Dzota thực sự cứu cánh mình trong môn Dược Lý. Mỗi câu hỏi đều có phân tích cơ chế rõ ràng chứ không phải đưa đáp án suông. Cảm ơn anh Duy đã hỗ trợ nhiệt tình qua Zalo!"
                     </p>
                     <div class="text-[11px] text-slate-400 font-mono flex items-center gap-2">
@@ -694,7 +802,7 @@
                 </div>
 
                 <!-- Student 3 -->
-                <div class="kha-card p-6 space-y-4 border-purple-500/30">
+                <div class="kha-card p-6 space-y-4 border-purple-500/30 reveal-init">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-purple-500 to-flame-500 p-[2px]">
@@ -707,11 +815,11 @@
                                 <p class="text-xs text-purple-400 font-semibold">Bác Sĩ Nội Trú Khóa 48</p>
                             </div>
                         </div>
-                        <span class="text-xl font-heading font-black text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded-lg border border-purple-500/30">
+                        <span class="text-lg sm:text-xl font-heading font-black text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded-lg border border-purple-500/30">
                             Top 5 BSNT
                         </span>
                     </div>
-                    <p class="text-slate-300 text-sm leading-relaxed italic">
+                    <p class="text-slate-300 text-xs sm:text-sm leading-relaxed italic">
                         "Hệ thống lặp lại ngắt quãng Anki SM-2 của Dzota giúp mình duy trì lượng kiến thức khổng lồ để thi Bác sĩ nội trú. Đây là nền tảng e-learning Y khoa thiết thực và sát với đề thi nhất mà mình từng sử dụng."
                     </p>
                     <div class="text-[11px] text-slate-400 font-mono flex items-center gap-2">
@@ -725,26 +833,41 @@
     </section>
 
     <!-- ============================================================== -->
-    <!-- 6. SHOWCASE MODULES: DYNEX OSCE, ANKI, KHO ĐỀ, NOTEBOOK AI    -->
+    <!-- 6. INTERACTIVE MULTI-TAB MODULE SHOWCASE                       -->
     <!-- ============================================================== -->
-    <section id="chuong-trinh" class="py-20 relative">
-        <div class="max-w-7xl mx-auto px-4 sm:px-8 space-y-16">
+    <section id="chuong-trinh" class="py-16 sm:py-24 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-8 space-y-12">
             
-            <div class="text-center space-y-3 max-w-3xl mx-auto">
+            <div class="text-center space-y-3 max-w-3xl mx-auto reveal-init">
                 <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-flame-500/10 border border-flame-500/30 text-flame-400 text-xs font-bold uppercase tracking-wider">
                     <i class="fa-solid fa-microchip text-flame-500"></i> Công Nghệ Học Tập Tương Tác
                 </div>
-                <h2 class="text-3xl sm:text-4xl font-heading font-black text-white">
+                <h2 class="text-2xl sm:text-4xl font-heading font-black text-white">
                     4 PHÂN HỆ E-LEARNING <span class="txt-gradient-flame">ĐỘT PHÁ CỦA DZOTA</span>
                 </h2>
-                <p class="text-slate-300 text-sm sm:text-base">
-                    Tích hợp toàn diện từ luyện phản xạ chạy trạm mô phỏng phòng thi thật đến đào sâu phân tích lâm sàng thông minh.
+                <p class="text-slate-300 text-xs sm:text-base">
+                    Tích hợp toàn diện từ luyện phản xạ chạy trạm mô phỏng phòng thi thật đến đào sâu phân tích lâm sàng thông minh. Bấm từng tab để trải nghiệm tính năng trực tiếp:
                 </p>
+
+                <!-- Interactive Tab Selector (Khanh Hung / Apple Hybrid) -->
+                <div class="flex items-center justify-center gap-2 pt-4 overflow-x-auto pb-2 scrollbar-none">
+                    <button onclick="selectModuleTab('osce')" id="tabBtnOsce" class="module-tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-flame-500 text-white shadow-neon-flame transition">
+                        ⚡ DYNEX OSCE Chạy Trạm
+                    </button>
+                    <button onclick="selectModuleTab('quiz')" id="tabBtnQuiz" class="module-tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-navy-850 text-slate-300 hover:text-white transition">
+                        📝 50.000+ Trắc Nghiệm
+                    </button>
+                    <button onclick="selectModuleTab('anki')" id="tabBtnAnki" class="module-tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-navy-850 text-slate-300 hover:text-white transition">
+                        🧠 Não Bộ Anki SM-2
+                    </button>
+                    <button onclick="selectModuleTab('ai')" id="tabBtnAi" class="module-tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-navy-850 text-slate-300 hover:text-white transition">
+                        🤖 AI NoteBook ND
+                    </button>
+                </div>
             </div>
 
-            <!-- MODULE 1: DYNEX OSCE (IMAGE TIÊU BẢN GIẢI PHẪU + TIMER 20S THỰC CHIẾN) -->
-            <div id="dynex-osce" class="kha-card p-6 sm:p-10 border-flame-500/40 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                
+            <!-- TAB PANE 1: DYNEX OSCE -->
+            <div id="modulePaneOsce" class="module-pane kha-card p-6 sm:p-10 border-flame-500/40 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center reveal-init">
                 <div class="lg:col-span-6 space-y-5">
                     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-flame-500/20 text-flame-400 text-xs font-bold uppercase">
                         <i class="fa-solid fa-bolt"></i> Module Trọng Tâm Số 1
@@ -752,10 +875,10 @@
                     <h3 class="text-2xl sm:text-3xl font-heading font-extrabold text-white">
                         DYNEX — Hệ Thống Thi Chạy Trạm Giải Phẫu AI (OSCE)
                     </h3>
-                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+                    <p class="text-slate-300 text-xs sm:text-base leading-relaxed">
                         Mô phỏng 100% áp lực phòng thi chạy trạm tại các trường Đại học Y Dược: chuông báo đổi trạm, bộ đếm ngược 20 giây, che giấu cấu trúc chỉ điểm (ví dụ: Vị trí #1 là cấu trúc gì?), và tự đánh giá độ nhớ não bộ với phím cách Space.
                     </p>
-                    <ul class="space-y-2.5 text-sm text-slate-200">
+                    <ul class="space-y-2.5 text-xs sm:text-sm text-slate-200">
                         <li class="flex items-center gap-2.5">
                             <i class="fa-solid fa-circle-check text-flame-500"></i>
                             <span>Tiêu bản giải phẫu thực tế: Xương đầu mặt cổ, lồng ngực, chi trên, chi dưới.</span>
@@ -770,52 +893,47 @@
                         </li>
                     </ul>
                     <div class="pt-2 flex flex-wrap gap-3">
-                        <a href="/dynex" class="btn-kha-primary px-6 py-3 rounded-xl font-bold text-sm inline-flex items-center gap-2">
+                        <a href="/dynex" class="btn-kha-primary px-5 sm:px-6 py-3 rounded-xl font-bold text-xs sm:text-sm inline-flex items-center gap-2">
                             <span>Vào Phòng Thi Chạy Trạm</span>
                             <i class="fa-solid fa-play text-xs"></i>
                         </a>
-                        <button onclick="revealDemoAnswer()" class="px-5 py-3 rounded-xl bg-navy-850 hover:bg-navy-800 text-gold-400 font-bold text-sm border border-gold-400/30 transition">
+                        <button onclick="revealDemoAnswer()" class="px-4 sm:px-5 py-3 rounded-xl bg-navy-850 hover:bg-navy-800 text-gold-400 font-bold text-xs sm:text-sm border border-gold-400/30 transition active:scale-95">
                             <i class="fa-regular fa-lightbulb mr-1.5"></i> Thử Lật Đáp Án (#1)
                         </button>
                     </div>
                 </div>
 
-                <!-- LIVE INTERACTIVE ANATOMICAL PREVIEW CARD (DƯÃ TRÊN ẢNH TIÊU BẢN XƯƠNG ĐẦU MẶT CỔ CỦA DZOTA) -->
+                <!-- OSCE STATION GRAPHIC SIMULATION -->
                 <div class="lg:col-span-6">
                     <div class="bg-navy-950 rounded-2xl p-4 sm:p-5 border border-white/10 shadow-2xl relative">
-                        <!-- Top Bar of OSCE Station -->
                         <div class="flex items-center justify-between pb-3 border-b border-white/10 text-xs">
                             <div class="flex items-center gap-2">
-                                <span class="w-3 h-3 rounded-full bg-rose-500 animate-ping"></span>
-                                <span class="font-heading font-bold text-white uppercase">GIẢI PHẪU 1 • ĐẦU MẶT CỔ</span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+                                <span class="font-heading font-bold text-white uppercase text-[11px] sm:text-xs">GIẢI PHẪU 1 • ĐẦU MẶT CỔ</span>
                             </div>
-                            <div class="flex items-center gap-2 bg-rose-500/15 border border-rose-500/30 text-rose-400 px-2.5 py-1 rounded-full font-mono font-bold">
+                            <div class="flex items-center gap-1.5 bg-rose-500/15 border border-rose-500/30 text-rose-400 px-2.5 py-1 rounded-full font-mono font-bold text-xs">
                                 <i class="fa-regular fa-clock"></i>
                                 <span id="demoTimer">18.4s</span>
                             </div>
                         </div>
 
-                        <!-- OSCE Anatomical Station Graphic -->
-                        <div class="my-4 relative rounded-xl overflow-hidden bg-navy-900 border border-white/10 flex flex-col items-center justify-center p-3 text-center">
-                            <div class="w-full flex justify-between items-center px-2 py-1 text-[11px] text-slate-400">
+                        <div class="my-3 relative rounded-xl overflow-hidden bg-navy-900 border border-white/10 flex flex-col items-center justify-center p-3 text-center">
+                            <div class="w-full flex justify-between items-center px-1 text-[11px] text-slate-400">
                                 <span>Tiêu bản số 01: 4 xương đơn & 2 xương đôi</span>
                                 <span class="text-gold-400 font-bold">CHỈ ĐIỂM: ? #1</span>
                             </div>
                             
-                            <!-- Diagram Mock with Pin -->
-                            <div class="w-full h-48 bg-gradient-to-b from-navy-850 to-navy-900 rounded-lg flex items-center justify-center relative overflow-hidden my-2">
+                            <div class="w-full h-44 sm:h-52 bg-gradient-to-b from-navy-850 to-navy-900 rounded-lg flex items-center justify-center relative overflow-hidden my-2">
                                 <div class="text-center p-4">
-                                    <i class="fa-solid fa-skull text-5xl text-slate-600 mb-2"></i>
+                                    <i class="fa-solid fa-skull text-4xl sm:text-5xl text-slate-600 mb-2"></i>
                                     <p class="text-xs text-slate-400">Sơ đồ xương đầu mặt cổ (Chuẩn đề thi chạy trạm)</p>
                                 </div>
-                                <!-- Interactive Masked Pin #1 -->
-                                <div class="absolute top-1/3 left-1/2 -translate-x-1/2 bg-gold-400 text-navy-950 font-black px-4 py-2 rounded-lg shadow-neon-gold border-2 border-white animate-bounce cursor-pointer" onclick="revealDemoAnswer()">
-                                    <div class="text-[10px] uppercase tracking-wider">Chỉ điểm</div>
-                                    <div class="text-sm">? VỊ TRÍ #1</div>
+                                <div class="absolute top-1/3 left-1/2 -translate-x-1/2 bg-gold-400 text-navy-950 font-black px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow-neon-gold border-2 border-white animate-bounce cursor-pointer active:scale-95" onclick="revealDemoAnswer()">
+                                    <div class="text-[9px] sm:text-[10px] uppercase tracking-wider">Chỉ điểm</div>
+                                    <div class="text-xs sm:text-sm">? VỊ TRÍ #1</div>
                                 </div>
                             </div>
 
-                            <!-- Reveal box -->
                             <div id="demoAnswerBox" class="w-full p-3 bg-navy-850 rounded-xl border border-white/10 text-left text-xs transition-all">
                                 <span class="text-slate-400">Câu hỏi trạm: </span>
                                 <strong class="text-white">Vị trí #1 là cấu trúc giải phẫu gì?</strong>
@@ -825,136 +943,208 @@
                             </div>
                         </div>
 
-                        <!-- Bottom OSCE Controls -->
-                        <div class="flex items-center justify-between pt-2 text-xs text-slate-400">
+                        <div class="flex items-center justify-between pt-1 text-xs text-slate-400">
                             <span class="flex items-center gap-1.5">
-                                <i class="fa-solid fa-brain text-gold-400"></i>
-                                Hàng đợi: 6 thẻ trạm
+                                <i class="fa-solid fa-brain text-gold-400"></i> Hàng đợi: 6 thẻ trạm
                             </span>
-                            <span class="text-emerald-400 font-bold">
-                                Đã thuộc: 5/6 (83%)
-                            </span>
+                            <span class="text-emerald-400 font-bold">Đã thuộc: 5/6 (83%)</span>
                         </div>
                     </div>
                 </div>
-
             </div>
 
-            <!-- MODULE 2 & 3 & 4 IN 3-COLUMN BENTO GRID -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                
-                <!-- Module 2: 50.000+ Trắc Nghiệm Y Khoa -->
-                <div class="kha-card p-6 space-y-4">
-                    <div class="w-12 h-12 rounded-xl bg-flame-500/15 border border-flame-500/30 text-flame-400 flex items-center justify-center text-xl shadow-neon-flame">
-                        <i class="fa-solid fa-clipboard-question"></i>
+            <!-- TAB PANE 2: 50.000+ TRẮC NGHIỆM -->
+            <div id="modulePaneQuiz" class="module-pane kha-card p-6 sm:p-10 border-gold-400/40 hidden grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                <div class="lg:col-span-6 space-y-5">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-gold-400/20 text-gold-400 text-xs font-bold uppercase">
+                        <i class="fa-solid fa-clipboard-question"></i> Module Ngân Hàng Đề Thi
                     </div>
-                    <h3 class="font-heading font-extrabold text-xl text-white">
-                        Ngân Hàng 50.000+ Câu Trắc Nghiệm Chuẩn Bloom
+                    <h3 class="text-2xl sm:text-3xl font-heading font-extrabold text-white">
+                        50.000+ Câu Trắc Nghiệm Chuẩn Bloom & Bộ Y Tế
                     </h3>
-                    <p class="text-sm text-slate-300 leading-relaxed">
-                        Phân loại chi tiết từ Nhận biết, Thông hiểu đến Phân tích ca lâm sàng. Đầy đủ các bộ môn: Giải Phẫu, Sinh Lý, Hóa Sinh, Dược Lý, Ngoại Bệnh Lý, Nội Khoa, Sản Nhi.
+                    <p class="text-slate-300 text-xs sm:text-base leading-relaxed">
+                        Đầy đủ từ Nhận biết, Thông hiểu đến Phân tích ca lâm sàng phức tạp. Mỗi câu hỏi đều có lời giải thích chi tiết, cơ chế bệnh sinh và dẫn nguồn sách giáo trình Y Hà Nội, ĐHYD TP.HCM.
                     </p>
-                    <a href="/tests" class="text-xs font-bold text-flame-400 hover:text-flame-300 inline-flex items-center gap-1 transition">
-                        Làm đề thi trắc nghiệm <i class="fa-solid fa-arrow-right text-[10px]"></i>
-                    </a>
-                </div>
-
-                <!-- Module 3: Não Bộ Anki SM-2 -->
-                <div class="kha-card p-6 space-y-4">
-                    <div class="w-12 h-12 rounded-xl bg-gold-400/15 border border-gold-400/30 text-gold-400 flex items-center justify-center text-xl shadow-neon-gold">
-                        <i class="fa-solid fa-brain"></i>
+                    <div class="pt-2">
+                        <a href="/tests" class="btn-kha-gold px-5 py-3 rounded-xl font-bold text-xs sm:text-sm inline-flex items-center gap-2">
+                            <span>Làm Thử Đề Thi Ngay</span>
+                            <i class="fa-solid fa-arrow-right text-xs"></i>
+                        </a>
                     </div>
-                    <h3 class="font-heading font-extrabold text-xl text-white">
-                        Thuật Toán Lặp Lại Ngắt Quãng Anki SM-2
-                    </h3>
-                    <p class="text-sm text-slate-300 leading-relaxed">
-                        Hệ thống tự động tính toán thời gian vàng não bộ chuẩn bị quên để nhắc bạn ôn lại (1 ngày, 3 ngày, 7 ngày, 14 ngày). Biến kiến thức thi cử thành trí nhớ dài hạn vĩnh viễn.
-                    </p>
-                    <a href="/dashboard" class="text-xs font-bold text-gold-400 hover:text-gold-300 inline-flex items-center gap-1 transition">
-                        Khám phá thẻ Anki <i class="fa-solid fa-arrow-right text-[10px]"></i>
-                    </a>
                 </div>
-
-                <!-- Module 4: NoteBook AI Y Khoa -->
-                <div class="kha-card p-6 space-y-4">
-                    <div class="w-12 h-12 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-400 flex items-center justify-center text-xl shadow-neon-purple">
-                        <i class="fa-solid fa-robot"></i>
+                <!-- Interactive Sample Quiz Box -->
+                <div class="lg:col-span-6 bg-navy-950 rounded-2xl p-5 border border-white/10 space-y-3">
+                    <div class="flex justify-between items-center text-xs text-slate-400 pb-2 border-b border-white/10">
+                        <span class="text-gold-400 font-bold">Dược Lý Học • Thuốc Tim Mạch</span>
+                        <span>Bloom 3: Ứng dụng</span>
                     </div>
-                    <h3 class="font-heading font-extrabold text-xl text-white">
-                        Trợ Lý NoteBook AI Y Khoa (Gemini)
-                    </h3>
-                    <p class="text-sm text-slate-300 leading-relaxed">
-                        Chỉ cần tải lên file slide bài giảng hoặc tài liệu PDF, NoteBook AI sẽ tự động phân tích ca bệnh lâm sàng, trích xuất điểm mấu chốt và tạo bộ câu hỏi ôn thi tương ứng.
+                    <p class="text-sm font-semibold text-white">
+                        Bệnh nhân nam 58 tuổi có tiền sử suy tim EF 35% và hen phế quản. Nhóm thuốc ức chế beta nào sau đây CHỐNG CHỈ ĐỊNH tuyệt đối?
                     </p>
-                    <a href="/notebook" class="text-xs font-bold text-purple-400 hover:text-purple-300 inline-flex items-center gap-1 transition">
-                        Mở Trợ lý NoteBook AI <i class="fa-solid fa-arrow-right text-[10px]"></i>
-                    </a>
+                    <div class="space-y-2 pt-1 text-xs">
+                        <button onclick="handleSampleQuiz(this, false)" class="quiz-opt w-full p-2.5 rounded-lg bg-navy-850 hover:bg-navy-800 border border-white/10 text-left transition flex justify-between items-center">
+                            <span>A. Bisoprolol (chọn lọc beta 1)</span>
+                            <span class="status-icon"></span>
+                        </button>
+                        <button onclick="handleSampleQuiz(this, true)" class="quiz-opt w-full p-2.5 rounded-lg bg-navy-850 hover:bg-navy-800 border border-white/10 text-left transition flex justify-between items-center">
+                            <span>B. Propranolol (không chọn lọc, chẹn cả beta 2 gây co thắt phế quản)</span>
+                            <span class="status-icon"></span>
+                        </button>
+                        <button onclick="handleSampleQuiz(this, false)" class="quiz-opt w-full p-2.5 rounded-lg bg-navy-850 hover:bg-navy-800 border border-white/10 text-left transition flex justify-between items-center">
+                            <span>C. Metoprolol succinate</span>
+                            <span class="status-icon"></span>
+                        </button>
+                    </div>
+                    <div id="quizExplain" class="hidden p-3 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-xs text-emerald-300">
+                        ✓ <strong>CHÍNH XÁC!</strong> Propranolol chẹn thụ thể beta-2 trên cơ trơn phế quản làm khởi phát cơn hen cấp tính đe dọa tính mạng.
+                    </div>
                 </div>
+            </div>
 
+            <!-- TAB PANE 3: ANKI SM-2 -->
+            <div id="modulePaneAnki" class="module-pane kha-card p-6 sm:p-10 border-purple-500/40 hidden grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                <div class="lg:col-span-6 space-y-5">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-purple-500/20 text-purple-400 text-xs font-bold uppercase">
+                        <i class="fa-solid fa-brain"></i> Trí Nhớ Vĩnh Viễn
+                    </div>
+                    <h3 class="text-2xl sm:text-3xl font-heading font-extrabold text-white">
+                        Thuật Toán Lặp Lại Ngắt Quãng Não Bộ (Anki SM-2)
+                    </h3>
+                    <p class="text-slate-300 text-xs sm:text-base leading-relaxed">
+                        Đường cong lãng quên Ebbinghaus chứng minh não bạn quên 70% kiến thức sau 24h. Dzota tự động tính toán chính xác chu kỳ bạn sắp quên để gửi thông báo ôn lại, biến 10.000 chi tiết giải phẫu thành phản xạ tiềm thức.
+                    </p>
+                    <div class="pt-2">
+                        <a href="/dashboard" class="btn-kha-primary px-5 py-3 rounded-xl font-bold text-xs sm:text-sm inline-flex items-center gap-2">
+                            <span>Mở Bàn Học Anki</span>
+                            <i class="fa-solid fa-arrow-right text-xs"></i>
+                        </a>
+                    </div>
+                </div>
+                <!-- Interactive Anki Card Flip Simulation -->
+                <div class="lg:col-span-6 bg-navy-950 rounded-2xl p-6 border border-white/10 text-center space-y-4">
+                    <div class="text-xs text-slate-400 flex justify-between">
+                        <span>THẺ SỐ #42 / 120</span>
+                        <span class="text-purple-400 font-bold">Giải Phẫu Thần Kinh</span>
+                    </div>
+                    <div id="ankiCardBox" onclick="flipAnkiCard()" class="p-8 rounded-xl bg-gradient-to-b from-navy-850 to-navy-900 border border-purple-500/30 cursor-pointer min-h-[140px] flex flex-col justify-center items-center shadow-lg transition-transform active:scale-98">
+                        <div id="ankiFront" class="space-y-2">
+                            <span class="text-xs uppercase font-bold text-gold-400">MẶT TRƯỚC (BẤM ĐỂ LẬT)</span>
+                            <p class="text-base font-bold text-white">Dây thần kinh sọ số VII (thần kinh mặt) chui ra ngoài sọ qua lỗ nào?</p>
+                        </div>
+                        <div id="ankiBack" class="space-y-2 hidden">
+                            <span class="text-xs uppercase font-bold text-emerald-400">MẶT SAU (ĐÁP ÁN)</span>
+                            <p class="text-base font-bold text-emerald-300">LỖ TRÂM CHŨM (Stylomastoid foramen)</p>
+                            <p class="text-[11px] text-slate-400">Ghi chú: Đi qua ống tai trong, qua xương đá rồi thoát ra tại lỗ trâm chũm.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 justify-center text-xs">
+                        <button onclick="rateAnki(1)" class="px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30 transition">Lặp lại (&lt;1m)</button>
+                        <button onclick="rateAnki(2)" class="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 transition">Khó (1 ngày)</button>
+                        <button onclick="rateAnki(3)" class="px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 transition">Tốt (3 ngày)</button>
+                        <button onclick="rateAnki(4)" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 transition">Dễ (7 ngày)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB PANE 4: NOTEBOOK AI -->
+            <div id="modulePaneAi" class="module-pane kha-card p-6 sm:p-10 border-blue-500/40 hidden grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                <div class="lg:col-span-6 space-y-5">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-blue-500/20 text-blue-400 text-xs font-bold uppercase">
+                        <i class="fa-solid fa-robot"></i> Trí Tuệ Nhân Tạo
+                    </div>
+                    <h3 class="text-2xl sm:text-3xl font-heading font-extrabold text-white">
+                        Trợ Lý NoteBook AI Y Khoa (Gemini 3.8 Flash)
+                    </h3>
+                    <p class="text-slate-300 text-xs sm:text-base leading-relaxed">
+                        Tải lên slide bài giảng PowerPoint hoặc tài liệu PDF, Trợ lý AI NoteBook ND tự động nhận diện các ca lâm sàng, tóm tắt chẩn đoán phân biệt và tự sinh ra các câu trắc nghiệm kiểm tra độ hiểu bài ngay lập tức.
+                    </p>
+                    <div class="pt-2">
+                        <a href="/notebook" class="btn-kha-primary px-5 py-3 rounded-xl font-bold text-xs sm:text-sm inline-flex items-center gap-2">
+                            <span>Khám Phá NoteBook AI</span>
+                            <i class="fa-solid fa-arrow-right text-xs"></i>
+                        </a>
+                    </div>
+                </div>
+                <!-- Interactive AI Chat / Scan Preview -->
+                <div class="lg:col-span-6 bg-navy-950 rounded-2xl p-5 border border-white/10 space-y-3 font-mono text-xs">
+                    <div class="flex items-center gap-2 text-slate-400 border-b border-white/10 pb-2">
+                        <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+                        <span class="text-white font-bold">NoteBook ND • AI Live Assistant</span>
+                    </div>
+                    <div class="p-3 rounded-lg bg-navy-900 border border-white/5 text-slate-300">
+                        <span class="text-blue-400">Tài liệu đã nạp:</span> Slide_Benh_Hoc_Ngoai_Khao_Viem_Ruot_Thua.pdf
+                    </div>
+                    <div class="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-200 space-y-1">
+                        <div class="font-bold text-gold-400">🤖 AI Đã Tóm Tắt 3 Điểm Cốt Lõi:</div>
+                        <div>1. Điểm đau MacBurney và dấu hiệu Rovsing dương tính.</div>
+                        <div>2. Tam chứng Dieulafoy: Đau hố chậu phải + Sốt nhẹ + Tăng cảm giác da.</div>
+                        <div>3. Đã tạo 15 câu trắc nghiệm tương ứng cho buổi thi!</div>
+                    </div>
+                </div>
             </div>
 
         </div>
     </section>
 
     <!-- ============================================================== -->
-    <!-- 7. 03 BẢO HIỂM CHO QUYẾT ĐỊNH CỦA BẠN (KHANHHUNG TRADEMARK)    -->
+    <!-- 7. 03 BẢO HIỂM CHO QUYẾT ĐỊNH CỦA BẠN                         -->
     <!-- ============================================================== -->
-    <section id="bao-hiem" class="py-20 relative bg-gradient-to-b from-navy-950 via-navy-900 to-navy-950 border-t border-white/5">
-        <div class="max-w-7xl mx-auto px-4 sm:px-8 space-y-14">
+    <section id="bao-hiem" class="py-16 sm:py-24 relative bg-gradient-to-b from-navy-950 via-navy-900 to-navy-950 border-t border-white/5 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-8 space-y-12">
             
-            <div class="text-center space-y-3 max-w-3xl mx-auto">
+            <div class="text-center space-y-3 max-w-3xl mx-auto reveal-init">
                 <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gold-400/10 border border-gold-400/30 text-gold-400 text-xs font-bold uppercase tracking-wider">
                     <i class="fa-solid fa-shield-halved text-gold-400"></i> Cam Kết Tuyệt Đối
                 </div>
-                <h2 class="text-3xl sm:text-5xl font-heading font-black text-white leading-tight">
+                <h2 class="text-2xl sm:text-5xl font-heading font-black text-white leading-tight">
                     Để Dễ Dàng Hơn Cho Quyết Định Của Bạn, <br>
                     <span class="txt-gradient-gold">Dzota Cung Cấp 03 BẢO HIỂM:</span>
                 </h2>
-                <p class="text-slate-300 text-sm sm:text-base">
+                <p class="text-slate-300 text-xs sm:text-base">
                     Chúng tôi thấu hiểu những khó khăn và áp lực học tập của sinh viên Y. Đây là 3 cam kết danh dự từ Tác giả Lê Nhật Duy (Y Khoa K26).
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
                 
                 <!-- BẢO HIỂM 01 -->
-                <div class="kha-card p-8 space-y-5 border-flame-500/40 relative">
+                <div class="kha-card p-6 sm:p-8 space-y-4 sm:space-y-5 border-flame-500/40 relative reveal-init">
                     <div class="text-4xl font-heading font-black text-flame-500/20 absolute top-4 right-6">01</div>
-                    <div class="w-14 h-14 rounded-2xl bg-flame-500/20 text-flame-400 flex items-center justify-center text-2xl shadow-neon-flame">
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-flame-500/20 text-flame-400 flex items-center justify-center text-xl sm:text-2xl shadow-neon-flame">
                         <i class="fa-solid fa-medal"></i>
                     </div>
-                    <h3 class="font-heading font-black text-xl text-white">
+                    <h3 class="font-heading font-black text-lg sm:text-xl text-white">
                         Bảo Hiểm 01: <br><span class="text-flame-400">BẢO HIỂM ĐIỂM SỐ CHẠY TRẠM</span>
                     </h3>
-                    <p class="text-slate-300 text-sm leading-relaxed">
+                    <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
                         Luyện tập đủ các trạm tiêu bản trên DYNEX theo đúng hướng dẫn, nếu bạn không tự tin nhận diện cấu trúc giải phẫu dưới 15 giây khi vào phòng thi thực tế, chúng tôi sẽ hoàn trả 100% học phí hoặc cấp quyền học lại miễn phí.
                     </p>
                 </div>
 
                 <!-- BẢO HIỂM 02 -->
-                <div class="kha-card-gold p-8 space-y-5 relative">
+                <div class="kha-card-gold p-6 sm:p-8 space-y-4 sm:space-y-5 relative reveal-init">
                     <div class="text-4xl font-heading font-black text-gold-400/20 absolute top-4 right-6">02</div>
-                    <div class="w-14 h-14 rounded-2xl bg-gold-400/20 text-gold-400 flex items-center justify-center text-2xl shadow-neon-gold">
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gold-400/20 text-gold-400 flex items-center justify-center text-xl sm:text-2xl shadow-neon-gold">
                         <i class="fa-solid fa-arrows-rotate"></i>
                     </div>
-                    <h3 class="font-heading font-black text-xl text-white">
+                    <h3 class="font-heading font-black text-lg sm:text-xl text-white">
                         Bảo Hiểm 02: <br><span class="text-gold-400">CẬP NHẬT ĐỀ THI LIÊN TỤC</span>
                     </h3>
-                    <p class="text-slate-300 text-sm leading-relaxed">
+                    <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
                         Không chỉ dừng lại ở ngân hàng có sẵn, toàn bộ đề thi chạy trạm và trắc nghiệm từ các trường Y Hà Nội, ĐHYD TP.HCM, ĐHYD Huế... luôn được bổ sung và cập nhật miễn phí theo từng đợt thi mới nhất trong năm học.
                     </p>
                 </div>
 
                 <!-- BẢO HIỂM 03 -->
-                <div class="kha-card p-8 space-y-5 border-emerald-500/40 relative">
+                <div class="kha-card p-6 sm:p-8 space-y-4 sm:space-y-5 border-emerald-500/40 relative reveal-init">
                     <div class="text-4xl font-heading font-black text-emerald-500/20 absolute top-4 right-6">03</div>
-                    <div class="w-14 h-14 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl">
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl sm:text-2xl">
                         <i class="fa-solid fa-headset"></i>
                     </div>
-                    <h3 class="font-heading font-black text-xl text-white">
+                    <h3 class="font-heading font-black text-lg sm:text-xl text-white">
                         Bảo Hiểm 03: <br><span class="text-emerald-400">ĐỒNG HÀNH 1-1 QUA ZALO</span>
                     </h3>
-                    <p class="text-slate-300 text-sm leading-relaxed">
+                    <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
                         Bạn không bao giờ phải học một mình. Mọi vướng mắc về cấu trúc giải phẫu, cơ chế thuốc hay phương pháp ôn thi đều được chính tác giả Lê Nhật Duy và đội ngũ mentor hỗ trợ trực tiếp qua Zalo Hotline <strong>0914659511</strong>.
                     </p>
                 </div>
@@ -967,28 +1157,28 @@
     <!-- ============================================================== -->
     <!-- 8. PRICING & MEMBERSHIP (KHANHHUNG STYLE)                      -->
     <!-- ============================================================== -->
-    <section id="bang-gia" class="py-20 relative">
-        <div class="max-w-7xl mx-auto px-4 sm:px-8 space-y-16">
+    <section id="bang-gia" class="py-16 sm:py-24 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-8 space-y-12 sm:space-y-16">
             
-            <div class="text-center space-y-3 max-w-2xl mx-auto">
+            <div class="text-center space-y-3 max-w-2xl mx-auto reveal-init">
                 <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-flame-500/10 border border-flame-500/30 text-flame-400 text-xs font-bold uppercase tracking-wider">
                     <i class="fa-solid fa-tags text-flame-500"></i> Bảng Giá Siêu Ưu Đãi
                 </div>
-                <h2 class="text-3xl sm:text-4xl font-heading font-black text-white">
+                <h2 class="text-2xl sm:text-4xl font-heading font-black text-white">
                     GÓI E-LEARNING <span class="txt-gradient-flame">DZOTA ACADEMY</span>
                 </h2>
-                <p class="text-slate-300 text-sm sm:text-base">
+                <p class="text-slate-300 text-xs sm:text-base">
                     Chi phí cực kỳ sinh viên, chất lượng đào tạo và công nghệ vượt trội. Đầu tư nhỏ cho thành tích học tập và sự nghiệp Y khoa vững chắc.
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-stretch">
                 
                 <!-- GÓI MIỄN PHÍ -->
-                <div class="kha-card p-8 flex flex-col justify-between space-y-6">
+                <div class="kha-card p-6 sm:p-8 flex flex-col justify-between space-y-6 reveal-init">
                     <div class="space-y-4">
                         <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Trải Nghiệm</div>
-                        <h3 class="font-heading font-extrabold text-2xl text-white">Miễn Phí</h3>
+                        <h3 class="font-heading font-extrabold text-xl sm:text-2xl text-white">Miễn Phí</h3>
                         <div class="text-3xl font-heading font-black text-white">0đ</div>
                         <p class="text-xs text-slate-400">Thích hợp cho sinh viên bắt đầu trải nghiệm giao diện và thi thử.</p>
                         
@@ -1007,21 +1197,21 @@
                             </div>
                         </div>
                     </div>
-                    <button onclick="openLoginModal('register')" class="w-full py-3 rounded-xl border border-white/15 bg-navy-850 hover:bg-navy-800 text-white font-bold text-sm transition">
+                    <button onclick="openLoginModal('register')" class="w-full py-3 rounded-xl border border-white/15 bg-navy-850 hover:bg-navy-800 text-white font-bold text-xs sm:text-sm transition active:scale-95">
                         Đăng Ký Học Thử
                     </button>
                 </div>
 
                 <!-- GÓI PRO Y KHOA (HOT) -->
-                <div class="kha-card-gold p-8 flex flex-col justify-between space-y-6 relative scale-105 z-10 shadow-neon-flame">
-                    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-flame-500 to-gold-400 text-navy-950 text-[11px] font-black uppercase tracking-wider px-4 py-1 rounded-full shadow-lg">
+                <div class="kha-card-gold p-6 sm:p-8 flex flex-col justify-between space-y-6 relative md:scale-105 z-10 shadow-neon-flame reveal-init">
+                    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-flame-500 to-gold-400 text-navy-950 text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-4 py-1 rounded-full shadow-lg">
                         🔥 GÓI ĐƯỢC CHỌN NHIỀU NHẤT
                     </div>
                     <div class="space-y-4 pt-2">
                         <div class="text-xs font-bold uppercase tracking-wider text-gold-400">1 Năm Học Tập</div>
-                        <h3 class="font-heading font-black text-2xl text-white">Pro Y Khoa</h3>
+                        <h3 class="font-heading font-black text-xl sm:text-2xl text-white">Pro Y Khoa</h3>
                         <div class="flex items-baseline gap-2">
-                            <span class="text-4xl font-heading font-black text-gold-400">199.000đ</span>
+                            <span class="text-3xl sm:text-4xl font-heading font-black text-gold-400">199.000đ</span>
                             <span class="text-xs text-slate-400 line-through">499.000đ</span>
                         </div>
                         <p class="text-xs text-slate-300">Đầy đủ tính năng bứt phá trạm thi giải phẫu và trắc nghiệm trong cả năm học.</p>
@@ -1045,18 +1235,18 @@
                             </div>
                         </div>
                     </div>
-                    <a href="https://zalo.me/0914659511?text=Toi%20muon%20dang%20ky%20Goi%20Pro%20Y%20Khoa%20199k" target="_blank" class="w-full btn-kha-primary py-3.5 rounded-xl text-center text-white font-extrabold text-sm block">
+                    <a href="https://zalo.me/0914659511?text=Toi%20muon%20dang%20ky%20Goi%20Pro%20Y%20Khoa%20199k" target="_blank" class="w-full btn-kha-primary py-3.5 rounded-xl text-center text-white font-extrabold text-xs sm:text-sm block">
                         ĐĂNG KÝ GÓI PRO 🚀
                     </a>
                 </div>
 
                 <!-- GÓI VIP TRỌN ĐỜI -->
-                <div class="kha-card p-8 flex flex-col justify-between space-y-6 border-purple-500/40">
+                <div class="kha-card p-6 sm:p-8 flex flex-col justify-between space-y-6 border-purple-500/40 reveal-init">
                     <div class="space-y-4">
                         <div class="text-xs font-bold uppercase tracking-wider text-purple-400">Suốt Cả 6 Năm Y</div>
-                        <h3 class="font-heading font-extrabold text-2xl text-white">VIP Trọn Đời</h3>
+                        <h3 class="font-heading font-extrabold text-xl sm:text-2xl text-white">VIP Trọn Đời</h3>
                         <div class="flex items-baseline gap-2">
-                            <span class="text-4xl font-heading font-black text-purple-400">399.000đ</span>
+                            <span class="text-3xl sm:text-4xl font-heading font-black text-purple-400">399.000đ</span>
                             <span class="text-xs text-slate-400 line-through">999.000đ</span>
                         </div>
                         <p class="text-xs text-slate-400">Dành cho sinh viên muốn sở hữu vĩnh viễn kho tàng đề thi từ Y1 đến Bác sĩ nội trú.</p>
@@ -1080,7 +1270,7 @@
                             </div>
                         </div>
                     </div>
-                    <a href="https://zalo.me/0914659511?text=Toi%20muon%20dang%20ky%20Goi%20VIP%20Tron%20Doi%20399k" target="_blank" class="w-full btn-kha-gold py-3 rounded-xl text-center text-navy-950 font-black text-sm block">
+                    <a href="https://zalo.me/0914659511?text=Toi%20muon%20dang%20ky%20Goi%20VIP%20Tron%20Doi%20399k" target="_blank" class="w-full btn-kha-gold py-3 rounded-xl text-center text-navy-950 font-black text-xs sm:text-sm block">
                         ĐĂNG KÝ GÓI VIP 👑
                     </a>
                 </div>
@@ -1091,19 +1281,19 @@
     </section>
 
     <!-- ============================================================== -->
-    <!-- 9. Q&A - GIẢI ĐÁP THẮC MẮC (FAQS - KHANHHUNG ACCORDION)        -->
+    <!-- 9. Q&A - GIẢI ĐÁP THẮC MẮC (FAQS)                              -->
     <!-- ============================================================== -->
-    <section id="faqs" class="py-20 relative bg-navy-900/60 border-t border-white/5">
-        <div class="max-w-4xl mx-auto px-4 sm:px-8 space-y-12">
+    <section id="faqs" class="py-16 sm:py-24 relative bg-navy-900/60 border-t border-white/5 z-10">
+        <div class="max-w-4xl mx-auto px-4 sm:px-8 space-y-10">
             
-            <div class="text-center space-y-3">
+            <div class="text-center space-y-3 reveal-init">
                 <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gold-400/10 border border-gold-400/30 text-gold-400 text-xs font-bold uppercase tracking-wider">
                     <i class="fa-solid fa-circle-question text-gold-400"></i> Hỏi & Đáp
                 </div>
-                <h2 class="text-3xl sm:text-4xl font-heading font-black text-white">
+                <h2 class="text-2xl sm:text-4xl font-heading font-black text-white">
                     Q&A — GIẢI ĐÁP CÂU HỎI THẮC MẮC
                 </h2>
-                <p class="text-slate-300 text-sm">
+                <p class="text-slate-300 text-xs sm:text-sm">
                     Mọi thắc mắc của bạn về nền tảng E-Learning Dzota đều được giải đáp chi tiết tại đây.
                 </p>
             </div>
@@ -1112,45 +1302,45 @@
             <div class="space-y-4">
                 
                 <!-- FAQ 1 -->
-                <div class="kha-card overflow-hidden border-white/10">
-                    <button onclick="toggleFaq(this)" class="w-full p-5 text-left flex items-center justify-between font-heading font-bold text-base text-white hover:text-gold-400 transition">
+                <div class="kha-card overflow-hidden border-white/10 reveal-init">
+                    <button onclick="toggleFaq(this)" class="w-full p-4 sm:p-5 text-left flex items-center justify-between font-heading font-bold text-sm sm:text-base text-white hover:text-gold-400 transition">
                         <span>1. Dzota có khác gì so với việc học trong sách giáo trình hay tài liệu photocopy?</span>
-                        <i class="fa-solid fa-chevron-down text-sm transition-transform duration-300"></i>
+                        <i class="fa-solid fa-chevron-down text-xs sm:text-sm transition-transform duration-300"></i>
                     </button>
-                    <div class="faq-content hidden px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-white/5 pt-3">
+                    <div class="faq-content hidden px-4 sm:px-5 pb-5 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-white/5 pt-3">
                         Giáo trình hay tài liệu thông thường chỉ giúp bạn đọc thụ động. Nhưng kỳ thi chạy trạm OSCE yêu cầu bạn phải phản xạ nhìn tiêu bản và viết tên cấu trúc trong vòng 20 giây! Dzota tái hiện áp lực phòng thi thật, kèm thuật toán ngắt quãng Anki và AI giải thích chi tiết, giúp bạn thuộc bài ngay và đạt điểm tối đa.
                     </div>
                 </div>
 
                 <!-- FAQ 2 -->
-                <div class="kha-card overflow-hidden border-white/10">
-                    <button onclick="toggleFaq(this)" class="w-full p-5 text-left flex items-center justify-between font-heading font-bold text-base text-white hover:text-gold-400 transition">
+                <div class="kha-card overflow-hidden border-white/10 reveal-init">
+                    <button onclick="toggleFaq(this)" class="w-full p-4 sm:p-5 text-left flex items-center justify-between font-heading font-bold text-sm sm:text-base text-white hover:text-gold-400 transition">
                         <span>2. Hệ thống DYNEX OSCE chạy trạm hỗ trợ những môn học nào?</span>
-                        <i class="fa-solid fa-chevron-down text-sm transition-transform duration-300"></i>
+                        <i class="fa-solid fa-chevron-down text-xs sm:text-sm transition-transform duration-300"></i>
                     </button>
-                    <div class="faq-content hidden px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-white/5 pt-3">
+                    <div class="faq-content hidden px-4 sm:px-5 pb-5 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-white/5 pt-3">
                         DYNEX hiện đang tập trung mạnh nhất cho Giải phẫu 1 & 2 (Đầu mặt cổ, Lồng ngực, Ổ bụng, Chi trên, Chi dưới), Ký sinh trùng, Mô học - Phôi thai học và Tiền lâm sàng. Ngân hàng đề liên tục được cập nhật từ đề thi của các trường Y Dược lớn trên toàn quốc.
                     </div>
                 </div>
 
                 <!-- FAQ 3 -->
-                <div class="kha-card overflow-hidden border-white/10">
-                    <button onclick="toggleFaq(this)" class="w-full p-5 text-left flex items-center justify-between font-heading font-bold text-base text-white hover:text-gold-400 transition">
+                <div class="kha-card overflow-hidden border-white/10 reveal-init">
+                    <button onclick="toggleFaq(this)" class="w-full p-4 sm:p-5 text-left flex items-center justify-between font-heading font-bold text-sm sm:text-base text-white hover:text-gold-400 transition">
                         <span>3. Tôi có thể học trên điện thoại hay iPad không?</span>
-                        <i class="fa-solid fa-chevron-down text-sm transition-transform duration-300"></i>
+                        <i class="fa-solid fa-chevron-down text-xs sm:text-sm transition-transform duration-300"></i>
                     </button>
-                    <div class="faq-content hidden px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-white/5 pt-3">
+                    <div class="faq-content hidden px-4 sm:px-5 pb-5 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-white/5 pt-3">
                         Hoàn toàn được! Dzota được tối ưu 100% responsive cho điện thoại (iOS, Android), máy tính bảng (iPad) và laptop. Bạn có thể mở web và làm bài chạy trạm mọi lúc mọi nơi ngay cả khi đang trực bệnh viện hay ngồi trên xe buýt.
                     </div>
                 </div>
 
                 <!-- FAQ 4 -->
-                <div class="kha-card overflow-hidden border-white/10">
-                    <button onclick="toggleFaq(this)" class="w-full p-5 text-left flex items-center justify-between font-heading font-bold text-base text-white hover:text-gold-400 transition">
+                <div class="kha-card overflow-hidden border-white/10 reveal-init">
+                    <button onclick="toggleFaq(this)" class="w-full p-4 sm:p-5 text-left flex items-center justify-between font-heading font-bold text-sm sm:text-base text-white hover:text-gold-400 transition">
                         <span>4. Làm thế nào để được Tác giả Lê Nhật Duy hỗ trợ trực tiếp?</span>
-                        <i class="fa-solid fa-chevron-down text-sm transition-transform duration-300"></i>
+                        <i class="fa-solid fa-chevron-down text-xs sm:text-sm transition-transform duration-300"></i>
                     </button>
-                    <div class="faq-content hidden px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-white/5 pt-3">
+                    <div class="faq-content hidden px-4 sm:px-5 pb-5 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-white/5 pt-3">
                         Bạn chỉ cần liên hệ Zalo cá nhân của tác giả: <strong>0914659511</strong>. Anh Duy (Y Khoa K26) sẽ trực tiếp lắng nghe, giải đáp các câu hỏi học tập và tư vấn phương pháp ôn thi chạy trạm phù hợp nhất với trường của bạn.
                     </div>
                 </div>
@@ -1161,14 +1351,13 @@
     </section>
 
     <!-- ============================================================== -->
-    <!-- 10. FOOTER: BẢN QUYỀN LÊ NHẬT DUY & HOTLINE ZALO               -->
+    <!-- 10. FOOTER                                                     -->
     <!-- ============================================================== -->
-    <footer class="bg-navy-950 border-t border-white/10 pt-16 pb-12 text-slate-400 text-sm">
+    <footer class="bg-navy-950 border-t border-white/10 pt-16 pb-24 md:pb-12 text-slate-400 text-sm relative z-10">
         <div class="max-w-7xl mx-auto px-4 sm:px-8 space-y-12">
             
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 
-                <!-- Col 1: Brand & Bio -->
                 <div class="md:col-span-2 space-y-4">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-flame-500 to-gold-400 p-[2px]">
@@ -1178,7 +1367,7 @@
                         </div>
                         <span class="font-heading font-black text-2xl text-white">DZOTA ACADEMY</span>
                     </div>
-                    <p class="text-slate-300 text-sm leading-relaxed max-w-md">
+                    <p class="text-slate-300 text-xs sm:text-sm leading-relaxed max-w-md">
                         Nền tảng E-Learning Y Khoa thông minh hàng đầu tại Việt Nam. Xây dựng bởi tác giả <strong>Lê Nhật Duy (Y Khoa K26)</strong> với sứ mệnh nâng cao chất lượng học tập và giảm bớt áp lực thi cử cho toàn bộ sinh viên Y Dược.
                     </p>
                     <div class="flex items-center gap-4 text-xs font-semibold text-slate-300">
@@ -1188,7 +1377,6 @@
                     </div>
                 </div>
 
-                <!-- Col 2: Liên kết học tập -->
                 <div class="space-y-3">
                     <h4 class="font-heading font-bold text-white text-sm uppercase tracking-wider">Hệ Thống Đào Tạo</h4>
                     <ul class="space-y-2 text-xs">
@@ -1200,7 +1388,6 @@
                     </ul>
                 </div>
 
-                <!-- Col 3: Hỗ trợ & Liên hệ -->
                 <div class="space-y-3">
                     <h4 class="font-heading font-bold text-white text-sm uppercase tracking-wider">Liên Hệ & Hỗ Trợ</h4>
                     <ul class="space-y-2 text-xs">
@@ -1229,10 +1416,10 @@
     </footer>
 
     <!-- ============================================================== -->
-    <!-- 11. FLOATING ZALO HOTLINE BUTTON (RINGING ANIMATION)           -->
+    <!-- 11. DESKTOP FLOATING ZALO HOTLINE BUTTON                       -->
     <!-- ============================================================== -->
-    <div class="fixed bottom-6 right-6 z-50 flex items-center gap-3">
-        <a href="https://zalo.me/0914659511" target="_blank" class="group flex items-center gap-3 bg-gradient-to-r from-flame-600 to-gold-500 text-navy-950 font-extrabold px-4 py-3 rounded-full shadow-neon-flame hover:scale-105 transition-all duration-300">
+    <div class="fixed bottom-6 right-6 z-40 hidden sm:flex items-center gap-3">
+        <a href="https://zalo.me/0914659511" target="_blank" class="group flex items-center gap-3 bg-gradient-to-r from-flame-600 to-gold-500 text-navy-950 font-extrabold px-4 py-3 rounded-full shadow-neon-flame hover:scale-105 active:scale-95 transition-all duration-300">
             <div class="w-8 h-8 rounded-full bg-navy-950 text-gold-400 flex items-center justify-center ring-phone">
                 <i class="fa-solid fa-phone text-sm"></i>
             </div>
@@ -1244,17 +1431,43 @@
     </div>
 
     <!-- ============================================================== -->
-    <!-- 12. POPUP MODAL LOGIN / REGISTER (AUTO-TRIGGER OR VIA HEADER)   -->
+    <!-- 12. MOBILE APP-STYLE FLOATING BOTTOM DOCK                     -->
+    <!-- ============================================================== -->
+    <div class="mobile-dock fixed bottom-0 left-0 right-0 z-40 sm:hidden px-3 py-2 flex items-center justify-around shadow-2xl">
+        <a href="/" class="flex flex-col items-center gap-1 text-gold-400 text-[10px] font-bold">
+            <i class="fa-solid fa-house text-base"></i>
+            <span>Trang Chủ</span>
+        </a>
+        <a href="/dynex" class="flex flex-col items-center gap-1 text-slate-300 hover:text-flame-400 text-[10px] font-semibold">
+            <i class="fa-solid fa-heart-pulse text-base"></i>
+            <span>OSCE 3D</span>
+        </a>
+        <a href="/dashboard" class="flex flex-col items-center gap-1 text-slate-300 hover:text-white text-[10px] font-semibold">
+            <div class="w-10 h-10 -mt-5 rounded-full btn-kha-primary flex items-center justify-center text-white shadow-neon-flame">
+                <i class="fa-solid fa-rocket text-sm"></i>
+            </div>
+            <span>Vào Học</span>
+        </a>
+        <a href="/tests" class="flex flex-col items-center gap-1 text-slate-300 hover:text-gold-400 text-[10px] font-semibold">
+            <i class="fa-solid fa-clipboard-check text-base"></i>
+            <span>Kho Đề</span>
+        </a>
+        <a href="https://zalo.me/0914659511" target="_blank" class="flex flex-col items-center gap-1 text-emerald-400 text-[10px] font-semibold">
+            <i class="fa-solid fa-phone ring-phone text-base"></i>
+            <span>Zalo Duy</span>
+        </a>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 13. POPUP MODAL LOGIN / REGISTER                               -->
     <!-- ============================================================== -->
     <div id="loginModal" class="fixed inset-0 z-50 hidden bg-navy-950/80 backdrop-blur-md flex items-center justify-center p-4">
         <div class="kha-card-gold max-w-md w-full p-6 sm:p-8 relative animate-in fade-in zoom-in-95 duration-200">
             
-            <!-- Close button -->
             <button onclick="closeLoginModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-navy-850 hover:bg-navy-800 text-slate-400 hover:text-white flex items-center justify-center">
                 <i class="fa-solid fa-xmark text-sm"></i>
             </button>
 
-            <!-- Modal Header -->
             <div class="text-center space-y-1 mb-5">
                 <div class="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-tr from-flame-500 to-gold-400 p-[2px] shadow-neon-flame mb-2">
                     <div class="w-full h-full bg-navy-950 rounded-[14px] flex items-center justify-center">
@@ -1265,7 +1478,6 @@
                 <p class="text-xs text-slate-400">Truy cập toàn bộ hệ sinh thái E-Learning Y Khoa</p>
             </div>
 
-            <!-- Google Sign-in inside Modal -->
             <div id="modalGoogleSignInBtn" class="flex justify-center w-full mb-3"></div>
 
             <div class="relative flex py-2 items-center">
@@ -1274,7 +1486,6 @@
                 <div class="flex-grow border-t border-white/10"></div>
             </div>
 
-            <!-- Modal Switcher -->
             <div class="flex p-1 bg-navy-950/80 rounded-xl border border-white/10 mb-4">
                 <button id="modalTabLogin" onclick="switchModalTab('login')" class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-flame-500 text-white">
                     Đăng Nhập
@@ -1284,7 +1495,6 @@
                 </button>
             </div>
 
-            <!-- Modal Form -->
             <form onsubmit="handleModalSubmit(event)" class="space-y-3.5">
                 <div class="space-y-1">
                     <label class="text-xs font-semibold text-slate-300">Tài khoản / Email / SĐT:</label>
@@ -1321,25 +1531,296 @@
     </div>
 
     <!-- ============================================================== -->
-    <!-- JAVASCRIPT LOGIC (AUTH, GOOGLE GSI, SESSION, OSCE DEMO, FAQS) -->
+    <!-- JAVASCRIPT: MOTION ENGINE, SOUND SYNTH, 3D CARDS, OBSERVER     -->
     <!-- ============================================================== -->
     <script>
-        // Check for session injected by server
+        // Session state
         let currentUser = window.__DZOTA_SESSION__ || null;
         let heroActiveTab = 'login';
         let modalActiveTab = 'login';
+        let isSoundEnabled = true;
 
         document.addEventListener('DOMContentLoaded', () => {
             initSessionState();
             initGoogleAuth();
             checkUrlForLoginIntent();
             startDemoTimer();
+            initScrollObserver();
+            initCard3DSheen();
+            initParticleCanvas();
+            initButtonRipples();
         });
 
-        // 1. Session State Handler
+        // ─── 1. WEB AUDIO SYNTHESIZER (CHIME SOUNDS) ───
+        let audioCtx = null;
+        function playChime(freq = 520, type = 'sine') {
+            if (!isSoundEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(freq * 1.5, audioCtx.currentTime + 0.12);
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.25);
+            } catch (e) {}
+        }
+
+        function toggleSound() {
+            isSoundEnabled = !isSoundEnabled;
+            const icon = document.getElementById('soundIcon');
+            const text = document.getElementById('soundText');
+            if (icon && text) {
+                if (isSoundEnabled) {
+                    icon.className = 'fa-solid fa-volume-high text-xs';
+                    text.textContent = 'Âm thanh: BẬT';
+                    playChime(600);
+                } else {
+                    icon.className = 'fa-solid fa-volume-xmark text-xs';
+                    text.textContent = 'Âm thanh: TẮT';
+                }
+            }
+        }
+
+        // ─── 2. SCROLL REVEAL OBSERVER & STATS COUNT-UP ───
+        function initScrollObserver() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('reveal-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+            document.querySelectorAll('.reveal-init').forEach(el => observer.observe(el));
+
+            // Stats Count-up Observer
+            const statsSection = document.getElementById('statsSection');
+            if (statsSection) {
+                const statsObserver = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting) {
+                        runCountUp();
+                        statsObserver.unobserve(statsSection);
+                    }
+                }, { threshold: 0.3 });
+                statsObserver.observe(statsSection);
+            }
+        }
+
+        function runCountUp() {
+            document.querySelectorAll('.stat-number').forEach(el => {
+                const target = parseFloat(el.getAttribute('data-target'));
+                const decimal = parseInt(el.getAttribute('data-decimal') || '0');
+                const duration = 1800;
+                const startTime = performance.now();
+
+                function update(now) {
+                    const progress = Math.min((now - startTime) / duration, 1);
+                    const eased = 1 - Math.pow(1 - progress, 3);
+                    const current = (target * eased).toFixed(decimal);
+                    el.textContent = decimal === 0 ? parseInt(current).toLocaleString('vi-VN') : current;
+                    if (progress < 1) requestAnimationFrame(update);
+                }
+                requestAnimationFrame(update);
+            });
+        }
+
+        // ─── 3. 3D CARD TILT & CURSOR SPOTLIGHT ───
+        function initCard3DSheen() {
+            const cards = document.querySelectorAll('.kha-card, .kha-card-gold');
+            cards.forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    card.style.setProperty('--mouse-x', `${x}px`);
+                    card.style.setProperty('--mouse-y', `${y}px`);
+
+                    if (window.innerWidth > 1024) {
+                        const centerX = rect.width / 2;
+                        const centerY = rect.height / 2;
+                        const rotX = ((y - centerY) / centerY) * -5;
+                        const rotY = ((x - centerX) / centerX) * 5;
+                        card.style.transform = `perspective(1000px) rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg) translateY(-4px)`;
+                    }
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = '';
+                    card.style.setProperty('--mouse-x', `-500px`);
+                    card.style.setProperty('--mouse-y', `-500px`);
+                });
+            });
+        }
+
+        // ─── 4. BUTTON RIPPLE & VIBRATION ───
+        function initButtonRipples() {
+            document.querySelectorAll('.btn-kha-primary, .btn-kha-gold').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    if (navigator.vibrate) navigator.vibrate(15);
+                    playChime(640);
+                    const rect = this.getBoundingClientRect();
+                    const circle = document.createElement('span');
+                    const d = Math.max(rect.width, rect.height);
+                    circle.style.width = circle.style.height = `${d}px`;
+                    circle.style.left = `${e.clientX - rect.left - d/2}px`;
+                    circle.style.top = `${e.clientY - rect.top - d/2}px`;
+                    circle.classList.add('ripple');
+                    const oldRipple = this.querySelector('.ripple');
+                    if (oldRipple) oldRipple.remove();
+                    this.appendChild(circle);
+                });
+            });
+        }
+
+        // ─── 5. CANVAS PARTICLES NETWORK ───
+        function initParticleCanvas() {
+            const canvas = document.getElementById('bgParticlesCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let width = canvas.width = window.innerWidth;
+            let height = canvas.height = window.innerHeight;
+
+            window.addEventListener('resize', () => {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            });
+
+            const particles = [];
+            const count = Math.min(Math.floor(width / 30), 45);
+
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 0.4,
+                    vy: (Math.random() - 0.5) * 0.4,
+                    r: Math.random() * 2 + 1,
+                    alpha: Math.random() * 0.6 + 0.2
+                });
+            }
+
+            function loop() {
+                ctx.clearRect(0, 0, width, height);
+                for (let i = 0; i < count; i++) {
+                    const p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    if (p.x < 0) p.x = width;
+                    if (p.x > width) p.x = 0;
+                    if (p.y < 0) p.y = height;
+                    if (p.y > height) p.y = 0;
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(254, 205, 31, ${p.alpha})`;
+                    ctx.fill();
+
+                    // Connect lines
+                    for (let j = i + 1; j < count; j++) {
+                        const p2 = particles[j];
+                        const dx = p.x - p2.x;
+                        const dy = p.y - p2.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 110) {
+                            ctx.beginPath();
+                            ctx.moveTo(p.x, p.y);
+                            ctx.lineTo(p2.x, p2.y);
+                            ctx.strokeStyle = `rgba(255, 102, 0, ${0.18 * (1 - dist / 110)})`;
+                            ctx.lineWidth = 0.8;
+                            ctx.stroke();
+                        }
+                    }
+                }
+                requestAnimationFrame(loop);
+            }
+            requestAnimationFrame(loop);
+        }
+
+        // ─── 6. INTERACTIVE MODULE TABS ───
+        function selectModuleTab(tabId) {
+            playChime(560);
+            const tabs = ['osce', 'quiz', 'anki', 'ai'];
+            tabs.forEach(t => {
+                const pane = document.getElementById(`modulePane${capitalize(t)}`);
+                const btn = document.getElementById(`tabBtn${capitalize(t)}`);
+                if (t === tabId) {
+                    if (pane) {
+                        pane.classList.remove('hidden');
+                        pane.classList.add('grid');
+                        pane.classList.add('reveal-visible');
+                    }
+                    if (btn) {
+                        btn.className = "module-tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-flame-500 text-white shadow-neon-flame transition scale-105";
+                    }
+                } else {
+                    if (pane) {
+                        pane.classList.add('hidden');
+                        pane.classList.remove('grid');
+                    }
+                    if (btn) {
+                        btn.className = "module-tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-navy-850 text-slate-300 hover:text-white transition";
+                    }
+                }
+            });
+        }
+        function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+        // Sample Quiz Interaction
+        function handleSampleQuiz(btn, isCorrect) {
+            playChime(isCorrect ? 800 : 300);
+            const parent = btn.parentElement;
+            parent.querySelectorAll('.quiz-opt').forEach(b => {
+                b.classList.remove('bg-emerald-500/30', 'border-emerald-400', 'bg-rose-500/30', 'border-rose-400');
+                b.querySelector('.status-icon').innerHTML = '';
+            });
+            const explain = document.getElementById('quizExplain');
+
+            if (isCorrect) {
+                btn.classList.add('bg-emerald-500/30', 'border-emerald-400');
+                btn.querySelector('.status-icon').innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i>';
+                if (explain) explain.classList.remove('hidden');
+                confetti({ particleCount: 50, spread: 50, origin: { y: 0.7 } });
+            } else {
+                btn.classList.add('bg-rose-500/30', 'border-rose-400');
+                btn.querySelector('.status-icon').innerHTML = '<i class="fa-solid fa-xmark text-rose-400"></i>';
+                if (explain) explain.classList.add('hidden');
+            }
+        }
+
+        // Anki Card Flip Simulation
+        let isAnkiFlipped = false;
+        function flipAnkiCard() {
+            playChime(700);
+            isAnkiFlipped = !isAnkiFlipped;
+            const front = document.getElementById('ankiFront');
+            const back = document.getElementById('ankiBack');
+            if (front && back) {
+                if (isAnkiFlipped) {
+                    front.classList.add('hidden');
+                    back.classList.remove('hidden');
+                } else {
+                    front.classList.remove('hidden');
+                    back.classList.add('hidden');
+                }
+            }
+        }
+        function rateAnki(level) {
+            playChime(level * 200 + 400);
+            flipAnkiCard();
+            confetti({ particleCount: 30, spread: 40 });
+        }
+
+        // ─── 7. SESSION & AUTH HANDLERS ───
         function initSessionState() {
             if (currentUser && currentUser.username) {
-                // Update Hero view to Khanh Hung "Chào Đồng Nghiệp" state
                 const heroAuth = document.getElementById('heroAuthState');
                 const heroWelcome = document.getElementById('heroWelcomeState');
                 const heroWelcomeName = document.getElementById('heroWelcomeName');
@@ -1352,18 +1833,17 @@
                     }
                 }
 
-                // Update Header Nav Auth Container
                 const navAuth = document.getElementById('navAuthContainer');
                 if (navAuth) {
                     navAuth.innerHTML = `
-                        <div class="flex items-center gap-2.5">
+                        <div class="flex items-center gap-2">
                             <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-flame-500 to-gold-400 p-[2px]">
                                 <div class="w-full h-full rounded-full bg-navy-950 flex items-center justify-center text-xs font-bold text-gold-400">
                                     ${(currentUser.fullName || currentUser.username).slice(0, 2).toUpperCase()}
                                 </div>
                             </div>
                             <span class="text-sm font-bold text-white hidden md:inline">${currentUser.fullName || currentUser.username}</span>
-                            <a href="/dashboard" class="btn-kha-primary px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5">
+                            <a href="/dashboard" class="btn-kha-primary px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5">
                                 <span>Vào Bàn Học</span>
                                 <i class="fa-solid fa-arrow-right text-xs"></i>
                             </a>
@@ -1373,7 +1853,6 @@
             }
         }
 
-        // 2. Google OAuth Initialization
         function initGoogleAuth() {
             fetch('/api/auth/google-config')
                 .then(res => res.json())
@@ -1391,9 +1870,8 @@
                                 theme: 'filled_black',
                                 size: 'large',
                                 shape: 'pill',
-                                width: '320',
-                                text: 'continue_with',
-                                logo_alignment: 'left'
+                                width: '300',
+                                text: 'continue_with'
                             });
                         }
 
@@ -1421,6 +1899,7 @@
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
+                    playChime(880);
                     confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
                     setTimeout(() => { window.location.href = '/dashboard'; }, 700);
                 } else {
@@ -1431,25 +1910,26 @@
             }
         }
 
-        // 3. Tab Switchers
         function switchHeroTab(tab) {
+            playChime(500);
             heroActiveTab = tab;
             const tabLogin = document.getElementById('heroTabLogin');
             const tabReg = document.getElementById('heroTabRegister');
             const submitText = document.getElementById('heroSubmitBtnText');
 
             if (tab === 'login') {
-                tabLogin.className = "flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all bg-gradient-to-r from-flame-500 to-flame-600 text-white shadow-sm";
-                tabReg.className = "flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-300 hover:text-white";
+                tabLogin.className = "flex-1 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all bg-gradient-to-r from-flame-500 to-flame-600 text-white shadow-sm";
+                tabReg.className = "flex-1 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-300 hover:text-white";
                 if (submitText) submitText.textContent = "ĐĂNG NHẬP VÀO HỆ THỐNG";
             } else {
-                tabReg.className = "flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all bg-gradient-to-r from-flame-500 to-flame-600 text-white shadow-sm";
-                tabLogin.className = "flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-300 hover:text-white";
+                tabReg.className = "flex-1 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all bg-gradient-to-r from-flame-500 to-flame-600 text-white shadow-sm";
+                tabLogin.className = "flex-1 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-300 hover:text-white";
                 if (submitText) submitText.textContent = "TẠO TÀI KHOẢN HỌC MIỄN PHÍ";
             }
         }
 
         function switchModalTab(tab) {
+            playChime(500);
             modalActiveTab = tab;
             const tabLogin = document.getElementById('modalTabLogin');
             const tabReg = document.getElementById('modalTabRegister');
@@ -1469,7 +1949,6 @@
             }
         }
 
-        // 4. Form Submit Handlers
         async function handleHeroSubmit(e) {
             e.preventDefault();
             const username = document.getElementById('heroUsername').value.trim();
@@ -1489,11 +1968,13 @@
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
+                    playChime(880);
                     msgBox.className = "text-xs py-2 px-3 rounded-lg font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 block";
                     msgBox.textContent = "Đăng nhập thành công! Đang chuyển hướng vào bài học...";
                     confetti({ particleCount: 80, spread: 60 });
                     setTimeout(() => { window.location.href = '/dashboard'; }, 600);
                 } else {
+                    playChime(250, 'sawtooth');
                     msgBox.className = "text-xs py-2 px-3 rounded-lg font-medium bg-rose-500/20 text-rose-400 border border-rose-500/30 block";
                     msgBox.textContent = data.error || "Sai tên đăng nhập hoặc mật khẩu.";
                 }
@@ -1524,11 +2005,13 @@
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
+                    playChime(880);
                     msgBox.className = "text-xs py-2 px-3 rounded-lg font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 block";
                     msgBox.textContent = "Thành công! Đang vào hệ thống...";
                     confetti({ particleCount: 80, spread: 60 });
                     setTimeout(() => { window.location.href = '/dashboard'; }, 600);
                 } else {
+                    playChime(250, 'sawtooth');
                     msgBox.className = "text-xs py-2 px-3 rounded-lg font-medium bg-rose-500/20 text-rose-400 border border-rose-500/30 block";
                     msgBox.textContent = data.error || "Đăng nhập thất bại.";
                 }
@@ -1549,8 +2032,8 @@
             }
         }
 
-        // 5. Modal and URL Routing Controls
         function openLoginModal(tab = 'login') {
+            playChime(500);
             const modal = document.getElementById('loginModal');
             if (modal) {
                 modal.classList.remove('hidden');
@@ -1585,14 +2068,27 @@
 
         function toggleMobileMenu() {
             const menu = document.getElementById('mobileMenu');
-            if (menu) menu.classList.toggle('hidden');
+            const icon = document.getElementById('mobileMenuIcon');
+            if (menu) {
+                menu.classList.toggle('hidden');
+                if (icon) {
+                    if (menu.classList.contains('hidden')) {
+                        icon.className = 'fa-solid fa-bars-staggered text-lg';
+                    } else {
+                        icon.className = 'fa-solid fa-xmark text-lg';
+                    }
+                }
+            }
         }
 
-        // 6. Interactive OSCE Anatomical Station Demo
         function revealDemoAnswer() {
+            playChime(750);
             const answerText = document.getElementById('demoAnswerText');
             if (answerText) {
                 answerText.classList.toggle('hidden');
+                if (!answerText.classList.contains('hidden')) {
+                    confetti({ particleCount: 35, spread: 50, origin: { y: 0.6 } });
+                }
             }
         }
 
@@ -1607,8 +2103,8 @@
             }, 100);
         }
 
-        // 7. Accordion FAQs
         function toggleFaq(btn) {
+            playChime(480);
             const content = btn.nextElementSibling;
             const icon = btn.querySelector('.fa-chevron-down');
             if (content) {
