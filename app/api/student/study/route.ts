@@ -120,6 +120,7 @@ export async function GET() {
     const assignedQuizzes: any[] = []
 
     allQuizzes.forEach(quiz => {
+      if (String(quiz.id).startsWith('dynex_')) return
       let parsed: any = {}
       try {
         parsed = JSON.parse(quiz.data)

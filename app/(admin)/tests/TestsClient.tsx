@@ -570,7 +570,7 @@ export default function TestsClient({ initialQuizzes, session }: TestsClientProp
           </button>
 
           <Link
-            href="/creator"
+            href="/creator" onClick={(e) => { e.preventDefault(); window.location.href = '/creator'; }}
             className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md shadow-blue-500/25 transition-all active:scale-95"
           >
             <Plus size={18} />

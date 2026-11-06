@@ -1024,7 +1024,7 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
                                 </div>
 
                                 <a
-                                  href={`/test/${m.quizId}`}
+                                  href={`/?id=${m.quizId}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition no-underline shadow-xs ${
@@ -1541,7 +1541,7 @@ export default function TeacherChatTab({ session, userQuizzes = [] }: TeacherCha
                     </div>
 
                     <a
-                      href={`/test/${quiz.id}`}
+                      href={`/?id=${quiz.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 no-underline flex-shrink-0 cursor-pointer"

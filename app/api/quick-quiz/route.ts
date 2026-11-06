@@ -138,7 +138,7 @@ export async function GET(request: Request) {
         }
       })
 
-      const list = quizzes.map(q => {
+      const list = quizzes.filter(q => !String(q.id).startsWith('dynex_')).map(q => {
         try {
           const parsed = JSON.parse(q.data)
           return {

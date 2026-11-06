@@ -1,15 +1,13 @@
 import prisma from '@/lib/prisma'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { Metadata, ResolvingMetadata } from 'next'
 import { cache } from 'react'
 import { unstable_cache } from 'next/cache'
 import TestInterface from './TestInterface'
+import QuickQuizRedirect from './QuickQuizRedirect'
 
 export const revalidate = 60
 
-// Tối ưu hóa truy vấn DB bằng React cache + Next.js Data Cache (unstable_cache)
-// Đảm bảo cả generateMetadata và TestPage cùng tái sử dụng 1 truy vấn duy nhất
-// và trả kết quả siêu tốc (<20ms) từ Edge Cache cho tất cả thí sinh truy cập link
 const getTestData = cache(async (id: string) => {
   return await unstable_cache(
     async () => {
@@ -79,7 +77,7 @@ export default async function TestPage({ params }: { params: Promise<{ id: strin
     // Check if this ID is a QuickQuiz (created via creator or quick quiz)
     const quickQuiz = await getQuickQuizData(resolvedParams.id)
     if (quickQuiz) {
-      redirect(`/?id=${resolvedParams.id}`)
+      return <QuickQuizRedirect id={resolvedParams.id} />
     }
     notFound()
   }

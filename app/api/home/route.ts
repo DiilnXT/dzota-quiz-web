@@ -9,7 +9,15 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
+    const id = searchParams.get('id') || searchParams.get('test') || searchParams.get('editId')
+    const shouldServeQuizApp =
+      !!id ||
+      searchParams.get('mode') === 'editor' ||
+      searchParams.get('action') === 'create' ||
+      searchParams.get('import') === 'notebook_nd' ||
+      searchParams.has('battle') ||
+      searchParams.has('view')
+
     const cookieStore = await cookies()
     const sessionStr = cookieStore.get('dzota_session')?.value
     let sessionData = null
@@ -19,7 +27,7 @@ export async function GET(request: Request) {
       } catch (e) {}
     }
 
-    if (id) {
+    if (shouldServeQuizApp) {
       let html = fs.readFileSync(path.join(process.cwd(), 'public/index.html'), 'utf8')
       if (sessionData) {
         const injectionScript = `<script>window.__DZOTA_SESSION__ = ${JSON.stringify(sessionData)};</script>`
@@ -29,12 +37,18 @@ export async function GET(request: Request) {
           html = injectionScript + html
         }
       }
-      const quiz = await prisma.quickQuiz.findUnique({ where: { id } })
-      if (quiz) {
-        // Replace OG tags in HTML safely
-        html = html.replace(/<meta property="og:title" content="[^"]*"/, `<meta property="og:title" content="${quiz.title}"`)
-        html = html.replace(/<meta property="og:description" content="[^"]*"/, `<meta property="og:description" content="Nhấn để bắt đầu làm bài thi: ${quiz.title}"`)
-        html = html.replace(/<title>.*?<\/title>/, `<title>${quiz.title}</title>`)
+      if (id) {
+        try {
+          const quiz = await prisma.quickQuiz.findUnique({ where: { id } })
+          if (quiz && quiz.title) {
+            const safeTitle = quiz.title.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            html = html.replace(/<meta property="og:title" content="[^"]*"/, `<meta property="og:title" content="${safeTitle}"`)
+            html = html.replace(/<meta property="og:description" content="[^"]*"/, `<meta property="og:description" content="Nhấn để bắt đầu làm bài thi: ${safeTitle}"`)
+            html = html.replace(/<title>.*?<\/title>/, `<title>${safeTitle} — Dzota</title>`)
+          }
+        } catch (dbErr) {
+          console.warn('Warning: Could not fetch quiz OG metadata in /api/home:', dbErr)
+        }
       }
       return new NextResponse(html, {
         headers: {

@@ -10,7 +10,7 @@ export default async function SubjectsPage() {
       <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200/50 sticky top-0 z-30 pt-safe">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-slate-400 hover:text-slate-600"><Home size={20}/></Link>
+            <a href="/" className="text-slate-400 hover:text-slate-600"><Home size={20}/></a>
             <span className="text-slate-300">/</span>
             <h1 className="text-xl font-bold text-black tracking-tight">Ngân Hàng Môn Học</h1>
           </div>

@@ -859,7 +859,8 @@
           !!localStorage.getItem('dzota_pending_import_quiz')
         );
         const [appMode, setAppMode] = useState(() => isEditorDirectMode ? 'editor' : 'home'); 
-        const [isLoading, setIsLoading] = useState(false);
+        const hasInitialQuizParam = typeof window !== 'undefined' && !!(new URLSearchParams(window.location.search).get('id') || new URLSearchParams(window.location.search).get('test') || new URLSearchParams(window.location.search).get('editId'));
+        const [isLoading, setIsLoading] = useState(() => hasInitialQuizParam);
         const [isParsing, setIsParsing] = useState(false);
         const [quizIdTracker, setQuizIdTracker] = useState(null);
         
@@ -2644,7 +2645,7 @@ Bảng đáp án:
                             }
                         });
 
-                        const merged = Array.from(map.values());
+                        const merged = Array.from(map.values()).filter(item => item && item.id && !String(item.id).startsWith('dynex_'));
                         setSavedQuizzes(merged);
                         try { localStorage.setItem('myQuizzes', JSON.stringify(merged)); } catch (e) {}
                     }
@@ -2663,6 +2664,7 @@ Bảng đáp án:
           const initApp = async () => {
             const params = new URLSearchParams(window.location.search);
             const quizId = params.get('id') || params.get('test') || params.get('editId');
+            const isEditParam = params.get('edit') === 'true' || params.has('editId') || (typeof window !== 'undefined' && window.location.pathname.startsWith('/creator') && !!quizId && params.get('mode') !== 'take');
             const viewParam = params.get('view') || params.get('tab');
             const isBankView = viewParam === 'bank' || viewParam === 'banks' || params.get('tab') === 'banks';
             const hasPendingImport = typeof window !== 'undefined' && !!localStorage.getItem('dzota_pending_import_quiz');
@@ -9554,6 +9556,9 @@ Bảng đáp án:
                                 </>
                             )}
                             
+                            {!isBank && (
+                                <button onClick={() => { const targetId = selectedItemAction.id; setSelectedItemAction(null); window.location.href = `/?id=${targetId}`; }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-emerald-800 font-bold bg-emerald-50/70 border border-emerald-100"><div className="text-emerald-600 bg-emerald-100 p-2 rounded-lg"><Icons.Play size={18}/></div> Vào làm bài thi ngay</button>
+                            )}
                             {!isBank && (
                                 <button onClick={() => { window.open(`/?id=${selectedItemAction.id}`, '_blank'); setSelectedItemAction(null); }} className="w-full text-left px-4 py-3.5 hover:bg-white rounded-xl flex items-center gap-3 transition-colors text-gray-800 font-medium">
                                     <div className="text-emerald-600 bg-emerald-50 p-2 rounded-lg"><Icons.Eye size={18}/></div> Xem / Làm thử đề thi

@@ -1,8 +1,7 @@
 // Dzota Quiz - Service Worker for Offline Exam Support
-const CACHE_NAME = 'dzota-quiz-offline-v4';
+const CACHE_NAME = 'dzota-quiz-offline-v6';
 
 const CORE_ASSETS = [
-  '/',
   '/index.html',
   '/logo-dzota.png',
   'https://cdn.tailwindcss.com',
@@ -60,8 +59,9 @@ self.addEventListener('fetch', (event) => {
               cache.put(req, copy);
               try {
                 const u = new URL(req.url);
-                if (u.pathname === '/' || u.pathname === '/index.html') {
-                  cache.put('/', response.clone());
+                const hasQuizParam = u.searchParams.has('id') || u.searchParams.has('test') || u.searchParams.has('editId') || u.searchParams.has('mode') || u.searchParams.has('action');
+                if (u.pathname === '/index.html' || u.pathname === '/creator' || (u.pathname === '/' && hasQuizParam)) {
+                  cache.put('/index.html', response.clone());
                 }
               } catch (e) {}
             });
@@ -71,22 +71,33 @@ self.addEventListener('fetch', (event) => {
         .catch(async () => {
           // Khi mất kết nối internet (Offline)
           const cache = await caches.open(CACHE_NAME);
-          // 1. Thử tìm đúng URL hiện tại trong cache
+          // 1. Thử tìm đúng URL hiện tại (kể cả query params) trong cache
           const cachedMatch = await cache.match(req);
           if (cachedMatch) return cachedMatch;
 
-          // 2. Thử tìm URL bỏ qua query params
-          const cachedIgnoreSearch = await cache.match(req, { ignoreSearch: true });
-          if (cachedIgnoreSearch) return cachedIgnoreSearch;
+          // 2. Nếu URL là link bài thi hoặc trình tạo đề, ưu tiên trả về App Shell (/index.html)
+          try {
+            const u = new URL(req.url);
+            const isQuizOrAppRoute =
+              u.pathname === '/index.html' ||
+              u.pathname === '/creator' ||
+              u.searchParams.has('id') ||
+              u.searchParams.has('test') ||
+              u.searchParams.has('editId');
+            if (isQuizOrAppRoute) {
+              const appShell = await cache.match('/index.html');
+              if (appShell) return appShell;
+            }
+          } catch (e) {}
 
-          // 3. Fallback về '/' hoặc '/index.html' (App Shell)
-          const fallbackShell = (await cache.match('/')) || (await cache.match('/index.html'));
+          // 3. Fallback về '/index.html' (App Shell)
+          const fallbackShell = await cache.match('/index.html');
           if (fallbackShell) return fallbackShell;
 
-          // 4. Lấy bất kỳ trang HTML đã lưu trong cache
+          // 4. Lấy trang bài thi đã lưu trong cache
           const cachedRequests = await cache.keys();
           for (const cr of cachedRequests) {
-            if (cr.url.includes('/?id=') || cr.url.endsWith('/') || cr.url.endsWith('.html')) {
+            if (cr.url.includes('/?id=') || cr.url.endsWith('/index.html')) {
               const res = await cache.match(cr);
               if (res) return res;
             }
@@ -113,7 +124,7 @@ self.addEventListener('fetch', (event) => {
     url.includes('.woff') ||
     url.includes('.ttf');
 
-  if (isStaticAsset) {
+  if (isStaticAsset && !url.includes('/_next/')) {
     event.respondWith(
       caches.match(req).then((cachedResponse) => {
         if (cachedResponse) {

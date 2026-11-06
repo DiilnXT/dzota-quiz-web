@@ -607,6 +607,10 @@ export default function DashboardClient({
       if (tab && ['dashboard', 'overview', 'quizzes', 'classes', 'teachers', 'friends', 'settings', 'profile', 'history', 'notebook_nd', 'study', 'mistakes'].includes(tab)) {
         if (isStudent && (tab === 'history' || tab === 'profile' || tab === 'study' || tab === 'mistakes' || tab === 'notebook_nd')) {
           setActiveTab(tab)
+        } else if (isStudent && tab === 'quizzes') {
+          setActiveTab('study')
+        } else if (!isStudent) {
+          setActiveTab(tab)
         } else if (!isStudent) {
           setActiveTab(tab)
         }

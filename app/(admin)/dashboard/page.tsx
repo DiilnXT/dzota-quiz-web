@@ -176,6 +176,7 @@ export default async function AdminDashboard() {
 
   const subjectMap: Record<string, { id: string; name: string; quizzes: { id: string; title: string }[] }> = {}
   ;(allSystemQuizzes || []).forEach(q => {
+    if (String(q.id).startsWith('dynex_')) return
     let parsedConfig: any = {}
     try { parsedConfig = JSON.parse(q.data)?.config || {} } catch (e) {}
     const catName = parsedConfig.category || parsedConfig.subject || 'Chung'
@@ -226,7 +227,7 @@ export default async function AdminDashboard() {
 
   const formattedUsers = (users || []).map(u => ({
     ...u,
-    quizzes: (u.quizzes || []).map((q: any) => {
+    quizzes: (u.quizzes || []).filter((q: any) => !String(q.id).startsWith('dynex_')).map((q: any) => {
       let parsedConfig: any = {}
       try {
         const d = JSON.parse(q.data)
@@ -243,7 +244,7 @@ export default async function AdminDashboard() {
     })
   }))
 
-  const formattedQuizzes = (quizzes || []).map(q => {
+  const formattedQuizzes = (quizzes || []).filter(q => !String(q.id).startsWith('dynex_')).map(q => {
     let parsedConfig: any = {}
     let questionCount = 0
     try {

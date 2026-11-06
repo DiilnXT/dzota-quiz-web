@@ -2796,7 +2796,7 @@ https://dzota.vercel.app/duocly`;
             Nguồn tài liệu: Bài giảng Dược lý 2026 • Dược lý 1 & 2 • Đề cương Dược lý Y 2025 - Y 2026 • Dược thư Quốc gia Việt Nam (QĐ số 3445/QĐ-BYT).
           </p>
           <div className="pt-3 flex items-center justify-center gap-4 text-xs font-semibold text-blue-700 dark:text-cyan-400 print:hidden">
-            <Link href="/" className="hover:underline">Trang Chủ Dzota</Link>
+            <a href="/" className="hover:underline">Trang Chủ Dzota</a>
             <span>•</span>
             <Link href="/dynex" className="hover:underline">Đấu Trường DYNEX OSCE</Link>
             <span>•</span>
