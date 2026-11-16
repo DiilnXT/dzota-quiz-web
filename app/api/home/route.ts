@@ -10,13 +10,15 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id') || searchParams.get('test') || searchParams.get('editId')
+    const viewParam = searchParams.get('view')
     const shouldServeQuizApp =
       !!id ||
       searchParams.get('mode') === 'editor' ||
       searchParams.get('action') === 'create' ||
       searchParams.get('import') === 'notebook_nd' ||
       searchParams.has('battle') ||
-      searchParams.has('view')
+      viewParam === 'bank' ||
+      viewParam === 'banks'
 
     const cookieStore = await cookies()
     const sessionStr = cookieStore.get('dzota_session')?.value
