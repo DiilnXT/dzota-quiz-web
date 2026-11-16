@@ -92,13 +92,14 @@ export async function POST(request: Request) {
 
       const role = isSuperAdminEmail ? 'ADMIN' : (user.role || 'STUDENT')
       const cookieStore = await cookies()
+      const safeAvatar = user.avatar && !user.avatar.startsWith('data:') && user.avatar.length < 300 ? user.avatar : null
       const sessionData = {
         id: user.id,
         role,
         username: user.username,
         email: user.email,
         name: user.name,
-        avatar: user.avatar,
+        avatar: safeAvatar,
         phone: user.phone
       }
       cookieStore.set(
