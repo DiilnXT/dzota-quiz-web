@@ -458,14 +458,20 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
                   </div>
                 </Link>
 
-                <a
-                  href="/creator?view=bank"
+                <Link
+                  href="/duocly"
+                  target="_blank"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition-all text-left cursor-pointer no-underline"
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition-all text-left cursor-pointer group"
                 >
-                  <BookOpen size={17} className="text-slate-400 dark:text-slate-500" />
-                  <span>Ngân hàng câu hỏi</span>
-                </a>
+                  <div className="flex items-center gap-3">
+                    <Shield size={17} className="text-sky-500 group-hover:scale-110 transition-transform" />
+                    <span>Dược Lý Lâm Sàng</span>
+                  </div>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-md font-extrabold bg-sky-50 dark:bg-sky-950 text-sky-600 dark:text-sky-400">
+                    423+
+                  </span>
+                </Link>
               </div>
             </div>
           )}
@@ -510,20 +516,29 @@ export default function AdminNavClient({ session }: AdminNavClientProps) {
             </button>
           </div>
 
-          <form action="/api/auth/logout" method="POST">
-            <button
-              type="submit"
-              className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50/70 dark:hover:bg-rose-950/30 rounded-lg transition-all cursor-pointer"
+          <div className="grid grid-cols-2 gap-1.5">
+            <a
+              href="/"
+              className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/30 rounded-lg transition-all cursor-pointer no-underline border border-slate-200/60 dark:border-slate-700/60"
             >
-              <LogOut size={13} />
-              <span>Đăng xuất</span>
-            </button>
-          </form>
+              <ExternalLink size={12} />
+              <span>Trang chủ</span>
+            </a>
+            <form action="/api/auth/logout" method="POST">
+              <button
+                type="submit"
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50/70 dark:hover:bg-rose-950/30 rounded-lg transition-all cursor-pointer border border-slate-200/60 dark:border-slate-700/60"
+              >
+                <LogOut size={12} />
+                <span>Đăng xuất</span>
+              </button>
+            </form>
+          </div>
         </div>
       </aside>
 
       {/* ─── 4. MOBILE BOTTOM NAVIGATION DOCK (SIÊU TIỆN LỢI TRÊN ĐIỆN THOẠI) ─── */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white/95 dark:bg-[#0F172A]/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800/80 z-40 px-2 py-1 flex items-center justify-around shadow-lg shadow-slate-950/10">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white/95 dark:bg-[#0F172A]/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800/80 z-40 px-2 pt-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] flex items-center justify-around shadow-lg shadow-slate-950/10">
         {isStudent ? (
           <>
             <button

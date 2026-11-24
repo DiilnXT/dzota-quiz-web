@@ -1,5 +1,6 @@
-// Dzota Quiz - Service Worker for Offline Exam Support
-const CACHE_NAME = 'dzota-quiz-offline-v6';
+// Dzota Quiz - Service Worker for Offline Exam Support (v7)
+// Strictly scoped to offline exam & static CDN assets — NEVER intercepts /dashboard, /login, or dynamic pages.
+const CACHE_NAME = 'dzota-quiz-offline-v7';
 
 const CORE_ASSETS = [
   '/index.html',
@@ -22,9 +23,7 @@ self.addEventListener('install', (event) => {
         } catch (err) {
           try {
             await cache.add(url);
-          } catch (e) {
-            // Ignore individual cache add errors
-          }
+          } catch (e) {}
         }
       }
     })
@@ -48,8 +47,27 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
-  // Xử lý Navigation Request (F5, bấm link, mở tab mới)
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(req.url);
+  } catch (e) {
+    return;
+  }
+
+  // CHỈ can thiệp Navigation khi mở trực tiếp link Đề Thi (?id=, ?test=, /index.html)
+  // Tuyệt đối KHÔNG chạm vào /dashboard, /login, /creator, /dynex, /duocly, /notebook hoặc trang chủ '/'
   if (req.mode === 'navigate') {
+    const isOfflineQuizNavigation =
+      parsedUrl.pathname === '/index.html' ||
+      (parsedUrl.pathname === '/' &&
+        (parsedUrl.searchParams.has('id') ||
+          parsedUrl.searchParams.has('test') ||
+          parsedUrl.searchParams.has('editId')));
+
+    if (!isOfflineQuizNavigation) {
+      return;
+    }
+
     event.respondWith(
       fetch(req)
         .then((response) => {
@@ -57,51 +75,18 @@ self.addEventListener('fetch', (event) => {
             const copy = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(req, copy);
-              try {
-                const u = new URL(req.url);
-                const hasQuizParam = u.searchParams.has('id') || u.searchParams.has('test') || u.searchParams.has('editId') || u.searchParams.has('mode') || u.searchParams.has('action');
-                if (u.pathname === '/index.html' || u.pathname === '/creator' || (u.pathname === '/' && hasQuizParam)) {
-                  cache.put('/index.html', response.clone());
-                }
-              } catch (e) {}
+              cache.put('/index.html', response.clone());
             });
           }
           return response;
         })
         .catch(async () => {
-          // Khi mất kết nối internet (Offline)
           const cache = await caches.open(CACHE_NAME);
-          // 1. Thử tìm đúng URL hiện tại (kể cả query params) trong cache
           const cachedMatch = await cache.match(req);
           if (cachedMatch) return cachedMatch;
 
-          // 2. Nếu URL là link bài thi hoặc trình tạo đề, ưu tiên trả về App Shell (/index.html)
-          try {
-            const u = new URL(req.url);
-            const isQuizOrAppRoute =
-              u.pathname === '/index.html' ||
-              u.pathname === '/creator' ||
-              u.searchParams.has('id') ||
-              u.searchParams.has('test') ||
-              u.searchParams.has('editId');
-            if (isQuizOrAppRoute) {
-              const appShell = await cache.match('/index.html');
-              if (appShell) return appShell;
-            }
-          } catch (e) {}
-
-          // 3. Fallback về '/index.html' (App Shell)
-          const fallbackShell = await cache.match('/index.html');
-          if (fallbackShell) return fallbackShell;
-
-          // 4. Lấy trang bài thi đã lưu trong cache
-          const cachedRequests = await cache.keys();
-          for (const cr of cachedRequests) {
-            if (cr.url.includes('/?id=') || cr.url.endsWith('/index.html')) {
-              const res = await cache.match(cr);
-              if (res) return res;
-            }
-          }
+          const appShell = await cache.match('/index.html');
+          if (appShell) return appShell;
 
           return new Response(
             '<html><head><meta charset="utf-8"><title>Offline - Dzota</title></head><body style="font-family:sans-serif;text-align:center;padding:50px;"><h2>Bạn đang ngoại tuyến</h2><p>Vui lòng kết nối mạng để tải bài thi.</p></body></html>',
@@ -112,23 +97,46 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Xử lý static assets (CDN scripts, styles, images)
+  // Xử lý static CDN assets & icons (loại trừ hoàn toàn /_next/, /api/, và chính /sw.js)
   const url = req.url;
-  const isStaticAsset =
-    url.includes('cdn.') ||
-    url.includes('cdnjs.') ||
-    url.includes('.js') ||
-    url.includes('.css') ||
-    url.includes('.png') ||
-    url.includes('.jpg') ||
-    url.includes('.woff') ||
-    url.includes('.ttf');
+  if (
+    parsedUrl.pathname.startsWith('/_next/') ||
+    parsedUrl.pathname.startsWith('/api/') ||
+    parsedUrl.pathname === '/sw.js'
+  ) {
+    if (parsedUrl.pathname.startsWith('/api/quick-quiz') && parsedUrl.searchParams.get('id') !== 'all') {
+      // Cho phép cache dữ liệu từng đề thi cụ thể để làm bài Offline
+      event.respondWith(
+        fetch(req)
+          .then((response) => {
+            if (response && response.status === 200) {
+              const copy = response.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+            }
+            return response;
+          })
+          .catch(async () => {
+            const cached = await caches.match(req);
+            if (cached) return cached;
+            throw new Error('Offline API unavailable');
+          })
+      );
+    }
+    return;
+  }
 
-  if (isStaticAsset && !url.includes('/_next/')) {
+  const isStaticAsset =
+    url.includes('cdn.jsdelivr.net') ||
+    url.includes('cdn.tailwindcss.com') ||
+    url.includes('cdnjs.cloudflare.com') ||
+    parsedUrl.pathname.endsWith('.png') ||
+    parsedUrl.pathname.endsWith('.jpg') ||
+    parsedUrl.pathname.endsWith('.woff2');
+
+  if (isStaticAsset) {
     event.respondWith(
       caches.match(req).then((cachedResponse) => {
         if (cachedResponse) {
-          // Stale-while-revalidate: cập nhật nền nếu có mạng
           fetch(req)
             .then((networkResponse) => {
               if (networkResponse && networkResponse.status === 200) {
@@ -138,7 +146,6 @@ self.addEventListener('fetch', (event) => {
             .catch(() => {});
           return cachedResponse;
         }
-
         return fetch(req)
           .then((networkResponse) => {
             if (networkResponse && networkResponse.status === 200) {
@@ -149,26 +156,6 @@ self.addEventListener('fetch', (event) => {
           })
           .catch(() => cachedResponse);
       })
-    );
-    return;
-  }
-
-  // API calls: Network first, fallback to cached
-  if (url.includes('/api/quick-quiz')) {
-    event.respondWith(
-      fetch(req)
-        .then((response) => {
-          if (response && response.status === 200) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
-          }
-          return response;
-        })
-        .catch(async () => {
-          const cached = await caches.match(req);
-          if (cached) return cached;
-          throw new Error('Offline API unavailable');
-        })
     );
   }
 });

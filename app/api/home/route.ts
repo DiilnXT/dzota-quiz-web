@@ -11,6 +11,9 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id') || searchParams.get('test') || searchParams.get('editId')
     const viewParam = searchParams.get('view')
+    if (viewParam === 'login') {
+      return NextResponse.redirect(new URL(sessionData ? '/dashboard' : '/login', request.url))
+    }
     const shouldServeQuizApp =
       !!id ||
       searchParams.get('mode') === 'editor' ||

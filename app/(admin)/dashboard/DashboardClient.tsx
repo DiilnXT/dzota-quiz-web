@@ -224,7 +224,7 @@ export default function DashboardClient({
   const isAdmin = !isTeacher && !isStudent
 
   // Navigation Tabs State
-  const defaultTab = isStudent ? 'history' : 'dashboard'
+  const defaultTab = isStudent ? 'study' : 'dashboard'
   const [activeTab, setActiveTab] = useState<string>(defaultTab)
 
   const switchTab = (tab: string) => {

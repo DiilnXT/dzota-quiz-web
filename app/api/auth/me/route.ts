@@ -103,16 +103,20 @@ export async function PUT(request: Request) {
       }
     })
 
-    // Cập nhật lại cookie session với dữ liệu mới
+    // Cập nhật lại cookie session với dữ liệu mới (loại bỏ chuỗi ảnh base64 lớn hơn 300 ký tự để tránh tràn 4KB cookie)
+    const safeAvatar =
+      updatedUser.avatar && !updatedUser.avatar.startsWith('data:') && updatedUser.avatar.length < 300
+        ? updatedUser.avatar
+        : null
     cookieStore.set(
       'dzota_session',
       JSON.stringify({
         ...session,
         name: updatedUser.name,
-        avatar: updatedUser.avatar,
+        avatar: safeAvatar,
         phone: updatedUser.phone
       }),
-      { maxAge: 60 * 60 * 24 * 30, httpOnly: true, path: '/' }
+      { maxAge: 60 * 60 * 24 * 30, httpOnly: true, sameSite: 'lax', path: '/' }
     )
 
     return NextResponse.json({

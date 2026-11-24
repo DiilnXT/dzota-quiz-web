@@ -13,10 +13,6 @@ const nextConfig: NextConfig = {
           destination: '/api/home',
         },
         {
-          source: '/login',
-          destination: '/api/home?view=login',
-        },
-        {
           source: '/creator',
           destination: '/api/creator',
         }
