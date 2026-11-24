@@ -169,10 +169,10 @@ export default function ModernAdminDashboard({
   return (
     <div className="space-y-6 sm:space-y-8 animate-fadeIn">
       {/* ─── 0. TOP USER PROFILE & ACTION BAR ─── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#0B0F19]/90 backdrop-blur-xl border border-slate-800/80 p-4 sm:px-6 sm:py-3.5 rounded-3xl shadow-xl">
-        <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 via-sky-500 to-cyan-400 p-0.5 shadow-md shadow-indigo-500/20 shrink-0">
-            <div className="w-full h-full bg-[#0B0F19] rounded-[14px] overflow-hidden flex items-center justify-center">
+      <div className="flex items-center justify-between gap-2 bg-[#0B0F19]/90 backdrop-blur-xl border border-slate-800/80 p-3 sm:px-6 sm:py-3.5 rounded-2xl sm:rounded-3xl shadow-xl">
+        <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1">
+          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-indigo-600 via-sky-500 to-cyan-400 p-0.5 shadow-md shadow-indigo-500/20 shrink-0">
+            <div className="w-full h-full bg-[#0B0F19] rounded-[10px] sm:rounded-[14px] overflow-hidden flex items-center justify-center">
               {session.avatar ? (
                 <img src={session.avatar} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
@@ -180,19 +180,19 @@ export default function ModernAdminDashboard({
               )}
             </div>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm sm:text-base font-black text-white">{session.name || session.username}</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
-                {isAdmin ? 'Super Admin' : isTeacher ? 'Giáo Viên' : 'Học Sinh'}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-xs sm:text-base font-black text-white truncate">{session.name || session.username}</span>
+              <span className="hidden xs:inline-block text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-black uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shrink-0">
+                {isAdmin ? 'Admin' : isTeacher ? 'Giáo Viên' : 'Học Sinh'}
               </span>
             </div>
-            <p className="text-xs text-slate-400 truncate max-w-xs">{session.email || 'lenhatduy.vietnam@gmail.com'}</p>
+            <p className="text-[11px] sm:text-xs text-slate-400 truncate">{session.email || 'lenhatduy.vietnam@gmail.com'}</p>
           </div>
         </div>
 
         {/* Action utility buttons */}
-        <div className="flex items-center flex-wrap gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {onOpenNotif && (
             <button
               onClick={onOpenNotif}
@@ -268,46 +268,45 @@ export default function ModernAdminDashboard({
               Hệ thống tạo đề trắc nghiệm AI thế hệ mới, phân quyền lớp học tự động theo Gmail và mô phỏng chạy trạm y khoa DYNEX chuẩn thi OSCE.
             </p>
 
-            {/* Quick Action CTAs */}
-            <div className="flex flex-wrap items-center gap-2.5 pt-2">
+            {/* Quick Action CTAs: 2x2 Grid on Mobile, Flex Row on Tablet/Desktop */}
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 pt-2">
               <a
                 href="/creator"
-                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-black text-xs sm:text-sm shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all active:scale-95 no-underline cursor-pointer"
+                className="px-3 sm:px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-black text-xs sm:text-sm shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-1.5 transition-all active:scale-95 no-underline cursor-pointer"
               >
-                <Plus className="w-4 h-4" />
-                <span>Soạn Đề Mới (AI / Thủ Công)</span>
+                <Plus className="w-4 h-4 shrink-0" />
+                <span className="truncate">Soạn Đề Mới</span>
               </a>
 
               <a
                 href="/creator?view=bank"
-                className="px-4 py-2.5 rounded-xl bg-emerald-600/25 hover:bg-emerald-600/40 border border-emerald-500/50 text-emerald-300 hover:text-white font-black text-xs sm:text-sm flex items-center gap-2 transition-all active:scale-95 no-underline cursor-pointer shadow-lg shadow-emerald-950/20"
+                className="px-3 sm:px-4 py-2.5 rounded-xl bg-emerald-600/25 hover:bg-emerald-600/40 border border-emerald-500/50 text-emerald-300 hover:text-white font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all active:scale-95 no-underline cursor-pointer shadow-lg shadow-emerald-950/20"
               >
-                <Folder className="w-4 h-4 text-emerald-400" />
-                <span>Ngân Hàng Câu Hỏi & Kho Đề</span>
+                <Folder className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="truncate">Kho Ngân Hàng</span>
               </a>
 
               <Link
                 href="/dynex"
                 target="_blank"
-                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-rose-700 hover:from-rose-500 hover:to-pink-500 text-white font-black text-xs sm:text-sm shadow-lg shadow-rose-600/30 flex items-center gap-2 transition-all active:scale-95 no-underline cursor-pointer"
+                className="px-3 sm:px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-rose-700 hover:from-rose-500 hover:to-pink-500 text-white font-black text-xs sm:text-sm shadow-lg shadow-rose-600/30 flex items-center justify-center gap-1.5 transition-all active:scale-95 no-underline cursor-pointer"
               >
-                <Flame className="w-4 h-4 text-amber-300 animate-pulse" />
-                <span>Mở DYNEX Y Khoa (OSCE)</span>
-                <ExternalLink className="w-3.5 h-3.5 text-rose-200" />
+                <Flame className="w-4 h-4 text-amber-300 animate-pulse shrink-0" />
+                <span className="truncate">DYNEX OSCE</span>
               </Link>
 
               <button
                 onClick={() => onSwitchTab('classes')}
-                className="px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 font-bold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer shadow-sm"
+                className="px-3 sm:px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
               >
-                <School className="w-4 h-4 text-purple-400" />
-                <span>Quản Lý Lớp Học</span>
+                <School className="w-4 h-4 text-purple-400 shrink-0" />
+                <span className="truncate">Quản Lý Lớp</span>
               </button>
             </div>
           </div>
 
           {/* Quick Metrics Circle & Summary Widget */}
-          <div className="bg-[#070b14]/90 border border-slate-800/90 rounded-3xl p-5 sm:p-6 shadow-xl shrink-0 w-full sm:w-auto min-w-[280px]">
+          <div className="bg-[#070b14]/90 border border-slate-800/90 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl shrink-0 w-full sm:w-auto sm:min-w-[260px]">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
               <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <Activity className="w-3.5 h-3.5 text-emerald-400" />

@@ -731,38 +731,47 @@ https://dzota.vercel.app/duocly`;
           1. HEADER & BRANDING BAR (BẢN QUYỀN: NHẬT DUY)
       ───────────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#0B1120]/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm print:hidden">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2.5">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2 sm:py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           
           {/* Logo & Platform Info */}
-          <div className="flex items-center gap-2 sm:gap-3.5">
-            <a
-              href="/"
-              className="p-1.5 sm:p-2 rounded-xl bg-gradient-to-tr from-blue-700 to-cyan-500 text-white shadow-md hover:opacity-90 transition active:scale-95 flex items-center justify-center no-underline"
-              title="Về Trang Chủ Dzota.Edu"
-            >
-              <Stethoscope className="w-5 h-5 sm:w-6 sm:h-6" />
-            </a>
-            <div>
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="text-lg sm:text-2xl font-bold tracking-tight text-blue-950 dark:text-white">
-                  DZOTA <span className="text-blue-600 dark:text-cyan-400">DƯỢC LÝ</span>
-                </span>
-                <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-cyan-300 border border-blue-200 dark:border-blue-800">
-                  {allEnhancedDrugs.length} Thuốc
-                </span>
-              </div>
-              <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-normal flex items-center gap-1.5">
-                <span>Tra Cứu Dược Lý Lâm Sàng</span>
-                <span>•</span>
-                <span className="font-semibold text-blue-700 dark:text-cyan-300">
-                  Bản quyền: Nhật Duy
-                </span>
+          <div className="flex items-center justify-between gap-2 sm:gap-3.5 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <a
+                href="/"
+                className="p-1.5 sm:p-2 rounded-xl bg-gradient-to-tr from-blue-700 to-cyan-500 text-white shadow-md hover:opacity-90 transition active:scale-95 flex items-center justify-center no-underline shrink-0"
+                title="Về Trang Chủ Dzota.Edu"
+              >
+                <Stethoscope className="w-5 h-5 sm:w-6 sm:h-6" />
+              </a>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <span className="text-base sm:text-2xl font-bold tracking-tight text-blue-950 dark:text-white truncate">
+                    DZOTA <span className="text-blue-600 dark:text-cyan-400">DƯỢC LÝ</span>
+                  </span>
+                  <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-cyan-300 border border-blue-200 dark:border-blue-800 shrink-0">
+                    {allEnhancedDrugs.length} Thuốc
+                  </span>
+                </div>
+                <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-normal flex items-center gap-1.5 truncate">
+                  <span className="truncate">Tra Cứu Dược Lý Lâm Sàng</span>
+                  <span>•</span>
+                  <span className="font-semibold text-blue-700 dark:text-cyan-300 shrink-0">
+                    Nhật Duy
+                  </span>
+                </div>
               </div>
             </div>
+
+            <a
+              href="/dashboard"
+              className="sm:hidden px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold shrink-0 no-underline"
+            >
+              Dashboard
+            </a>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Action Buttons (Smooth horizontal scroll on mobile, row on desktop) */}
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none pb-0.5 sm:pb-0 -mx-1 px-1 sm:mx-0 sm:px-0">
             
             {/* Flashcard Study Mode Button (FEATURED) */}
             <button

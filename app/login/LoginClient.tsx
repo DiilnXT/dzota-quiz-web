@@ -61,11 +61,12 @@ export default function LoginClient() {
               auto_select: false,
             })
             googleBtnRef.current.innerHTML = ''
+            const btnWidth = Math.max(220, Math.min(window.innerWidth - 72, 340))
             window.google.accounts.id.renderButton(googleBtnRef.current, {
               theme: 'filled_black',
               size: 'large',
               shape: 'pill',
-              width: 340,
+              width: btnWidth,
               text: 'continue_with',
             })
           } else if (attempts < 25) {
@@ -237,14 +238,14 @@ export default function LoginClient() {
       </div>
 
       {/* Right Auth Form Column */}
-      <div className="flex-1 relative z-10 flex flex-col justify-center items-center px-4 py-8 sm:px-8">
+      <div className="flex-1 relative z-10 flex flex-col justify-center items-center px-3.5 py-5 sm:px-8 sm:py-8 min-h-[100dvh]">
         {/* Mobile Top Bar */}
-        <div className="w-full max-w-md flex lg:hidden items-center justify-between mb-6">
-          <a href="/" className="inline-flex items-center gap-2.5 no-underline">
-            <div className="w-9 h-9 rounded-xl bg-white p-1 flex items-center justify-center shadow">
+        <div className="w-full max-w-md flex lg:hidden items-center justify-between mb-4">
+          <a href="/" className="inline-flex items-center gap-2 no-underline">
+            <div className="w-8 h-8 rounded-xl bg-white p-1 flex items-center justify-center shadow">
               <img src="/logo-dzota.png" alt="Dzota" className="w-full h-full object-contain" />
             </div>
-            <span className="text-lg font-black text-white tracking-tight">
+            <span className="text-base font-black text-white tracking-tight">
               DZOTA <span className="text-emerald-400">EDU</span>
             </span>
           </a>
@@ -257,7 +258,7 @@ export default function LoginClient() {
           </a>
         </div>
 
-        <div className="w-full max-w-md bg-[#0D1322]/90 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 sm:p-8 shadow-[0_24px_80px_rgba(0,0,0,0.65)]">
+        <div className="w-full max-w-md bg-[#0D1322]/90 backdrop-blur-2xl border border-white/10 rounded-3xl p-5 sm:p-8 shadow-[0_24px_80px_rgba(0,0,0,0.65)]">
           {/* Header */}
           <div className="text-center space-y-1.5 mb-6">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold mb-1">

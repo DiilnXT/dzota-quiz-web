@@ -159,7 +159,7 @@ export default function Header({
               )}
             </div>
           ) : (
-            <nav className="flex items-center gap-1 bg-[#111827]/90 p-1 sm:p-1.5 rounded-2xl border border-slate-800 shadow-inner overflow-x-auto max-w-[55vw] sm:max-w-none scrollbar-none">
+            <nav className="hidden md:flex items-center gap-1 bg-[#111827]/90 p-1 sm:p-1.5 rounded-2xl border border-slate-800 shadow-inner overflow-x-auto scrollbar-none">
               <button
                 onClick={() => setCurrentTab('learn')}
                 className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap ${
@@ -338,6 +338,60 @@ export default function Header({
             )}
           </div>
         </div>
+
+        {/* Dedicated Mobile Sub-Header Tab Bar (No horizontal cramping on phones) */}
+        {!isExamCandidateMode && (
+          <div className="md:hidden pb-2.5 -mx-1 px-1 flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+            <button
+              onClick={() => setCurrentTab('learn')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer ${
+                currentTab === 'learn' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-900/90 text-slate-300 border border-slate-800'
+              }`}
+            >
+              Góc Học Tập
+            </button>
+            <button
+              onClick={() => setCurrentTab('flashcard')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer ${
+                currentTab === 'flashcard' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-900/90 text-slate-300 border border-slate-800'
+              }`}
+            >
+              Flashcard Anki
+            </button>
+            <button
+              onClick={() => setCurrentTab('exam')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold whitespace-nowrap shrink-0 cursor-pointer ${
+                currentTab === 'exam' ? 'bg-rose-600 text-white shadow' : 'bg-rose-950/60 text-rose-300 border border-rose-800/60'
+              }`}
+            >
+              🔥 Thi Chạy Trạm
+            </button>
+            <button
+              onClick={() => setCurrentTab('exams')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer ${
+                currentTab === 'exams' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-900/90 text-slate-300 border border-slate-800'
+              }`}
+            >
+              Kho Đề
+            </button>
+            <button
+              onClick={() => setCurrentTab('classes')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer ${
+                currentTab === 'classes' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-900/90 text-slate-300 border border-slate-800'
+              }`}
+            >
+              Lớp Học
+            </button>
+            <button
+              onClick={() => setCurrentTab('history')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer ${
+                currentTab === 'history' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-900/90 text-slate-300 border border-slate-800'
+              }`}
+            >
+              Bảng Điểm
+            </button>
+          </div>
+        )}
       </div>
     </header>
   )

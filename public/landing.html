@@ -204,6 +204,16 @@
           padding-bottom: 0;
         }
       }
+      /* Prevent iOS Safari zoom on input tap & horizontal overflow */
+      html, body {
+        max-width: 100vw;
+        overflow-x: hidden;
+      }
+      @media (max-width: 640px) {
+        input, select, textarea {
+          font-size: 16px !important;
+        }
+      }
     </style>
 </head>
 <body class="pb-safe-dock antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
@@ -221,17 +231,17 @@
     <!-- ============================================================== -->
     <!-- 1. STICKY NAVIGATION HEADER                                    -->
     <!-- ============================================================== -->
-    <header class="sticky top-0 z-50 border-b border-white/[0.07] bg-[#050811]/80 backdrop-blur-xl theme-nav transition-all">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-[70px] flex items-center justify-between gap-3">
+    <header class="sticky top-0 z-50 border-b border-white/[0.07] bg-[#050811]/85 backdrop-blur-xl theme-nav transition-all">
+        <div class="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 h-14 sm:h-[70px] flex items-center justify-between gap-2">
             <!-- Brand Logo -->
-            <a href="/" class="flex items-center gap-2.5 sm:gap-3 group shrink-0">
-                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white p-1 shadow-md shadow-emerald-500/10 border border-slate-200/80 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <a href="/" class="flex items-center gap-2 sm:gap-3 group shrink-0 min-w-0">
+                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white p-1 shadow-md shadow-emerald-500/10 border border-slate-200/80 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                     <img src="/logo-dzota.png" alt="Dzota Logo" class="w-full h-full object-contain" />
                 </div>
-                <div>
+                <div class="min-w-0">
                     <div class="flex items-center gap-1.5">
-                        <span class="text-lg sm:text-xl font-black tracking-tight text-white theme-heading leading-none">DZOTA</span>
-                        <span class="text-[10px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">EDU</span>
+                        <span class="text-base sm:text-xl font-black tracking-tight text-white theme-heading leading-none">DZOTA</span>
+                        <span class="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">EDU</span>
                     </div>
                     <span class="hidden sm:block text-[11px] font-medium text-slate-400 theme-body leading-tight mt-0.5">
                         Học Tập & Khảo Thí Thông Minh
@@ -250,13 +260,13 @@
             </nav>
 
             <!-- Right Actions -->
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 <!-- Theme Switcher -->
                 <button
                     type="button"
                     onclick="toggleLandingTheme()"
                     id="themeToggleBtn"
-                    class="w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/10 theme-subsurface flex items-center justify-center text-slate-300 theme-heading transition cursor-pointer"
+                    class="w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/10 theme-subsurface flex items-center justify-center text-slate-300 theme-heading transition cursor-pointer shrink-0"
                     aria-label="Đổi giao diện Sáng / Tối"
                     title="Đổi chế độ Sáng / Tối"
                 >
@@ -270,7 +280,7 @@
                 </button>
 
                 <!-- Dynamic Auth / Dashboard CTA -->
-                <div id="navAuthArea" class="flex items-center gap-2">
+                <div id="navAuthArea" class="flex items-center gap-1.5 sm:gap-2">
                     <button
                         type="button"
                         onclick="openAuthModal('login')"
@@ -282,14 +292,55 @@
                         href="/dashboard"
                         id="primaryDashboardBtn"
                         onclick="return handleDashboardClick(event)"
-                        class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-500/20 transition active:scale-95"
+                        class="inline-flex items-center gap-1 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-500/20 transition active:scale-95 whitespace-nowrap"
                     >
-                        <span>Vào Dashboard</span>
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <span>Dashboard</span>
+                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
                     </a>
                 </div>
+
+                <!-- Mobile Quick Drawer Button -->
+                <button
+                    type="button"
+                    onclick="toggleMobileDrawer()"
+                    class="lg:hidden w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/10 theme-subsurface flex items-center justify-center text-slate-200 theme-heading transition cursor-pointer shrink-0"
+                    aria-label="Mở menu điều hướng"
+                >
+                    <svg id="mobileMenuOpenIcon" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                    <svg id="mobileMenuCloseIcon" class="w-4 h-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Expandable Menu Drawer -->
+        <div id="mobileTopDrawer" class="hidden lg:hidden border-t border-white/[0.07] bg-[#070B16]/98 theme-surface px-4 py-4 space-y-3 shadow-2xl">
+            <div class="grid grid-cols-2 gap-2 text-xs font-bold">
+                <a href="/dashboard" onclick="toggleMobileDrawer(); return handleDashboardClick(event)" class="p-3 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-between">
+                    <span>Bàn Học Chính</span><span>→</span>
+                </a>
+                <a href="/duocly" class="p-3 rounded-xl bg-white/[0.04] theme-subsurface text-white theme-heading border border-white/10 flex items-center justify-between">
+                    <span>Dược Lý 423+</span><span>→</span>
+                </a>
+                <a href="/dynex" class="p-3 rounded-xl bg-white/[0.04] theme-subsurface text-white theme-heading border border-white/10 flex items-center justify-between">
+                    <span>Chạy Trạm OSCE</span><span>→</span>
+                </a>
+                <a href="/notebook" class="p-3 rounded-xl bg-white/[0.04] theme-subsurface text-white theme-heading border border-white/10 flex items-center justify-between">
+                    <span>NoteBook AI</span><span>→</span>
+                </a>
+            </div>
+            <div class="flex items-center justify-between pt-2 border-t border-white/[0.07] text-xs">
+                <button type="button" onclick="toggleMobileDrawer(); openAuthModal('login')" class="px-3.5 py-2 rounded-xl bg-emerald-500 text-slate-950 font-extrabold cursor-pointer">
+                    Đăng nhập / Đăng ký
+                </button>
+                <a href="https://zalo.me/0914659511" target="_blank" rel="noopener noreferrer" class="font-bold text-emerald-400">
+                    Zalo hỗ trợ: 0914659511
+                </a>
             </div>
         </div>
     </header>
@@ -298,94 +349,94 @@
         <!-- ============================================================== -->
         <!-- 2. HERO SECTION + INSTANT EXAM ENTRY                           -->
         <!-- ============================================================== -->
-        <section class="pt-10 pb-14 sm:pt-16 sm:pb-20 lg:pt-20 lg:pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+        <section class="pt-6 pb-10 sm:pt-14 sm:pb-20 lg:pt-20 lg:pb-24 px-3.5 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-7 lg:gap-12 items-center">
                 <!-- Left Column: Value Proposition & Quick Exam Launcher -->
-                <div class="lg:col-span-7 space-y-6 sm:space-y-7">
-                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-bold">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                        <span>Nền Tảng Giáo Dục & Khảo Thí Số 1 Cho Sinh Viên & Giảng Viên</span>
+                <div class="lg:col-span-7 space-y-4 sm:space-y-6">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[11px] sm:text-xs font-bold max-w-full">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0"></span>
+                        <span class="truncate">Hệ Sinh Thái Học Tập & Khảo Thí Thông Minh</span>
                     </div>
 
-                    <h1 class="text-3xl sm:text-5xl lg:text-[54px] font-black tracking-tight text-white theme-heading leading-[1.12]">
+                    <h1 class="text-[28px] sm:text-5xl lg:text-[54px] font-black tracking-tight text-white theme-heading leading-[1.16] sm:leading-[1.12]">
                         Học tập chủ động.<br />
                         Khảo thí chuẩn xác cùng <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">Dzota Academy.</span>
                     </h1>
 
-                    <p class="text-sm sm:text-base lg:text-lg text-slate-400 theme-body leading-relaxed max-w-2xl">
-                        Từ <strong class="text-slate-200 theme-heading">Phòng thi trắc nghiệm thông minh</strong> (Online, Offline & Battle), <strong class="text-slate-200 theme-heading">Trợ lý giáo trình AI NoteBook ND</strong>, đến <strong class="text-slate-200 theme-heading">Cẩm nang 423+ thuốc Dược lý</strong> và <strong class="text-slate-200 theme-heading">Mô phỏng chạy trạm OSCE</strong> — tất cả hội tụ trên một bàn học duy nhất.
+                    <p class="text-[13px] sm:text-base lg:text-lg text-slate-400 theme-body leading-relaxed max-w-2xl">
+                        Từ <strong class="text-slate-200 theme-heading">Phòng thi trắc nghiệm AI</strong> (Online, Offline & Battle), <strong class="text-slate-200 theme-heading">NoteBook ND</strong>, đến <strong class="text-slate-200 theme-heading">423+ thuốc Dược lý</strong> và <strong class="text-slate-200 theme-heading">Chạy trạm OSCE</strong> — gói gọn trên một bàn học duy nhất.
                     </p>
 
                     <!-- Primary Action Buttons -->
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
+                    <div class="grid grid-cols-2 sm:flex sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 pt-0.5">
                         <a
                             href="/dashboard"
                             onclick="return handleDashboardClick(event)"
-                            class="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-sm sm:text-base shadow-xl shadow-emerald-500/20 transition-all active:scale-[0.98]"
+                            class="inline-flex items-center justify-center gap-2 px-3.5 sm:px-6 py-3 sm:py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-xs sm:text-base shadow-xl shadow-emerald-500/20 transition-all active:scale-[0.98] text-center"
                         >
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
                                 <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
                                 <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
                                 <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                                 <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                             </svg>
-                            <span id="heroMainCtaText">Mở Bàn Học & Dashboard</span>
+                            <span id="heroMainCtaText" class="truncate">Mở Dashboard</span>
                         </a>
 
                         <a
                             href="#interactive-demo"
-                            class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 theme-surface text-white theme-heading font-bold text-sm sm:text-base transition-all"
+                            class="inline-flex items-center justify-center gap-1.5 px-3.5 sm:px-6 py-3 sm:py-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 theme-surface text-white theme-heading font-bold text-xs sm:text-base transition-all text-center"
                         >
-                            <span>Làm Thử Đề Trực Tiếp</span>
-                            <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                            <span class="truncate">Làm Thử Đề</span>
+                            <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                             </svg>
                         </a>
                     </div>
 
-                    <!-- Instant Exam Code / Link Entry Bar -->
-                    <div class="p-2 sm:p-2.5 rounded-2xl bg-[#0B1120]/90 border border-white/10 theme-surface max-w-xl shadow-lg">
-                        <form onsubmit="handleQuickExamOpen(event)" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                            <div class="relative flex-1 flex items-center">
-                                <svg class="w-4 h-4 text-emerald-400 absolute left-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <!-- Instant Exam Code / Link Entry Bar (Single compact row even on mobile) -->
+                    <div class="p-1.5 sm:p-2 rounded-2xl bg-[#0B1120]/90 border border-white/10 theme-surface max-w-xl shadow-lg">
+                        <form onsubmit="handleQuickExamOpen(event)" class="flex items-center gap-1.5 sm:gap-2">
+                            <div class="relative flex-1 flex items-center min-w-0">
+                                <svg class="w-4 h-4 text-emerald-400 absolute left-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                                 </svg>
                                 <input
                                     type="text"
                                     id="quickExamInput"
-                                    placeholder="Dán link đề thi hoặc nhập Mã ID bài test để vào thi ngay..."
-                                    class="w-full pl-10 pr-3 py-2.5 bg-transparent text-xs sm:text-sm text-white theme-heading placeholder:text-slate-500 focus:outline-none font-medium"
+                                    placeholder="Dán link hoặc mã ID đề thi..."
+                                    class="w-full pl-9 pr-2 py-2 bg-transparent text-sm text-white theme-heading placeholder:text-slate-500 focus:outline-none font-medium min-w-0"
                                 />
                             </div>
                             <button
                                 type="submit"
-                                class="px-4 py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 border border-emerald-500/30 font-extrabold text-xs sm:text-sm transition-all shrink-0 cursor-pointer"
+                                class="px-3.5 sm:px-4 py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 border border-emerald-500/30 font-extrabold text-xs sm:text-sm transition-all shrink-0 cursor-pointer whitespace-nowrap"
                             >
-                                Vào Phòng Thi →
+                                Vào Thi →
                             </button>
                         </form>
                     </div>
 
                     <!-- Trust Metrics Bar -->
-                    <div class="grid grid-cols-3 gap-4 pt-2 border-t border-white/[0.07] max-w-xl">
-                        <div>
-                            <div class="text-xl sm:text-2xl font-black font-mono text-white theme-heading">100%</div>
-                            <div class="text-[11px] sm:text-xs font-medium text-slate-400 theme-body">Hỗ trợ thi Offline khi rớt mạng</div>
+                    <div class="grid grid-cols-3 gap-2.5 sm:gap-4 pt-2 border-t border-white/[0.07] max-w-xl">
+                        <div class="min-w-0">
+                            <div class="text-lg sm:text-2xl font-black font-mono text-white theme-heading">100%</div>
+                            <div class="text-[11px] sm:text-xs font-medium text-slate-400 theme-body leading-snug">Thi mượt cả khi Offline</div>
                         </div>
-                        <div>
-                            <div class="text-xl sm:text-2xl font-black font-mono text-emerald-400">423+</div>
-                            <div class="text-[11px] sm:text-xs font-medium text-slate-400 theme-body">Hoạt chất Dược thư Quốc gia</div>
+                        <div class="min-w-0">
+                            <div class="text-lg sm:text-2xl font-black font-mono text-emerald-400">423+</div>
+                            <div class="text-[11px] sm:text-xs font-medium text-slate-400 theme-body leading-snug">Thuốc Dược thư QG</div>
                         </div>
-                        <div>
-                            <div class="text-xl sm:text-2xl font-black font-mono text-cyan-400">SM-2 & AI</div>
-                            <div class="text-[11px] sm:text-xs font-medium text-slate-400 theme-body">Phân tích lỗi sai & lặp lại ngắt quãng</div>
+                        <div class="min-w-0">
+                            <div class="text-lg sm:text-2xl font-black font-mono text-cyan-400">AI & SM-2</div>
+                            <div class="text-[11px] sm:text-xs font-medium text-slate-400 theme-body leading-snug">Sổ lỗi sai & Thẻ nhớ</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Right Column: Quick Access & Live Account Card -->
                 <div class="lg:col-span-5">
-                    <div class="bento-card theme-surface rounded-3xl p-6 sm:p-7 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
+                    <div class="bento-card theme-surface rounded-3xl p-4 sm:p-7 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
                         <!-- Logged-Out View: Fast Sign-In / Sign-Up Card -->
                         <div id="heroGuestCard">
                             <div class="flex items-center justify-between mb-5">
@@ -514,26 +565,26 @@
         <!-- ============================================================== -->
         <!-- 3. INTERACTIVE LIVE WORKBENCH (4 REAL FUNCTIONAL MODULES)      -->
         <!-- ============================================================== -->
-        <section id="interactive-demo" class="py-14 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto reveal">
-            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        <section id="interactive-demo" class="py-10 sm:py-20 px-3.5 sm:px-6 lg:px-8 max-w-7xl mx-auto reveal">
+            <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-5 sm:mb-8">
                 <div>
-                    <span class="text-xs font-extrabold uppercase tracking-widest text-emerald-400">Trải Nghiệm Thực Tế Ngay Trên Trang</span>
-                    <h2 class="text-2xl sm:text-4xl font-black text-white theme-heading tracking-tight mt-1">
+                    <span class="text-[11px] sm:text-xs font-extrabold uppercase tracking-widest text-emerald-400">Trải Nghiệm Thực Tế Ngay Trên Trang</span>
+                    <h2 class="text-xl sm:text-4xl font-black text-white theme-heading tracking-tight mt-1">
                          Bàn Học Tương Tác Đa Phân Hệ Dzota
                     </h2>
                 </div>
-                <!-- Tab Switcher -->
-                <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                    <button type="button" onclick="switchWorkbench('quiz')" id="wbBtn_quiz" class="wb-tab px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-slate-950 shrink-0 transition cursor-pointer">
-                        1. Phòng Thi Trắc Nghiệm
+                <!-- Tab Switcher: 2x2 Grid on Mobile, Flex Row on Tablet/Desktop -->
+                <div class="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-1.5">
+                    <button type="button" onclick="switchWorkbench('quiz')" id="wbBtn_quiz" class="wb-tab px-3 sm:px-4 py-2.5 sm:py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-slate-950 text-center transition cursor-pointer truncate">
+                        1. Phòng Thi Đề Mẫu
                     </button>
-                    <button type="button" onclick="switchWorkbench('duocly')" id="wbBtn_duocly" class="wb-tab px-4 py-2 rounded-xl text-xs font-bold bg-white/[0.04] text-slate-300 border border-white/10 theme-subsurface theme-heading shrink-0 transition cursor-pointer">
-                        2. Tra Cứu Dược Lý (423+)
+                    <button type="button" onclick="switchWorkbench('duocly')" id="wbBtn_duocly" class="wb-tab px-3 sm:px-4 py-2.5 sm:py-2 rounded-xl text-xs font-bold bg-white/[0.04] text-slate-300 border border-white/10 theme-subsurface theme-heading text-center transition cursor-pointer truncate">
+                        2. Dược Lý (423+)
                     </button>
-                    <button type="button" onclick="switchWorkbench('osce')" id="wbBtn_osce" class="wb-tab px-4 py-2 rounded-xl text-xs font-bold bg-white/[0.04] text-slate-300 border border-white/10 theme-subsurface theme-heading shrink-0 transition cursor-pointer">
-                        3. Chạy Trạm OSCE (20s)
+                    <button type="button" onclick="switchWorkbench('osce')" id="wbBtn_osce" class="wb-tab px-3 sm:px-4 py-2.5 sm:py-2 rounded-xl text-xs font-bold bg-white/[0.04] text-slate-300 border border-white/10 theme-subsurface theme-heading text-center transition cursor-pointer truncate">
+                        3. Chạy Trạm (20s)
                     </button>
-                    <button type="button" onclick="switchWorkbench('notebook')" id="wbBtn_notebook" class="wb-tab px-4 py-2 rounded-xl text-xs font-bold bg-white/[0.04] text-slate-300 border border-white/10 theme-subsurface theme-heading shrink-0 transition cursor-pointer">
+                    <button type="button" onclick="switchWorkbench('notebook')" id="wbBtn_notebook" class="wb-tab px-3 sm:px-4 py-2.5 sm:py-2 rounded-xl text-xs font-bold bg-white/[0.04] text-slate-300 border border-white/10 theme-subsurface theme-heading text-center transition cursor-pointer truncate">
                         4. NoteBook ND AI
                     </button>
                 </div>
@@ -1137,6 +1188,19 @@
         initScrollAndSpotlight();
       });
 
+      function toggleMobileDrawer() {
+        var drawer = document.getElementById('mobileTopDrawer');
+        var icOpen = document.getElementById('mobileMenuOpenIcon');
+        var icClose = document.getElementById('mobileMenuCloseIcon');
+        if (!drawer) return;
+        var willShow = drawer.classList.contains('hidden');
+        drawer.classList.toggle('hidden', !willShow);
+        if (icOpen && icClose) {
+          icOpen.classList.toggle('hidden', willShow);
+          icClose.classList.toggle('hidden', !willShow);
+        }
+      }
+
       // Theme Switcher
       function toggleLandingTheme() {
         var html = document.documentElement;
@@ -1221,13 +1285,14 @@
         var badgeEl = document.getElementById('userInitialBadge');
         if (badgeEl) badgeEl.textContent = String(displayName).slice(0, 2).toUpperCase();
         var ctaText = document.getElementById('heroMainCtaText');
-        if (ctaText) ctaText.textContent = 'Tiếp Tục Vào Dashboard Của Bạn';
+        if (ctaText) ctaText.textContent = 'Vào Dashboard Của Bạn';
 
         var navArea = document.getElementById('navAuthArea');
         if (navArea) {
           navArea.innerHTML =
-            '<a href="/dashboard" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-500/20 transition">' +
-              '<span>Bàn Học: ' + escapeHtml(String(displayName).slice(0, 16)) + '</span>' +
+            '<a href="/dashboard" class="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-500/20 transition whitespace-nowrap">' +
+              '<span class="sm:hidden">Bàn Học</span>' +
+              '<span class="hidden sm:inline">Bàn Học: ' + escapeHtml(String(displayName).slice(0, 16)) + '</span>' +
               '<span>→</span>' +
             '</a>';
         }
@@ -1256,12 +1321,14 @@
                 var hb = document.getElementById('heroGoogleBtn');
                 if (hb) {
                   hb.innerHTML = '';
-                  window.google.accounts.id.renderButton(hb, { theme: 'filled_black', size: 'large', shape: 'pill', width: 300, text: 'continue_with' });
+                  var hw = Math.max(220, Math.min((hb.parentElement ? hb.parentElement.clientWidth : 280) - 8, 320));
+                  window.google.accounts.id.renderButton(hb, { theme: 'filled_black', size: 'large', shape: 'pill', width: hw, text: 'continue_with' });
                 }
                 var mb = document.getElementById('modalGoogleBtn');
                 if (mb) {
                   mb.innerHTML = '';
-                  window.google.accounts.id.renderButton(mb, { theme: 'filled_black', size: 'large', shape: 'pill', width: 300, text: 'continue_with' });
+                  var mw = Math.max(220, Math.min(window.innerWidth - 72, 300));
+                  window.google.accounts.id.renderButton(mb, { theme: 'filled_black', size: 'large', shape: 'pill', width: mw, text: 'continue_with' });
                 }
               } else if (tries < 25) {
                 tries++;
@@ -1422,10 +1489,10 @@
           var btn = document.getElementById('wbBtn_' + k);
           if (k === tab) {
             pane.classList.remove('hidden');
-            btn.className = 'wb-tab px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-slate-950 shrink-0 transition cursor-pointer';
+            btn.className = 'wb-tab px-3 sm:px-4 py-2.5 sm:py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-slate-950 text-center transition cursor-pointer truncate';
           } else {
             pane.classList.add('hidden');
-            btn.className = 'wb-tab px-4 py-2 rounded-xl text-xs font-bold bg-white/[0.04] text-slate-300 border border-white/10 theme-subsurface theme-heading shrink-0 transition cursor-pointer';
+            btn.className = 'wb-tab px-3 sm:px-4 py-2.5 sm:py-2 rounded-xl text-xs font-bold bg-white/[0.04] text-slate-300 border border-white/10 theme-subsurface theme-heading text-center transition cursor-pointer truncate';
           }
         });
       }

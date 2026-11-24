@@ -343,55 +343,54 @@ export default function StudentStudyTab({ currentUser, showToast }: StudentStudy
       </div>
 
       {/* ─── 2. SUB-NAVIGATION TABS (CHỌN GÓC HỌC TẬP) ─── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-[#1E293B] p-2 sm:p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white dark:bg-[#1E293B] p-2 sm:p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
           <button
             onClick={() => setActiveSubTab('assigned')}
-            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
+            className={`px-2.5 sm:px-3.5 py-2.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center sm:justify-start gap-1.5 transition-all cursor-pointer min-w-0 ${
               activeSubTab === 'assigned'
                 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                : 'text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 sm:bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
-            <BookOpen size={16} />
-            <span>Bài Thi Được Giao ({studyData.assignedQuizzes.length})</span>
+            <BookOpen size={15} className="shrink-0" />
+            <span className="truncate">Đề Được Giao ({studyData.assignedQuizzes.length})</span>
           </button>
 
           <button
             onClick={() => setActiveSubTab('osce')}
-            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
+            className={`px-2.5 sm:px-3.5 py-2.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center sm:justify-start gap-1.5 transition-all cursor-pointer min-w-0 ${
               activeSubTab === 'osce'
                 ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                : 'text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 sm:bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
-            <Activity size={16} className="text-emerald-400" />
-            <span>Kho Đề Thi Chạy Trạm DYNEX OSCE ({osceStationExams.length})</span>
-            <span className="text-[10px] px-1.5 py-0.2 bg-emerald-400 text-emerald-950 font-black rounded-md">Y Khoa</span>
+            <Activity size={15} className="text-emerald-400 shrink-0" />
+            <span className="truncate">Chạy Trạm OSCE ({osceStationExams.length})</span>
           </button>
 
           <button
             onClick={() => setActiveSubTab('docs')}
-            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
+            className={`px-2.5 sm:px-3.5 py-2.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center sm:justify-start gap-1.5 transition-all cursor-pointer min-w-0 ${
               activeSubTab === 'docs'
                 ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                : 'text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 sm:bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
-            <FileText size={16} />
-            <span>Tài Liệu Ôn Thi & Giáo Trình ({studyMaterialsList.length})</span>
+            <FileText size={15} className="shrink-0" />
+            <span className="truncate">Tài Liệu Y ({studyMaterialsList.length})</span>
           </button>
 
           <button
             onClick={() => setActiveSubTab('history')}
-            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
+            className={`px-2.5 sm:px-3.5 py-2.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center sm:justify-start gap-1.5 transition-all cursor-pointer min-w-0 ${
               activeSubTab === 'history'
                 ? 'bg-slate-800 text-white dark:bg-slate-700 shadow-md'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                : 'text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 sm:bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
-            <Clock size={16} />
-            <span>Lịch Sử Bài Làm ({studyData.history.length})</span>
+            <Clock size={15} className="shrink-0" />
+            <span className="truncate">Lịch Sử ({studyData.history.length})</span>
           </button>
         </div>
 
