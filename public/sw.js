@@ -1,6 +1,6 @@
 // Dzota Quiz - Service Worker for Offline Exam Support (v7)
 // Strictly scoped to offline exam & static CDN assets — NEVER intercepts /dashboard, /login, or dynamic pages.
-const CACHE_NAME = 'dzota-quiz-offline-v9';
+const CACHE_NAME = 'dzota-quiz-offline-v10';
 
 const CORE_ASSETS = [
   '/index.html',

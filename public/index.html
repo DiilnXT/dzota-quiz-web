@@ -2440,6 +2440,68 @@
             if (kAns) { q.correct = kAns; return; }
         };
 
+        // Nhận diện dòng kết thúc đề thi ("--- HẾT ---", "(Cán bộ coi thi không giải thích gì thêm)") để không nối nhầm vào phương án D câu cuối
+        const isExamEndSeparator = (txt) => {
+            const t = (txt || '').trim();
+            if (/^[-—–=_*~•\s]*HẾT(?:\s+ĐỀ(?:\s+THI)?)?[-—–=_*~•\s.!]*$/i.test(t)) return true;
+            if (/^\(?\s*(?:Cán bộ coi thi|Giám thị(?:\s+coi thi)?)\s+không\s+giải\s+thích/i.test(t)) return true;
+            return false;
+        };
+
+        // Bóc tách dãy phương án nằm trên cùng 1 hàng (VD: "A. ...   B. ...   C. ...   D. ...")
+        // Loại bỏ triệt để tên viết tắt chi sinh học Latinh giữa câu (VD: "E. coli", "A. duodenale", "B. coli", "F. buski")
+        const extractInlineOptionMatches = (lineText, expectedStartLetter = 'A') => {
+            if (!lineText) return [];
+            const multiOptRegex = /(?:^|[\s\t])(?:[*_]{0,2})(?:\(|\[)?([A-G])(?:\)|\])?\s*([.):/])(?:[*_]{0,2})/g;
+            const rawMatches = [];
+            let mm;
+            while ((mm = multiOptRegex.exec(lineText)) !== null) {
+                const leadWsStr = (mm[0].match(/^[\s\t]+/) || [''])[0];
+                rawMatches.push({
+                    letter: mm[1].toUpperCase(),
+                    delim: mm[2],
+                    leadWsStr,
+                    index: mm.index + leadWsStr.length,
+                    endOfPrefix: mm.index + mm[0].length
+                });
+            }
+            if (rawMatches.length < 2) return [];
+
+            const trimmedLine = lineText.trim();
+            const firstCand = rawMatches[0];
+            const afterFirst = lineText.slice(firstCand.endOfPrefix).trim();
+            const usesCapitalizedStyle = /^[A-ZÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ0-9(\[\"'*+-]/.test(
+                firstCand.index === 0 ? afterFirst : trimmedLine
+            );
+
+            const isMidSentenceBinomialAbbrev = (m) => {
+                if (m.index === 0) return false;
+                if (m.delim !== '.') return false;
+                if (/[\t]| {2,}/.test(m.leadWsStr)) return false;
+                const after = lineText.slice(m.endOfPrefix);
+                if (usesCapitalizedStyle && /^\s*[a-z]{3,}\b/.test(after)) return true;
+                return false;
+            };
+
+            const filtered = rawMatches.filter(m => !isMidSentenceBinomialAbbrev(m));
+            if (filtered.length < 2) return [];
+
+            const seq = [];
+            let expectedCode = expectedStartLetter.charCodeAt(0);
+            for (const m of filtered) {
+                if (m.letter.charCodeAt(0) === expectedCode) {
+                    if (seq.length > 0) {
+                        const prev = seq[seq.length - 1];
+                        const prevContent = lineText.slice(prev.endOfPrefix, m.index).trim();
+                        if (!prevContent) continue;
+                    }
+                    seq.push(m);
+                    expectedCode++;
+                }
+            }
+            return seq.length >= 2 ? seq : [];
+        };
+
         // Động cơ bóc tách danh sách dòng DOM thành câu hỏi chuẩn (Dùng chung cho cả Đề Thường, Câu Lẻ Ngân Hàng và Ngân Hàng Hàng Loạt)
         const parseLinesIntoRawQuestions = (lines, editorBody, formatMode, allowDecimalHierarchy = false) => {
             const rawQuestions = [];
@@ -2461,6 +2523,16 @@
                 currentQOptAttrs = {};
             };
 
+            const getNextExpectedOptionLetter = (q) => {
+                if (!q) return 'A';
+                const keys = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+                let lastFilledIdx = -1;
+                for (let k = 0; k < keys.length; k++) {
+                    if (q.options[keys[k]] !== "") lastFilledIdx = k;
+                }
+                return lastFilledIdx + 1 < keys.length ? keys[lastFilledIdx + 1] : 'G';
+            };
+
             for (let i = 0; i < lines.length; i++) {
                 const lineObj = trimLineObj(lines[i]);
                 const lineText = lineObj.text;
@@ -2473,39 +2545,40 @@
                 }
                 if (reachedAnswerKeyFooter) break;
 
+                if (isExamEndSeparator(lineText)) {
+                    flushCurrent();
+                    continue;
+                }
+
                 // Dòng "Đáp án: B" / "Chọn: C" đứng riêng ngay dưới câu hỏi
-                const inlineAnsMatch = lineText.match(/^(?:Đáp án(?:\s*đúng)?|Chọn(?:\s*đáp án)?|Answer(?:\s*Key)?)[s.:=*-]+([A-G])\b/i);
+                const inlineAnsMatch = lineText.match(/^(?:Đáp án(?:\s*đúng)?|Chọn(?:\s*đáp án)?|Answer(?:\s*Key)?)[\s.:=*-]+([A-G])\b/i);
                 if (inlineAnsMatch && currentQ) {
                     currentQ.correct = inlineAnsMatch[1].toUpperCase();
                     continue;
                 }
 
-                // Kiểm tra dòng chứa >= 2 phương án trên cùng 1 hàng (VD: A. ...   B. ...   C. ...   D. ...)
-                const multiOptRegex = /(?:^|[\s\t])(?:[*_]{0,2})(?:\(|\[)?([A-G])(?:\)|\])?\s*[.):/](?:[*_]{0,2})/g;
-                const multiMatches = [];
-                let mm;
-                while ((mm = multiOptRegex.exec(lineText)) !== null) {
-                    const leadWs = (mm[0].match(/^[\s\t]+/) || [''])[0].length;
-                    multiMatches.push({
-                        letter: mm[1].toUpperCase(),
-                        index: mm.index + leadWs,
-                        endOfPrefix: mm.index + mm[0].length
-                    });
-                }
+                // Kiểm tra dòng phương án đơn hoặc dãy phương án trên cùng 1 hàng
+                const expectedOptLetter = getNextExpectedOptionLetter(currentQ);
+                const multiMatches = extractInlineOptionMatches(lineText, expectedOptLetter);
+                const optMatch = multiMatches.length === 0 ? extractOptionMatch(lineText) : null;
 
-                const decimalMatch = (allowDecimalHierarchy && multiMatches.length === 0)
+                // Luôn kiểm tra tiêu đề câu hỏi độc lập với ký tự viết tắt trong thân câu (VD: "E. coli", "A. duodenale")
+                const decimalMatch = (!optMatch && allowDecimalHierarchy)
                     ? lineText.match(/^(?:Câu|Bài)?\s*(\d+)\.(\d+)[\s.:)-]+(.*)/i)
                     : null;
-                const optMatch = multiMatches.length <= 1 ? extractOptionMatch(lineText) : null;
-                const qHeader = (!decimalMatch && multiMatches.length === 0) ? extractQuestionHeader(lineText, optMatch, qCounter) : null;
+                const qHeader = (!decimalMatch && !optMatch) ? extractQuestionHeader(lineText, null, qCounter) : null;
 
-                if ((decimalMatch || qHeader) && !optMatch) {
+                if (decimalMatch || qHeader) {
                     flushCurrent();
                     qCounter++;
+                    // Kiểm tra trường hợp câu hỏi gộp cả 4 đáp án A. B. C. D. ngay trên cùng 1 dòng tiêu đề
+                    const headerInlineOpts = extractInlineOptionMatches(lineText, 'A');
                     if (decimalMatch) {
                         const slotNum = parseInt(decimalMatch[1], 10);
                         const varNum = parseInt(decimalMatch[2], 10);
-                        let qText = decimalMatch[3].trim();
+                        const rawHeaderLine = headerInlineOpts.length >= 2 ? lineText.slice(0, headerInlineOpts[0].index) : lineText;
+                        const dmClean = rawHeaderLine.match(/^(?:Câu|Bài)?\s*(\d+)\.(\d+)[\s.:)-]+(.*)/i);
+                        let qText = (dmClean ? dmClean[3] : decimalMatch[3]).trim();
                         if (/^\[(.*)\]$/.test(qText) && !qText.includes('][') && !qText.includes('],[')) {
                             qText = qText.replace(/^\[\s*/, '').replace(/\s*\]$/, '').trim();
                         }
@@ -2524,19 +2597,35 @@
                     } else {
                         const qNum = qHeader.number || String(qCounter);
                         const slotNum = parseInt(qNum, 10) || qCounter;
+                        let qText = qHeader.text;
+                        if (headerInlineOpts.length >= 2) {
+                            const slicedHeader = extractQuestionHeader(lineText.slice(0, headerInlineOpts[0].index), null, qCounter - 1);
+                            if (slicedHeader) qText = slicedHeader.text;
+                        }
                         currentQ = {
                             id: parseInt(qNum, 10) || Date.now() + Math.random(),
                             slotNum,
                             varNum: 1,
                             rawKey: String(qNum),
                             number: String(qNum),
-                            text: qHeader.text,
+                            text: qText,
                             options: { A: "", B: "", C: "", D: "", E: "", F: "", G: "" },
                             correct: null,
                             images: [...lineObj.images]
                         };
                     }
                     currentQOptAttrs = {};
+                    if (headerInlineOpts.length >= 2) {
+                        for (let idx = 0; idx < headerInlineOpts.length; idx++) {
+                            const curr = headerInlineOpts[idx];
+                            const endPos = (idx + 1 < headerInlineOpts.length) ? headerInlineOpts[idx + 1].index : lineText.length;
+                            const subLineObj = sliceLineObj(lineObj, curr.index, endPos);
+                            let content = lineText.slice(curr.endOfPrefix, endPos).trim().replace(/^\*\*/, '').replace(/\*\*$/, '');
+                            content = content.replace(/\s*\((?:đúng|đáp án đúng|chính xác|correct|true)\)/i, '').replace(/\s*\[x\]/i, '').trim();
+                            currentQ.options[curr.letter] = content;
+                            currentQOptAttrs[curr.letter] = checkOptionAttributes(subLineObj, curr.letter, content, formatMode);
+                        }
+                    }
                 } else if (multiMatches.length >= 2 && currentQ) {
                     for (let idx = 0; idx < multiMatches.length; idx++) {
                         const curr = multiMatches[idx];
@@ -2614,6 +2703,7 @@
             let line = lines[i].trim();
             if (!line) continue;
             if (/^[-*_]{3,}$/.test(line)) continue;
+            if (isExamEndSeparator(line)) { flushCurrent(); continue; }
 
             const optMatch = extractOptionMatch(line);
             const qMatch = extractQuestionHeader(line, optMatch, qCounter);
@@ -2662,22 +2752,15 @@
 
               currentQuestion.options[letter] = optContent;
             } else if (currentQuestion) {
-              // Kiểm tra xem dòng có chứa nhiều phương án trên 1 dòng không (vd: A. ... B. ... C. ... D. ...)
-              const optLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
-              const optIndices = [];
-              optLetters.forEach(ltr => {
-                const reg = new RegExp(`(?:^|\\s)(?:[*_]{0,2})(${ltr})[\\s.):/\\*-]+(?:[*_]{0,2})`, 'gi');
-                let m;
-                while ((m = reg.exec(line)) !== null) {
-                  optIndices.push({ letter: ltr, index: m.index, matchLen: m[0].length });
-                }
-              });
+              // Kiểm tra xem dòng có chứa nhiều phương án liên tiếp hợp lệ trên 1 dòng không
+              const filledKeys = ['A', 'B', 'C', 'D', 'E', 'F', 'G'].filter(k => currentQuestion.options[k] !== undefined);
+              const expStart = filledKeys.length > 0 ? String.fromCharCode(filledKeys[filledKeys.length - 1].charCodeAt(0) + 1) : 'A';
+              const optIndices = extractInlineOptionMatches(line, expStart);
 
               if (optIndices.length >= 2) {
-                optIndices.sort((a, b) => a.index - b.index);
                 for (let idx = 0; idx < optIndices.length; idx++) {
                   const curr = optIndices[idx];
-                  const startPos = curr.index + curr.matchLen;
+                  const startPos = curr.endOfPrefix;
                   const endPos = (idx + 1 < optIndices.length) ? optIndices[idx + 1].index : line.length;
                   const chunk = line.substring(curr.index, endPos).trim();
 

@@ -926,6 +926,80 @@ export default function WordImporter({ chapterId, onDone }: { chapterId: string,
         }
       } catch {}
 
+      const isAnswerTableHeading = (txt: string) =>
+        /^(?:BẢNG ĐÁP ÁN(?:\s+NGÂN HÀNG CÂU HỎI)?|ĐÁP ÁN ĐỀ THI|ANSWER KEY)$/i.test((txt || '').trim())
+
+      const isExamEndSeparator = (txt: string) => {
+        const t = (txt || '').trim()
+        if (/^[-—–=_*~•\s]*HẾT(?:\s+ĐỀ(?:\s+THI)?)?[-—–=_*~•\s.!]*$/i.test(t)) return true
+        if (/^\(?\s*(?:Cán bộ coi thi|Giám thị(?:\s+coi thi)?)\s+không\s+giải\s+thích/i.test(t)) return true
+        return false
+      }
+
+      const extractInlineOptionMatches = (lineText: string, expectedStartLetter = 'A') => {
+        if (!lineText) return []
+        const multiOptRegex = /(?:^|[\s\t])(?:[*_]{0,2})(?:\(|\[)?([A-G])(?:\)|\])?\s*([.):/])(?:[*_]{0,2})/g
+        const rawMatches: any[] = []
+        let mm
+        while ((mm = multiOptRegex.exec(lineText)) !== null) {
+          const leadWsStr = (mm[0].match(/^[\s\t]+/) || [''])[0]
+          rawMatches.push({
+            letter: mm[1].toUpperCase(),
+            delim: mm[2],
+            leadWsStr,
+            index: mm.index + leadWsStr.length,
+            endOfPrefix: mm.index + mm[0].length,
+          })
+        }
+        if (rawMatches.length < 2) return []
+
+        const trimmedLine = lineText.trim()
+        const firstCand = rawMatches[0]
+        const afterFirst = lineText.slice(firstCand.endOfPrefix).trim()
+        const usesCapitalizedStyle = /^[A-ZÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ0-9(\[\"'*+-]/.test(
+          firstCand.index === 0 ? afterFirst : trimmedLine
+        )
+
+        const isMidSentenceBinomialAbbrev = (m: any) => {
+          if (m.index === 0) return false
+          if (m.delim !== '.') return false
+          if (/[\t]| {2,}/.test(m.leadWsStr)) return false
+          const after = lineText.slice(m.endOfPrefix)
+          if (usesCapitalizedStyle && /^\s*[a-z]{3,}\b/.test(after)) return true
+          return false
+        }
+
+        const filtered = rawMatches.filter((m) => !isMidSentenceBinomialAbbrev(m))
+        if (filtered.length < 2) return []
+
+        const seq: any[] = []
+        let expectedCode = expectedStartLetter.charCodeAt(0)
+        for (const m of filtered) {
+          if (m.letter.charCodeAt(0) === expectedCode) {
+            if (seq.length > 0) {
+              const prev = seq[seq.length - 1]
+              const prevContent = lineText.slice(prev.endOfPrefix, m.index).trim()
+              if (!prevContent) continue
+            }
+            seq.push(m)
+            expectedCode++
+          }
+        }
+        return seq.length >= 2 ? seq : []
+      }
+
+      const getNextExpectedOptionLetter = (q: any) => {
+        if (!q) return 'A'
+        const keys = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        let lastFilledIdx = -1
+        for (let k = 0; k < keys.length; k++) {
+          if (q.options[keys[k]] !== '') lastFilledIdx = k
+        }
+        return lastFilledIdx + 1 < keys.length ? keys[lastFilledIdx + 1] : 'G'
+      }
+
+      let reachedAnswerKeyFooter = false
+
       const flushCurrentQ = () => {
         if (!currentQ) return
         finalizeQuestion(currentQ, currentQOptAttrs, importFormatMode, answerMap)
@@ -934,45 +1008,64 @@ export default function WordImporter({ chapterId, onDone }: { chapterId: string,
         currentQOptAttrs = {}
       }
 
-      lines.forEach((rawLineObj) => {
-        const lineObj = trimLineObj(rawLineObj)
+      for (let i = 0; i < lines.length; i++) {
+        const lineObj = trimLineObj(lines[i])
         const lineText = lineObj.text
-        if (!lineText && lineObj.images.length === 0) return
+        if (!lineText && lineObj.images.length === 0) continue
 
-        const inlineAnsMatch = lineText.match(/^(?:Đáp án(?:\s*đúng)?|Chọn(?:\s*đáp án)?|Answer)[\s.:=-]+([A-G])\b/i)
+        if (isAnswerTableHeading(lineText)) {
+          reachedAnswerKeyFooter = true
+          flushCurrentQ()
+          break
+        }
+        if (reachedAnswerKeyFooter) break
+
+        if (isExamEndSeparator(lineText)) {
+          flushCurrentQ()
+          continue
+        }
+
+        const inlineAnsMatch = lineText.match(/^(?:Đáp án(?:\s*đúng)?|Chọn(?:\s*đáp án)?|Answer(?:\s*Key)?)[\s.:=*-]+([A-G])\b/i)
         if (inlineAnsMatch && currentQ) {
           currentQ.correct = inlineAnsMatch[1].toUpperCase()
-          return
+          continue
         }
 
-        const multiOptRegex = /(?:^|[\s\t])(?:[*_]{0,2})(?:\(|\[)?([A-G])(?:\)|\])?\s*[.):/](?:[*_]{0,2})/g
-        const multiMatches: any[] = []
-        let mm
-        while ((mm = multiOptRegex.exec(lineText)) !== null) {
-          const leadWs = (mm[0].match(/^[\s\t]+/) || [''])[0].length
-          multiMatches.push({
-            letter: mm[1].toUpperCase(),
-            index: mm.index + leadWs,
-            endOfPrefix: mm.index + mm[0].length,
-          })
-        }
+        const expectedOptLetter = getNextExpectedOptionLetter(currentQ)
+        const multiMatches = extractInlineOptionMatches(lineText, expectedOptLetter)
+        const optMatch = multiMatches.length === 0 ? extractOptionMatch(lineText) : null
+        const qHeader = !optMatch ? extractQuestionHeader(lineText, null, qCounter) : null
 
-        const optMatch = multiMatches.length <= 1 ? extractOptionMatch(lineText) : null
-        const qHeader = multiMatches.length === 0 ? extractQuestionHeader(lineText, optMatch, qCounter) : null
-
-        if (qHeader && !optMatch) {
+        if (qHeader) {
           flushCurrentQ()
           qCounter++
+          const headerInlineOpts = extractInlineOptionMatches(lineText, 'A')
           const qNum = qHeader.number || String(qCounter)
+          let qText = qHeader.text
+          if (headerInlineOpts.length >= 2) {
+            const slicedHeader = extractQuestionHeader(lineText.slice(0, headerInlineOpts[0].index), null, qCounter - 1)
+            if (slicedHeader) qText = slicedHeader.text
+          }
           currentQ = {
             id: parseInt(qNum) || Date.now() + Math.random(),
             number: qNum,
-            text: qHeader.text,
+            text: qText,
             options: { A: '', B: '', C: '', D: '', E: '', F: '', G: '' },
             correct: null,
             images: [...lineObj.images],
           }
           currentQOptAttrs = {}
+          if (headerInlineOpts.length >= 2) {
+            for (let idx = 0; idx < headerInlineOpts.length; idx++) {
+              const curr = headerInlineOpts[idx]
+              const endPos = idx + 1 < headerInlineOpts.length ? headerInlineOpts[idx + 1].index : lineText.length
+              const subLineObj = sliceLineObj(lineObj, curr.index, endPos)
+              let content = lineText.slice(curr.endOfPrefix, endPos).trim().replace(/^\*\*/, '').replace(/\*\*$/, '')
+              content = content.replace(/\s*\((?:đúng|đáp án đúng|chính xác|correct|true)\)/i, '').replace(/\s*\[x\]/i, '').trim()
+              currentQ.options[curr.letter] = content
+              currentQOptAttrs[curr.letter] = checkOptionAttributes(subLineObj, curr.letter)
+            }
+          }
         } else if (multiMatches.length >= 2 && currentQ) {
           for (let idx = 0; idx < multiMatches.length; idx++) {
             const curr = multiMatches[idx]
@@ -1001,6 +1094,7 @@ export default function WordImporter({ chapterId, onDone }: { chapterId: string,
               currentQOptAttrs[lastKey].hasAnyBoldContent = true
               currentQOptAttrs[lastKey].isBold = true
             }
+            if (lineAttrs.hasHighlight) currentQOptAttrs[lastKey].hasHighlight = true
             if (lineAttrs.hasColor) {
               currentQOptAttrs[lastKey].hasColor = true
               currentQOptAttrs[lastKey].color = lineAttrs.color
@@ -1011,9 +1105,9 @@ export default function WordImporter({ chapterId, onDone }: { chapterId: string,
           }
           if (lineObj.images.length > 0) currentQ.images.push(...lineObj.images)
         }
-      })
+      }
 
-      flushCurrentQ()
+            flushCurrentQ()
       setParsedQuestions(questions)
 
       if (questions.length === 0) {
